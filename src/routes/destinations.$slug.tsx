@@ -60,13 +60,13 @@ function DestinationPage() {
           <div>
             <p className="eyebrow mb-4">Signature Highlights</p>
             <ul className="space-y-3">
-              {(region.highlights ?? []).map((h) => (
+              {(region.highlights ?? []).map((h: string) => (
                 <li key={h} className="border-l-2 border-gold pl-4 text-sm">{h}</li>
               ))}
             </ul>
             <p className="eyebrow mb-4 mt-8">Countries</p>
             <div className="flex flex-wrap gap-2">
-              {region.countries.map((c) => (
+              {region.countries.map((c: string) => (
                 <span key={c} className="rounded-sm border border-border bg-card px-3 py-1 text-xs">{c}</span>
               ))}
             </div>

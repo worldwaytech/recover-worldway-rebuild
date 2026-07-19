@@ -59,21 +59,21 @@ function JourneyDetail() {
 
             <h3 className="mt-12 font-serif text-2xl">Highlights</h3>
             <ul className="mt-4 space-y-2">
-              {j.highlights.map((h) => (
+              {j.highlights.map((h: string) => (
                 <li key={h} className="border-l-2 border-gold pl-4 text-sm">{h}</li>
               ))}
             </ul>
 
             <h3 className="mt-12 font-serif text-2xl">Signature Accommodation</h3>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-              {j.accommodations.map((a) => <li key={a}>· {a}</li>)}
+              {j.accommodations.map((a: string) => <li key={a}>· {a}</li>)}
             </ul>
           </div>
 
           <aside className="rounded-sm border border-border bg-card p-6 shadow-soft h-fit lg:sticky lg:top-28">
             <p className="eyebrow mb-3">Departures</p>
             <ul className="space-y-1 text-sm">
-              {j.departures.map((d) => <li key={d}>{d}</li>)}
+              {j.departures.map((d: string) => <li key={d}>{d}</li>)}
             </ul>
             <div className="mt-6 border-t border-border pt-6">
               <p className="text-2xl font-serif">{formatPrice(j.priceFrom)}</p>
