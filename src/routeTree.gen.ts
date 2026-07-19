@@ -9,8 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrustRouteImport } from './routes/trust'
 import { Route as TripBuilderRouteImport } from './routes/trip-builder'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MembershipRouteImport } from './routes/membership'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
@@ -22,14 +27,39 @@ import { Route as JourneysSlugRouteImport } from './routes/journeys.$slug'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TripBuilderRoute = TripBuilderRouteImport.update({
   id: '/trip-builder',
   path: '/trip-builder',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembershipRoute = MembershipRouteImport.update({
   id: '/membership',
   path: '/membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -88,8 +118,13 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/help': typeof HelpRoute
   '/membership': typeof MembershipRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/trip-builder': typeof TripBuilderRoute
+  '/trust': typeof TrustRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
@@ -102,8 +137,13 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/help': typeof HelpRoute
   '/membership': typeof MembershipRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/trip-builder': typeof TripBuilderRoute
+  '/trust': typeof TrustRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
@@ -117,8 +157,13 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/help': typeof HelpRoute
   '/membership': typeof MembershipRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/trip-builder': typeof TripBuilderRoute
+  '/trust': typeof TrustRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
@@ -133,8 +178,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/contact'
+    | '/cookies'
+    | '/help'
     | '/membership'
+    | '/privacy'
+    | '/terms'
     | '/trip-builder'
+    | '/trust'
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/journeys/$slug'
@@ -147,8 +197,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/contact'
+    | '/cookies'
+    | '/help'
     | '/membership'
+    | '/privacy'
+    | '/terms'
     | '/trip-builder'
+    | '/trust'
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/journeys/$slug'
@@ -161,8 +216,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/contact'
+    | '/cookies'
+    | '/help'
     | '/membership'
+    | '/privacy'
+    | '/terms'
     | '/trip-builder'
+    | '/trust'
     | '/blog/$slug'
     | '/destinations/$slug'
     | '/journeys/$slug'
@@ -176,8 +236,13 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
+  HelpRoute: typeof HelpRoute
   MembershipRoute: typeof MembershipRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   TripBuilderRoute: typeof TripBuilderRoute
+  TrustRoute: typeof TrustRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
   JourneysSlugRoute: typeof JourneysSlugRoute
@@ -188,6 +253,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trip-builder': {
       id: '/trip-builder'
       path: '/trip-builder'
@@ -195,11 +267,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TripBuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/membership': {
       id: '/membership'
       path: '/membership'
       fullPath: '/membership'
       preLoaderRoute: typeof MembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -280,8 +380,13 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
+  HelpRoute: HelpRoute,
   MembershipRoute: MembershipRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   TripBuilderRoute: TripBuilderRoute,
+  TrustRoute: TrustRoute,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
   JourneysSlugRoute: JourneysSlugRoute,
