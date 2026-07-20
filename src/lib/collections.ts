@@ -93,7 +93,7 @@ export const collectionsMeta: Record<CollectionKind, CollectionMeta> = {
     ],
     itemNoun: "voyage",
     itemNounPlural: "voyages",
-    detailBasePath: "/cruises/voyage",
+    detailBasePath: "/cruises",
   },
   "cruises-expedition": {
     slug: "cruises-expedition",
