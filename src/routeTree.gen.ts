@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as YachtsRouteImport } from './routes/yachts'
 import { Route as WorldCruisesRouteImport } from './routes/world-cruises'
 import { Route as WellnessRouteImport } from './routes/wellness'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as VisaRouteImport } from './routes/visa'
 import { Route as VillasRouteImport } from './routes/villas'
 import { Route as TrustRouteImport } from './routes/trust'
@@ -21,11 +22,14 @@ import { Route as ToursRouteImport } from './routes/tours'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TailorMadeRouteImport } from './routes/tailor-made'
 import { Route as SmallGroupRouteImport } from './routes/small-group'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as SafariRouteImport } from './routes/safari'
 import { Route as RiverCruisesRouteImport } from './routes/river-cruises'
 import { Route as RailRouteImport } from './routes/rail'
 import { Route as PrivateAviationRouteImport } from './routes/private-aviation'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PolarExpeditionsRouteImport } from './routes/polar-expeditions'
 import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as InsuranceRouteImport } from './routes/insurance'
@@ -39,7 +43,10 @@ import { Route as CulturalRouteImport } from './routes/cultural'
 import { Route as CruisesRouteImport } from './routes/cruises'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ConciergeRouteImport } from './routes/concierge'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AgentRouteImport } from './routes/agent'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -88,6 +95,11 @@ const WellnessRoute = WellnessRouteImport.update({
   path: '/wellness',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VisaRoute = VisaRouteImport.update({
   id: '/visa',
   path: '/visa',
@@ -133,6 +145,16 @@ const SmallGroupRoute = SmallGroupRouteImport.update({
   path: '/small-group',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SafariRoute = SafariRouteImport.update({
   id: '/safari',
   path: '/safari',
@@ -156,6 +178,11 @@ const PrivateAviationRoute = PrivateAviationRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PolarExpeditionsRoute = PolarExpeditionsRouteImport.update({
@@ -223,9 +250,24 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConciergeRoute = ConciergeRouteImport.update({
+  id: '/concierge',
+  path: '/concierge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentRoute = AgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivitiesRoute = ActivitiesRouteImport.update({
@@ -393,7 +435,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
+  '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
@@ -407,11 +452,14 @@ export interface FileRoutesByFullPath {
   '/insurance': typeof InsuranceRouteWithChildren
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
+  '/portal': typeof PortalRoute
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
   '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/safari': typeof SafariRouteWithChildren
+  '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/small-group': typeof SmallGroupRouteWithChildren
   '/tailor-made': typeof TailorMadeRouteWithChildren
   '/terms': typeof TermsRoute
@@ -421,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
+  '/wallet': typeof WalletRoute
   '/wellness': typeof WellnessRouteWithChildren
   '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
@@ -458,7 +507,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
+  '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
@@ -472,11 +524,14 @@ export interface FileRoutesByTo {
   '/insurance': typeof InsuranceRouteWithChildren
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
+  '/portal': typeof PortalRoute
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
   '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/safari': typeof SafariRouteWithChildren
+  '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/small-group': typeof SmallGroupRouteWithChildren
   '/tailor-made': typeof TailorMadeRouteWithChildren
   '/terms': typeof TermsRoute
@@ -486,6 +541,7 @@ export interface FileRoutesByTo {
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
+  '/wallet': typeof WalletRoute
   '/wellness': typeof WellnessRouteWithChildren
   '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
@@ -524,7 +580,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
+  '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
@@ -538,11 +597,14 @@ export interface FileRoutesById {
   '/insurance': typeof InsuranceRouteWithChildren
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
+  '/portal': typeof PortalRoute
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
   '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/safari': typeof SafariRouteWithChildren
+  '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/small-group': typeof SmallGroupRouteWithChildren
   '/tailor-made': typeof TailorMadeRouteWithChildren
   '/terms': typeof TermsRoute
@@ -552,6 +614,7 @@ export interface FileRoutesById {
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
+  '/wallet': typeof WalletRoute
   '/wellness': typeof WellnessRouteWithChildren
   '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
@@ -591,7 +654,10 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
+    | '/admin'
+    | '/agent'
     | '/auth'
+    | '/concierge'
     | '/contact'
     | '/cookies'
     | '/cruises'
@@ -605,11 +671,14 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/membership'
     | '/polar-expeditions'
+    | '/portal'
     | '/privacy'
     | '/private-aviation'
     | '/rail'
     | '/river-cruises'
     | '/safari'
+    | '/search'
+    | '/sitemap.xml'
     | '/small-group'
     | '/tailor-made'
     | '/terms'
@@ -619,6 +688,7 @@ export interface FileRouteTypes {
     | '/trust'
     | '/villas'
     | '/visa'
+    | '/wallet'
     | '/wellness'
     | '/world-cruises'
     | '/yachts'
@@ -656,7 +726,10 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
+    | '/admin'
+    | '/agent'
     | '/auth'
+    | '/concierge'
     | '/contact'
     | '/cookies'
     | '/cruises'
@@ -670,11 +743,14 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/membership'
     | '/polar-expeditions'
+    | '/portal'
     | '/privacy'
     | '/private-aviation'
     | '/rail'
     | '/river-cruises'
     | '/safari'
+    | '/search'
+    | '/sitemap.xml'
     | '/small-group'
     | '/tailor-made'
     | '/terms'
@@ -684,6 +760,7 @@ export interface FileRouteTypes {
     | '/trust'
     | '/villas'
     | '/visa'
+    | '/wallet'
     | '/wellness'
     | '/world-cruises'
     | '/yachts'
@@ -721,7 +798,10 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activities'
+    | '/admin'
+    | '/agent'
     | '/auth'
+    | '/concierge'
     | '/contact'
     | '/cookies'
     | '/cruises'
@@ -735,11 +815,14 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/membership'
     | '/polar-expeditions'
+    | '/portal'
     | '/privacy'
     | '/private-aviation'
     | '/rail'
     | '/river-cruises'
     | '/safari'
+    | '/search'
+    | '/sitemap.xml'
     | '/small-group'
     | '/tailor-made'
     | '/terms'
@@ -749,6 +832,7 @@ export interface FileRouteTypes {
     | '/trust'
     | '/villas'
     | '/visa'
+    | '/wallet'
     | '/wellness'
     | '/world-cruises'
     | '/yachts'
@@ -787,7 +871,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ActivitiesRoute: typeof ActivitiesRouteWithChildren
+  AdminRoute: typeof AdminRoute
+  AgentRoute: typeof AgentRoute
   AuthRoute: typeof AuthRoute
+  ConciergeRoute: typeof ConciergeRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   CruisesRoute: typeof CruisesRouteWithChildren
@@ -801,11 +888,14 @@ export interface RootRouteChildren {
   InsuranceRoute: typeof InsuranceRouteWithChildren
   MembershipRoute: typeof MembershipRoute
   PolarExpeditionsRoute: typeof PolarExpeditionsRouteWithChildren
+  PortalRoute: typeof PortalRoute
   PrivacyRoute: typeof PrivacyRoute
   PrivateAviationRoute: typeof PrivateAviationRouteWithChildren
   RailRoute: typeof RailRouteWithChildren
   RiverCruisesRoute: typeof RiverCruisesRouteWithChildren
   SafariRoute: typeof SafariRouteWithChildren
+  SearchRoute: typeof SearchRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SmallGroupRoute: typeof SmallGroupRouteWithChildren
   TailorMadeRoute: typeof TailorMadeRouteWithChildren
   TermsRoute: typeof TermsRoute
@@ -815,6 +905,7 @@ export interface RootRouteChildren {
   TrustRoute: typeof TrustRoute
   VillasRoute: typeof VillasRouteWithChildren
   VisaRoute: typeof VisaRouteWithChildren
+  WalletRoute: typeof WalletRoute
   WellnessRoute: typeof WellnessRouteWithChildren
   WorldCruisesRoute: typeof WorldCruisesRouteWithChildren
   YachtsRoute: typeof YachtsRouteWithChildren
@@ -847,6 +938,13 @@ declare module '@tanstack/react-router' {
       path: '/wellness'
       fullPath: '/wellness'
       preLoaderRoute: typeof WellnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/visa': {
@@ -912,6 +1010,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SmallGroupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/safari': {
       id: '/safari'
       path: '/safari'
@@ -945,6 +1057,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/polar-expeditions': {
@@ -1038,11 +1157,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/concierge': {
+      id: '/concierge'
+      path: '/concierge'
+      fullPath: '/concierge'
+      preLoaderRoute: typeof ConciergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agent': {
+      id: '/agent'
+      path: '/agent'
+      fullPath: '/agent'
+      preLoaderRoute: typeof AgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activities': {
@@ -1537,7 +1677,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ActivitiesRoute: ActivitiesRouteWithChildren,
+  AdminRoute: AdminRoute,
+  AgentRoute: AgentRoute,
   AuthRoute: AuthRoute,
+  ConciergeRoute: ConciergeRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   CruisesRoute: CruisesRouteWithChildren,
@@ -1551,11 +1694,14 @@ const rootRouteChildren: RootRouteChildren = {
   InsuranceRoute: InsuranceRouteWithChildren,
   MembershipRoute: MembershipRoute,
   PolarExpeditionsRoute: PolarExpeditionsRouteWithChildren,
+  PortalRoute: PortalRoute,
   PrivacyRoute: PrivacyRoute,
   PrivateAviationRoute: PrivateAviationRouteWithChildren,
   RailRoute: RailRouteWithChildren,
   RiverCruisesRoute: RiverCruisesRouteWithChildren,
   SafariRoute: SafariRouteWithChildren,
+  SearchRoute: SearchRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SmallGroupRoute: SmallGroupRouteWithChildren,
   TailorMadeRoute: TailorMadeRouteWithChildren,
   TermsRoute: TermsRoute,
@@ -1565,6 +1711,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrustRoute: TrustRoute,
   VillasRoute: VillasRouteWithChildren,
   VisaRoute: VisaRouteWithChildren,
+  WalletRoute: WalletRoute,
   WellnessRoute: WellnessRouteWithChildren,
   WorldCruisesRoute: WorldCruisesRouteWithChildren,
   YachtsRoute: YachtsRouteWithChildren,
