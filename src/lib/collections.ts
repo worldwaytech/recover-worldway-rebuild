@@ -115,7 +115,7 @@ export const collectionsMeta: Record<CollectionKind, CollectionMeta> = {
     ],
     itemNoun: "expedition",
     itemNounPlural: "expeditions",
-    detailBasePath: "/cruises/expedition",
+    detailBasePath: "/expedition-cruises",
   },
   "cruises-river": {
     slug: "cruises-river",
@@ -136,7 +136,7 @@ export const collectionsMeta: Record<CollectionKind, CollectionMeta> = {
     ],
     itemNoun: "river voyage",
     itemNounPlural: "river voyages",
-    detailBasePath: "/cruises/river",
+    detailBasePath: "/river-cruises",
   },
   "cruises-world": {
     slug: "cruises-world",
@@ -157,7 +157,7 @@ export const collectionsMeta: Record<CollectionKind, CollectionMeta> = {
     ],
     itemNoun: "world voyage",
     itemNounPlural: "world voyages",
-    detailBasePath: "/cruises/world",
+    detailBasePath: "/world-cruises",
   },
   rail: {
     slug: "rail",

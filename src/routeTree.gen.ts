@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YachtsRouteImport } from './routes/yachts'
+import { Route as WorldCruisesRouteImport } from './routes/world-cruises'
 import { Route as WellnessRouteImport } from './routes/wellness'
 import { Route as VisaRouteImport } from './routes/visa'
 import { Route as VillasRouteImport } from './routes/villas'
@@ -21,6 +22,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TailorMadeRouteImport } from './routes/tailor-made'
 import { Route as SmallGroupRouteImport } from './routes/small-group'
 import { Route as SafariRouteImport } from './routes/safari'
+import { Route as RiverCruisesRouteImport } from './routes/river-cruises'
 import { Route as RailRouteImport } from './routes/rail'
 import { Route as PrivateAviationRouteImport } from './routes/private-aviation'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -32,6 +34,7 @@ import { Route as HoneymoonRouteImport } from './routes/honeymoon'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as FlightsRouteImport } from './routes/flights'
 import { Route as FamilyRouteImport } from './routes/family'
+import { Route as ExpeditionCruisesRouteImport } from './routes/expedition-cruises'
 import { Route as CulturalRouteImport } from './routes/cultural'
 import { Route as CruisesRouteImport } from './routes/cruises'
 import { Route as CookiesRouteImport } from './routes/cookies'
@@ -44,6 +47,7 @@ import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as DestinationsIndexRouteImport } from './routes/destinations.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as YachtsSlugRouteImport } from './routes/yachts.$slug'
+import { Route as WorldCruisesSlugRouteImport } from './routes/world-cruises.$slug'
 import { Route as WellnessSlugRouteImport } from './routes/wellness.$slug'
 import { Route as VisaSlugRouteImport } from './routes/visa.$slug'
 import { Route as VillasSlugRouteImport } from './routes/villas.$slug'
@@ -52,6 +56,7 @@ import { Route as ToursSlugRouteImport } from './routes/tours.$slug'
 import { Route as TailorMadeSlugRouteImport } from './routes/tailor-made.$slug'
 import { Route as SmallGroupSlugRouteImport } from './routes/small-group.$slug'
 import { Route as SafariSlugRouteImport } from './routes/safari.$slug'
+import { Route as RiverCruisesSlugRouteImport } from './routes/river-cruises.$slug'
 import { Route as RailSlugRouteImport } from './routes/rail.$slug'
 import { Route as PrivateAviationSlugRouteImport } from './routes/private-aviation.$slug'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
@@ -61,21 +66,21 @@ import { Route as HotelsSlugRouteImport } from './routes/hotels.$slug'
 import { Route as HoneymoonSlugRouteImport } from './routes/honeymoon.$slug'
 import { Route as FlightsSlugRouteImport } from './routes/flights.$slug'
 import { Route as FamilySlugRouteImport } from './routes/family.$slug'
+import { Route as ExpeditionCruisesSlugRouteImport } from './routes/expedition-cruises.$slug'
 import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slug'
 import { Route as CulturalSlugRouteImport } from './routes/cultural.$slug'
-import { Route as CruisesWorldRouteImport } from './routes/cruises.world'
-import { Route as CruisesRiverRouteImport } from './routes/cruises.river'
-import { Route as CruisesExpeditionRouteImport } from './routes/cruises.expedition'
 import { Route as CruisesSlugRouteImport } from './routes/cruises.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as ActivitiesSlugRouteImport } from './routes/activities.$slug'
-import { Route as CruisesWorldSlugRouteImport } from './routes/cruises.world.$slug'
-import { Route as CruisesRiverSlugRouteImport } from './routes/cruises.river.$slug'
-import { Route as CruisesExpeditionSlugRouteImport } from './routes/cruises.expedition.$slug'
 
 const YachtsRoute = YachtsRouteImport.update({
   id: '/yachts',
   path: '/yachts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorldCruisesRoute = WorldCruisesRouteImport.update({
+  id: '/world-cruises',
+  path: '/world-cruises',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WellnessRoute = WellnessRouteImport.update({
@@ -133,6 +138,11 @@ const SafariRoute = SafariRouteImport.update({
   path: '/safari',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RiverCruisesRoute = RiverCruisesRouteImport.update({
+  id: '/river-cruises',
+  path: '/river-cruises',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RailRoute = RailRouteImport.update({
   id: '/rail',
   path: '/rail',
@@ -186,6 +196,11 @@ const FlightsRoute = FlightsRouteImport.update({
 const FamilyRoute = FamilyRouteImport.update({
   id: '/family',
   path: '/family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpeditionCruisesRoute = ExpeditionCruisesRouteImport.update({
+  id: '/expedition-cruises',
+  path: '/expedition-cruises',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CulturalRoute = CulturalRouteImport.update({
@@ -248,6 +263,11 @@ const YachtsSlugRoute = YachtsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => YachtsRoute,
 } as any)
+const WorldCruisesSlugRoute = WorldCruisesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => WorldCruisesRoute,
+} as any)
 const WellnessSlugRoute = WellnessSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -287,6 +307,11 @@ const SafariSlugRoute = SafariSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => SafariRoute,
+} as any)
+const RiverCruisesSlugRoute = RiverCruisesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => RiverCruisesRoute,
 } as any)
 const RailSlugRoute = RailSlugRouteImport.update({
   id: '/$slug',
@@ -333,6 +358,11 @@ const FamilySlugRoute = FamilySlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => FamilyRoute,
 } as any)
+const ExpeditionCruisesSlugRoute = ExpeditionCruisesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ExpeditionCruisesRoute,
+} as any)
 const DestinationsSlugRoute = DestinationsSlugRouteImport.update({
   id: '/destinations/$slug',
   path: '/destinations/$slug',
@@ -342,21 +372,6 @@ const CulturalSlugRoute = CulturalSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => CulturalRoute,
-} as any)
-const CruisesWorldRoute = CruisesWorldRouteImport.update({
-  id: '/world',
-  path: '/world',
-  getParentRoute: () => CruisesRoute,
-} as any)
-const CruisesRiverRoute = CruisesRiverRouteImport.update({
-  id: '/river',
-  path: '/river',
-  getParentRoute: () => CruisesRoute,
-} as any)
-const CruisesExpeditionRoute = CruisesExpeditionRouteImport.update({
-  id: '/expedition',
-  path: '/expedition',
-  getParentRoute: () => CruisesRoute,
 } as any)
 const CruisesSlugRoute = CruisesSlugRouteImport.update({
   id: '/$slug',
@@ -373,21 +388,6 @@ const ActivitiesSlugRoute = ActivitiesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ActivitiesRoute,
 } as any)
-const CruisesWorldSlugRoute = CruisesWorldSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CruisesWorldRoute,
-} as any)
-const CruisesRiverSlugRoute = CruisesRiverSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CruisesRiverRoute,
-} as any)
-const CruisesExpeditionSlugRoute = CruisesExpeditionSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CruisesExpeditionRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -398,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
   '/cultural': typeof CulturalRouteWithChildren
+  '/expedition-cruises': typeof ExpeditionCruisesRouteWithChildren
   '/family': typeof FamilyRouteWithChildren
   '/flights': typeof FlightsRouteWithChildren
   '/help': typeof HelpRoute
@@ -409,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
+  '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/safari': typeof SafariRouteWithChildren
   '/small-group': typeof SmallGroupRouteWithChildren
   '/tailor-made': typeof TailorMadeRouteWithChildren
@@ -420,15 +422,14 @@ export interface FileRoutesByFullPath {
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
   '/wellness': typeof WellnessRouteWithChildren
+  '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
   '/activities/$slug': typeof ActivitiesSlugRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
-  '/cruises/expedition': typeof CruisesExpeditionRouteWithChildren
-  '/cruises/river': typeof CruisesRiverRouteWithChildren
-  '/cruises/world': typeof CruisesWorldRouteWithChildren
   '/cultural/$slug': typeof CulturalSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/flights/$slug': typeof FlightsSlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
@@ -438,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
+  '/river-cruises/$slug': typeof RiverCruisesSlugRoute
   '/safari/$slug': typeof SafariSlugRoute
   '/small-group/$slug': typeof SmallGroupSlugRoute
   '/tailor-made/$slug': typeof TailorMadeSlugRoute
@@ -446,13 +448,11 @@ export interface FileRoutesByFullPath {
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
   '/wellness/$slug': typeof WellnessSlugRoute
+  '/world-cruises/$slug': typeof WorldCruisesSlugRoute
   '/yachts/$slug': typeof YachtsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/journeys/': typeof JourneysIndexRoute
-  '/cruises/expedition/$slug': typeof CruisesExpeditionSlugRoute
-  '/cruises/river/$slug': typeof CruisesRiverSlugRoute
-  '/cruises/world/$slug': typeof CruisesWorldSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -463,6 +463,7 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
   '/cultural': typeof CulturalRouteWithChildren
+  '/expedition-cruises': typeof ExpeditionCruisesRouteWithChildren
   '/family': typeof FamilyRouteWithChildren
   '/flights': typeof FlightsRouteWithChildren
   '/help': typeof HelpRoute
@@ -474,6 +475,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
+  '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/safari': typeof SafariRouteWithChildren
   '/small-group': typeof SmallGroupRouteWithChildren
   '/tailor-made': typeof TailorMadeRouteWithChildren
@@ -485,15 +487,14 @@ export interface FileRoutesByTo {
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
   '/wellness': typeof WellnessRouteWithChildren
+  '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
   '/activities/$slug': typeof ActivitiesSlugRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
-  '/cruises/expedition': typeof CruisesExpeditionRouteWithChildren
-  '/cruises/river': typeof CruisesRiverRouteWithChildren
-  '/cruises/world': typeof CruisesWorldRouteWithChildren
   '/cultural/$slug': typeof CulturalSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/flights/$slug': typeof FlightsSlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
@@ -503,6 +504,7 @@ export interface FileRoutesByTo {
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
+  '/river-cruises/$slug': typeof RiverCruisesSlugRoute
   '/safari/$slug': typeof SafariSlugRoute
   '/small-group/$slug': typeof SmallGroupSlugRoute
   '/tailor-made/$slug': typeof TailorMadeSlugRoute
@@ -511,13 +513,11 @@ export interface FileRoutesByTo {
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
   '/wellness/$slug': typeof WellnessSlugRoute
+  '/world-cruises/$slug': typeof WorldCruisesSlugRoute
   '/yachts/$slug': typeof YachtsSlugRoute
   '/blog': typeof BlogIndexRoute
   '/destinations': typeof DestinationsIndexRoute
   '/journeys': typeof JourneysIndexRoute
-  '/cruises/expedition/$slug': typeof CruisesExpeditionSlugRoute
-  '/cruises/river/$slug': typeof CruisesRiverSlugRoute
-  '/cruises/world/$slug': typeof CruisesWorldSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -529,6 +529,7 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
   '/cultural': typeof CulturalRouteWithChildren
+  '/expedition-cruises': typeof ExpeditionCruisesRouteWithChildren
   '/family': typeof FamilyRouteWithChildren
   '/flights': typeof FlightsRouteWithChildren
   '/help': typeof HelpRoute
@@ -540,6 +541,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
+  '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/safari': typeof SafariRouteWithChildren
   '/small-group': typeof SmallGroupRouteWithChildren
   '/tailor-made': typeof TailorMadeRouteWithChildren
@@ -551,15 +553,14 @@ export interface FileRoutesById {
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
   '/wellness': typeof WellnessRouteWithChildren
+  '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
   '/activities/$slug': typeof ActivitiesSlugRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
-  '/cruises/expedition': typeof CruisesExpeditionRouteWithChildren
-  '/cruises/river': typeof CruisesRiverRouteWithChildren
-  '/cruises/world': typeof CruisesWorldRouteWithChildren
   '/cultural/$slug': typeof CulturalSlugRoute
   '/destinations/$slug': typeof DestinationsSlugRoute
+  '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/flights/$slug': typeof FlightsSlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
@@ -569,6 +570,7 @@ export interface FileRoutesById {
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
+  '/river-cruises/$slug': typeof RiverCruisesSlugRoute
   '/safari/$slug': typeof SafariSlugRoute
   '/small-group/$slug': typeof SmallGroupSlugRoute
   '/tailor-made/$slug': typeof TailorMadeSlugRoute
@@ -577,13 +579,11 @@ export interface FileRoutesById {
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
   '/wellness/$slug': typeof WellnessSlugRoute
+  '/world-cruises/$slug': typeof WorldCruisesSlugRoute
   '/yachts/$slug': typeof YachtsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/journeys/': typeof JourneysIndexRoute
-  '/cruises/expedition/$slug': typeof CruisesExpeditionSlugRoute
-  '/cruises/river/$slug': typeof CruisesRiverSlugRoute
-  '/cruises/world/$slug': typeof CruisesWorldSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -596,6 +596,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/cruises'
     | '/cultural'
+    | '/expedition-cruises'
     | '/family'
     | '/flights'
     | '/help'
@@ -607,6 +608,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/private-aviation'
     | '/rail'
+    | '/river-cruises'
     | '/safari'
     | '/small-group'
     | '/tailor-made'
@@ -618,15 +620,14 @@ export interface FileRouteTypes {
     | '/villas'
     | '/visa'
     | '/wellness'
+    | '/world-cruises'
     | '/yachts'
     | '/activities/$slug'
     | '/blog/$slug'
     | '/cruises/$slug'
-    | '/cruises/expedition'
-    | '/cruises/river'
-    | '/cruises/world'
     | '/cultural/$slug'
     | '/destinations/$slug'
+    | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/flights/$slug'
     | '/honeymoon/$slug'
@@ -636,6 +637,7 @@ export interface FileRouteTypes {
     | '/polar-expeditions/$slug'
     | '/private-aviation/$slug'
     | '/rail/$slug'
+    | '/river-cruises/$slug'
     | '/safari/$slug'
     | '/small-group/$slug'
     | '/tailor-made/$slug'
@@ -644,13 +646,11 @@ export interface FileRouteTypes {
     | '/villas/$slug'
     | '/visa/$slug'
     | '/wellness/$slug'
+    | '/world-cruises/$slug'
     | '/yachts/$slug'
     | '/blog/'
     | '/destinations/'
     | '/journeys/'
-    | '/cruises/expedition/$slug'
-    | '/cruises/river/$slug'
-    | '/cruises/world/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -661,6 +661,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/cruises'
     | '/cultural'
+    | '/expedition-cruises'
     | '/family'
     | '/flights'
     | '/help'
@@ -672,6 +673,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/private-aviation'
     | '/rail'
+    | '/river-cruises'
     | '/safari'
     | '/small-group'
     | '/tailor-made'
@@ -683,15 +685,14 @@ export interface FileRouteTypes {
     | '/villas'
     | '/visa'
     | '/wellness'
+    | '/world-cruises'
     | '/yachts'
     | '/activities/$slug'
     | '/blog/$slug'
     | '/cruises/$slug'
-    | '/cruises/expedition'
-    | '/cruises/river'
-    | '/cruises/world'
     | '/cultural/$slug'
     | '/destinations/$slug'
+    | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/flights/$slug'
     | '/honeymoon/$slug'
@@ -701,6 +702,7 @@ export interface FileRouteTypes {
     | '/polar-expeditions/$slug'
     | '/private-aviation/$slug'
     | '/rail/$slug'
+    | '/river-cruises/$slug'
     | '/safari/$slug'
     | '/small-group/$slug'
     | '/tailor-made/$slug'
@@ -709,13 +711,11 @@ export interface FileRouteTypes {
     | '/villas/$slug'
     | '/visa/$slug'
     | '/wellness/$slug'
+    | '/world-cruises/$slug'
     | '/yachts/$slug'
     | '/blog'
     | '/destinations'
     | '/journeys'
-    | '/cruises/expedition/$slug'
-    | '/cruises/river/$slug'
-    | '/cruises/world/$slug'
   id:
     | '__root__'
     | '/'
@@ -726,6 +726,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/cruises'
     | '/cultural'
+    | '/expedition-cruises'
     | '/family'
     | '/flights'
     | '/help'
@@ -737,6 +738,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/private-aviation'
     | '/rail'
+    | '/river-cruises'
     | '/safari'
     | '/small-group'
     | '/tailor-made'
@@ -748,15 +750,14 @@ export interface FileRouteTypes {
     | '/villas'
     | '/visa'
     | '/wellness'
+    | '/world-cruises'
     | '/yachts'
     | '/activities/$slug'
     | '/blog/$slug'
     | '/cruises/$slug'
-    | '/cruises/expedition'
-    | '/cruises/river'
-    | '/cruises/world'
     | '/cultural/$slug'
     | '/destinations/$slug'
+    | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/flights/$slug'
     | '/honeymoon/$slug'
@@ -766,6 +767,7 @@ export interface FileRouteTypes {
     | '/polar-expeditions/$slug'
     | '/private-aviation/$slug'
     | '/rail/$slug'
+    | '/river-cruises/$slug'
     | '/safari/$slug'
     | '/small-group/$slug'
     | '/tailor-made/$slug'
@@ -774,13 +776,11 @@ export interface FileRouteTypes {
     | '/villas/$slug'
     | '/visa/$slug'
     | '/wellness/$slug'
+    | '/world-cruises/$slug'
     | '/yachts/$slug'
     | '/blog/'
     | '/destinations/'
     | '/journeys/'
-    | '/cruises/expedition/$slug'
-    | '/cruises/river/$slug'
-    | '/cruises/world/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -792,6 +792,7 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   CruisesRoute: typeof CruisesRouteWithChildren
   CulturalRoute: typeof CulturalRouteWithChildren
+  ExpeditionCruisesRoute: typeof ExpeditionCruisesRouteWithChildren
   FamilyRoute: typeof FamilyRouteWithChildren
   FlightsRoute: typeof FlightsRouteWithChildren
   HelpRoute: typeof HelpRoute
@@ -803,6 +804,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PrivateAviationRoute: typeof PrivateAviationRouteWithChildren
   RailRoute: typeof RailRouteWithChildren
+  RiverCruisesRoute: typeof RiverCruisesRouteWithChildren
   SafariRoute: typeof SafariRouteWithChildren
   SmallGroupRoute: typeof SmallGroupRouteWithChildren
   TailorMadeRoute: typeof TailorMadeRouteWithChildren
@@ -814,6 +816,7 @@ export interface RootRouteChildren {
   VillasRoute: typeof VillasRouteWithChildren
   VisaRoute: typeof VisaRouteWithChildren
   WellnessRoute: typeof WellnessRouteWithChildren
+  WorldCruisesRoute: typeof WorldCruisesRouteWithChildren
   YachtsRoute: typeof YachtsRouteWithChildren
   BlogSlugRoute: typeof BlogSlugRoute
   DestinationsSlugRoute: typeof DestinationsSlugRoute
@@ -830,6 +833,13 @@ declare module '@tanstack/react-router' {
       path: '/yachts'
       fullPath: '/yachts'
       preLoaderRoute: typeof YachtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/world-cruises': {
+      id: '/world-cruises'
+      path: '/world-cruises'
+      fullPath: '/world-cruises'
+      preLoaderRoute: typeof WorldCruisesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wellness': {
@@ -909,6 +919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SafariRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/river-cruises': {
+      id: '/river-cruises'
+      path: '/river-cruises'
+      fullPath: '/river-cruises'
+      preLoaderRoute: typeof RiverCruisesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rail': {
       id: '/rail'
       path: '/rail'
@@ -984,6 +1001,13 @@ declare module '@tanstack/react-router' {
       path: '/family'
       fullPath: '/family'
       preLoaderRoute: typeof FamilyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expedition-cruises': {
+      id: '/expedition-cruises'
+      path: '/expedition-cruises'
+      fullPath: '/expedition-cruises'
+      preLoaderRoute: typeof ExpeditionCruisesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cultural': {
@@ -1070,6 +1094,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YachtsSlugRouteImport
       parentRoute: typeof YachtsRoute
     }
+    '/world-cruises/$slug': {
+      id: '/world-cruises/$slug'
+      path: '/$slug'
+      fullPath: '/world-cruises/$slug'
+      preLoaderRoute: typeof WorldCruisesSlugRouteImport
+      parentRoute: typeof WorldCruisesRoute
+    }
     '/wellness/$slug': {
       id: '/wellness/$slug'
       path: '/$slug'
@@ -1125,6 +1156,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/safari/$slug'
       preLoaderRoute: typeof SafariSlugRouteImport
       parentRoute: typeof SafariRoute
+    }
+    '/river-cruises/$slug': {
+      id: '/river-cruises/$slug'
+      path: '/$slug'
+      fullPath: '/river-cruises/$slug'
+      preLoaderRoute: typeof RiverCruisesSlugRouteImport
+      parentRoute: typeof RiverCruisesRoute
     }
     '/rail/$slug': {
       id: '/rail/$slug'
@@ -1189,6 +1227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FamilySlugRouteImport
       parentRoute: typeof FamilyRoute
     }
+    '/expedition-cruises/$slug': {
+      id: '/expedition-cruises/$slug'
+      path: '/$slug'
+      fullPath: '/expedition-cruises/$slug'
+      preLoaderRoute: typeof ExpeditionCruisesSlugRouteImport
+      parentRoute: typeof ExpeditionCruisesRoute
+    }
     '/destinations/$slug': {
       id: '/destinations/$slug'
       path: '/destinations/$slug'
@@ -1202,27 +1247,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/cultural/$slug'
       preLoaderRoute: typeof CulturalSlugRouteImport
       parentRoute: typeof CulturalRoute
-    }
-    '/cruises/world': {
-      id: '/cruises/world'
-      path: '/world'
-      fullPath: '/cruises/world'
-      preLoaderRoute: typeof CruisesWorldRouteImport
-      parentRoute: typeof CruisesRoute
-    }
-    '/cruises/river': {
-      id: '/cruises/river'
-      path: '/river'
-      fullPath: '/cruises/river'
-      preLoaderRoute: typeof CruisesRiverRouteImport
-      parentRoute: typeof CruisesRoute
-    }
-    '/cruises/expedition': {
-      id: '/cruises/expedition'
-      path: '/expedition'
-      fullPath: '/cruises/expedition'
-      preLoaderRoute: typeof CruisesExpeditionRouteImport
-      parentRoute: typeof CruisesRoute
     }
     '/cruises/$slug': {
       id: '/cruises/$slug'
@@ -1245,27 +1269,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivitiesSlugRouteImport
       parentRoute: typeof ActivitiesRoute
     }
-    '/cruises/world/$slug': {
-      id: '/cruises/world/$slug'
-      path: '/$slug'
-      fullPath: '/cruises/world/$slug'
-      preLoaderRoute: typeof CruisesWorldSlugRouteImport
-      parentRoute: typeof CruisesWorldRoute
-    }
-    '/cruises/river/$slug': {
-      id: '/cruises/river/$slug'
-      path: '/$slug'
-      fullPath: '/cruises/river/$slug'
-      preLoaderRoute: typeof CruisesRiverSlugRouteImport
-      parentRoute: typeof CruisesRiverRoute
-    }
-    '/cruises/expedition/$slug': {
-      id: '/cruises/expedition/$slug'
-      path: '/$slug'
-      fullPath: '/cruises/expedition/$slug'
-      preLoaderRoute: typeof CruisesExpeditionSlugRouteImport
-      parentRoute: typeof CruisesExpeditionRoute
-    }
   }
 }
 
@@ -1281,53 +1284,12 @@ const ActivitiesRouteWithChildren = ActivitiesRoute._addFileChildren(
   ActivitiesRouteChildren,
 )
 
-interface CruisesExpeditionRouteChildren {
-  CruisesExpeditionSlugRoute: typeof CruisesExpeditionSlugRoute
-}
-
-const CruisesExpeditionRouteChildren: CruisesExpeditionRouteChildren = {
-  CruisesExpeditionSlugRoute: CruisesExpeditionSlugRoute,
-}
-
-const CruisesExpeditionRouteWithChildren =
-  CruisesExpeditionRoute._addFileChildren(CruisesExpeditionRouteChildren)
-
-interface CruisesRiverRouteChildren {
-  CruisesRiverSlugRoute: typeof CruisesRiverSlugRoute
-}
-
-const CruisesRiverRouteChildren: CruisesRiverRouteChildren = {
-  CruisesRiverSlugRoute: CruisesRiverSlugRoute,
-}
-
-const CruisesRiverRouteWithChildren = CruisesRiverRoute._addFileChildren(
-  CruisesRiverRouteChildren,
-)
-
-interface CruisesWorldRouteChildren {
-  CruisesWorldSlugRoute: typeof CruisesWorldSlugRoute
-}
-
-const CruisesWorldRouteChildren: CruisesWorldRouteChildren = {
-  CruisesWorldSlugRoute: CruisesWorldSlugRoute,
-}
-
-const CruisesWorldRouteWithChildren = CruisesWorldRoute._addFileChildren(
-  CruisesWorldRouteChildren,
-)
-
 interface CruisesRouteChildren {
   CruisesSlugRoute: typeof CruisesSlugRoute
-  CruisesExpeditionRoute: typeof CruisesExpeditionRouteWithChildren
-  CruisesRiverRoute: typeof CruisesRiverRouteWithChildren
-  CruisesWorldRoute: typeof CruisesWorldRouteWithChildren
 }
 
 const CruisesRouteChildren: CruisesRouteChildren = {
   CruisesSlugRoute: CruisesSlugRoute,
-  CruisesExpeditionRoute: CruisesExpeditionRouteWithChildren,
-  CruisesRiverRoute: CruisesRiverRouteWithChildren,
-  CruisesWorldRoute: CruisesWorldRouteWithChildren,
 }
 
 const CruisesRouteWithChildren =
@@ -1344,6 +1306,17 @@ const CulturalRouteChildren: CulturalRouteChildren = {
 const CulturalRouteWithChildren = CulturalRoute._addFileChildren(
   CulturalRouteChildren,
 )
+
+interface ExpeditionCruisesRouteChildren {
+  ExpeditionCruisesSlugRoute: typeof ExpeditionCruisesSlugRoute
+}
+
+const ExpeditionCruisesRouteChildren: ExpeditionCruisesRouteChildren = {
+  ExpeditionCruisesSlugRoute: ExpeditionCruisesSlugRoute,
+}
+
+const ExpeditionCruisesRouteWithChildren =
+  ExpeditionCruisesRoute._addFileChildren(ExpeditionCruisesRouteChildren)
 
 interface FamilyRouteChildren {
   FamilySlugRoute: typeof FamilySlugRoute
@@ -1435,6 +1408,18 @@ const RailRouteChildren: RailRouteChildren = {
 
 const RailRouteWithChildren = RailRoute._addFileChildren(RailRouteChildren)
 
+interface RiverCruisesRouteChildren {
+  RiverCruisesSlugRoute: typeof RiverCruisesSlugRoute
+}
+
+const RiverCruisesRouteChildren: RiverCruisesRouteChildren = {
+  RiverCruisesSlugRoute: RiverCruisesSlugRoute,
+}
+
+const RiverCruisesRouteWithChildren = RiverCruisesRoute._addFileChildren(
+  RiverCruisesRouteChildren,
+)
+
 interface SafariRouteChildren {
   SafariSlugRoute: typeof SafariSlugRoute
 }
@@ -1525,6 +1510,18 @@ const WellnessRouteWithChildren = WellnessRoute._addFileChildren(
   WellnessRouteChildren,
 )
 
+interface WorldCruisesRouteChildren {
+  WorldCruisesSlugRoute: typeof WorldCruisesSlugRoute
+}
+
+const WorldCruisesRouteChildren: WorldCruisesRouteChildren = {
+  WorldCruisesSlugRoute: WorldCruisesSlugRoute,
+}
+
+const WorldCruisesRouteWithChildren = WorldCruisesRoute._addFileChildren(
+  WorldCruisesRouteChildren,
+)
+
 interface YachtsRouteChildren {
   YachtsSlugRoute: typeof YachtsSlugRoute
 }
@@ -1545,6 +1542,7 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   CruisesRoute: CruisesRouteWithChildren,
   CulturalRoute: CulturalRouteWithChildren,
+  ExpeditionCruisesRoute: ExpeditionCruisesRouteWithChildren,
   FamilyRoute: FamilyRouteWithChildren,
   FlightsRoute: FlightsRouteWithChildren,
   HelpRoute: HelpRoute,
@@ -1556,6 +1554,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PrivateAviationRoute: PrivateAviationRouteWithChildren,
   RailRoute: RailRouteWithChildren,
+  RiverCruisesRoute: RiverCruisesRouteWithChildren,
   SafariRoute: SafariRouteWithChildren,
   SmallGroupRoute: SmallGroupRouteWithChildren,
   TailorMadeRoute: TailorMadeRouteWithChildren,
@@ -1567,6 +1566,7 @@ const rootRouteChildren: RootRouteChildren = {
   VillasRoute: VillasRouteWithChildren,
   VisaRoute: VisaRouteWithChildren,
   WellnessRoute: WellnessRouteWithChildren,
+  WorldCruisesRoute: WorldCruisesRouteWithChildren,
   YachtsRoute: YachtsRouteWithChildren,
   BlogSlugRoute: BlogSlugRoute,
   DestinationsSlugRoute: DestinationsSlugRoute,
