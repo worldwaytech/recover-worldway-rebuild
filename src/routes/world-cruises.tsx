@@ -2,18 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CollectionLanding } from "@/components/CollectionTemplate";
 import { collectionItems, collectionsMeta } from "@/lib/collections";
 
-const KIND = "cruises-expedition" as const;
+const KIND = "cruises-world" as const;
 
-export const Route = createFileRoute("/cruises/expedition")({
+export const Route = createFileRoute("/world-cruises")({
   head: () => {
     const meta = collectionsMeta[KIND];
-    const url = "https://recover-worldway-rebuild.lovable.app/cruises/expedition";
+    const url = "https://recover-worldway-rebuild.lovable.app/world-cruises";
     return {
       meta: [
-        { title: "Expedition Cruises | Worldway Luxe" },
-        { name: "description", content: "Small-ship expeditions to Antarctica, the Arctic, Galápagos and the Kimberley." },
-        { property: "og:title", content: "Expedition Cruises | Worldway Luxe" },
-        { property: "og:description", content: "Small-ship expeditions to Antarctica, the Arctic, Galápagos and the Kimberley." },
+        { title: "World Cruises | Worldway Luxe" },
+        { name: "description", content: "Full circumnavigation voyages aboard the world's finest ships." },
+        { property: "og:title", content: "World Cruises | Worldway Luxe" },
+        { property: "og:description", content: "Full circumnavigation voyages aboard the world's finest ships." },
         { property: "og:image", content: meta.heroImage },
         { property: "og:type", content: "website" },
         { property: "og:url", content: url },

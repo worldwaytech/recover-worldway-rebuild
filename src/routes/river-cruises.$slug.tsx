@@ -2,9 +2,9 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { CollectionDetail } from "@/components/CollectionTemplate";
 import { getCollectionItem, collectionsMeta } from "@/lib/collections";
 
-const KIND = "cruises-expedition" as const;
+const KIND = "cruises-river" as const;
 
-export const Route = createFileRoute("/cruises/expedition/$slug")({
+export const Route = createFileRoute("/river-cruises/$slug")({
   loader: ({ params }) => {
     const item = getCollectionItem(KIND, params.slug);
     if (!item) throw notFound();
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/cruises/expedition/$slug")({
   head: ({ loaderData, params }) => {
     if (!loaderData) return { meta: [{ title: "Not found" }, { name: "robots", content: "noindex" }] };
     const item = loaderData.item;
-    const url = `https://recover-worldway-rebuild.lovable.app/cruises/expedition/${params.slug}`;
+    const url = `https://recover-worldway-rebuild.lovable.app/river-cruises/${params.slug}`;
     const meta = collectionsMeta[KIND];
     return {
       meta: [

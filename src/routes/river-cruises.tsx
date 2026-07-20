@@ -4,10 +4,10 @@ import { collectionItems, collectionsMeta } from "@/lib/collections";
 
 const KIND = "cruises-river" as const;
 
-export const Route = createFileRoute("/cruises/river")({
+export const Route = createFileRoute("/river-cruises")({
   head: () => {
     const meta = collectionsMeta[KIND];
-    const url = "https://recover-worldway-rebuild.lovable.app/cruises/river";
+    const url = "https://recover-worldway-rebuild.lovable.app/river-cruises";
     return {
       meta: [
         { title: "River Cruises | Worldway Luxe" },
