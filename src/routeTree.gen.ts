@@ -44,6 +44,7 @@ import { Route as CruisesRouteImport } from './routes/cruises'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ConciergeRouteImport } from './routes/concierge'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -110,6 +111,7 @@ import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as ActivitiesSlugRouteImport } from './routes/activities.$slug'
+import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 
 const YachtsRoute = YachtsRouteImport.update({
   id: '/yachts',
@@ -284,6 +286,11 @@ const ContactRoute = ContactRouteImport.update({
 const ConciergeRoute = ConciergeRouteImport.update({
   id: '/concierge',
   path: '/concierge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -616,6 +623,11 @@ const ActivitiesSlugRoute = ActivitiesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ActivitiesRoute,
 } as any)
+const BookKindSlugRoute = BookKindSlugRouteImport.update({
+  id: '/book/$kind/$slug',
+  path: '/book/$kind/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -624,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -719,12 +732,14 @@ export interface FileRoutesByFullPath {
   '/membership/': typeof MembershipIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/wallet/': typeof WalletIndexRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -817,6 +832,7 @@ export interface FileRoutesByTo {
   '/membership': typeof MembershipIndexRoute
   '/portal': typeof PortalIndexRoute
   '/wallet': typeof WalletIndexRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -826,6 +842,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -921,6 +938,7 @@ export interface FileRoutesById {
   '/membership/': typeof MembershipIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/wallet/': typeof WalletIndexRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -931,6 +949,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/auth'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -1026,12 +1045,14 @@ export interface FileRouteTypes {
     | '/membership/'
     | '/portal/'
     | '/wallet/'
+    | '/book/$kind/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/activities'
     | '/auth'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -1124,6 +1145,7 @@ export interface FileRouteTypes {
     | '/membership'
     | '/portal'
     | '/wallet'
+    | '/book/$kind/$slug'
   id:
     | '__root__'
     | '/'
@@ -1132,6 +1154,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/auth'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -1227,6 +1250,7 @@ export interface FileRouteTypes {
     | '/membership/'
     | '/portal/'
     | '/wallet/'
+    | '/book/$kind/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1236,6 +1260,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AgentRoute: typeof AgentRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CheckoutRoute: typeof CheckoutRoute
   ConciergeRoute: typeof ConciergeRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
@@ -1277,6 +1302,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   DestinationsIndexRoute: typeof DestinationsIndexRoute
   JourneysIndexRoute: typeof JourneysIndexRoute
+  BookKindSlugRoute: typeof BookKindSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1524,6 +1550,13 @@ declare module '@tanstack/react-router' {
       path: '/concierge'
       fullPath: '/concierge'
       preLoaderRoute: typeof ConciergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1988,6 +2021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivitiesSlugRouteImport
       parentRoute: typeof ActivitiesRoute
     }
+    '/book/$kind/$slug': {
+      id: '/book/$kind/$slug'
+      path: '/book/$kind/$slug'
+      fullPath: '/book/$kind/$slug'
+      preLoaderRoute: typeof BookKindSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -2365,6 +2405,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AgentRoute: AgentRouteWithChildren,
   AuthRoute: AuthRoute,
+  CheckoutRoute: CheckoutRoute,
   ConciergeRoute: ConciergeRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
@@ -2406,6 +2447,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   DestinationsIndexRoute: DestinationsIndexRoute,
   JourneysIndexRoute: JourneysIndexRoute,
+  BookKindSlugRoute: BookKindSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
