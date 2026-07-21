@@ -50,6 +50,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as DestinationsIndexRouteImport } from './routes/destinations.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
@@ -66,6 +67,15 @@ import { Route as SafariSlugRouteImport } from './routes/safari.$slug'
 import { Route as RiverCruisesSlugRouteImport } from './routes/river-cruises.$slug'
 import { Route as RailSlugRouteImport } from './routes/rail.$slug'
 import { Route as PrivateAviationSlugRouteImport } from './routes/private-aviation.$slug'
+import { Route as PortalWishlistRouteImport } from './routes/portal.wishlist'
+import { Route as PortalTravelersRouteImport } from './routes/portal.travelers'
+import { Route as PortalSupportRouteImport } from './routes/portal.support'
+import { Route as PortalSecurityRouteImport } from './routes/portal.security'
+import { Route as PortalReviewsRouteImport } from './routes/portal.reviews'
+import { Route as PortalProfileRouteImport } from './routes/portal.profile'
+import { Route as PortalPreferencesRouteImport } from './routes/portal.preferences'
+import { Route as PortalNotificationsRouteImport } from './routes/portal.notifications'
+import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
 import { Route as JourneysSlugRouteImport } from './routes/journeys.$slug'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
@@ -285,6 +295,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalIndexRoute = PortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalRoute,
+} as any)
 const JourneysIndexRoute = JourneysIndexRouteImport.update({
   id: '/journeys/',
   path: '/journeys/',
@@ -364,6 +379,51 @@ const PrivateAviationSlugRoute = PrivateAviationSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => PrivateAviationRoute,
+} as any)
+const PortalWishlistRoute = PortalWishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalTravelersRoute = PortalTravelersRouteImport.update({
+  id: '/travelers',
+  path: '/travelers',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSupportRoute = PortalSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSecurityRoute = PortalSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalReviewsRoute = PortalReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalProfileRoute = PortalProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalPreferencesRoute = PortalPreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalNotificationsRoute = PortalNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalDocumentsRoute = PortalDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => PortalRoute,
 } as any)
 const PolarExpeditionsSlugRoute = PolarExpeditionsSlugRouteImport.update({
   id: '/$slug',
@@ -452,7 +512,7 @@ export interface FileRoutesByFullPath {
   '/insurance': typeof InsuranceRouteWithChildren
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
-  '/portal': typeof PortalRoute
+  '/portal': typeof PortalRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
@@ -486,6 +546,15 @@ export interface FileRoutesByFullPath {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -502,6 +571,7 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof BlogIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/journeys/': typeof JourneysIndexRoute
+  '/portal/': typeof PortalIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -524,7 +594,6 @@ export interface FileRoutesByTo {
   '/insurance': typeof InsuranceRouteWithChildren
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
-  '/portal': typeof PortalRoute
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
@@ -558,6 +627,15 @@ export interface FileRoutesByTo {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -574,6 +652,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogIndexRoute
   '/destinations': typeof DestinationsIndexRoute
   '/journeys': typeof JourneysIndexRoute
+  '/portal': typeof PortalIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -597,7 +676,7 @@ export interface FileRoutesById {
   '/insurance': typeof InsuranceRouteWithChildren
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
-  '/portal': typeof PortalRoute
+  '/portal': typeof PortalRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
@@ -631,6 +710,15 @@ export interface FileRoutesById {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -647,6 +735,7 @@ export interface FileRoutesById {
   '/blog/': typeof BlogIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/journeys/': typeof JourneysIndexRoute
+  '/portal/': typeof PortalIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -705,6 +794,15 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$slug'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/$slug'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -721,6 +819,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/destinations/'
     | '/journeys/'
+    | '/portal/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -743,7 +842,6 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/membership'
     | '/polar-expeditions'
-    | '/portal'
     | '/privacy'
     | '/private-aviation'
     | '/rail'
@@ -777,6 +875,15 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$slug'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/$slug'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -793,6 +900,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/destinations'
     | '/journeys'
+    | '/portal'
   id:
     | '__root__'
     | '/'
@@ -849,6 +957,15 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$slug'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/$slug'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -865,6 +982,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/destinations/'
     | '/journeys/'
+    | '/portal/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -888,7 +1006,7 @@ export interface RootRouteChildren {
   InsuranceRoute: typeof InsuranceRouteWithChildren
   MembershipRoute: typeof MembershipRoute
   PolarExpeditionsRoute: typeof PolarExpeditionsRouteWithChildren
-  PortalRoute: typeof PortalRoute
+  PortalRoute: typeof PortalRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   PrivateAviationRoute: typeof PrivateAviationRouteWithChildren
   RailRoute: typeof RailRouteWithChildren
@@ -1206,6 +1324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/': {
+      id: '/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/journeys/': {
       id: '/journeys/'
       path: '/journeys'
@@ -1317,6 +1442,69 @@ declare module '@tanstack/react-router' {
       fullPath: '/private-aviation/$slug'
       preLoaderRoute: typeof PrivateAviationSlugRouteImport
       parentRoute: typeof PrivateAviationRoute
+    }
+    '/portal/wishlist': {
+      id: '/portal/wishlist'
+      path: '/wishlist'
+      fullPath: '/portal/wishlist'
+      preLoaderRoute: typeof PortalWishlistRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/travelers': {
+      id: '/portal/travelers'
+      path: '/travelers'
+      fullPath: '/portal/travelers'
+      preLoaderRoute: typeof PortalTravelersRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/support': {
+      id: '/portal/support'
+      path: '/support'
+      fullPath: '/portal/support'
+      preLoaderRoute: typeof PortalSupportRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/security': {
+      id: '/portal/security'
+      path: '/security'
+      fullPath: '/portal/security'
+      preLoaderRoute: typeof PortalSecurityRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/reviews': {
+      id: '/portal/reviews'
+      path: '/reviews'
+      fullPath: '/portal/reviews'
+      preLoaderRoute: typeof PortalReviewsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/profile': {
+      id: '/portal/profile'
+      path: '/profile'
+      fullPath: '/portal/profile'
+      preLoaderRoute: typeof PortalProfileRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/preferences': {
+      id: '/portal/preferences'
+      path: '/preferences'
+      fullPath: '/portal/preferences'
+      preLoaderRoute: typeof PortalPreferencesRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/notifications': {
+      id: '/portal/notifications'
+      path: '/notifications'
+      fullPath: '/portal/notifications'
+      preLoaderRoute: typeof PortalNotificationsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/documents': {
+      id: '/portal/documents'
+      path: '/documents'
+      fullPath: '/portal/documents'
+      preLoaderRoute: typeof PortalDocumentsRouteImport
+      parentRoute: typeof PortalRoute
     }
     '/polar-expeditions/$slug': {
       id: '/polar-expeditions/$slug'
@@ -1526,6 +1714,35 @@ const PolarExpeditionsRouteChildren: PolarExpeditionsRouteChildren = {
 const PolarExpeditionsRouteWithChildren =
   PolarExpeditionsRoute._addFileChildren(PolarExpeditionsRouteChildren)
 
+interface PortalRouteChildren {
+  PortalDocumentsRoute: typeof PortalDocumentsRoute
+  PortalNotificationsRoute: typeof PortalNotificationsRoute
+  PortalPreferencesRoute: typeof PortalPreferencesRoute
+  PortalProfileRoute: typeof PortalProfileRoute
+  PortalReviewsRoute: typeof PortalReviewsRoute
+  PortalSecurityRoute: typeof PortalSecurityRoute
+  PortalSupportRoute: typeof PortalSupportRoute
+  PortalTravelersRoute: typeof PortalTravelersRoute
+  PortalWishlistRoute: typeof PortalWishlistRoute
+  PortalIndexRoute: typeof PortalIndexRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalDocumentsRoute: PortalDocumentsRoute,
+  PortalNotificationsRoute: PortalNotificationsRoute,
+  PortalPreferencesRoute: PortalPreferencesRoute,
+  PortalProfileRoute: PortalProfileRoute,
+  PortalReviewsRoute: PortalReviewsRoute,
+  PortalSecurityRoute: PortalSecurityRoute,
+  PortalSupportRoute: PortalSupportRoute,
+  PortalTravelersRoute: PortalTravelersRoute,
+  PortalWishlistRoute: PortalWishlistRoute,
+  PortalIndexRoute: PortalIndexRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
+
 interface PrivateAviationRouteChildren {
   PrivateAviationSlugRoute: typeof PrivateAviationSlugRoute
 }
@@ -1694,7 +1911,7 @@ const rootRouteChildren: RootRouteChildren = {
   InsuranceRoute: InsuranceRouteWithChildren,
   MembershipRoute: MembershipRoute,
   PolarExpeditionsRoute: PolarExpeditionsRouteWithChildren,
-  PortalRoute: PortalRoute,
+  PortalRoute: PortalRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   PrivateAviationRoute: PrivateAviationRouteWithChildren,
   RailRoute: RailRouteWithChildren,
