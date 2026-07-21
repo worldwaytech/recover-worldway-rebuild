@@ -44,18 +44,27 @@ import { Route as CruisesRouteImport } from './routes/cruises'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ConciergeRouteImport } from './routes/concierge'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WalletIndexRouteImport } from './routes/wallet.index'
+import { Route as PortalIndexRouteImport } from './routes/portal.index'
+import { Route as MembershipIndexRouteImport } from './routes/membership.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as DestinationsIndexRouteImport } from './routes/destinations.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as AgentIndexRouteImport } from './routes/agent.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as YachtsSlugRouteImport } from './routes/yachts.$slug'
 import { Route as WorldCruisesSlugRouteImport } from './routes/world-cruises.$slug'
 import { Route as WellnessSlugRouteImport } from './routes/wellness.$slug'
+import { Route as WalletRefundsRouteImport } from './routes/wallet.refunds'
+import { Route as WalletPaymentsRouteImport } from './routes/wallet.payments'
+import { Route as WalletInvoicesRouteImport } from './routes/wallet.invoices'
 import { Route as VisaSlugRouteImport } from './routes/visa.$slug'
 import { Route as VillasSlugRouteImport } from './routes/villas.$slug'
 import { Route as TransfersSlugRouteImport } from './routes/transfers.$slug'
@@ -66,7 +75,19 @@ import { Route as SafariSlugRouteImport } from './routes/safari.$slug'
 import { Route as RiverCruisesSlugRouteImport } from './routes/river-cruises.$slug'
 import { Route as RailSlugRouteImport } from './routes/rail.$slug'
 import { Route as PrivateAviationSlugRouteImport } from './routes/private-aviation.$slug'
+import { Route as PortalWishlistRouteImport } from './routes/portal.wishlist'
+import { Route as PortalTravelersRouteImport } from './routes/portal.travelers'
+import { Route as PortalSupportRouteImport } from './routes/portal.support'
+import { Route as PortalSecurityRouteImport } from './routes/portal.security'
+import { Route as PortalReviewsRouteImport } from './routes/portal.reviews'
+import { Route as PortalProfileRouteImport } from './routes/portal.profile'
+import { Route as PortalPreferencesRouteImport } from './routes/portal.preferences'
+import { Route as PortalNotificationsRouteImport } from './routes/portal.notifications'
+import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
+import { Route as MembershipTiersRouteImport } from './routes/membership.tiers'
+import { Route as MembershipJoinRouteImport } from './routes/membership.join'
+import { Route as MembershipBenefitsRouteImport } from './routes/membership.benefits'
 import { Route as JourneysSlugRouteImport } from './routes/journeys.$slug'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
 import { Route as HotelsSlugRouteImport } from './routes/hotels.$slug'
@@ -78,7 +99,19 @@ import { Route as DestinationsSlugRouteImport } from './routes/destinations.$slu
 import { Route as CulturalSlugRouteImport } from './routes/cultural.$slug'
 import { Route as CruisesSlugRouteImport } from './routes/cruises.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AgentTrainingRouteImport } from './routes/agent.training'
+import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
+import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
+import { Route as AgentClientsRouteImport } from './routes/agent.clients'
+import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSeoRouteImport } from './routes/admin.seo'
+import { Route as AdminCrmRouteImport } from './routes/admin.crm'
+import { Route as AdminContentRouteImport } from './routes/admin.content'
+import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as ActivitiesSlugRouteImport } from './routes/activities.$slug'
+import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 
 const YachtsRoute = YachtsRouteImport.update({
   id: '/yachts',
@@ -255,6 +288,11 @@ const ConciergeRoute = ConciergeRouteImport.update({
   path: '/concierge',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -285,6 +323,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletIndexRoute = WalletIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WalletRoute,
+} as any)
+const PortalIndexRoute = PortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalRoute,
+} as any)
+const MembershipIndexRoute = MembershipIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MembershipRoute,
+} as any)
 const JourneysIndexRoute = JourneysIndexRouteImport.update({
   id: '/journeys/',
   path: '/journeys/',
@@ -300,6 +353,16 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
   path: '/blog/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentIndexRoute = AgentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const YachtsSlugRoute = YachtsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -314,6 +377,21 @@ const WellnessSlugRoute = WellnessSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => WellnessRoute,
+} as any)
+const WalletRefundsRoute = WalletRefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
+  getParentRoute: () => WalletRoute,
+} as any)
+const WalletPaymentsRoute = WalletPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => WalletRoute,
+} as any)
+const WalletInvoicesRoute = WalletInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => WalletRoute,
 } as any)
 const VisaSlugRoute = VisaSlugRouteImport.update({
   id: '/$slug',
@@ -365,10 +443,70 @@ const PrivateAviationSlugRoute = PrivateAviationSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => PrivateAviationRoute,
 } as any)
+const PortalWishlistRoute = PortalWishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalTravelersRoute = PortalTravelersRouteImport.update({
+  id: '/travelers',
+  path: '/travelers',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSupportRoute = PortalSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSecurityRoute = PortalSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalReviewsRoute = PortalReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalProfileRoute = PortalProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalPreferencesRoute = PortalPreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalNotificationsRoute = PortalNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalDocumentsRoute = PortalDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PolarExpeditionsSlugRoute = PolarExpeditionsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => PolarExpeditionsRoute,
+} as any)
+const MembershipTiersRoute = MembershipTiersRouteImport.update({
+  id: '/tiers',
+  path: '/tiers',
+  getParentRoute: () => MembershipRoute,
+} as any)
+const MembershipJoinRoute = MembershipJoinRouteImport.update({
+  id: '/join',
+  path: '/join',
+  getParentRoute: () => MembershipRoute,
+} as any)
+const MembershipBenefitsRoute = MembershipBenefitsRouteImport.update({
+  id: '/benefits',
+  path: '/benefits',
+  getParentRoute: () => MembershipRoute,
 } as any)
 const JourneysSlugRoute = JourneysSlugRouteImport.update({
   id: '/journeys/$slug',
@@ -425,19 +563,80 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentTrainingRoute = AgentTrainingRouteImport.update({
+  id: '/training',
+  path: '/training',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentCommissionsRoute = AgentCommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentCollateralRoute = AgentCollateralRouteImport.update({
+  id: '/collateral',
+  path: '/collateral',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentClientsRoute = AgentClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentBookingsRoute = AgentBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSeoRoute = AdminSeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCrmRoute = AdminCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsRoute = AdminBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ActivitiesSlugRoute = ActivitiesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => ActivitiesRoute,
+} as any)
+const BookKindSlugRoute = BookKindSlugRouteImport.update({
+  id: '/book/$kind/$slug',
+  path: '/book/$kind/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
-  '/admin': typeof AdminRoute
-  '/agent': typeof AgentRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/agent': typeof AgentRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -450,9 +649,9 @@ export interface FileRoutesByFullPath {
   '/honeymoon': typeof HoneymoonRouteWithChildren
   '/hotels': typeof HotelsRouteWithChildren
   '/insurance': typeof InsuranceRouteWithChildren
-  '/membership': typeof MembershipRoute
+  '/membership': typeof MembershipRouteWithChildren
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
-  '/portal': typeof PortalRoute
+  '/portal': typeof PortalRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
@@ -469,11 +668,22 @@ export interface FileRoutesByFullPath {
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
-  '/wallet': typeof WalletRoute
+  '/wallet': typeof WalletRouteWithChildren
   '/wellness': typeof WellnessRouteWithChildren
   '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
   '/activities/$slug': typeof ActivitiesSlugRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/crm': typeof AdminCrmRoute
+  '/admin/seo': typeof AdminSeoRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/agent/bookings': typeof AgentBookingsRoute
+  '/agent/clients': typeof AgentClientsRoute
+  '/agent/collateral': typeof AgentCollateralRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
+  '/agent/training': typeof AgentTrainingRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
   '/cultural/$slug': typeof CulturalSlugRoute
@@ -485,7 +695,19 @@ export interface FileRoutesByFullPath {
   '/hotels/$slug': typeof HotelsSlugRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
+  '/membership/benefits': typeof MembershipBenefitsRoute
+  '/membership/join': typeof MembershipJoinRoute
+  '/membership/tiers': typeof MembershipTiersRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -496,20 +718,28 @@ export interface FileRoutesByFullPath {
   '/transfers/$slug': typeof TransfersSlugRoute
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
+  '/wallet/invoices': typeof WalletInvoicesRoute
+  '/wallet/payments': typeof WalletPaymentsRoute
+  '/wallet/refunds': typeof WalletRefundsRoute
   '/wellness/$slug': typeof WellnessSlugRoute
   '/world-cruises/$slug': typeof WorldCruisesSlugRoute
   '/yachts/$slug': typeof YachtsSlugRoute
+  '/admin/': typeof AdminIndexRoute
+  '/agent/': typeof AgentIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/journeys/': typeof JourneysIndexRoute
+  '/membership/': typeof MembershipIndexRoute
+  '/portal/': typeof PortalIndexRoute
+  '/wallet/': typeof WalletIndexRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
-  '/admin': typeof AdminRoute
-  '/agent': typeof AgentRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -522,9 +752,7 @@ export interface FileRoutesByTo {
   '/honeymoon': typeof HoneymoonRouteWithChildren
   '/hotels': typeof HotelsRouteWithChildren
   '/insurance': typeof InsuranceRouteWithChildren
-  '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
-  '/portal': typeof PortalRoute
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
@@ -541,11 +769,21 @@ export interface FileRoutesByTo {
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
-  '/wallet': typeof WalletRoute
   '/wellness': typeof WellnessRouteWithChildren
   '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
   '/activities/$slug': typeof ActivitiesSlugRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/crm': typeof AdminCrmRoute
+  '/admin/seo': typeof AdminSeoRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/agent/bookings': typeof AgentBookingsRoute
+  '/agent/clients': typeof AgentClientsRoute
+  '/agent/collateral': typeof AgentCollateralRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
+  '/agent/training': typeof AgentTrainingRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
   '/cultural/$slug': typeof CulturalSlugRoute
@@ -557,7 +795,19 @@ export interface FileRoutesByTo {
   '/hotels/$slug': typeof HotelsSlugRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
+  '/membership/benefits': typeof MembershipBenefitsRoute
+  '/membership/join': typeof MembershipJoinRoute
+  '/membership/tiers': typeof MembershipTiersRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -568,21 +818,31 @@ export interface FileRoutesByTo {
   '/transfers/$slug': typeof TransfersSlugRoute
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
+  '/wallet/invoices': typeof WalletInvoicesRoute
+  '/wallet/payments': typeof WalletPaymentsRoute
+  '/wallet/refunds': typeof WalletRefundsRoute
   '/wellness/$slug': typeof WellnessSlugRoute
   '/world-cruises/$slug': typeof WorldCruisesSlugRoute
   '/yachts/$slug': typeof YachtsSlugRoute
+  '/admin': typeof AdminIndexRoute
+  '/agent': typeof AgentIndexRoute
   '/blog': typeof BlogIndexRoute
   '/destinations': typeof DestinationsIndexRoute
   '/journeys': typeof JourneysIndexRoute
+  '/membership': typeof MembershipIndexRoute
+  '/portal': typeof PortalIndexRoute
+  '/wallet': typeof WalletIndexRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activities': typeof ActivitiesRouteWithChildren
-  '/admin': typeof AdminRoute
-  '/agent': typeof AgentRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/agent': typeof AgentRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -595,9 +855,9 @@ export interface FileRoutesById {
   '/honeymoon': typeof HoneymoonRouteWithChildren
   '/hotels': typeof HotelsRouteWithChildren
   '/insurance': typeof InsuranceRouteWithChildren
-  '/membership': typeof MembershipRoute
+  '/membership': typeof MembershipRouteWithChildren
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
-  '/portal': typeof PortalRoute
+  '/portal': typeof PortalRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/private-aviation': typeof PrivateAviationRouteWithChildren
   '/rail': typeof RailRouteWithChildren
@@ -614,11 +874,22 @@ export interface FileRoutesById {
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
   '/visa': typeof VisaRouteWithChildren
-  '/wallet': typeof WalletRoute
+  '/wallet': typeof WalletRouteWithChildren
   '/wellness': typeof WellnessRouteWithChildren
   '/world-cruises': typeof WorldCruisesRouteWithChildren
   '/yachts': typeof YachtsRouteWithChildren
   '/activities/$slug': typeof ActivitiesSlugRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/crm': typeof AdminCrmRoute
+  '/admin/seo': typeof AdminSeoRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/agent/bookings': typeof AgentBookingsRoute
+  '/agent/clients': typeof AgentClientsRoute
+  '/agent/collateral': typeof AgentCollateralRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
+  '/agent/training': typeof AgentTrainingRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
   '/cultural/$slug': typeof CulturalSlugRoute
@@ -630,7 +901,19 @@ export interface FileRoutesById {
   '/hotels/$slug': typeof HotelsSlugRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$slug': typeof JourneysSlugRoute
+  '/membership/benefits': typeof MembershipBenefitsRoute
+  '/membership/join': typeof MembershipJoinRoute
+  '/membership/tiers': typeof MembershipTiersRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/$slug': typeof PrivateAviationSlugRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -641,12 +924,21 @@ export interface FileRoutesById {
   '/transfers/$slug': typeof TransfersSlugRoute
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
+  '/wallet/invoices': typeof WalletInvoicesRoute
+  '/wallet/payments': typeof WalletPaymentsRoute
+  '/wallet/refunds': typeof WalletRefundsRoute
   '/wellness/$slug': typeof WellnessSlugRoute
   '/world-cruises/$slug': typeof WorldCruisesSlugRoute
   '/yachts/$slug': typeof YachtsSlugRoute
+  '/admin/': typeof AdminIndexRoute
+  '/agent/': typeof AgentIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/journeys/': typeof JourneysIndexRoute
+  '/membership/': typeof MembershipIndexRoute
+  '/portal/': typeof PortalIndexRoute
+  '/wallet/': typeof WalletIndexRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -657,6 +949,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/auth'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -693,6 +986,17 @@ export interface FileRouteTypes {
     | '/world-cruises'
     | '/yachts'
     | '/activities/$slug'
+    | '/admin/analytics'
+    | '/admin/bookings'
+    | '/admin/content'
+    | '/admin/crm'
+    | '/admin/seo'
+    | '/admin/users'
+    | '/agent/bookings'
+    | '/agent/clients'
+    | '/agent/collateral'
+    | '/agent/commissions'
+    | '/agent/training'
     | '/blog/$slug'
     | '/cruises/$slug'
     | '/cultural/$slug'
@@ -704,7 +1008,19 @@ export interface FileRouteTypes {
     | '/hotels/$slug'
     | '/insurance/$slug'
     | '/journeys/$slug'
+    | '/membership/benefits'
+    | '/membership/join'
+    | '/membership/tiers'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/$slug'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -715,20 +1031,28 @@ export interface FileRouteTypes {
     | '/transfers/$slug'
     | '/villas/$slug'
     | '/visa/$slug'
+    | '/wallet/invoices'
+    | '/wallet/payments'
+    | '/wallet/refunds'
     | '/wellness/$slug'
     | '/world-cruises/$slug'
     | '/yachts/$slug'
+    | '/admin/'
+    | '/agent/'
     | '/blog/'
     | '/destinations/'
     | '/journeys/'
+    | '/membership/'
+    | '/portal/'
+    | '/wallet/'
+    | '/book/$kind/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/activities'
-    | '/admin'
-    | '/agent'
     | '/auth'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -741,9 +1065,7 @@ export interface FileRouteTypes {
     | '/honeymoon'
     | '/hotels'
     | '/insurance'
-    | '/membership'
     | '/polar-expeditions'
-    | '/portal'
     | '/privacy'
     | '/private-aviation'
     | '/rail'
@@ -760,11 +1082,21 @@ export interface FileRouteTypes {
     | '/trust'
     | '/villas'
     | '/visa'
-    | '/wallet'
     | '/wellness'
     | '/world-cruises'
     | '/yachts'
     | '/activities/$slug'
+    | '/admin/analytics'
+    | '/admin/bookings'
+    | '/admin/content'
+    | '/admin/crm'
+    | '/admin/seo'
+    | '/admin/users'
+    | '/agent/bookings'
+    | '/agent/clients'
+    | '/agent/collateral'
+    | '/agent/commissions'
+    | '/agent/training'
     | '/blog/$slug'
     | '/cruises/$slug'
     | '/cultural/$slug'
@@ -776,7 +1108,19 @@ export interface FileRouteTypes {
     | '/hotels/$slug'
     | '/insurance/$slug'
     | '/journeys/$slug'
+    | '/membership/benefits'
+    | '/membership/join'
+    | '/membership/tiers'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/$slug'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -787,12 +1131,21 @@ export interface FileRouteTypes {
     | '/transfers/$slug'
     | '/villas/$slug'
     | '/visa/$slug'
+    | '/wallet/invoices'
+    | '/wallet/payments'
+    | '/wallet/refunds'
     | '/wellness/$slug'
     | '/world-cruises/$slug'
     | '/yachts/$slug'
+    | '/admin'
+    | '/agent'
     | '/blog'
     | '/destinations'
     | '/journeys'
+    | '/membership'
+    | '/portal'
+    | '/wallet'
+    | '/book/$kind/$slug'
   id:
     | '__root__'
     | '/'
@@ -801,6 +1154,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/auth'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -837,6 +1191,17 @@ export interface FileRouteTypes {
     | '/world-cruises'
     | '/yachts'
     | '/activities/$slug'
+    | '/admin/analytics'
+    | '/admin/bookings'
+    | '/admin/content'
+    | '/admin/crm'
+    | '/admin/seo'
+    | '/admin/users'
+    | '/agent/bookings'
+    | '/agent/clients'
+    | '/agent/collateral'
+    | '/agent/commissions'
+    | '/agent/training'
     | '/blog/$slug'
     | '/cruises/$slug'
     | '/cultural/$slug'
@@ -848,7 +1213,19 @@ export interface FileRouteTypes {
     | '/hotels/$slug'
     | '/insurance/$slug'
     | '/journeys/$slug'
+    | '/membership/benefits'
+    | '/membership/join'
+    | '/membership/tiers'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/$slug'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -859,21 +1236,31 @@ export interface FileRouteTypes {
     | '/transfers/$slug'
     | '/villas/$slug'
     | '/visa/$slug'
+    | '/wallet/invoices'
+    | '/wallet/payments'
+    | '/wallet/refunds'
     | '/wellness/$slug'
     | '/world-cruises/$slug'
     | '/yachts/$slug'
+    | '/admin/'
+    | '/agent/'
     | '/blog/'
     | '/destinations/'
     | '/journeys/'
+    | '/membership/'
+    | '/portal/'
+    | '/wallet/'
+    | '/book/$kind/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ActivitiesRoute: typeof ActivitiesRouteWithChildren
-  AdminRoute: typeof AdminRoute
-  AgentRoute: typeof AgentRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AgentRoute: typeof AgentRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CheckoutRoute: typeof CheckoutRoute
   ConciergeRoute: typeof ConciergeRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
@@ -886,9 +1273,9 @@ export interface RootRouteChildren {
   HoneymoonRoute: typeof HoneymoonRouteWithChildren
   HotelsRoute: typeof HotelsRouteWithChildren
   InsuranceRoute: typeof InsuranceRouteWithChildren
-  MembershipRoute: typeof MembershipRoute
+  MembershipRoute: typeof MembershipRouteWithChildren
   PolarExpeditionsRoute: typeof PolarExpeditionsRouteWithChildren
-  PortalRoute: typeof PortalRoute
+  PortalRoute: typeof PortalRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   PrivateAviationRoute: typeof PrivateAviationRouteWithChildren
   RailRoute: typeof RailRouteWithChildren
@@ -905,7 +1292,7 @@ export interface RootRouteChildren {
   TrustRoute: typeof TrustRoute
   VillasRoute: typeof VillasRouteWithChildren
   VisaRoute: typeof VisaRouteWithChildren
-  WalletRoute: typeof WalletRoute
+  WalletRoute: typeof WalletRouteWithChildren
   WellnessRoute: typeof WellnessRouteWithChildren
   WorldCruisesRoute: typeof WorldCruisesRouteWithChildren
   YachtsRoute: typeof YachtsRouteWithChildren
@@ -915,6 +1302,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   DestinationsIndexRoute: typeof DestinationsIndexRoute
   JourneysIndexRoute: typeof JourneysIndexRoute
+  BookKindSlugRoute: typeof BookKindSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1164,6 +1552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConciergeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -1206,6 +1601,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wallet/': {
+      id: '/wallet/'
+      path: '/'
+      fullPath: '/wallet/'
+      preLoaderRoute: typeof WalletIndexRouteImport
+      parentRoute: typeof WalletRoute
+    }
+    '/portal/': {
+      id: '/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/membership/': {
+      id: '/membership/'
+      path: '/'
+      fullPath: '/membership/'
+      preLoaderRoute: typeof MembershipIndexRouteImport
+      parentRoute: typeof MembershipRoute
+    }
     '/journeys/': {
       id: '/journeys/'
       path: '/journeys'
@@ -1227,6 +1643,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agent/': {
+      id: '/agent/'
+      path: '/'
+      fullPath: '/agent/'
+      preLoaderRoute: typeof AgentIndexRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/yachts/$slug': {
       id: '/yachts/$slug'
       path: '/$slug'
@@ -1247,6 +1677,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/wellness/$slug'
       preLoaderRoute: typeof WellnessSlugRouteImport
       parentRoute: typeof WellnessRoute
+    }
+    '/wallet/refunds': {
+      id: '/wallet/refunds'
+      path: '/refunds'
+      fullPath: '/wallet/refunds'
+      preLoaderRoute: typeof WalletRefundsRouteImport
+      parentRoute: typeof WalletRoute
+    }
+    '/wallet/payments': {
+      id: '/wallet/payments'
+      path: '/payments'
+      fullPath: '/wallet/payments'
+      preLoaderRoute: typeof WalletPaymentsRouteImport
+      parentRoute: typeof WalletRoute
+    }
+    '/wallet/invoices': {
+      id: '/wallet/invoices'
+      path: '/invoices'
+      fullPath: '/wallet/invoices'
+      preLoaderRoute: typeof WalletInvoicesRouteImport
+      parentRoute: typeof WalletRoute
     }
     '/visa/$slug': {
       id: '/visa/$slug'
@@ -1318,12 +1769,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateAviationSlugRouteImport
       parentRoute: typeof PrivateAviationRoute
     }
+    '/portal/wishlist': {
+      id: '/portal/wishlist'
+      path: '/wishlist'
+      fullPath: '/portal/wishlist'
+      preLoaderRoute: typeof PortalWishlistRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/travelers': {
+      id: '/portal/travelers'
+      path: '/travelers'
+      fullPath: '/portal/travelers'
+      preLoaderRoute: typeof PortalTravelersRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/support': {
+      id: '/portal/support'
+      path: '/support'
+      fullPath: '/portal/support'
+      preLoaderRoute: typeof PortalSupportRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/security': {
+      id: '/portal/security'
+      path: '/security'
+      fullPath: '/portal/security'
+      preLoaderRoute: typeof PortalSecurityRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/reviews': {
+      id: '/portal/reviews'
+      path: '/reviews'
+      fullPath: '/portal/reviews'
+      preLoaderRoute: typeof PortalReviewsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/profile': {
+      id: '/portal/profile'
+      path: '/profile'
+      fullPath: '/portal/profile'
+      preLoaderRoute: typeof PortalProfileRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/preferences': {
+      id: '/portal/preferences'
+      path: '/preferences'
+      fullPath: '/portal/preferences'
+      preLoaderRoute: typeof PortalPreferencesRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/notifications': {
+      id: '/portal/notifications'
+      path: '/notifications'
+      fullPath: '/portal/notifications'
+      preLoaderRoute: typeof PortalNotificationsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/documents': {
+      id: '/portal/documents'
+      path: '/documents'
+      fullPath: '/portal/documents'
+      preLoaderRoute: typeof PortalDocumentsRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/polar-expeditions/$slug': {
       id: '/polar-expeditions/$slug'
       path: '/$slug'
       fullPath: '/polar-expeditions/$slug'
       preLoaderRoute: typeof PolarExpeditionsSlugRouteImport
       parentRoute: typeof PolarExpeditionsRoute
+    }
+    '/membership/tiers': {
+      id: '/membership/tiers'
+      path: '/tiers'
+      fullPath: '/membership/tiers'
+      preLoaderRoute: typeof MembershipTiersRouteImport
+      parentRoute: typeof MembershipRoute
+    }
+    '/membership/join': {
+      id: '/membership/join'
+      path: '/join'
+      fullPath: '/membership/join'
+      preLoaderRoute: typeof MembershipJoinRouteImport
+      parentRoute: typeof MembershipRoute
+    }
+    '/membership/benefits': {
+      id: '/membership/benefits'
+      path: '/benefits'
+      fullPath: '/membership/benefits'
+      preLoaderRoute: typeof MembershipBenefitsRouteImport
+      parentRoute: typeof MembershipRoute
     }
     '/journeys/$slug': {
       id: '/journeys/$slug'
@@ -1402,12 +1937,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agent/training': {
+      id: '/agent/training'
+      path: '/training'
+      fullPath: '/agent/training'
+      preLoaderRoute: typeof AgentTrainingRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/commissions': {
+      id: '/agent/commissions'
+      path: '/commissions'
+      fullPath: '/agent/commissions'
+      preLoaderRoute: typeof AgentCommissionsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/collateral': {
+      id: '/agent/collateral'
+      path: '/collateral'
+      fullPath: '/agent/collateral'
+      preLoaderRoute: typeof AgentCollateralRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/clients': {
+      id: '/agent/clients'
+      path: '/clients'
+      fullPath: '/agent/clients'
+      preLoaderRoute: typeof AgentClientsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/bookings': {
+      id: '/agent/bookings'
+      path: '/bookings'
+      fullPath: '/agent/bookings'
+      preLoaderRoute: typeof AgentBookingsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/seo': {
+      id: '/admin/seo'
+      path: '/seo'
+      fullPath: '/admin/seo'
+      preLoaderRoute: typeof AdminSeoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/crm': {
+      id: '/admin/crm'
+      path: '/crm'
+      fullPath: '/admin/crm'
+      preLoaderRoute: typeof AdminCrmRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings': {
+      id: '/admin/bookings'
+      path: '/bookings'
+      fullPath: '/admin/bookings'
+      preLoaderRoute: typeof AdminBookingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/activities/$slug': {
       id: '/activities/$slug'
       path: '/$slug'
       fullPath: '/activities/$slug'
       preLoaderRoute: typeof ActivitiesSlugRouteImport
       parentRoute: typeof ActivitiesRoute
+    }
+    '/book/$kind/$slug': {
+      id: '/book/$kind/$slug'
+      path: '/book/$kind/$slug'
+      fullPath: '/book/$kind/$slug'
+      preLoaderRoute: typeof BookKindSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1423,6 +2042,48 @@ const ActivitiesRouteChildren: ActivitiesRouteChildren = {
 const ActivitiesRouteWithChildren = ActivitiesRoute._addFileChildren(
   ActivitiesRouteChildren,
 )
+
+interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminContentRoute: typeof AdminContentRoute
+  AdminCrmRoute: typeof AdminCrmRoute
+  AdminSeoRoute: typeof AdminSeoRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminBookingsRoute: AdminBookingsRoute,
+  AdminContentRoute: AdminContentRoute,
+  AdminCrmRoute: AdminCrmRoute,
+  AdminSeoRoute: AdminSeoRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AgentRouteChildren {
+  AgentBookingsRoute: typeof AgentBookingsRoute
+  AgentClientsRoute: typeof AgentClientsRoute
+  AgentCollateralRoute: typeof AgentCollateralRoute
+  AgentCommissionsRoute: typeof AgentCommissionsRoute
+  AgentTrainingRoute: typeof AgentTrainingRoute
+  AgentIndexRoute: typeof AgentIndexRoute
+}
+
+const AgentRouteChildren: AgentRouteChildren = {
+  AgentBookingsRoute: AgentBookingsRoute,
+  AgentClientsRoute: AgentClientsRoute,
+  AgentCollateralRoute: AgentCollateralRoute,
+  AgentCommissionsRoute: AgentCommissionsRoute,
+  AgentTrainingRoute: AgentTrainingRoute,
+  AgentIndexRoute: AgentIndexRoute,
+}
+
+const AgentRouteWithChildren = AgentRoute._addFileChildren(AgentRouteChildren)
 
 interface CruisesRouteChildren {
   CruisesSlugRoute: typeof CruisesSlugRoute
@@ -1515,6 +2176,24 @@ const InsuranceRouteWithChildren = InsuranceRoute._addFileChildren(
   InsuranceRouteChildren,
 )
 
+interface MembershipRouteChildren {
+  MembershipBenefitsRoute: typeof MembershipBenefitsRoute
+  MembershipJoinRoute: typeof MembershipJoinRoute
+  MembershipTiersRoute: typeof MembershipTiersRoute
+  MembershipIndexRoute: typeof MembershipIndexRoute
+}
+
+const MembershipRouteChildren: MembershipRouteChildren = {
+  MembershipBenefitsRoute: MembershipBenefitsRoute,
+  MembershipJoinRoute: MembershipJoinRoute,
+  MembershipTiersRoute: MembershipTiersRoute,
+  MembershipIndexRoute: MembershipIndexRoute,
+}
+
+const MembershipRouteWithChildren = MembershipRoute._addFileChildren(
+  MembershipRouteChildren,
+)
+
 interface PolarExpeditionsRouteChildren {
   PolarExpeditionsSlugRoute: typeof PolarExpeditionsSlugRoute
 }
@@ -1525,6 +2204,35 @@ const PolarExpeditionsRouteChildren: PolarExpeditionsRouteChildren = {
 
 const PolarExpeditionsRouteWithChildren =
   PolarExpeditionsRoute._addFileChildren(PolarExpeditionsRouteChildren)
+
+interface PortalRouteChildren {
+  PortalDocumentsRoute: typeof PortalDocumentsRoute
+  PortalNotificationsRoute: typeof PortalNotificationsRoute
+  PortalPreferencesRoute: typeof PortalPreferencesRoute
+  PortalProfileRoute: typeof PortalProfileRoute
+  PortalReviewsRoute: typeof PortalReviewsRoute
+  PortalSecurityRoute: typeof PortalSecurityRoute
+  PortalSupportRoute: typeof PortalSupportRoute
+  PortalTravelersRoute: typeof PortalTravelersRoute
+  PortalWishlistRoute: typeof PortalWishlistRoute
+  PortalIndexRoute: typeof PortalIndexRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalDocumentsRoute: PortalDocumentsRoute,
+  PortalNotificationsRoute: PortalNotificationsRoute,
+  PortalPreferencesRoute: PortalPreferencesRoute,
+  PortalProfileRoute: PortalProfileRoute,
+  PortalReviewsRoute: PortalReviewsRoute,
+  PortalSecurityRoute: PortalSecurityRoute,
+  PortalSupportRoute: PortalSupportRoute,
+  PortalTravelersRoute: PortalTravelersRoute,
+  PortalWishlistRoute: PortalWishlistRoute,
+  PortalIndexRoute: PortalIndexRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
 
 interface PrivateAviationRouteChildren {
   PrivateAviationSlugRoute: typeof PrivateAviationSlugRoute
@@ -1638,6 +2346,23 @@ const VisaRouteChildren: VisaRouteChildren = {
 
 const VisaRouteWithChildren = VisaRoute._addFileChildren(VisaRouteChildren)
 
+interface WalletRouteChildren {
+  WalletInvoicesRoute: typeof WalletInvoicesRoute
+  WalletPaymentsRoute: typeof WalletPaymentsRoute
+  WalletRefundsRoute: typeof WalletRefundsRoute
+  WalletIndexRoute: typeof WalletIndexRoute
+}
+
+const WalletRouteChildren: WalletRouteChildren = {
+  WalletInvoicesRoute: WalletInvoicesRoute,
+  WalletPaymentsRoute: WalletPaymentsRoute,
+  WalletRefundsRoute: WalletRefundsRoute,
+  WalletIndexRoute: WalletIndexRoute,
+}
+
+const WalletRouteWithChildren =
+  WalletRoute._addFileChildren(WalletRouteChildren)
+
 interface WellnessRouteChildren {
   WellnessSlugRoute: typeof WellnessSlugRoute
 }
@@ -1677,9 +2402,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ActivitiesRoute: ActivitiesRouteWithChildren,
-  AdminRoute: AdminRoute,
-  AgentRoute: AgentRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AgentRoute: AgentRouteWithChildren,
   AuthRoute: AuthRoute,
+  CheckoutRoute: CheckoutRoute,
   ConciergeRoute: ConciergeRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
@@ -1692,9 +2418,9 @@ const rootRouteChildren: RootRouteChildren = {
   HoneymoonRoute: HoneymoonRouteWithChildren,
   HotelsRoute: HotelsRouteWithChildren,
   InsuranceRoute: InsuranceRouteWithChildren,
-  MembershipRoute: MembershipRoute,
+  MembershipRoute: MembershipRouteWithChildren,
   PolarExpeditionsRoute: PolarExpeditionsRouteWithChildren,
-  PortalRoute: PortalRoute,
+  PortalRoute: PortalRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   PrivateAviationRoute: PrivateAviationRouteWithChildren,
   RailRoute: RailRouteWithChildren,
@@ -1711,7 +2437,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrustRoute: TrustRoute,
   VillasRoute: VillasRouteWithChildren,
   VisaRoute: VisaRouteWithChildren,
-  WalletRoute: WalletRoute,
+  WalletRoute: WalletRouteWithChildren,
   WellnessRoute: WellnessRouteWithChildren,
   WorldCruisesRoute: WorldCruisesRouteWithChildren,
   YachtsRoute: YachtsRouteWithChildren,
@@ -1721,6 +2447,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   DestinationsIndexRoute: DestinationsIndexRoute,
   JourneysIndexRoute: JourneysIndexRoute,
+  BookKindSlugRoute: BookKindSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
