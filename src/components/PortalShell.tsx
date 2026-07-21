@@ -83,7 +83,7 @@ export function PortalShell({
               const cls =
                 "block rounded-sm border border-border bg-card p-6 shadow-soft transition-shadow hover:shadow-elegant";
               return t.to ? (
-                <Link key={t.title} to={t.to} className={cls}>
+                <Link key={t.title} to={t.to as string} className={cls}>
                   {inner}
                 </Link>
               ) : (
