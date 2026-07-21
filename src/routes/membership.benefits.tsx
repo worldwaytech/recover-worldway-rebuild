@@ -40,6 +40,5 @@ export const Route = createFileRoute("/membership/benefits")({
         <CTASection title="Request an invitation" intro="Speak with the head of membership to explore whether the Circle is the right fit." primaryTo="/membership/join" primaryLabel="Apply now" secondaryTo="/membership/tiers" secondaryLabel="Compare tiers" />
       </section>
     </main>
-  );
-}),
+  ),
 });
