@@ -52,7 +52,7 @@ export function PortalShell({
                 return (
                   <li key={n.to}>
                     <Link
-                      to={n.to}
+                      to={n.to as string}
                       className={`inline-block py-3 border-b-2 -mb-px transition-colors ${
                         active
                           ? "border-gold text-foreground"
