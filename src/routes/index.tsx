@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Tailor-made luxury travel, private journeys, expedition cruises and private jet experiences from Worldway Luxe.",
+          "Tailor-made luxury travel, private journeys, small group departures, expedition cruises and private jet experiences. Worldway Luxe is a Partner with A&K.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/" },
