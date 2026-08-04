@@ -47,8 +47,7 @@ export function Up17CityAutocomplete({
         if (cancelled) return;
         if (!res.ok) {
           setRows([]);
-          if (res.status === 429) setError("Too many requests — slow down.");
-          else setError("City lookup unavailable");
+          setError("City lookup unavailable");
         } else {
           setRows(res.results ?? []);
           setError(null);
