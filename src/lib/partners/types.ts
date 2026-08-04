@@ -25,7 +25,8 @@ export type PartnerCategory =
   | "experiences"
   | "marketplace"
   | "bedbank"
-  | "gds";
+  | "gds"
+  | "ota-aggregation";
 
 /** Runtime state of a connector, resolved server-side from credentials + health. */
 export type PartnerMode = "live" | "demonstration" | "awaiting-credentials" | "disabled";
