@@ -27,6 +27,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as SafariRouteImport } from './routes/safari'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as RiverCruisesRouteImport } from './routes/river-cruises'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RailRouteImport } from './routes/rail'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PrivateJetsRouteImport } from './routes/private-jets'
@@ -266,6 +267,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const RiverCruisesRoute = RiverCruisesRouteImport.update({
   id: '/river-cruises',
   path: '/river-cruises',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RailRoute = RailRouteImport.update({
@@ -1070,6 +1076,7 @@ export interface FileRoutesByFullPath {
   '/private-jets': typeof PrivateJetsRoute
   '/products': typeof ProductsRoute
   '/rail': typeof RailRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/safari': typeof SafariRouteWithChildren
@@ -1224,6 +1231,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/private-jets': typeof PrivateJetsRoute
   '/products': typeof ProductsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -1383,6 +1391,7 @@ export interface FileRoutesById {
   '/private-jets': typeof PrivateJetsRoute
   '/products': typeof ProductsRoute
   '/rail': typeof RailRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/river-cruises': typeof RiverCruisesRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/safari': typeof SafariRouteWithChildren
@@ -1555,6 +1564,7 @@ export interface FileRouteTypes {
     | '/private-jets'
     | '/products'
     | '/rail'
+    | '/reset-password'
     | '/river-cruises'
     | '/robots.txt'
     | '/safari'
@@ -1709,6 +1719,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/private-jets'
     | '/products'
+    | '/reset-password'
     | '/robots.txt'
     | '/search'
     | '/sitemap.xml'
@@ -1867,6 +1878,7 @@ export interface FileRouteTypes {
     | '/private-jets'
     | '/products'
     | '/rail'
+    | '/reset-password'
     | '/river-cruises'
     | '/robots.txt'
     | '/safari'
@@ -2038,6 +2050,7 @@ export interface RootRouteChildren {
   PrivateJetsRoute: typeof PrivateJetsRoute
   ProductsRoute: typeof ProductsRoute
   RailRoute: typeof RailRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   RiverCruisesRoute: typeof RiverCruisesRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SafariRoute: typeof SafariRouteWithChildren
@@ -2195,6 +2208,13 @@ declare module '@tanstack/react-router' {
       path: '/river-cruises'
       fullPath: '/river-cruises'
       preLoaderRoute: typeof RiverCruisesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rail': {
@@ -3752,6 +3772,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivateJetsRoute: PrivateJetsRoute,
   ProductsRoute: ProductsRoute,
   RailRoute: RailRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   RiverCruisesRoute: RiverCruisesRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SafariRoute: SafariRouteWithChildren,
