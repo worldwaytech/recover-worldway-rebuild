@@ -356,7 +356,7 @@ export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
     summary:
       "Indian travel API aggregator for flights, hotels and buses with live inventory via header authentication.",
     baseUrl: "https://travelapi.up17.in/api",
-    auth: { kind: "basic", secrets: ["UP17_USERNAME", "UP17_PASSWORD"] },
+    auth: { kind: "header-pair", secrets: ["UP17_USERNAME", "UP17_PASSWORD"] },
     endpoints: {
       health: "/airservice/rest/search",
       catalog: "/airservice/rest/search",
