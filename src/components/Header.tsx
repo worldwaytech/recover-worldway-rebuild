@@ -135,8 +135,8 @@ export function Header() {
             {regions.map((r) => (
               <Link
                 key={r.slug}
-                to="/destinations/$slug"
-                params={{ slug: r.slug }}
+                to="/destinations/$region"
+                params={{ region: r.slug }}
                 className="group"
                 onClick={() => setOpenMenu(null)}
               >
