@@ -3,8 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, PageHero, SearchCard, ResultsPanel, Field } from "@/components/search-shell";
 import { inputClass } from "@/components/search-form";
-import { LocationAutocomplete } from "@/components/location-autocomplete";
-import { searchFlights } from "@/lib/wwl.functions";
+import { AirportAutocomplete } from "@/components/up17/airport-autocomplete";
+import { Up17FlightResults, type Offer } from "@/components/up17/flight-offer-list";
+import { TopRoutes } from "@/components/up17/top-routes";
+import { up17FlightSearch } from "@/lib/up17/up17.functions";
 import { portal } from "@/lib/portal-store";
 import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
 
@@ -31,7 +33,7 @@ const TRIP_TABS: { key: Trip; label: string }[] = [
 ];
 
 function FlightsPage() {
-  const runFlightSearch = useServerFn(searchFlights);
+  const runFlightSearch = useServerFn(up17FlightSearch);
   const [trip, setTrip] = useState<Trip>("round_trip");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
@@ -46,6 +48,8 @@ function FlightsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<unknown>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [token, setToken] = useState<string | null>(null);
   const [gate, setGate] = useState(false);
 
   function updateLeg(i: number, patch: Partial<Leg>) {
@@ -80,8 +84,14 @@ function FlightsPage() {
     }
     setLoading(true);
     setData(null);
+    setOffers([]);
     try {
-      const payload: Record<string, unknown> = { passengers, cabin, trip_type: trip };
+      const payload: Record<string, unknown> = {
+        passengers,
+        cabin,
+        trip_type: trip,
+        depart_date: depart || legs[0]?.date || "",
+      };
       if (trip === "multi_city") {
         payload.legs = legs
           .filter((l) => l.origin && l.destination && l.date)
@@ -92,11 +102,13 @@ function FlightsPage() {
         payload.depart_date = depart;
         if (trip === "round_trip" && ret) payload.return_date = ret;
       }
-      const res = await runFlightSearch({ data: payload });
+      const res = await runFlightSearch({ data: payload as never });
       if (!res.ok) setError(res.error ?? "Request failed");
       else {
         portal.recordSearch();
-        setData(res.data ?? { message: "Search completed." });
+        setToken(res.searchTokenId);
+        setOffers(res.offers as Offer[]);
+        if (!res.offers.length) setData({ message: "No fares returned for this search." });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
@@ -135,23 +147,19 @@ function FlightsPage() {
           {trip !== "multi_city" ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Field label="From">
-                <LocationAutocomplete
-                  name="origin_visible"
-                  kind="airports"
+                <AirportAutocomplete
+                  value={origin}
                   required
-                  placeholder="JFK, London Heathrow…"
+                  placeholder="Delhi, DEL, London Heathrow…"
                   onChange={setOrigin}
-                  onSelect={(r) => setOrigin(r.iata ?? r.city ?? "")}
                 />
               </Field>
               <Field label="To">
-                <LocationAutocomplete
-                  name="destination_visible"
-                  kind="airports"
+                <AirportAutocomplete
+                  value={destination}
                   required
-                  placeholder="LHR, Paris CDG…"
+                  placeholder="Dubai, DXB, Paris CDG…"
                   onChange={setDestination}
-                  onSelect={(r) => setDestination(r.iata ?? r.city ?? "")}
                 />
               </Field>
               <Field label="Departure">
@@ -204,23 +212,19 @@ function FlightsPage() {
                   className="grid gap-4 rounded-xl border border-border/50 bg-background/30 p-4 md:grid-cols-[1fr_1fr_1fr_auto]"
                 >
                   <Field label={`Leg ${i + 1} From`}>
-                    <LocationAutocomplete
-                      name={`leg${i}_from`}
-                      kind="airports"
+                    <AirportAutocomplete
+                      value={leg.origin}
                       required
                       placeholder="Airport"
                       onChange={(value) => updateLeg(i, { origin: value })}
-                      onSelect={(r) => updateLeg(i, { origin: r.iata ?? r.city ?? "" })}
                     />
                   </Field>
                   <Field label="To">
-                    <LocationAutocomplete
-                      name={`leg${i}_to`}
-                      kind="airports"
+                    <AirportAutocomplete
+                      value={leg.destination}
                       required
                       placeholder="Airport"
                       onChange={(value) => updateLeg(i, { destination: value })}
-                      onSelect={(r) => updateLeg(i, { destination: r.iata ?? r.city ?? "" })}
                     />
                   </Field>
                   <Field label="Date">
@@ -292,7 +296,19 @@ function FlightsPage() {
           </div>
         </form>
       </SearchCard>
-      <ResultsPanel loading={loading} error={error} data={data} />
+      {offers.length ? (
+        <Up17FlightResults offers={offers} searchTokenId={token} />
+      ) : (
+        <ResultsPanel loading={loading} error={error} data={data} />
+      )}
+      <TopRoutes
+        onPick={(o, d) => {
+          setTrip("one_way");
+          setOrigin(o);
+          setDestination(d);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
       <MembershipUpgradeDialog open={gate} onOpenChange={setGate} reason="search" />
     </PageShell>
   );
