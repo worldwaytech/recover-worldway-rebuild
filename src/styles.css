@@ -163,9 +163,15 @@
 @theme inline {
   --color-gold: oklch(0.82 0.13 85);
   --color-gold-foreground: oklch(0.16 0.02 260);
+  /* Legacy WorldwayLuxe reconstruction tokens (ivory / ink) */
+  --color-ivory: oklch(0.97 0.01 90);
+  --color-ivory-foreground: oklch(0.18 0.02 260);
+  --color-ink: oklch(0.2 0.02 260);
+  --color-ink-foreground: oklch(0.97 0.01 90);
   --shadow-soft: 0 12px 40px -24px oklch(0 0 0 / 0.7);
   --shadow-elegant: 0 24px 70px -30px oklch(0 0 0 / 0.8), 0 0 0 1px oklch(0.82 0.13 85 / 0.12);
 }
+
 
 @utility container-lux {
   width: 100%;
