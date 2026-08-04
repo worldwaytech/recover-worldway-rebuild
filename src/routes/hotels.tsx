@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, PageHero, SearchCard, Field } from "@/components/search-shell";
 import { inputClass } from "@/components/search-form";
-import { LocationAutocomplete } from "@/components/location-autocomplete";
-import { HotelResults } from "@/components/hotel-results";
-import { searchHotels } from "@/lib/wwl.functions";
+import { Up17CityAutocomplete } from "@/components/up17/city-autocomplete";
+import { Up17HotelResults } from "@/components/up17/hotel-results";
+import { up17HotelSearch } from "@/lib/up17/up17.functions";
 import { portal } from "@/lib/portal-store";
 import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/hotels")({
 });
 
 function HotelsPage() {
-  const runHotelSearch = useServerFn(searchHotels);
+  const runHotelSearch = useServerFn(up17HotelSearch);
   const [destination, setDestination] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -55,7 +55,7 @@ function HotelsPage() {
       if (!res.ok) setError(res.error ?? "Request failed");
       else {
         portal.recordSearch();
-        setData(res.data);
+        setData(res);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
@@ -72,17 +72,16 @@ function HotelsPage() {
         subtitle="Curated palaces, villas, and design hotels around the world."
         image="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=2000&q=80"
       />
-      <SearchCard title="Hotel Search">
+      <SearchCard title="Hotel Search — UP17 Live">
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <Field label="Destination">
-              <LocationAutocomplete
+              <Up17CityAutocomplete
                 name="destination_visible"
-                kind="cities"
                 required
-                placeholder="Dubai, Positano, Kyoto…"
+                placeholder="New Delhi, Mumbai, Bangalore…"
                 onChange={setDestination}
-                onSelect={(r) => setDestination(r.city ?? r.airport_name ?? "")}
+                onSelect={(r) => setDestination(`${r.city}, ${r.country}`)}
               />
             </Field>
             <Field label="Check In">
@@ -135,7 +134,7 @@ function HotelsPage() {
           </div>
         </form>
       </SearchCard>
-      <HotelResults loading={loading} error={error} data={data} />
+      <Up17HotelResults loading={loading} error={error} data={data} />
       <MembershipUpgradeDialog open={gate} onOpenChange={setGate} reason="search" />
     </PageShell>
   );

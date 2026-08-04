@@ -2,6 +2,7 @@
 // Docs: https://travelapi.up17.in/up17_api.html — Basic-style header auth.
 
 import { AIRPORT_ROWS } from "./airports.data.server";
+import { searchUp17Cities, findUp17CityByName, type Up17City } from "./cities.data.server";
 
 const BASE = "https://travelapi.up17.in/api";
 
@@ -473,4 +474,259 @@ export async function up17BaggageOptions(args: {
     status: res.status,
     data: { options: normalizeBaggage(res.data, args.currency ?? "INR") },
   };
+}
+
+// ---------------------------------------------------------------- hotels
+
+export type Up17HotelRoom = {
+  roomType: string;
+  boardBasis: string;
+  refundable: boolean;
+  price: number | null;
+  currency: string;
+};
+
+export type Up17Hotel = {
+  resultIndex: string;
+  hotelCode: string;
+  name: string;
+  city: string;
+  country: string;
+  starRating: number;
+  category: string;
+  address: string;
+  description: string;
+  image: string;
+  currency: string;
+  totalPrice: number | null;
+  rooms: Up17HotelRoom[];
+};
+
+export type Up17HotelSearchInput = {
+  destination: string; // free text; resolved via city master
+  check_in: string;
+  check_out: string;
+  guests?: number;
+  rooms?: number;
+  nationality?: string;
+  min_rating?: number;
+  max_rating?: number;
+  user_ip?: string;
+};
+
+export type Up17HotelSearchResponse = {
+  searchTokenId: string | null;
+  hotels: Up17Hotel[];
+  count: number;
+};
+
+function normalizeHotel(raw: Rec): Up17Hotel {
+  const rec = asRec(raw);
+  const fare = asRec(pick(rec, ["Fare", "fare"]));
+  const roomsRaw = pick(rec, ["Rooms", "rooms"]);
+  const rooms: Up17HotelRoom[] = Array.isArray(roomsRaw)
+    ? (roomsRaw as Rec[]).map((r) => {
+        const roomFare = asRec(pick(r, ["Fare", "fare"]));
+        return {
+          roomType: str(pick(r, ["RoomType", "roomType", "RoomTypeName"])),
+          boardBasis: str(pick(r, ["BoardBasis", "boardBasis", "BoardType"])),
+          refundable: Boolean(pick(r, ["IsRefundable", "isRefundable"])),
+          price: num(pick(roomFare, ["PublishedFare", "OfferedFare", "TotalFare"])),
+          currency: str(pick(roomFare, ["Currency", "CurrencyCode"])) || "INR",
+        };
+      })
+    : [];
+  return {
+    resultIndex: str(pick(rec, ["ResultIndex", "resultIndex"])),
+    hotelCode: str(pick(rec, ["HotelCode", "hotelCode"])),
+    name: str(pick(rec, ["HotelName", "hotelName", "Name"])),
+    city: str(pick(rec, ["CityName", "cityName", "City"])),
+    country: str(pick(rec, ["CountryName", "countryName", "Country"])),
+    starRating: num(pick(rec, ["StarRating", "starRating", "HotelCategory"])) ?? 0,
+    category: str(pick(rec, ["HotelCategory", "category", "StarRatingText"])),
+    address: str(pick(rec, ["Address", "address", "HotelAddress"])),
+    description: str(pick(rec, ["HotelDescription", "description", "Description"])),
+    image: str(pick(rec, ["HotelImage", "image", "ImageUrl", "HeroImage"])),
+    currency: str(pick(fare, ["Currency", "CurrencyCode"])) || "INR",
+    totalPrice: num(pick(fare, ["PublishedFare", "OfferedFare", "TotalFare"])),
+    rooms,
+  };
+}
+
+export async function up17SearchHotels(
+  input: Up17HotelSearchInput,
+): Promise<Up17Result<Up17HotelSearchResponse>> {
+  const city = findUp17CityByName(input.destination);
+  if (!city) {
+    return {
+      ok: false,
+      status: 422,
+      error: `UP17 city master does not yet contain "${input.destination}". Please provide the full Hotel/Bus City Master from UP17 to expand coverage.`,
+    };
+  }
+  const checkIn = input.check_in;
+  const checkOut = input.check_out;
+  const nights = Math.max(
+    1,
+    Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24),
+    ),
+  );
+  const rooms = input.rooms ?? 1;
+  const guests = input.guests ?? 2;
+  const adults = Math.max(1, Math.ceil(guests / rooms));
+  const roomGuests = Array.from({ length: rooms }, () => ({
+    Adult: adults,
+    Child: 0,
+    ChildAge: [] as number[],
+  }));
+  const payload = {
+    UserIp: input.user_ip ?? "1.1.1.1",
+    CountryCode: city.countryCode,
+    CheckInDate: checkIn,
+    CheckOutDate: checkOut,
+    NoOfNights: nights,
+    DestinationCityId: city.cityId,
+    GuestNationality: input.nationality ?? city.countryCode,
+    NoOfRooms: rooms,
+    MinRating: input.min_rating ?? 1,
+    MaxRating: input.max_rating ?? 5,
+    RoomGuests: roomGuests,
+  };
+  const res = await callUp17<unknown>("/hotelservice/rest/search", payload);
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  const root = asRec(res.data);
+  const token = str(pick(root, ["SearchTokenId"])) || null;
+  const result = pick(root, ["Result", "result", "Results", "results"]);
+  const rawHotels = Array.isArray(result) ? (result as Rec[]) : [];
+  const hotels = rawHotels.map(normalizeHotel);
+  return { ok: true, status: res.status, data: { searchTokenId: token, hotels, count: hotels.length } };
+}
+
+export async function up17CityAutocomplete(
+  query: string,
+  limit = 12,
+): Promise<{ ok: true; results: Up17City[] }> {
+  return { ok: true, results: searchUp17Cities(query, limit) };
+}
+
+// ---------------------------------------------------------------- buses
+
+export type Up17BusSegment = {
+  operator: string;
+  busType: string;
+  vehicleNumber?: string;
+  origin: string;
+  destination: string;
+  departure: string | null;
+  arrival: string | null;
+  durationMin: number | null;
+  seatsAvailable: number | null;
+  amenities: string[];
+};
+
+export type Up17BusOffer = {
+  resultIndex: string;
+  operator: string;
+  busType: string;
+  origin: string;
+  destination: string;
+  departure: string | null;
+  arrival: string | null;
+  durationMin: number | null;
+  price: number | null;
+  currency: string;
+  seatsAvailable: number | null;
+  refundable: boolean;
+  amenities: string[];
+  segments: Up17BusSegment[];
+};
+
+export type Up17BusSearchInput = {
+  origin: string;
+  destination: string;
+  date: string;
+  passengers?: number;
+  user_ip?: string;
+};
+
+export type Up17BusSearchResponse = {
+  searchTokenId: string | null;
+  buses: Up17BusOffer[];
+  count: number;
+};
+
+function normalizeBus(raw: Rec): Up17BusOffer {
+  const rec = asRec(raw);
+  const fare = asRec(pick(rec, ["Fare", "fare"]));
+  const segmentsRaw = pick(rec, ["Segments", "segments"]);
+  const segments: Up17BusSegment[] = Array.isArray(segmentsRaw)
+    ? (segmentsRaw as Rec[]).map((s) => ({
+        operator: str(pick(s, ["Operator", "operator", "TravelsName"])),
+        busType: str(pick(s, ["BusType", "busType", "VehicleType"])),
+        vehicleNumber: str(pick(s, ["VehicleNumber", "vehicleNumber"])),
+        origin: str(pick(s, ["Origin", "origin", "Source"])),
+        destination: str(pick(s, ["Destination", "destination", "DestinationName"])),
+        departure: str(pick(s, ["DepTime", "DepartureTime", "departure"])) || null,
+        arrival: str(pick(s, ["ArrTime", "ArrivalTime", "arrival"])) || null,
+        durationMin: num(pick(s, ["Duration", "duration"])),
+        seatsAvailable: num(pick(s, ["AvailableSeats", "seatsAvailable", "Seats"])),
+        amenities: Array.isArray(pick(s, ["Amenities", "amenities"]))
+          ? (pick(s, ["Amenities", "amenities"]) as unknown[]).filter((x): x is string => typeof x === "string")
+          : [],
+      }))
+    : [];
+  const first = segments[0];
+  return {
+    resultIndex: str(pick(rec, ["ResultIndex", "resultIndex"])),
+    operator: first?.operator || str(pick(rec, ["Operator", "operator", "TravelsName"])),
+    busType: first?.busType || str(pick(rec, ["BusType", "busType"])),
+    origin: first?.origin || str(pick(rec, ["Origin", "origin"])),
+    destination: first?.destination || str(pick(rec, ["Destination", "destination"])),
+    departure: first?.departure || null,
+    arrival: first?.arrival || null,
+    durationMin: first?.durationMin ?? num(pick(rec, ["Duration", "duration"])),
+    price: num(pick(fare, ["PublishedFare", "OfferedFare", "TotalFare", "Price"])),
+    currency: str(pick(fare, ["Currency", "CurrencyCode"])) || "INR",
+    seatsAvailable:
+      first?.seatsAvailable ?? num(pick(rec, ["AvailableSeats", "seatsAvailable", "Seats"])),
+    refundable: Boolean(pick(rec, ["IsRefundable", "isRefundable"])),
+    amenities: first?.amenities ?? [],
+    segments,
+  };
+}
+
+export async function up17SearchBuses(
+  input: Up17BusSearchInput,
+): Promise<Up17Result<Up17BusSearchResponse>> {
+  const originCity = findUp17CityByName(input.origin);
+  const destCity = findUp17CityByName(input.destination);
+  if (!originCity) {
+    return {
+      ok: false,
+      status: 422,
+      error: `UP17 city master does not yet contain origin "${input.origin}". Please provide the full Hotel/Bus City Master from UP17 to expand coverage.`,
+    };
+  }
+  if (!destCity) {
+    return {
+      ok: false,
+      status: 422,
+      error: `UP17 city master does not yet contain destination "${input.destination}". Please provide the full Hotel/Bus City Master from UP17 to expand coverage.`,
+    };
+  }
+  const payload = {
+    UserIp: input.user_ip ?? "1.1.1.1",
+    OriginId: originCity.cityId,
+    DestinationId: destCity.cityId,
+    DateOfJourney: input.date,
+  };
+  const res = await callUp17<unknown>("/busservice/rest/search", payload);
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  const root = asRec(res.data);
+  const token = str(pick(root, ["SearchTokenId"])) || null;
+  const result = pick(root, ["Result", "result", "Results", "results"]);
+  const rawBuses = Array.isArray(result) ? (result as Rec[]) : [];
+  const buses = rawBuses.map(normalizeBus);
+  return { ok: true, status: res.status, data: { searchTokenId: token, buses, count: buses.length } };
 }

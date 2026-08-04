@@ -98,6 +98,11 @@ function authHeaders(cfg: PartnerConnectorConfig): Record<string, string> {
     case "basic":
       if (a) h.Authorization = `Basic ${btoa(`${a}:${b ?? ""}`)}`;
       break;
+    case "header-pair":
+      // First secret becomes Username header, second becomes Password header.
+      if (a) h.Username = a;
+      if (b) h.Password = b;
+      break;
     case "signed-session":
       if (cfg.auth.header && a) h[cfg.auth.header] = a;
       break;

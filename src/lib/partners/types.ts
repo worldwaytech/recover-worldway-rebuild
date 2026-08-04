@@ -16,7 +16,8 @@ export type PartnerAuthKind =
   | "bearer-token"
   | "oauth2-client-credentials"
   | "basic"
-  | "signed-session";
+  | "signed-session"
+  | "header-pair";
 
 export type PartnerCategory =
   | "luxury-tour-operator"
@@ -25,7 +26,8 @@ export type PartnerCategory =
   | "experiences"
   | "marketplace"
   | "bedbank"
-  | "gds";
+  | "gds"
+  | "ota-aggregation";
 
 /** Runtime state of a connector, resolved server-side from credentials + health. */
 export type PartnerMode = "live" | "demonstration" | "awaiting-credentials" | "disabled";
