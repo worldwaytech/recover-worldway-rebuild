@@ -1,46 +1,142 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { SectionHeading } from "@/components/site";
-import { Button } from "@/components/ui/button";
+import { createFileRoute } from "@tanstack/react-router";
+import { PageShell, PageHero } from "@/components/search-shell";
+import { SearchForm, Field, inputClass } from "@/components/search-form";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
+import { buildTrip } from "@/lib/wwl.functions";
+import { portal } from "@/lib/portal-store";
+import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/trip-builder")({
   head: () => ({
     meta: [
-      { title: "Bespoke Trip Builder | Worldway Luxe" },
-      { name: "description", content: "Craft your own extraordinary journey with our AI-assisted bespoke trip planner and specialist review." },
-      { property: "og:title", content: "Bespoke Trip Builder | Worldway Luxe" },
-      { property: "og:url", content: "/trip-builder" },
+      { title: "Trip Builder — Worldway Travels Group" },
+      { name: "description", content: "Compose a bespoke multi-city itinerary in minutes." },
     ],
-    links: [{ rel: "canonical", href: "/trip-builder" }],
   }),
-  component: TripBuilder,
+  component: TripBuilderPage,
 });
 
-function TripBuilder() {
-  return (
-    <main className="pt-24">
-      <section className="container-lux py-16 text-center">
-        <p className="eyebrow mb-4">Bespoke</p>
-        <h1 className="font-serif text-5xl md:text-7xl">Design Your Journey</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-          Our trip builder pairs AI-assisted itinerary drafting with a Worldway specialist's craft to
-          shape a journey uniquely yours.
-        </p>
-        <div className="mt-8">
-          <Link to="/contact"><Button variant="gold" size="lg">Begin with a Specialist</Button></Link>
-        </div>
-      </section>
+function TripBuilderPage() {
+  // Membership lives in localStorage, which is unreadable during SSR.
+  // Check access inside useEffect so the initial (SSR) render never ships
+  // the paywall to paying members and cause a hydration flash.
+  const [ready, setReady] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [gate, setGate] = useState(false);
+  useEffect(() => {
+    const ok = portal.hasAiAccess();
+    setHasAccess(ok);
+    setGate(!ok);
+    setReady(true);
+  }, []);
 
-      <section className="container-lux pb-20">
-        <div className="mx-auto max-w-2xl rounded-sm border border-border bg-card p-12 text-center shadow-soft">
-          <p className="eyebrow mb-3">Coming online with Cloud</p>
-          <h2 className="font-serif text-3xl">Interactive Planner</h2>
-          <p className="mt-4 text-sm text-muted-foreground">
-            The full AI-assisted trip planner — with live pricing, availability and instant specialist
-            review — activates once Lovable Cloud is enabled on this project. Until then, our
-            specialists will craft your itinerary personally.
-          </p>
-        </div>
-      </section>
-    </main>
+  if (!ready) {
+    // Neutral SSR shell — no paywall, no builder — until we know membership.
+    return (
+      <PageShell>
+        <PageHero
+          eyebrow="Trip Builder"
+          title="Compose a bespoke journey."
+          subtitle="Multi-city, multi-modal — orchestrated end to end."
+          image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=2000&q=80"
+        />
+      </PageShell>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <PageShell>
+        <PageHero
+          eyebrow="AI Trip Builder"
+          title="An Elite privilege."
+          subtitle="Multi-city, multi-modal itineraries — reserved for Worldway Elite members."
+          image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=2000&q=80"
+        />
+        <MembershipUpgradeDialog open={gate} onOpenChange={setGate} reason="ai" />
+      </PageShell>
+    );
+  }
+  return (
+    <PageShell>
+      <PageHero
+        eyebrow="Trip Builder"
+        title="Compose a bespoke journey."
+        subtitle="Multi-city, multi-modal — orchestrated end to end."
+        image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=2000&q=80"
+      />
+      <SearchForm
+        title="Design your journey"
+        submitLabel="Build Trip"
+        fn={buildTrip}
+        buildPayload={(f) => {
+          const interests = String(f.get("destinations") || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const budgetNum = Number(f.get("budget"));
+          const style = String(f.get("style") || "");
+          const originStr = String(f.get("origin") || "");
+          const notesRaw = String(f.get("notes") || "");
+          const notes = [
+            originStr ? `Origin: ${originStr}` : "",
+            style ? `Style: ${style}` : "",
+            notesRaw,
+          ]
+            .filter(Boolean)
+            .join(" | ");
+          return {
+            destination: interests[0] ?? "",
+            start_date: f.get("start_date"),
+            end_date: f.get("end_date"),
+            travelers: Number(f.get("travelers") || 2),
+            budget: Number.isFinite(budgetNum) && budgetNum > 0 ? budgetNum : undefined,
+            interests: interests.length > 1 ? interests.slice(1) : undefined,
+            notes: notes || undefined,
+          };
+        }}
+      >
+        <Field label="Starting City">
+          <LocationAutocomplete
+            name="origin"
+            kind="locations"
+            required
+            placeholder="New York, Paris…"
+          />
+        </Field>
+        <Field label="Destinations (comma separated)">
+          <input
+            name="destinations"
+            required
+            placeholder="Paris, Amalfi, Marrakech"
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Start">
+          <input type="date" name="start_date" required className={inputClass} />
+        </Field>
+        <Field label="End">
+          <input type="date" name="end_date" required className={inputClass} />
+        </Field>
+        <Field label="Travelers">
+          <input type="number" min={1} defaultValue={2} name="travelers" className={inputClass} />
+        </Field>
+        <Field label="Style">
+          <select name="style" className={inputClass} defaultValue="luxury">
+            <option value="luxury">Luxury</option>
+            <option value="ultra_luxury">Ultra Luxury</option>
+            <option value="adventure">Adventure</option>
+            <option value="wellness">Wellness</option>
+          </select>
+        </Field>
+        <Field label="Budget (USD)">
+          <input name="budget" placeholder="50000" className={inputClass} />
+        </Field>
+        <Field label="Notes">
+          <input name="notes" placeholder="Anniversary trip…" className={inputClass} />
+        </Field>
+      </SearchForm>
+    </PageShell>
   );
 }

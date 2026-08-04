@@ -1,7 +1,4 @@
-// Plain image imports. When Lovable Cloud is enabled later, we may switch to
-// vite-imagetools for AVIF conversion — the exported `images` object is the
-// stable interface every consumer uses.
-
+// Shared imagery for the collections catalogue.
 import heroImg from "@/assets/hero.jpg";
 import africaImg from "@/assets/dest-africa.jpg";
 import asiaImg from "@/assets/dest-asia.jpg";

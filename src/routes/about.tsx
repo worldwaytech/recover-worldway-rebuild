@@ -1,81 +1,103 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { SectionHeading } from "@/components/site";
-import { Button } from "@/components/ui/button";
-import { images } from "@/lib/data";
+import { PageShell } from "@/components/search-shell";
+import { ContentHero, ContentBody, Clause } from "@/components/content-page";
+import { Globe2, ShieldCheck, Clock, Plane } from "lucide-react";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Worldway Luxe | A Partner with A&K" },
-      { name: "description", content: "Worldway Luxe is a luxury travel house designing tailor-made journeys worldwide, a Partner with A&K since 1997." },
-      { property: "og:title", content: "About Worldway Luxe" },
-      { property: "og:description", content: "A luxury travel house, Partner with A&K." },
-      { property: "og:url", content: "/about" },
+      { title: "About Worldway Travels Group — Luxury Travel Company" },
+      {
+        name: "description",
+        content:
+          "Worldway Travels Group is a global luxury travel company delivering flights, hotels, private aviation, transfers and bespoke journeys with 24/7 concierge care.",
+      },
+      { property: "og:title", content: "About Worldway Travels Group" },
+      {
+        property: "og:description",
+        content:
+          "A global luxury travel company delivering flights, hotels, private aviation and bespoke journeys with 24/7 concierge care.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/about" }],
   }),
-  component: About,
+  component: AboutPage,
 });
 
-function About() {
+const STATS = [
+  { icon: <Globe2 className="h-5 w-5" />, value: "190+", label: "Countries served" },
+  { icon: <Plane className="h-5 w-5" />, value: "900+", label: "Airline & supplier partners" },
+  { icon: <Clock className="h-5 w-5" />, value: "24/7", label: "Concierge availability" },
+  { icon: <ShieldCheck className="h-5 w-5" />, value: "100%", label: "Verified inventory" },
+];
+
+function AboutPage() {
   return (
-    <main>
-      <section className="relative h-[60vh] min-h-[420px] overflow-hidden">
-        <img src={images.hero} alt="Worldway Luxe" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 to-ink/70" />
-        <div className="container-lux relative z-10 flex h-full flex-col items-center justify-center text-center text-primary-foreground">
-          <p className="eyebrow mb-4 text-primary-foreground/80">About us</p>
-          <h1 className="font-serif text-5xl md:text-7xl">A Life of Extraordinary Journeys</h1>
-        </div>
-      </section>
-
-      <section className="container-lux py-20">
-        <div className="mx-auto max-w-3xl">
-          <SectionHeading eyebrow="Our story" title="Since 1997, a partnership with the extraordinary" />
-          <div className="mt-8 space-y-6 text-lg leading-relaxed text-muted-foreground">
-            <p>
-              Worldway Luxe was founded on a simple belief: that the very finest travel is a conversation
-              between a traveller's imagination and a specialist's craft. Over more than two decades, we have
-              built enduring partnerships with the world's most respected hotels, expedition operators, private
-              guides and drivers — the people who transform a good journey into an unforgettable one.
-            </p>
-            <p>
-              Today, as a Partner with A&amp;K, we bring together the intimacy of a specialist travel house with
-              the reach and infrastructure of one of the most respected names in luxury travel. Our clients enjoy
-              unrivalled access, seamless logistics and true on-the-ground care across every continent.
-            </p>
-            <p>
-              Every itinerary is designed by hand, by a specialist who has walked the ground, tasted the food and
-              met the people. Nothing is left to chance. From the first briefing to the final farewell, we are with
-              you — quietly, precisely, and always one step ahead.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-secondary/40 py-20">
-        <div className="container-lux grid gap-8 md:grid-cols-4">
-          {[
-            { n: "25+", l: "Years designing journeys" },
-            { n: "100+", l: "Countries covered" },
-            { n: "5★", l: "Forbes Travel Guide Award" },
-            { n: "24/7", l: "Concierge support" },
-          ].map((s) => (
-            <div key={s.l} className="text-center">
-              <p className="font-serif text-5xl text-gold">{s.n}</p>
-              <p className="mt-2 text-xs uppercase tracking-widest text-muted-foreground">{s.l}</p>
+    <PageShell>
+      <ContentHero
+        eyebrow="Our house"
+        title="Travel, engineered around the traveller."
+        subtitle="Worldway Travels Group combines a global supply network with an AI concierge and human specialists, so every journey is booked once and cared for end to end."
+      />
+      <div className="mx-auto grid max-w-5xl gap-4 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
+        {STATS.map((s) => (
+          <div key={s.label} className="rounded-xl border border-border/60 bg-card/60 p-5">
+            <div className="text-primary">{s.icon}</div>
+            <div className="mt-3 font-serif text-2xl text-foreground">{s.value}</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              {s.label}
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="container-lux py-20 text-center">
-        <SectionHeading eyebrow="Speak with us" title="Begin your journey" align="center" />
-        <div className="mt-8 flex justify-center gap-3">
-          <Link to="/contact"><Button variant="gold" size="lg">Contact a Specialist</Button></Link>
-          <Link to="/journeys"><Button variant="outline-ink" size="lg">Browse Journeys</Button></Link>
-        </div>
-      </section>
-    </main>
+          </div>
+        ))}
+      </div>
+      <ContentBody>
+        <Clause heading="Who we are">
+          <p>
+            Worldway Travels Group is a full-service travel company operating across leisure,
+            corporate and private aviation. We aggregate live supplier inventory — scheduled and
+            fixed-departure flights, hotels and residences, ground transfers, coaches, activities
+            and private charter — into a single booking and servicing platform.
+          </p>
+        </Clause>
+        <Clause heading="How we work">
+          <p>
+            Every search on this platform queries live supplier systems in real time. We do not
+            publish estimated or illustrative inventory: if a supplier cannot return availability,
+            we say so rather than show a placeholder fare.
+          </p>
+          <p>
+            Members reach specialists through the AI Concierge, which is connected to the same
+            inventory, wallet and booking records as our operations team.
+          </p>
+        </Clause>
+        <Clause heading="Who we serve">
+          <p>
+            Individual travellers and members, corporate travel programmes through our{" "}
+            <Link to="/b2b" className="text-primary underline-offset-4 hover:underline">
+              corporate portal
+            </Link>
+            , and accredited travel agents through our{" "}
+            <Link to="/agent" className="text-primary underline-offset-4 hover:underline">
+              agent programme
+            </Link>
+            .
+          </p>
+        </Clause>
+        <Clause heading="Talk to us">
+          <p>
+            Reach the concierge desk any time via{" "}
+            <Link to="/contact" className="text-primary underline-offset-4 hover:underline">
+              our contact desk
+            </Link>{" "}
+            or read our{" "}
+            <Link to="/trust" className="text-primary underline-offset-4 hover:underline">
+              trust and safety commitments
+            </Link>
+            .
+          </p>
+        </Clause>
+      </ContentBody>
+    </PageShell>
   );
 }

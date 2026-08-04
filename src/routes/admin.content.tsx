@@ -1,28 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PortalShell } from "@/components/PortalShell";
-import { adminNav } from "./admin.index";
-
-const sections = [
-  "Destinations",
-  "Journeys",
-  "Collections",
-  "Blog & guides",
-  "Homepage modules",
-  "Legal pages",
-];
+import { useState } from "react";
+import { admin } from "@/lib/admin-store";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/admin/content")({
-  head: () => ({ meta: [{ title: "Content CMS | Admin" }, { name: "robots", content: "noindex" }] }),
-  component: () => (
-    <PortalShell eyebrow="CMS" title="Content" intro="Manage destinations, journeys, collections, editorial content and legal pages." nav={adminNav}>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {sections.map((s) => (
-          <div key={s} className="rounded-sm border border-border bg-card p-5">
-            <p className="font-serif text-xl">{s}</p>
-            <p className="mt-1 text-sm text-muted-foreground">Draft, publish and schedule content revisions.</p>
-          </div>
-        ))}
-      </div>
-    </PortalShell>
-  ),
+  head: () => ({ meta: [{ title: "Content & Flags — Worldway Travels Group" }] }),
+  component: ContentPage,
 });
+
+function ContentPage() {
+  const [tick, setTick] = useState(0);
+  void tick;
+  const flags = admin.flags();
+  return (
+    <div className="space-y-8">
+      <div>
+        <div className="text-[0.65rem] uppercase tracking-[0.3em] text-primary">Platform</div>
+        <h1 className="mt-2 font-serif text-3xl text-primary">Content & Feature Flags</h1>
+        <p className="text-sm text-muted-foreground">
+          Toggle products and gated experiences globally.
+        </p>
+      </div>
+      <div
+        className="overflow-hidden rounded-2xl border border-border/60 bg-card/60"
+        style={{ boxShadow: "var(--shadow-portal)" }}
+      >
+        <ul className="divide-y divide-border/40">
+          {flags.map((f) => (
+            <li key={f.key} className="flex items-center justify-between p-5">
+              <div>
+                <div className="text-sm font-medium text-foreground">{f.label}</div>
+                <div className="text-xs text-muted-foreground">
+                  {f.key}
+                  {f.note ? ` · ${f.note}` : ""}
+                </div>
+              </div>
+              <Switch
+                checked={f.enabled}
+                onCheckedChange={() => {
+                  admin.toggleFlag(f.key);
+                  setTick((t) => t + 1);
+                }}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}

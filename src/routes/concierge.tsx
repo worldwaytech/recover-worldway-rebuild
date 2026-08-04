@@ -1,60 +1,193 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { SectionHeading } from "@/components/site";
-import { Button } from "@/components/ui/button";
-
-// TODO(Lovable Cloud): AI Concierge streams from Lovable AI Gateway
-// (google/gemini-2.5-flash) with a system prompt hydrated from user profile,
-// booking context and CRM history. This shell demonstrates the UI surface.
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute } from "@tanstack/react-router";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { PageShell, PageHero } from "@/components/search-shell";
+import { inputClass } from "@/components/search-form";
+import { conciergeChat } from "@/lib/wwl.functions";
+import { portal } from "@/lib/portal-store";
+import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
 
 export const Route = createFileRoute("/concierge")({
+  validateSearch: (search: Record<string, unknown>): { prompt?: string } =>
+    typeof search.prompt === "string" ? { prompt: search.prompt.slice(0, 400) } : {},
   head: () => ({
     meta: [
-      { title: "AI Concierge | Worldway Luxe" },
-      { name: "description", content: "Speak with the Worldway AI Concierge — instant answers, itinerary drafts and booking support around the clock." },
+      { title: "AI Concierge — Worldway Travels Group" },
+      { name: "description", content: "24/7 AI travel concierge for bespoke arrangements." },
     ],
-    links: [{ rel: "canonical", href: "https://recover-worldway-rebuild.lovable.app/concierge" }],
   }),
-  component: Concierge,
+  component: ConciergePage,
 });
 
-function Concierge() {
+type Msg = { role: "user" | "assistant"; content: string };
+
+function extractReply(data: unknown): string {
+  if (!data) return "";
+  if (typeof data === "string") return data;
+  if (typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    if (typeof d.reply === "string") return d.reply;
+    if (typeof d.message === "string") return d.message;
+    if (typeof d.content === "string") return d.content;
+    if (typeof d.answer === "string") return d.answer;
+  }
+  return JSON.stringify(data, null, 2);
+}
+
+function ConciergePage() {
+  const runConciergeChat = useServerFn(conciergeChat);
+  const { prompt } = Route.useSearch();
+  const [messages, setMessages] = useState<Msg[]>([
+    { role: "assistant", content: "Good day. I'm your Worldway concierge — where shall we begin?" },
+  ]);
+  const [input, setInput] = useState<string>(prompt ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState(false);
+  const sessionId = useMemo(
+    () => `wtg-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`,
+    [],
+  );
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const SUGGESTIONS = [
+    "Plan a 5-day romantic escape to the Amalfi coast in September",
+    "Private jet options from Delhi to the Maldives next weekend",
+    "Best time and villa for a family safari in Kenya",
+    "Curate a Michelin dining itinerary in Tokyo for 3 nights",
+  ];
+
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    if (!portal.hasAiAccess()) {
+      setGate(true);
+      return;
+    }
+    const text = input.trim();
+    if (!text) return;
+    const next: Msg[] = [...messages, { role: "user", content: text }];
+    setMessages(next);
+    setInput("");
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await runConciergeChat({ data: { message: text, session_id: sessionId } });
+      if (!res.ok) setError(res.error ?? "Request failed");
+      else setMessages([...next, { role: "assistant", content: extractReply(res.data) || "…" }]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setLoading(false);
+      inputRef.current?.focus();
+    }
+  }
+
   return (
-    <main className="pt-24">
-      <section className="container-lux py-16">
-        <p className="eyebrow text-gold">Powered by Worldway Intelligence</p>
-        <h1 className="mt-3 font-serif text-5xl md:text-6xl">AI Concierge</h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
-          The Worldway AI Concierge drafts itineraries, answers destination questions and hands off seamlessly to a
-          human specialist when you're ready to book.
-        </p>
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_2fr]">
-          <aside className="rounded-sm border border-border bg-card p-6 shadow-soft">
-            <p className="eyebrow mb-3">Try asking</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>"Two weeks in Japan for cherry blossom, family of four"</li>
-              <li>"Antarctica in December — fly-cruise vs Drake?"</li>
-              <li>"Anniversary trip to the Maldives, 10 nights, all-villa"</li>
-              <li>"Private jet expedition January to March"</li>
-            </ul>
-          </aside>
-          <div className="rounded-sm border border-border bg-card p-6 shadow-soft min-h-[420px] flex flex-col">
-            <div className="flex-1 space-y-3 text-sm">
-              <div className="rounded-sm bg-sand/60 p-3">Hello — I'm the Worldway AI Concierge. Where in the world are you dreaming of?</div>
-              <div className="rounded-sm border border-dashed border-border p-3 text-muted-foreground">
-                TODO(Lovable Cloud): connect to Lovable AI Gateway streaming endpoint. Enable Cloud to activate live conversation.
+    <PageShell>
+      <PageHero
+        eyebrow="AI Concierge"
+        title="Ask anything. Anywhere. Anytime."
+        subtitle="A discreet, always-on intelligence for travel arrangements."
+        image="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=2000&q=80"
+      />
+      <section className="mx-auto -mt-16 max-w-3xl px-6">
+        <div className="rounded-2xl border border-border/60 bg-card/80 p-6 shadow-2xl backdrop-blur-xl">
+          <div className="mb-4 text-xs uppercase tracking-[0.3em] text-primary">Conversation</div>
+          <div ref={scrollRef} className="max-h-[520px] space-y-4 overflow-y-auto pr-2">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
+              >
+                <div
+                  className={
+                    m.role === "user"
+                      ? "max-w-[80%] rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-sm text-primary-foreground"
+                      : "max-w-[85%] rounded-2xl rounded-bl-sm border border-border/60 bg-background/60 px-4 py-3 text-sm text-foreground"
+                  }
+                >
+                  {m.role === "assistant" ? (
+                    <div className="prose prose-sm prose-invert max-w-none prose-headings:font-serif prose-headings:text-foreground prose-p:my-2 prose-li:my-0.5 prose-a:text-primary prose-strong:text-foreground">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    m.content
+                  )}
+                </div>
               </div>
+            ))}
+            {loading ? (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-sm border border-border/60 bg-background/60 px-4 py-3 text-sm text-muted-foreground">
+                  <span className="inline-flex gap-1">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary" />
+                  </span>
+                </div>
+              </div>
+            ) : null}
+            {error ? <div className="text-xs text-destructive">{error}</div> : null}
+          </div>
+          {messages.length <= 1 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setInput(s)}
+                  className="rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-[11px] text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
+                >
+                  {s}
+                </button>
+              ))}
             </div>
-            <form className="mt-4 flex gap-2">
-              <input disabled placeholder="Enable Lovable Cloud to chat…" className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-sm" />
-              <Button variant="gold" disabled>Send</Button>
-            </form>
+          ) : null}
+          <form onSubmit={send} className="mt-5 flex gap-2">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="A quiet villa on the Amalfi coast, next August…"
+              className={inputClass}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-full bg-primary px-6 py-2 text-xs uppercase tracking-[0.3em] text-primary-foreground disabled:opacity-60"
+            >
+              Send
+            </button>
+          </form>
+          <div className="mt-3">
+            <LocationAutocomplete
+              name="concierge_location"
+              kind="locations"
+              label="Add location context (optional)"
+              placeholder="Search a city or airport…"
+              onSelect={(row) => {
+                const label = row.iata
+                  ? `${row.iata}${row.city ? ` (${row.city})` : ""}`
+                  : [row.city, row.country].filter(Boolean).join(", ");
+                setInput((v) => (v ? `${v} — ${label}` : `Regarding ${label}: `));
+              }}
+            />
           </div>
         </div>
-        <div className="mt-8 flex gap-3">
-          <Link to="/contact"><Button variant="outline-ink">Prefer a human?</Button></Link>
-          <Link to="/trip-builder"><Button variant="gold">Open trip builder</Button></Link>
-        </div>
       </section>
-    </main>
+      <div className="h-24" />
+      <MembershipUpgradeDialog open={gate} onOpenChange={setGate} reason="ai" />
+    </PageShell>
   );
 }

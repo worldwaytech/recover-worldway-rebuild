@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://recover-worldway-rebuild.lovable.app/sitemap.xml

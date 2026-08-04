@@ -1,48 +1,70 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { regions } from "@/lib/data";
-import { SectionHeading } from "@/components/site";
+import { allRegions, countRegion } from "@/lib/destinations";
+import { DemoNotice } from "@/components/partners/journey-ui";
 
 export const Route = createFileRoute("/destinations/")({
-  head: () => ({
-    meta: [
-      { title: "Destinations | Worldway Luxe" },
-      { name: "description", content: "Extraordinary luxury travel destinations across all seven continents, curated by Worldway Luxe specialists." },
-      { property: "og:title", content: "Destinations | Worldway Luxe" },
-      { property: "og:description", content: "Extraordinary luxury travel destinations across all seven continents." },
-      { property: "og:url", content: "/destinations" },
-    ],
-    links: [{ rel: "canonical", href: "/destinations" }],
-  }),
+  head: () => {
+    const title = "Destinations — Worldway Travels Group";
+    const description =
+      "Explore the world by region, country and destination: luxury journeys, partner voyages and specialist advice for every corner of the map.";
+    const url = "https://worldwaytravelsgroup.com/destinations";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: DestinationsIndex,
 });
 
 function DestinationsIndex() {
+  const regions = allRegions();
   return (
-    <main className="pt-24">
-      <section className="container-lux py-16">
-        <SectionHeading
-          eyebrow="Explore the world"
-          title="Destinations"
-          intro="From the plains of Africa to the ice of Antarctica, discover the destinations Worldway Luxe brings to life."
-        />
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {regions.map((r) => (
+    <div className="mx-auto max-w-7xl px-4 py-14">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+        Where we travel
+      </p>
+      <h1 className="mt-2 font-serif text-4xl">Destinations</h1>
+      <p className="mt-3 max-w-3xl text-muted-foreground">
+        Every Worldway destination is mapped to the partners, ships, lodges and guides we trust
+        there. Choose a region to drill down through countries, states and individual destinations.
+      </p>
+      <DemoNotice className="mt-5 max-w-3xl" />
+
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {regions.map((r) => {
+          const c = countRegion(r);
+          return (
             <Link
               key={r.slug}
-              to="/destinations/$slug"
-              params={{ slug: r.slug }}
-              className="group relative aspect-[4/5] overflow-hidden rounded-sm"
+              to="/destinations/$region"
+              params={{ region: r.slug }}
+              className="group relative block overflow-hidden rounded-lg border border-border/60"
             >
-              <img src={r.image} alt={r.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-6 text-primary-foreground">
-                <h3 className="font-serif text-3xl">{r.name}</h3>
-                <p className="mt-1 text-sm text-primary-foreground/80 line-clamp-2">{r.blurb}</p>
+              <img
+                src={r.heroImage}
+                alt={`${r.name} luxury travel`}
+                loading="lazy"
+                className="h-64 w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
+              <div className="absolute bottom-0 p-5">
+                <h2 className="font-serif text-2xl">{r.headline}</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {c.countries} countries · {c.destinations} destinations · {c.journeys} journeys
+                </p>
               </div>
             </Link>
-          ))}
-        </div>
-      </section>
-    </main>
+          );
+        })}
+      </div>
+    </div>
   );
 }

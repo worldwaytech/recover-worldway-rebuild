@@ -4,25 +4,21 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { AuthProvider } from "@/lib/auth";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { CookieConsent } from "@/components/CookieConsent";
+import { reportLovableError } from "../lib/lovable-error-reporting";
+import { useAuthHydration } from "@/hooks/use-auth-hydration";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-serif text-foreground">404</h1>
+        <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           The page you're looking for doesn't exist or has been moved.
@@ -43,6 +39,10 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  useEffect(() => {
+    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+  }, [error]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -58,13 +58,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Try again
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
           </a>
@@ -79,42 +79,47 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "Worldway Luxe" },
-      { property: "og:site_name", content: "Worldway Luxe" },
+      { title: "Worldway Travels Group — Bespoke Luxury Travel" },
+      {
+        name: "description",
+        content:
+          "Private jets, five-star residences, curated activities, and a 24/7 AI concierge.",
+      },
+      { property: "og:title", content: "Worldway Travels Group — Bespoke Luxury Travel" },
+      {
+        property: "og:description",
+        content:
+          "Private jets, five-star residences, curated activities, and a 24/7 AI concierge.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#C8A24A" },
-      { name: "application-name", content: "WorldwayLuxe" },
-      { title: "Worldway Luxe | Extraordinary Luxury Journeys Worldwide" },
-      { property: "og:title", content: "Worldway Luxe | Extraordinary Luxury Journeys Worldwide" },
-      { name: "twitter:title", content: "Worldway Luxe | Extraordinary Luxury Journeys Worldwide" },
-      { name: "description", content: "Tailor-made luxury travel, private journeys, small group departures, expedition cruises and private jet experiences. Worldway Luxe is a Partner with A&K." },
-      { property: "og:description", content: "Tailor-made luxury travel, private journeys, small group departures, expedition cruises and private jet experiences. Worldway Luxe is a Partner with A&K." },
-      { name: "twitter:description", content: "Tailor-made luxury travel, private journeys, small group departures, expedition cruises and private jet experiences. Worldway Luxe is a Partner with A&K." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/69b18190-cb47-4b63-8b66-29ea20d081f9" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/69b18190-cb47-4b63-8b66-29ea20d081f9" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Worldway Travels Group — Bespoke Luxury Travel" },
+      {
+        name: "twitter:description",
+        content:
+          "Private jets, five-star residences, curated activities, and a 24/7 AI concierge.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1600&q=80",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1600&q=80",
+      },
     ],
     links: [
-      { rel: "icon", href: "/favicon.ico" },
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500&display=swap",
-      },
-      { rel: "stylesheet", href: appCss },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "TravelAgency",
-          name: "Worldway Luxe",
-          description:
-            "Luxury tailor-made travel, private journeys, expedition cruises and private jet experiences. Partner with A&K.",
-          areaServed: "Worldwide",
-        }),
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap",
       },
     ],
   }),
@@ -140,24 +145,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAuthPage = pathname.startsWith("/auth");
+  useAuthHydration();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <a href="#main-content" className="skip-to-content">
-          Skip to content
-        </a>
-        {!isAuthPage && <Header />}
-        <div id="main-content" tabIndex={-1} className="outline-none">
-          <Outlet />
-        </div>
-        {!isAuthPage && <Footer />}
-        <WhatsAppButton />
-        <CookieConsent />
-        <Toaster position="top-center" />
-      </AuthProvider>
+      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <Outlet />
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
 }
