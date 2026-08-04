@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, PageHero, SearchCard, Field } from "@/components/search-shell";
 import { inputClass } from "@/components/search-form";
-import { LocationAutocomplete } from "@/components/location-autocomplete";
-import { HotelResults } from "@/components/hotel-results";
-import { searchHotels } from "@/lib/wwl.functions";
+import { Up17CityAutocomplete } from "@/components/up17/city-autocomplete";
+import { Up17HotelResults } from "@/components/up17/hotel-results";
+import { up17HotelSearch } from "@/lib/up17/up17.functions";
 import { portal } from "@/lib/portal-store";
 import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
 
