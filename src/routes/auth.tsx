@@ -76,7 +76,7 @@ function AuthPage() {
       } else {
         const requestedRole: Role = role === "super_admin" || role === "admin" ? "b2c" : role;
         const n = safeNext();
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -88,10 +88,34 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created — you're signed in.");
+        if (data.session) {
+          toast.success("Account created — you're signed in.");
+        } else {
+          toast.success("Account created — check your email to confirm your address.");
+        }
       }
     } catch (e: unknown) {
       setErr((e as { message?: string })?.message ?? "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    setErr(null);
+    if (!email) {
+      setErr("Enter your email address first, then choose “Forgot password”.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset link sent — check your inbox.");
+    } catch (e: unknown) {
+      setErr((e as { message?: string })?.message ?? "Could not send the reset link.");
     } finally {
       setBusy(false);
     }
@@ -192,7 +216,18 @@ function AuthPage() {
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
           </Button>
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={busy}
+              className="w-full text-center text-xs text-muted-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Forgot password?
+            </button>
+          )}
         </form>
+
 
         <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
           <div className="h-px flex-1 bg-border/60" /> or continue with{" "}
