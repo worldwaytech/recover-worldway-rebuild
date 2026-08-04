@@ -101,6 +101,26 @@ function AuthPage() {
     }
   }
 
+  async function handleForgotPassword() {
+    setErr(null);
+    if (!email) {
+      setErr("Enter your email address first, then choose “Forgot password”.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset link sent — check your inbox.");
+    } catch (e: unknown) {
+      setErr((e as { message?: string })?.message ?? "Could not send the reset link.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function signInGoogle() {
     setErr(null);
     setBusy(true);
