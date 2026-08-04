@@ -205,6 +205,17 @@ function FlightsPage() {
                   <option value="first">First</option>
                 </select>
               </Field>
+              <Field label="Preference">
+                <label className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2.5 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={directOnly}
+                    onChange={(e) => setDirectOnly(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  Non-stop flights only
+                </label>
+              </Field>
             </div>
           ) : (
             <div className="space-y-4">
