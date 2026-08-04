@@ -813,6 +813,60 @@ export type Database = {
         }
         Relationships: []
       }
+      up17_bus_cities: {
+        Row: {
+          city_id: string
+          city_name: string
+          id: number
+          priority: number
+        }
+        Insert: {
+          city_id: string
+          city_name: string
+          id?: number
+          priority?: number
+        }
+        Update: {
+          city_id?: string
+          city_name?: string
+          id?: number
+          priority?: number
+        }
+        Relationships: []
+      }
+      up17_hotel_cities: {
+        Row: {
+          city_id: string
+          country: string | null
+          country_code: string | null
+          destination: string
+          id: number
+          priority: number
+          state_province: string | null
+          state_province_code: string | null
+        }
+        Insert: {
+          city_id: string
+          country?: string | null
+          country_code?: string | null
+          destination: string
+          id?: number
+          priority?: number
+          state_province?: string | null
+          state_province_code?: string | null
+        }
+        Update: {
+          city_id?: string
+          country?: string | null
+          country_code?: string | null
+          destination?: string
+          id?: number
+          priority?: number
+          state_province?: string | null
+          state_province_code?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

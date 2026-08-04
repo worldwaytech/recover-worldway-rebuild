@@ -9,6 +9,7 @@ export function Up17CityAutocomplete({
   required,
   defaultValue = "",
   className,
+  kind = "hotel",
   onSelect,
   onChange,
 }: {
@@ -18,6 +19,7 @@ export function Up17CityAutocomplete({
   required?: boolean;
   defaultValue?: string;
   className?: string;
+  kind?: "hotel" | "bus";
   onSelect?: (city: Up17City) => void;
   onChange?: (value: string) => void;
 }) {
@@ -43,7 +45,7 @@ export function Up17CityAutocomplete({
     setLoading(true);
     const t = setTimeout(async () => {
       try {
-        const res = await lookup({ data: { query: q, limit: 10 } });
+        const res = await lookup({ data: { query: q, limit: 10, kind } });
         if (cancelled) return;
         if (!res.ok) {
           setRows([]);
@@ -62,7 +64,7 @@ export function Up17CityAutocomplete({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [value, lookup]);
+  }, [value, lookup, kind]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {

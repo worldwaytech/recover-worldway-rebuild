@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-export type { Up17City } from "./cities.data.server";
+export type { Up17City } from "./cities.db.server";
 
 const iata = z.string().trim().min(2).max(4);
 
@@ -16,6 +16,7 @@ const searchSchema = z.object({
   cabin: z.enum(["economy", "premium_economy", "business", "first"]).optional(),
   trip_type: z.enum(["one_way", "round_trip", "multi_city"]).optional(),
   direct_only: z.boolean().optional(),
+  preferred_carriers: z.array(z.string().trim().min(2).max(3)).max(10).optional(),
   legs: z
     .array(z.object({ origin: iata, destination: iata, date: z.string().trim().min(4) }))
     .max(6)
@@ -53,6 +54,21 @@ export const up17BaggageLookup = createServerFn({ method: "POST" })
     return { ok: res.ok, options: res.data?.options ?? [] };
   });
 
+export const up17FareRuleLookup = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        resultIndex: z.string().trim().min(1).max(200),
+        searchTokenId: z.string().trim().min(1).max(200),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17FareRules } = await import("./up17.server");
+    const res = await up17FareRules(data);
+    return { ok: res.ok, error: res.error, rules: res.data?.rules ?? [] };
+  });
+
 export type AirportSuggestion = {
   iata: string;
   city: string;
@@ -86,6 +102,8 @@ const hotelSchema = z.object({
   guests: z.number().int().min(1).max(20).optional(),
   rooms: z.number().int().min(1).max(10).optional(),
   nationality: z.string().trim().max(4).optional(),
+  min_rating: z.number().int().min(1).max(5).optional(),
+  max_rating: z.number().int().min(1).max(5).optional(),
 });
 
 export const up17HotelSearch = createServerFn({ method: "POST" })
@@ -98,8 +116,33 @@ export const up17HotelSearch = createServerFn({ method: "POST" })
       status: res.status,
       error: res.error,
       searchTokenId: res.data?.searchTokenId ?? null,
+      cityName: res.data?.cityName ?? "",
       hotels: res.data?.hotels ?? [],
       count: res.data?.count ?? 0,
+    };
+  });
+
+export const up17HotelDetailLookup = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        resultIndex: z.string().trim().min(1).max(200),
+        hotelCode: z.string().trim().min(1).max(200),
+        searchTokenId: z.string().trim().min(1).max(200),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17HotelDetail } = await import("./up17.server");
+    const res = await up17HotelDetail(data);
+    return {
+      ok: res.ok,
+      error: res.error,
+      gallery: res.data?.gallery ?? [],
+      amenities: res.data?.amenities ?? [],
+      description: res.data?.description ?? "",
+      checkInTime: res.data?.checkInTime ?? "",
+      checkOutTime: res.data?.checkOutTime ?? "",
     };
   });
 
@@ -109,12 +152,13 @@ export const up17CityLookup = createServerFn({ method: "POST" })
       .object({
         query: z.string().trim().max(80),
         limit: z.number().int().min(1).max(25).optional(),
+        kind: z.enum(["hotel", "bus"]).optional(),
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
     const { up17CityAutocomplete } = await import("./up17.server");
-    return up17CityAutocomplete(data.query, data.limit ?? 12);
+    return up17CityAutocomplete(data.query, data.limit ?? 12, data.kind ?? "hotel");
   });
 
 const busSchema = z.object({

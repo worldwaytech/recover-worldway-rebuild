@@ -73,18 +73,20 @@ function BusesPage() {
               <Up17CityAutocomplete
                 name="origin_visible"
                 required
-                placeholder="New Delhi, Mumbai, Bangalore…"
+                kind="bus"
+                placeholder="Delhi, Mumbai, Bangalore, Goa…"
                 onChange={setOrigin}
-                onSelect={(r) => setOrigin(`${r.city}, ${r.country}`)}
+                onSelect={(r) => setOrigin(r.city)}
               />
             </Field>
             <Field label="To">
               <Up17CityAutocomplete
                 name="destination_visible"
                 required
-                placeholder="New Delhi, Mumbai, Bangalore…"
+                kind="bus"
+                placeholder="Delhi, Mumbai, Bangalore, Goa…"
                 onChange={setDestination}
-                onSelect={(r) => setDestination(`${r.city}, ${r.country}`)}
+                onSelect={(r) => setDestination(r.city)}
               />
             </Field>
             <Field label="Date">
