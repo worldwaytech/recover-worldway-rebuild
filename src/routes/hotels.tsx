@@ -79,7 +79,8 @@ function HotelsPage() {
               <Up17CityAutocomplete
                 name="destination_visible"
                 required
-                placeholder="New Delhi, Mumbai, Bangalore…"
+                kind="hotel"
+                placeholder="Dubai, London, New Delhi, Singapore…"
                 onChange={setDestination}
                 onSelect={(r) => setDestination(`${r.city}, ${r.country}`)}
               />

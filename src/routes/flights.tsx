@@ -40,7 +40,8 @@ function FlightsPage() {
   const [depart, setDepart] = useState("");
   const [ret, setRet] = useState("");
   const [passengers, setPassengers] = useState(1);
-  const [cabin, setCabin] = useState("business");
+  const [cabin, setCabin] = useState("economy");
+  const [directOnly, setDirectOnly] = useState(false);
   const [legs, setLegs] = useState<Leg[]>([
     { origin: "", destination: "", date: "" },
     { origin: "", destination: "", date: "" },
@@ -90,6 +91,7 @@ function FlightsPage() {
         passengers,
         cabin,
         trip_type: trip,
+        direct_only: directOnly,
         depart_date: depart || legs[0]?.date || "",
       };
       if (trip === "multi_city") {
@@ -202,6 +204,17 @@ function FlightsPage() {
                   <option value="business">Business</option>
                   <option value="first">First</option>
                 </select>
+              </Field>
+              <Field label="Preference">
+                <label className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2.5 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={directOnly}
+                    onChange={(e) => setDirectOnly(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  Non-stop flights only
+                </label>
               </Field>
             </div>
           ) : (
