@@ -169,7 +169,7 @@ export function Up17CityAutocomplete({
                   UP17 City ID · {r.cityId}
                 </div>
               </li>
-            )))
+            ))
           )}
         </ul>
       ) : null}
