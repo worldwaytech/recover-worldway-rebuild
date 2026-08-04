@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+export type { Up17City } from "./cities.data.server";
+
 const iata = z.string().trim().min(2).max(4);
 
 const searchSchema = z.object({
