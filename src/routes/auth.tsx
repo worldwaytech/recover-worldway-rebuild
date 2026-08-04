@@ -216,7 +216,18 @@ function AuthPage() {
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
           </Button>
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={busy}
+              className="w-full text-center text-xs text-muted-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Forgot password?
+            </button>
+          )}
         </form>
+
 
         <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
           <div className="h-px flex-1 bg-border/60" /> or continue with{" "}
