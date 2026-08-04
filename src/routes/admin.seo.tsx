@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PortalShell } from "@/components/PortalShell";
-import { adminNav } from "./admin.index";
+import { adminNav } from "@/lib/portal-nav";
 
 const checks = [
   { key: "Title", ok: 24, warn: 3, fail: 1 },

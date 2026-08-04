@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PortalShell } from "@/components/PortalShell";
-import { agentNav } from "./agent.index";
+import { agentNav } from "@/lib/portal-nav";
 
 const modules = [
   { title: "Worldway Foundations", lessons: 6 },
