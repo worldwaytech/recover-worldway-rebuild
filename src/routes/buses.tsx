@@ -20,7 +20,7 @@ export const Route = createFileRoute("/buses")({
 });
 
 function BusesPage() {
-  const runBusSearch = useServerFn(searchBuses);
+  const runBusSearch = useServerFn(up17BusSearch);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState("");
@@ -49,7 +49,7 @@ function BusesPage() {
       if (!res.ok) setError(res.error ?? "Request failed");
       else {
         portal.recordSearch();
-        setData(res.data);
+        setData(res);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
@@ -66,27 +66,25 @@ function BusesPage() {
         subtitle="Executive coaches, minibuses, and private group fleets."
         image="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=2000&q=80"
       />
-      <SearchCard title="Bus Search">
+      <SearchCard title="Bus Search — UP17 Live">
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Field label="From">
-              <LocationAutocomplete
+              <Up17CityAutocomplete
                 name="origin_visible"
-                kind="cities"
                 required
-                placeholder="Delhi, Rome, Bangkok…"
+                placeholder="New Delhi, Mumbai, Bangalore…"
                 onChange={setOrigin}
-                onSelect={(r) => setOrigin(r.city ?? r.airport_name ?? "")}
+                onSelect={(r) => setOrigin(`${r.city}, ${r.country}`)}
               />
             </Field>
             <Field label="To">
-              <LocationAutocomplete
+              <Up17CityAutocomplete
                 name="destination_visible"
-                kind="cities"
                 required
-                placeholder="Jaipur, Florence, Chiang Mai…"
+                placeholder="New Delhi, Mumbai, Bangalore…"
                 onChange={setDestination}
-                onSelect={(r) => setDestination(r.city ?? r.airport_name ?? "")}
+                onSelect={(r) => setDestination(`${r.city}, ${r.country}`)}
               />
             </Field>
             <Field label="Date">
@@ -120,7 +118,7 @@ function BusesPage() {
           </div>
         </form>
       </SearchCard>
-      <BusResults loading={loading} error={error} data={data} />
+      <Up17BusResults loading={loading} error={error} data={data} />
       <MembershipUpgradeDialog open={gate} onOpenChange={setGate} reason="search" />
     </PageShell>
   );
