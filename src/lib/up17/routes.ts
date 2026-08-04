@@ -19,7 +19,7 @@ DEL:Delhi>CCU:Kolkata
 CCU:Kolkata>DEL:Delhi
 DEL:Delhi>HYD:Hyderabad
 HYD:Hyderabad>DEL:Delhi
-BOM:Mumbai>DXB:Goa
+HYD:Hyderabad>CCU:Kolkata
 DEL:Delhi>MAA:Chennai
 MAA:Chennai>DEL:Delhi
 BOM:Mumbai>HYD:Hyderabad
