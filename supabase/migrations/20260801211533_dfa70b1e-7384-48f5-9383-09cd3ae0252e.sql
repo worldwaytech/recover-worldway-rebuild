@@ -1,0 +1,1 @@
+DELETE FROM public.quote_requests WHERE email = 'validation+prelaunch@worldwaytravelsgroup.com' AND message = 'PRELAUNCH VALIDATION - please ignore';

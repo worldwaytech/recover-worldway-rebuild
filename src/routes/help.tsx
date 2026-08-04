@@ -1,52 +1,129 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { SectionHeading } from "@/components/site";
-import { Button } from "@/components/ui/button";
-
-const faqs = [
-  { q: "How do I plan a journey with Worldway Luxe?", a: "Share your dates, destinations and interests via our enquiry form or call us — a specialist will craft a proposal within one business day." },
-  { q: "Can you arrange fully private journeys?", a: "Yes. Every itinerary is designed uniquely for you, with private guides, transfers and accommodation throughout." },
-  { q: "Do you offer group departures?", a: "We offer intimate small-group journeys as well as fully private and tailor-made experiences." },
-  { q: "Is my booking financially protected?", a: "Yes — all Worldway Luxe bookings carry full financial protection under industry-standard schemes." },
-  { q: "What if I need help during my journey?", a: "You'll have 24/7 access to a dedicated specialist and local concierge support at every stop." },
-];
+import { PageShell } from "@/components/search-shell";
+import { ContentHero } from "@/components/content-page";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
     meta: [
-      { title: "Help Center | Worldway Luxe" },
-      { name: "description", content: "Answers to common questions about planning, booking and travelling with Worldway Luxe." },
-      { property: "og:url", content: "/help" },
+      { title: "Help Centre — Worldway Travels Group" },
+      {
+        name: "description",
+        content:
+          "Answers on bookings, changes and cancellations, payments and wallet, membership tiers, documents and the AI Concierge.",
+      },
+      { property: "og:title", content: "Worldway Help Centre" },
+      {
+        property: "og:description",
+        content: "Answers on bookings, changes, payments, membership and the AI Concierge.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/help" }],
-    scripts: [{
-      type: "application/ld+json",
-      children: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-      }),
-    }],
   }),
-  component: Help,
+  component: HelpPage,
 });
 
-function Help() {
+const SECTIONS: { group: string; items: { q: string; a: string }[] }[] = [
+  {
+    group: "Bookings",
+    items: [
+      {
+        q: "Where do I find my bookings?",
+        a: "Every confirmed booking appears under Account → Bookings, with the supplier reference, travel dates and current status.",
+      },
+      {
+        q: "Why does a search sometimes return no results?",
+        a: "All inventory is queried live from suppliers. When a supplier has no availability for your dates or is temporarily unreachable, we show that plainly instead of displaying illustrative fares.",
+      },
+      {
+        q: "Can I change or cancel a booking?",
+        a: "Change and cancellation rules are set by each supplier and are shown before you confirm. Send a change request from Account → Bookings or contact the concierge desk.",
+      },
+    ],
+  },
+  {
+    group: "Payments & wallet",
+    items: [
+      {
+        q: "How does the Worldway wallet work?",
+        a: "Your wallet holds a prepaid balance you can top up by card or PayPal and apply to eligible bookings. Balances and transactions are visible under Wallet.",
+      },
+      {
+        q: "Which payment methods are accepted?",
+        a: "Major credit and debit cards, PayPal, and wallet balance. Corporate accounts can be invoiced through the corporate portal.",
+      },
+    ],
+  },
+  {
+    group: "Membership",
+    items: [
+      {
+        q: "What do membership tiers include?",
+        a: "Traveler is free. Travel Plus and Elite add member pricing, priority support and expanded concierge access. Enterprise covers corporate programmes.",
+      },
+      {
+        q: "How do I upgrade?",
+        a: "Open the Membership page and choose a plan; upgrades are confirmed by the concierge desk and applied to your account server-side.",
+      },
+    ],
+  },
+  {
+    group: "AI Concierge",
+    items: [
+      {
+        q: "What can the concierge do?",
+        a: "It searches live inventory, drafts itineraries, answers destination and policy questions, and hands off to a human specialist when needed.",
+      },
+      {
+        q: "Is the concierge available to all members?",
+        a: "Yes — every signed-in member can use the AI Concierge.",
+      },
+    ],
+  },
+];
+
+function HelpPage() {
   return (
-    <main className="pt-24">
-      <section className="container-lux py-16">
-        <SectionHeading eyebrow="Help" title="How can we help?" intro="Common questions about planning, booking and travelling with Worldway Luxe." />
-        <div className="mt-12 space-y-6">
-          {faqs.map((f) => (
-            <div key={f.q} className="rounded-sm border border-border bg-card p-6 shadow-soft">
-              <h3 className="font-serif text-xl">{f.q}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{f.a}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 text-center">
-          <Link to="/contact"><Button variant="gold" size="lg">Contact a Specialist</Button></Link>
-        </div>
-      </section>
-    </main>
+    <PageShell>
+      <ContentHero
+        eyebrow="Help centre"
+        title="Answers, without the hold music."
+        subtitle="The questions our desk answers most. If yours isn't here, the concierge desk replies within two hours."
+      />
+      <div className="mx-auto max-w-3xl space-y-10 px-6 py-16">
+        {SECTIONS.map((s) => (
+          <section key={s.group}>
+            <h2 className="mb-3 text-[11px] uppercase tracking-[0.3em] text-primary">{s.group}</h2>
+            <Accordion
+              type="single"
+              collapsible
+              className="rounded-xl border border-border/60 bg-card/50 px-4"
+            >
+              {s.items.map((it) => (
+                <AccordionItem key={it.q} value={it.q}>
+                  <AccordionTrigger className="text-left text-sm">{it.q}</AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground">
+                    {it.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </section>
+        ))}
+        <p className="text-sm text-muted-foreground">
+          Still stuck?{" "}
+          <Link to="/contact" className="text-primary underline-offset-4 hover:underline">
+            Contact the concierge desk
+          </Link>
+          .
+        </p>
+      </div>
+    </PageShell>
   );
 }

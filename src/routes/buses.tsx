@@ -1,0 +1,127 @@
+import { useState, type FormEvent } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute } from "@tanstack/react-router";
+import { PageShell, PageHero, SearchCard, Field } from "@/components/search-shell";
+import { inputClass } from "@/components/search-form";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
+import { BusResults } from "@/components/bus-results";
+import { searchBuses } from "@/lib/wwl.functions";
+import { portal } from "@/lib/portal-store";
+import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
+
+export const Route = createFileRoute("/buses")({
+  head: () => ({
+    meta: [
+      { title: "Coach & Bus — Worldway Travels Group" },
+      { name: "description", content: "Executive coaches and private group transportation." },
+    ],
+  }),
+  component: BusesPage,
+});
+
+function BusesPage() {
+  const runBusSearch = useServerFn(searchBuses);
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const [date, setDate] = useState("");
+  const [passengers, setPassengers] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<unknown>(null);
+  const [gate, setGate] = useState(false);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    window.dispatchEvent(new Event("wwtg:search-submit"));
+    if (!origin || !destination) {
+      setError("Please choose both cities.");
+      return;
+    }
+    if (!portal.canSearch()) {
+      setGate(true);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setData(null);
+    try {
+      const res = await runBusSearch({ data: { origin, destination, date, passengers } });
+      if (!res.ok) setError(res.error ?? "Request failed");
+      else {
+        portal.recordSearch();
+        setData(res.data);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <PageShell>
+      <PageHero
+        eyebrow="Coach & Bus"
+        title="Move your group in comfort."
+        subtitle="Executive coaches, minibuses, and private group fleets."
+        image="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=2000&q=80"
+      />
+      <SearchCard title="Bus Search">
+        <form onSubmit={onSubmit} className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Field label="From">
+              <LocationAutocomplete
+                name="origin_visible"
+                kind="cities"
+                required
+                placeholder="Delhi, Rome, Bangkok…"
+                onChange={setOrigin}
+                onSelect={(r) => setOrigin(r.city ?? r.airport_name ?? "")}
+              />
+            </Field>
+            <Field label="To">
+              <LocationAutocomplete
+                name="destination_visible"
+                kind="cities"
+                required
+                placeholder="Jaipur, Florence, Chiang Mai…"
+                onChange={setDestination}
+                onSelect={(r) => setDestination(r.city ?? r.airport_name ?? "")}
+              />
+            </Field>
+            <Field label="Date">
+              <input
+                type="date"
+                required
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Passengers">
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={passengers}
+                onChange={(e) => setPassengers(Number(e.target.value) || 1)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-full bg-primary px-8 py-3 text-xs uppercase tracking-[0.3em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {loading ? "Searching…" : "Search Buses"}
+            </button>
+          </div>
+        </form>
+      </SearchCard>
+      <BusResults loading={loading} error={error} data={data} />
+      <MembershipUpgradeDialog open={gate} onOpenChange={setGate} reason="search" />
+    </PageShell>
+  );
+}

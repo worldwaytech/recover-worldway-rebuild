@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PortalShell } from "@/components/PortalShell";
-import { adminNav } from "./admin.index";
+import { adminNav } from "@/lib/portal-nav";
 
 const kpis = [
   { label: "Revenue MTD", value: "$0", trend: "—" },

@@ -1,36 +1,67 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PortalShell } from "@/components/PortalShell";
-import { LayoutDashboard, Users, Wallet, FileText, LineChart, Settings, BookOpen, GraduationCap } from "lucide-react";
-
-const agentNav = [
-  { label: "Overview", to: "/agent", exact: true },
-  { label: "Bookings", to: "/agent/bookings" },
-  { label: "Commissions", to: "/agent/commissions" },
-  { label: "Clients", to: "/agent/clients" },
-  { label: "Collateral", to: "/agent/collateral" },
-  { label: "Training", to: "/agent/training" },
-];
+import { PortalCard, StatTile } from "@/components/portal-shell";
+import { Plane, Route as RouteIcon, PlaneTakeoff } from "lucide-react";
 
 export const Route = createFileRoute("/agent/")({
-  head: () => ({ meta: [{ title: "Agent Portal | Worldway Luxe" }, { name: "robots", content: "noindex" }] }),
-  component: () => (
-    <PortalShell
-      eyebrow="For accredited agents"
-      title="Agent Portal"
-      intro="Bookings, commissions, marketing collateral, training and preferred-partner benefits."
-      nav={agentNav}
-      tiles={[
-        { icon: LayoutDashboard, title: "Bookings", text: "Active bookings, departures and quote pipeline.", to: "/agent/bookings" },
-        { icon: Wallet, title: "Commissions", text: "Real-time commission ledger with monthly payouts.", to: "/agent/commissions" },
-        { icon: FileText, title: "Collateral", text: "Brochures and co-branded assets ready to send.", to: "/agent/collateral" },
-        { icon: Users, title: "Clients CRM", text: "Passenger profiles, passport data and travel history.", to: "/agent/clients" },
-        { icon: LineChart, title: "Performance", text: "Year-over-year sales, mix and pipeline analytics." },
-        { icon: GraduationCap, title: "Training", text: "Product accreditation, destination masterclasses.", to: "/agent/training" },
-        { icon: BookOpen, title: "Preferred rates", text: "Virtuoso, FSPP, STARS and Impresario benefits." },
-        { icon: Settings, title: "Preferences", text: "Notification, calendar and payout preferences." },
-      ]}
-    />
-  ),
+  head: () => ({
+    meta: [
+      { title: "Agent Portal — Worldway" },
+      { name: "description", content: "Travel agent workspace for bookings and commissions." },
+      { name: "robots", content: "noindex, nofollow" },
+      { property: "og:title", content: "Agent Portal — Worldway" },
+      {
+        property: "og:description",
+        content: "Travel agent workspace for bookings and commissions.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: AgentHome,
 });
 
-export { agentNav };
+function AgentHome() {
+  const stats = [
+    { l: "Open quotes", v: "12" },
+    { l: "MTD commission", v: "$8,420" },
+    { l: "Confirmed trips", v: "27" },
+  ];
+  const tiles = [
+    {
+      t: "Quote a flight",
+      d: "Live fares · agent net rates.",
+      to: "/flights",
+      i: <Plane className="h-5 w-5" />,
+    },
+    {
+      t: "Build a trip",
+      d: "Multi-city itinerary quoter.",
+      to: "/trip-builder",
+      i: <RouteIcon className="h-5 w-5" />,
+    },
+    {
+      t: "Private jets",
+      d: "On-demand charter quotes.",
+      to: "/private-jets",
+      i: <PlaneTakeoff className="h-5 w-5" />,
+    },
+  ];
+  return (
+    <div className="space-y-10">
+      <div>
+        <div className="text-[0.65rem] uppercase tracking-[0.3em] text-primary">Agent portal</div>
+        <h1 className="mt-2 font-serif text-3xl text-primary">Dashboard</h1>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {stats.map((s) => (
+          <StatTile key={s.l} label={s.l} value={s.v} />
+        ))}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {tiles.map((c) => (
+          <PortalCard key={c.to} title={c.t} description={c.d} to={c.to} icon={c.i} />
+        ))}
+      </div>
+    </div>
+  );
+}

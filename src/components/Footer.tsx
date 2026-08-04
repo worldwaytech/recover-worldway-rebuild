@@ -56,7 +56,7 @@ export function Footer() {
           <ul className="space-y-2 text-sm text-primary-foreground/70">
             {regions.map((r) => (
               <li key={r.slug}>
-                <Link to="/destinations/$slug" params={{ slug: r.slug }} className="hover:text-gold">
+                <Link to="/destinations/$region" params={{ region: r.slug }} className="hover:text-gold">
                   {r.name}
                 </Link>
               </li>
