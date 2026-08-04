@@ -59,8 +59,12 @@ export function toursEnvironment(): "sandbox" | "production" {
   return process.env.TOURS_API_ENV === "production" ? "production" : "sandbox";
 }
 
+function toursKey(): string | undefined {
+  return process.env.TOURS_API_KEY || process.env.TOURS_PUBLISHABLE_KEY;
+}
+
 export function toursConfigured(): boolean {
-  return Boolean(process.env.TOURS_API_KEY);
+  return Boolean(toursKey());
 }
 
 export function toursBookingConfigured(): boolean {
@@ -86,7 +90,7 @@ export async function gFetch<T>(
   path: string,
   init?: { method?: "GET" | "POST" | "PATCH"; body?: unknown },
 ): Promise<Res<T>> {
-  const key = process.env.TOURS_API_KEY;
+  const key = toursKey();
   if (!key) return { ok: false, status: 503, error: "Tour supplier API key not configured." };
   // Retry transient supplier failures (rate limit / gateway) with backoff.
   let last: Res<T> = { ok: false, status: 502, error: "Supplier request failed" };
