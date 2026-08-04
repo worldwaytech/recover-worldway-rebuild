@@ -16,7 +16,8 @@ export type PartnerAuthKind =
   | "bearer-token"
   | "oauth2-client-credentials"
   | "basic"
-  | "signed-session";
+  | "signed-session"
+  | "header-pair";
 
 export type PartnerCategory =
   | "luxury-tour-operator"
