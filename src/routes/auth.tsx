@@ -76,7 +76,7 @@ function AuthPage() {
       } else {
         const requestedRole: Role = role === "super_admin" || role === "admin" ? "b2c" : role;
         const n = safeNext();
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -88,7 +88,11 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Account created — you're signed in.");
+        if (data.session) {
+          toast.success("Account created — you're signed in.");
+        } else {
+          toast.success("Account created — check your email to confirm your address.");
+        }
       }
     } catch (e: unknown) {
       setErr((e as { message?: string })?.message ?? "Something went wrong.");
