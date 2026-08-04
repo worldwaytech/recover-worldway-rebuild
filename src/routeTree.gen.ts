@@ -172,6 +172,7 @@ import { Route as CrystalCruisesVoyagesCodeRouteImport } from './routes/crystal-
 import { Route as CrystalCruisesShipsSlugRouteImport } from './routes/crystal-cruises.ships.$slug'
 import { Route as CrystalCruisesDestinationsSlugRouteImport } from './routes/crystal-cruises.destinations.$slug'
 import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
+import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
 import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -1002,6 +1003,11 @@ const BookKindSlugRoute = BookKindSlugRouteImport.update({
   path: '/book/$kind/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicToursWebhookRoute = ApiPublicToursWebhookRouteImport.update({
+  id: '/api/public/tours-webhook',
+  path: '/api/public/tours-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountBookingIdRoute = AccountBookingIdRouteImport.update({
   id: '/booking/$id',
   path: '/booking/$id',
@@ -1193,6 +1199,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
@@ -1337,6 +1344,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
@@ -1508,6 +1516,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
@@ -1681,6 +1690,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/api/public/tours-webhook'
     | '/book/$kind/$slug'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
@@ -1825,6 +1835,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/api/public/tours-webhook'
     | '/book/$kind/$slug'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
@@ -1995,6 +2006,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/api/public/tours-webhook'
     | '/book/$kind/$slug'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
@@ -2078,6 +2090,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
 }
@@ -3225,6 +3238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookKindSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tours-webhook': {
+      id: '/api/public/tours-webhook'
+      path: '/api/public/tours-webhook'
+      fullPath: '/api/public/tours-webhook'
+      preLoaderRoute: typeof ApiPublicToursWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/booking/$id': {
       id: '/account/booking/$id'
       path: '/booking/$id'
@@ -3801,6 +3821,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
 }
