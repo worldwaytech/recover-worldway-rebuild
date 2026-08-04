@@ -76,3 +76,63 @@ export const up17Status = createServerFn({ method: "GET" }).handler(async () => 
   const { up17Configured } = await import("./up17.server");
   return { configured: up17Configured() };
 });
+
+const hotelSchema = z.object({
+  destination: z.string().trim().min(1).max(120),
+  check_in: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  check_out: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  guests: z.number().int().min(1).max(20).optional(),
+  rooms: z.number().int().min(1).max(10).optional(),
+  nationality: z.string().trim().max(4).optional(),
+});
+
+export const up17HotelSearch = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => hotelSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { up17SearchHotels } = await import("./up17.server");
+    const res = await up17SearchHotels(data);
+    return {
+      ok: res.ok,
+      status: res.status,
+      error: res.error,
+      searchTokenId: res.data?.searchTokenId ?? null,
+      hotels: res.data?.hotels ?? [],
+      count: res.data?.count ?? 0,
+    };
+  });
+
+export const up17CityLookup = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        query: z.string().trim().max(80),
+        limit: z.number().int().min(1).max(25).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17CityAutocomplete } = await import("./up17.server");
+    return up17CityAutocomplete(data.query, data.limit ?? 12);
+  });
+
+const busSchema = z.object({
+  origin: z.string().trim().min(1).max(120),
+  destination: z.string().trim().min(1).max(120),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  passengers: z.number().int().min(1).max(50).optional(),
+});
+
+export const up17BusSearch = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => busSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { up17SearchBuses } = await import("./up17.server");
+    const res = await up17SearchBuses(data);
+    return {
+      ok: res.ok,
+      status: res.status,
+      error: res.error,
+      searchTokenId: res.data?.searchTokenId ?? null,
+      buses: res.data?.buses ?? [],
+      count: res.data?.count ?? 0,
+    };
+  });
