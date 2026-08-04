@@ -41,7 +41,10 @@ function readHotels(data: unknown): Hotel[] {
   if (!data || typeof data !== "object") return [];
   const d = data as Record<string, unknown>;
   if (Array.isArray(d.hotels)) return d.hotels as Hotel[];
-  const nested = d.data && typeof d.data === "object" && !Array.isArray(d.data) ? d.data : null;
+  const nested =
+    d.data && typeof d.data === "object" && !Array.isArray(d.data)
+      ? (d.data as Record<string, unknown>)
+      : null;
   if (nested && Array.isArray(nested.hotels)) return nested.hotels as Hotel[];
   return [];
 }
