@@ -32,6 +32,7 @@ import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PrivateJetsRouteImport } from './routes/private-jets'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PrePurchasedFlightsRouteImport } from './routes/pre-purchased-flights'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PolarExpeditionsRouteImport } from './routes/polar-expeditions'
 import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -53,6 +54,7 @@ import { Route as CruisesRouteImport } from './routes/cruises'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ConciergeRouteImport } from './routes/concierge'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as BusesRouteImport } from './routes/buses'
 import { Route as B2cRouteImport } from './routes/b2c'
 import { Route as B2bRouteImport } from './routes/b2b'
@@ -74,6 +76,7 @@ import { Route as SmallGroupIndexRouteImport } from './routes/small-group.index'
 import { Route as SafariIndexRouteImport } from './routes/safari.index'
 import { Route as RiverCruisesIndexRouteImport } from './routes/river-cruises.index'
 import { Route as RailIndexRouteImport } from './routes/rail.index'
+import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PolarExpeditionsIndexRouteImport } from './routes/polar-expeditions.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
@@ -84,6 +87,7 @@ import { Route as DestinationsIndexRouteImport } from './routes/destinations.ind
 import { Route as CulturalIndexRouteImport } from './routes/cultural.index'
 import { Route as CrystalCruisesIndexRouteImport } from './routes/crystal-cruises.index'
 import { Route as CruisesIndexRouteImport } from './routes/cruises.index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as B2bIndexRouteImport } from './routes/b2b.index'
 import { Route as AgentIndexRouteImport } from './routes/agent.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -101,6 +105,15 @@ import { Route as SafariSlugRouteImport } from './routes/safari.$slug'
 import { Route as RiverCruisesSlugRouteImport } from './routes/river-cruises.$slug'
 import { Route as RailSlugRouteImport } from './routes/rail.$slug'
 import { Route as PrivateAviationEmptyLegsRouteImport } from './routes/private-aviation.empty-legs'
+import { Route as PortalWishlistRouteImport } from './routes/portal.wishlist'
+import { Route as PortalTravelersRouteImport } from './routes/portal.travelers'
+import { Route as PortalSupportRouteImport } from './routes/portal.support'
+import { Route as PortalSecurityRouteImport } from './routes/portal.security'
+import { Route as PortalReviewsRouteImport } from './routes/portal.reviews'
+import { Route as PortalProfileRouteImport } from './routes/portal.profile'
+import { Route as PortalPreferencesRouteImport } from './routes/portal.preferences'
+import { Route as PortalNotificationsRouteImport } from './routes/portal.notifications'
+import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
@@ -112,13 +125,20 @@ import { Route as CulturalSlugRouteImport } from './routes/cultural.$slug'
 import { Route as CrystalCruisesSearchRouteImport } from './routes/crystal-cruises.search'
 import { Route as CrystalCruisesQuoteRouteImport } from './routes/crystal-cruises.quote'
 import { Route as CruisesSlugRouteImport } from './routes/cruises.$slug'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as B2bTeamRouteImport } from './routes/b2b.team'
 import { Route as B2bReportsRouteImport } from './routes/b2b.reports'
 import { Route as B2bPoliciesRouteImport } from './routes/b2b.policies'
+import { Route as AgentTrainingRouteImport } from './routes/agent.training'
 import { Route as AgentSignupRouteImport } from './routes/agent.signup'
+import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
+import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
+import { Route as AgentClientsRouteImport } from './routes/agent.clients'
+import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
@@ -129,6 +149,7 @@ import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminApiRouteImport } from './routes/admin.api'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
 import { Route as ActivitiesCodeRouteImport } from './routes/activities.$code'
 import { Route as AccountTripsRouteImport } from './routes/account.trips'
@@ -149,6 +170,7 @@ import { Route as DestinationsRegionCountryRouteImport } from './routes/destinat
 import { Route as CrystalCruisesVoyagesCodeRouteImport } from './routes/crystal-cruises.voyages.$code'
 import { Route as CrystalCruisesShipsSlugRouteImport } from './routes/crystal-cruises.ships.$slug'
 import { Route as CrystalCruisesDestinationsSlugRouteImport } from './routes/crystal-cruises.destinations.$slug'
+import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -271,6 +293,11 @@ const PrePurchasedFlightsRoute = PrePurchasedFlightsRouteImport.update({
   path: '/pre-purchased-flights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PolarExpeditionsRoute = PolarExpeditionsRouteImport.update({
   id: '/polar-expeditions',
   path: '/polar-expeditions',
@@ -374,6 +401,11 @@ const ContactRoute = ContactRouteImport.update({
 const ConciergeRoute = ConciergeRouteImport.update({
   id: '/concierge',
   path: '/concierge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusesRoute = BusesRouteImport.update({
@@ -481,6 +513,11 @@ const RailIndexRoute = RailIndexRouteImport.update({
   path: '/',
   getParentRoute: () => RailRoute,
 } as any)
+const PortalIndexRoute = PortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PolarExpeditionsIndexRoute = PolarExpeditionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -530,6 +567,11 @@ const CruisesIndexRoute = CruisesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CruisesRoute,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const B2bIndexRoute = B2bIndexRouteImport.update({
   id: '/',
@@ -617,6 +659,51 @@ const PrivateAviationEmptyLegsRoute =
     path: '/private-aviation/empty-legs',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PortalWishlistRoute = PortalWishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalTravelersRoute = PortalTravelersRouteImport.update({
+  id: '/travelers',
+  path: '/travelers',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSupportRoute = PortalSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSecurityRoute = PortalSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalReviewsRoute = PortalReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalProfileRoute = PortalProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalPreferencesRoute = PortalPreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalNotificationsRoute = PortalNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalDocumentsRoute = PortalDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PolarExpeditionsSlugRoute = PolarExpeditionsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -672,6 +759,11 @@ const CruisesSlugRoute = CruisesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => CruisesRoute,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const B2bTeamRoute = B2bTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -687,9 +779,34 @@ const B2bPoliciesRoute = B2bPoliciesRouteImport.update({
   path: '/policies',
   getParentRoute: () => B2bRoute,
 } as any)
+const AgentTrainingRoute = AgentTrainingRouteImport.update({
+  id: '/training',
+  path: '/training',
+  getParentRoute: () => AgentRoute,
+} as any)
 const AgentSignupRoute = AgentSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentCommissionsRoute = AgentCommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentCollateralRoute = AgentCollateralRouteImport.update({
+  id: '/collateral',
+  path: '/collateral',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentClientsRoute = AgentClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentBookingsRoute = AgentBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
   getParentRoute: () => AgentRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -705,6 +822,11 @@ const AdminSuperRoute = AdminSuperRouteImport.update({
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSeoRoute = AdminSeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
@@ -755,6 +877,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
 const AdminApiRoute = AdminApiRouteImport.update({
   id: '/api',
   path: '/api',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAgentsRoute = AdminAgentsRouteImport.update({
@@ -864,6 +991,11 @@ const CrystalCruisesDestinationsSlugRoute =
     path: '/destinations/$slug',
     getParentRoute: () => CrystalCruisesRoute,
   } as any)
+const BookKindSlugRoute = BookKindSlugRouteImport.update({
+  id: '/book/$kind/$slug',
+  path: '/book/$kind/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountBookingIdRoute = AccountBookingIdRouteImport.update({
   id: '/booking/$id',
   path: '/booking/$id',
@@ -910,6 +1042,7 @@ export interface FileRoutesByFullPath {
   '/b2b': typeof B2bRouteWithChildren
   '/b2c': typeof B2cRoute
   '/buses': typeof BusesRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -931,6 +1064,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
+  '/portal': typeof PortalRouteWithChildren
   '/pre-purchased-flights': typeof PrePurchasedFlightsRoute
   '/privacy': typeof PrivacyRoute
   '/private-jets': typeof PrivateJetsRoute
@@ -964,6 +1098,7 @@ export interface FileRoutesByFullPath {
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -974,13 +1109,20 @@ export interface FileRoutesByFullPath {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/users': typeof AdminUsersRoute
+  '/agent/bookings': typeof AgentBookingsRoute
+  '/agent/clients': typeof AgentClientsRoute
+  '/agent/collateral': typeof AgentCollateralRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
+  '/agent/training': typeof AgentTrainingRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
   '/crystal-cruises/quote': typeof CrystalCruisesQuoteRoute
   '/crystal-cruises/search': typeof CrystalCruisesSearchRoute
@@ -992,6 +1134,15 @@ export interface FileRoutesByFullPath {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/empty-legs': typeof PrivateAviationEmptyLegsRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -1009,6 +1160,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/b2b/': typeof B2bIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/cruises/': typeof CruisesIndexRoute
   '/crystal-cruises/': typeof CrystalCruisesIndexRoute
   '/cultural/': typeof CulturalIndexRoute
@@ -1019,6 +1171,7 @@ export interface FileRoutesByFullPath {
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
+  '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
   '/river-cruises/': typeof RiverCruisesIndexRoute
   '/safari/': typeof SafariIndexRoute
@@ -1033,6 +1186,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
@@ -1054,6 +1208,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/b2c': typeof B2cRoute
   '/buses': typeof BusesRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -1087,6 +1242,7 @@ export interface FileRoutesByTo {
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -1097,13 +1253,20 @@ export interface FileRoutesByTo {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/users': typeof AdminUsersRoute
+  '/agent/bookings': typeof AgentBookingsRoute
+  '/agent/clients': typeof AgentClientsRoute
+  '/agent/collateral': typeof AgentCollateralRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
+  '/agent/training': typeof AgentTrainingRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
   '/crystal-cruises/quote': typeof CrystalCruisesQuoteRoute
   '/crystal-cruises/search': typeof CrystalCruisesSearchRoute
@@ -1114,6 +1277,15 @@ export interface FileRoutesByTo {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/empty-legs': typeof PrivateAviationEmptyLegsRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -1131,6 +1303,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/agent': typeof AgentIndexRoute
   '/b2b': typeof B2bIndexRoute
+  '/blog': typeof BlogIndexRoute
   '/cruises': typeof CruisesIndexRoute
   '/crystal-cruises': typeof CrystalCruisesIndexRoute
   '/cultural': typeof CulturalIndexRoute
@@ -1141,6 +1314,7 @@ export interface FileRoutesByTo {
   '/insurance': typeof InsuranceIndexRoute
   '/journeys': typeof JourneysIndexRoute
   '/polar-expeditions': typeof PolarExpeditionsIndexRoute
+  '/portal': typeof PortalIndexRoute
   '/rail': typeof RailIndexRoute
   '/river-cruises': typeof RiverCruisesIndexRoute
   '/safari': typeof SafariIndexRoute
@@ -1155,6 +1329,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
@@ -1180,6 +1355,7 @@ export interface FileRoutesById {
   '/b2b': typeof B2bRouteWithChildren
   '/b2c': typeof B2cRoute
   '/buses': typeof BusesRoute
+  '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
@@ -1201,6 +1377,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/membership': typeof MembershipRoute
   '/polar-expeditions': typeof PolarExpeditionsRouteWithChildren
+  '/portal': typeof PortalRouteWithChildren
   '/pre-purchased-flights': typeof PrePurchasedFlightsRoute
   '/privacy': typeof PrivacyRoute
   '/private-jets': typeof PrivateJetsRoute
@@ -1234,6 +1411,7 @@ export interface FileRoutesById {
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -1244,13 +1422,20 @@ export interface FileRoutesById {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/users': typeof AdminUsersRoute
+  '/agent/bookings': typeof AgentBookingsRoute
+  '/agent/clients': typeof AgentClientsRoute
+  '/agent/collateral': typeof AgentCollateralRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
+  '/agent/training': typeof AgentTrainingRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/cruises/$slug': typeof CruisesSlugRoute
   '/crystal-cruises/quote': typeof CrystalCruisesQuoteRoute
   '/crystal-cruises/search': typeof CrystalCruisesSearchRoute
@@ -1262,6 +1447,15 @@ export interface FileRoutesById {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/notifications': typeof PortalNotificationsRoute
+  '/portal/preferences': typeof PortalPreferencesRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/reviews': typeof PortalReviewsRoute
+  '/portal/security': typeof PortalSecurityRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/portal/travelers': typeof PortalTravelersRoute
+  '/portal/wishlist': typeof PortalWishlistRoute
   '/private-aviation/empty-legs': typeof PrivateAviationEmptyLegsRoute
   '/rail/$slug': typeof RailSlugRoute
   '/river-cruises/$slug': typeof RiverCruisesSlugRoute
@@ -1279,6 +1473,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/b2b/': typeof B2bIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/cruises/': typeof CruisesIndexRoute
   '/crystal-cruises/': typeof CrystalCruisesIndexRoute
   '/cultural/': typeof CulturalIndexRoute
@@ -1289,6 +1484,7 @@ export interface FileRoutesById {
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
+  '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
   '/river-cruises/': typeof RiverCruisesIndexRoute
   '/safari/': typeof SafariIndexRoute
@@ -1303,6 +1499,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
@@ -1330,6 +1527,7 @@ export interface FileRouteTypes {
     | '/b2b'
     | '/b2c'
     | '/buses'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -1351,6 +1549,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/membership'
     | '/polar-expeditions'
+    | '/portal'
     | '/pre-purchased-flights'
     | '/privacy'
     | '/private-jets'
@@ -1384,6 +1583,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
+    | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
     | '/admin/bookings'
@@ -1394,13 +1594,20 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
     | '/admin/users'
+    | '/agent/bookings'
+    | '/agent/clients'
+    | '/agent/collateral'
+    | '/agent/commissions'
     | '/agent/signup'
+    | '/agent/training'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
+    | '/blog/$slug'
     | '/cruises/$slug'
     | '/crystal-cruises/quote'
     | '/crystal-cruises/search'
@@ -1412,6 +1619,15 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/empty-legs'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -1429,6 +1645,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/agent/'
     | '/b2b/'
+    | '/blog/'
     | '/cruises/'
     | '/crystal-cruises/'
     | '/cultural/'
@@ -1439,6 +1656,7 @@ export interface FileRouteTypes {
     | '/insurance/'
     | '/journeys/'
     | '/polar-expeditions/'
+    | '/portal/'
     | '/rail/'
     | '/river-cruises/'
     | '/safari/'
@@ -1453,6 +1671,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/book/$kind/$slug'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
@@ -1474,6 +1693,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/b2c'
     | '/buses'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -1507,6 +1727,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
+    | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
     | '/admin/bookings'
@@ -1517,13 +1738,20 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
     | '/admin/users'
+    | '/agent/bookings'
+    | '/agent/clients'
+    | '/agent/collateral'
+    | '/agent/commissions'
     | '/agent/signup'
+    | '/agent/training'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
+    | '/blog/$slug'
     | '/cruises/$slug'
     | '/crystal-cruises/quote'
     | '/crystal-cruises/search'
@@ -1534,6 +1762,15 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/empty-legs'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -1551,6 +1788,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/b2b'
+    | '/blog'
     | '/cruises'
     | '/crystal-cruises'
     | '/cultural'
@@ -1561,6 +1799,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/journeys'
     | '/polar-expeditions'
+    | '/portal'
     | '/rail'
     | '/river-cruises'
     | '/safari'
@@ -1575,6 +1814,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/book/$kind/$slug'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
@@ -1599,6 +1839,7 @@ export interface FileRouteTypes {
     | '/b2b'
     | '/b2c'
     | '/buses'
+    | '/checkout'
     | '/concierge'
     | '/contact'
     | '/cookies'
@@ -1620,6 +1861,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/membership'
     | '/polar-expeditions'
+    | '/portal'
     | '/pre-purchased-flights'
     | '/privacy'
     | '/private-jets'
@@ -1653,6 +1895,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
+    | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
     | '/admin/bookings'
@@ -1663,13 +1906,20 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
     | '/admin/users'
+    | '/agent/bookings'
+    | '/agent/clients'
+    | '/agent/collateral'
+    | '/agent/commissions'
     | '/agent/signup'
+    | '/agent/training'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
+    | '/blog/$slug'
     | '/cruises/$slug'
     | '/crystal-cruises/quote'
     | '/crystal-cruises/search'
@@ -1681,6 +1931,15 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
+    | '/portal/documents'
+    | '/portal/notifications'
+    | '/portal/preferences'
+    | '/portal/profile'
+    | '/portal/reviews'
+    | '/portal/security'
+    | '/portal/support'
+    | '/portal/travelers'
+    | '/portal/wishlist'
     | '/private-aviation/empty-legs'
     | '/rail/$slug'
     | '/river-cruises/$slug'
@@ -1698,6 +1957,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/agent/'
     | '/b2b/'
+    | '/blog/'
     | '/cruises/'
     | '/crystal-cruises/'
     | '/cultural/'
@@ -1708,6 +1968,7 @@ export interface FileRouteTypes {
     | '/insurance/'
     | '/journeys/'
     | '/polar-expeditions/'
+    | '/portal/'
     | '/rail/'
     | '/river-cruises/'
     | '/safari/'
@@ -1722,6 +1983,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/book/$kind/$slug'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
@@ -1748,6 +2010,7 @@ export interface RootRouteChildren {
   B2bRoute: typeof B2bRouteWithChildren
   B2cRoute: typeof B2cRoute
   BusesRoute: typeof BusesRoute
+  CheckoutRoute: typeof CheckoutRoute
   ConciergeRoute: typeof ConciergeRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
@@ -1769,6 +2032,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   MembershipRoute: typeof MembershipRoute
   PolarExpeditionsRoute: typeof PolarExpeditionsRouteWithChildren
+  PortalRoute: typeof PortalRouteWithChildren
   PrePurchasedFlightsRoute: typeof PrePurchasedFlightsRoute
   PrivacyRoute: typeof PrivacyRoute
   PrivateJetsRoute: typeof PrivateJetsRoute
@@ -1795,10 +2059,13 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  BookKindSlugRoute: typeof BookKindSlugRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
 }
 
@@ -1965,6 +2232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrePurchasedFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/polar-expeditions': {
       id: '/polar-expeditions'
       path: '/polar-expeditions'
@@ -2110,6 +2384,13 @@ declare module '@tanstack/react-router' {
       path: '/concierge'
       fullPath: '/concierge'
       preLoaderRoute: typeof ConciergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buses': {
@@ -2259,6 +2540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RailIndexRouteImport
       parentRoute: typeof RailRoute
     }
+    '/portal/': {
+      id: '/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/polar-expeditions/': {
       id: '/polar-expeditions/'
       path: '/'
@@ -2328,6 +2616,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cruises/'
       preLoaderRoute: typeof CruisesIndexRouteImport
       parentRoute: typeof CruisesRoute
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/b2b/': {
       id: '/b2b/'
@@ -2448,6 +2743,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateAviationEmptyLegsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/wishlist': {
+      id: '/portal/wishlist'
+      path: '/wishlist'
+      fullPath: '/portal/wishlist'
+      preLoaderRoute: typeof PortalWishlistRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/travelers': {
+      id: '/portal/travelers'
+      path: '/travelers'
+      fullPath: '/portal/travelers'
+      preLoaderRoute: typeof PortalTravelersRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/support': {
+      id: '/portal/support'
+      path: '/support'
+      fullPath: '/portal/support'
+      preLoaderRoute: typeof PortalSupportRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/security': {
+      id: '/portal/security'
+      path: '/security'
+      fullPath: '/portal/security'
+      preLoaderRoute: typeof PortalSecurityRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/reviews': {
+      id: '/portal/reviews'
+      path: '/reviews'
+      fullPath: '/portal/reviews'
+      preLoaderRoute: typeof PortalReviewsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/profile': {
+      id: '/portal/profile'
+      path: '/profile'
+      fullPath: '/portal/profile'
+      preLoaderRoute: typeof PortalProfileRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/preferences': {
+      id: '/portal/preferences'
+      path: '/preferences'
+      fullPath: '/portal/preferences'
+      preLoaderRoute: typeof PortalPreferencesRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/notifications': {
+      id: '/portal/notifications'
+      path: '/notifications'
+      fullPath: '/portal/notifications'
+      preLoaderRoute: typeof PortalNotificationsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/documents': {
+      id: '/portal/documents'
+      path: '/documents'
+      fullPath: '/portal/documents'
+      preLoaderRoute: typeof PortalDocumentsRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/polar-expeditions/$slug': {
       id: '/polar-expeditions/$slug'
       path: '/$slug'
@@ -2525,6 +2883,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CruisesSlugRouteImport
       parentRoute: typeof CruisesRoute
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/b2b/team': {
       id: '/b2b/team'
       path: '/team'
@@ -2546,11 +2911,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof B2bPoliciesRouteImport
       parentRoute: typeof B2bRoute
     }
+    '/agent/training': {
+      id: '/agent/training'
+      path: '/training'
+      fullPath: '/agent/training'
+      preLoaderRoute: typeof AgentTrainingRouteImport
+      parentRoute: typeof AgentRoute
+    }
     '/agent/signup': {
       id: '/agent/signup'
       path: '/signup'
       fullPath: '/agent/signup'
       preLoaderRoute: typeof AgentSignupRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/commissions': {
+      id: '/agent/commissions'
+      path: '/commissions'
+      fullPath: '/agent/commissions'
+      preLoaderRoute: typeof AgentCommissionsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/collateral': {
+      id: '/agent/collateral'
+      path: '/collateral'
+      fullPath: '/agent/collateral'
+      preLoaderRoute: typeof AgentCollateralRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/clients': {
+      id: '/agent/clients'
+      path: '/clients'
+      fullPath: '/agent/clients'
+      preLoaderRoute: typeof AgentClientsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/bookings': {
+      id: '/agent/bookings'
+      path: '/bookings'
+      fullPath: '/agent/bookings'
+      preLoaderRoute: typeof AgentBookingsRouteImport
       parentRoute: typeof AgentRoute
     }
     '/admin/users': {
@@ -2572,6 +2972,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/seo': {
+      id: '/admin/seo'
+      path: '/seo'
+      fullPath: '/admin/seo'
+      preLoaderRoute: typeof AdminSeoRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/payments': {
@@ -2642,6 +3049,13 @@ declare module '@tanstack/react-router' {
       path: '/api'
       fullPath: '/admin/api'
       preLoaderRoute: typeof AdminApiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/agents': {
@@ -2784,6 +3198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrystalCruisesDestinationsSlugRouteImport
       parentRoute: typeof CrystalCruisesRoute
     }
+    '/book/$kind/$slug': {
+      id: '/book/$kind/$slug'
+      path: '/book/$kind/$slug'
+      fullPath: '/book/$kind/$slug'
+      preLoaderRoute: typeof BookKindSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/booking/$id': {
       id: '/account/booking/$id'
       path: '/booking/$id'
@@ -2856,6 +3277,7 @@ const AccountRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminAgentsRoute: typeof AdminAgentsRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApiRoute: typeof AdminApiRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
@@ -2866,6 +3288,7 @@ interface AdminRouteChildren {
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -2874,6 +3297,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgentsRoute: AdminAgentsRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApiRoute: AdminApiRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminBookingsRoute: AdminBookingsRoute,
@@ -2884,6 +3308,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -2893,12 +3318,22 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AgentRouteChildren {
+  AgentBookingsRoute: typeof AgentBookingsRoute
+  AgentClientsRoute: typeof AgentClientsRoute
+  AgentCollateralRoute: typeof AgentCollateralRoute
+  AgentCommissionsRoute: typeof AgentCommissionsRoute
   AgentSignupRoute: typeof AgentSignupRoute
+  AgentTrainingRoute: typeof AgentTrainingRoute
   AgentIndexRoute: typeof AgentIndexRoute
 }
 
 const AgentRouteChildren: AgentRouteChildren = {
+  AgentBookingsRoute: AgentBookingsRoute,
+  AgentClientsRoute: AgentClientsRoute,
+  AgentCollateralRoute: AgentCollateralRoute,
+  AgentCommissionsRoute: AgentCommissionsRoute,
   AgentSignupRoute: AgentSignupRoute,
+  AgentTrainingRoute: AgentTrainingRoute,
   AgentIndexRoute: AgentIndexRoute,
 }
 
@@ -3098,6 +3533,35 @@ const PolarExpeditionsRouteChildren: PolarExpeditionsRouteChildren = {
 const PolarExpeditionsRouteWithChildren =
   PolarExpeditionsRoute._addFileChildren(PolarExpeditionsRouteChildren)
 
+interface PortalRouteChildren {
+  PortalDocumentsRoute: typeof PortalDocumentsRoute
+  PortalNotificationsRoute: typeof PortalNotificationsRoute
+  PortalPreferencesRoute: typeof PortalPreferencesRoute
+  PortalProfileRoute: typeof PortalProfileRoute
+  PortalReviewsRoute: typeof PortalReviewsRoute
+  PortalSecurityRoute: typeof PortalSecurityRoute
+  PortalSupportRoute: typeof PortalSupportRoute
+  PortalTravelersRoute: typeof PortalTravelersRoute
+  PortalWishlistRoute: typeof PortalWishlistRoute
+  PortalIndexRoute: typeof PortalIndexRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalDocumentsRoute: PortalDocumentsRoute,
+  PortalNotificationsRoute: PortalNotificationsRoute,
+  PortalPreferencesRoute: PortalPreferencesRoute,
+  PortalProfileRoute: PortalProfileRoute,
+  PortalReviewsRoute: PortalReviewsRoute,
+  PortalSecurityRoute: PortalSecurityRoute,
+  PortalSupportRoute: PortalSupportRoute,
+  PortalTravelersRoute: PortalTravelersRoute,
+  PortalWishlistRoute: PortalWishlistRoute,
+  PortalIndexRoute: PortalIndexRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
+
 interface RailRouteChildren {
   RailSlugRoute: typeof RailSlugRoute
   RailIndexRoute: typeof RailIndexRoute
@@ -3260,6 +3724,7 @@ const rootRouteChildren: RootRouteChildren = {
   B2bRoute: B2bRouteWithChildren,
   B2cRoute: B2cRoute,
   BusesRoute: BusesRoute,
+  CheckoutRoute: CheckoutRoute,
   ConciergeRoute: ConciergeRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
@@ -3281,6 +3746,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   MembershipRoute: MembershipRoute,
   PolarExpeditionsRoute: PolarExpeditionsRouteWithChildren,
+  PortalRoute: PortalRouteWithChildren,
   PrePurchasedFlightsRoute: PrePurchasedFlightsRoute,
   PrivacyRoute: PrivacyRoute,
   PrivateJetsRoute: PrivateJetsRoute,
@@ -3308,10 +3774,13 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ActivitiesCodeRoute: ActivitiesCodeRoute,
+  BlogSlugRoute: BlogSlugRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
+  BlogIndexRoute: BlogIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  BookKindSlugRoute: BookKindSlugRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
 }
 export const routeTree = rootRouteImport
