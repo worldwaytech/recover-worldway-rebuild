@@ -82,7 +82,11 @@ function FlightsPage() {
     } else if (!origin || !destination || !depart) {
       setError("Please fill origin, destination and departure date.");
       return;
+    } else if (trip === "round_trip" && !ret) {
+      setError("Please pick a return date, or switch to One Way.");
+      return;
     }
+
     setLoading(true);
     setData(null);
     setOffers([]);

@@ -60,6 +60,9 @@ export function AirportAutocomplete({
         required={required}
         placeholder={placeholder}
         autoComplete="off"
+        role="combobox"
+        aria-expanded={open && rows.length > 0}
+        aria-autocomplete="list"
         onChange={(e) => {
           setText(e.target.value);
           setOpen(true);
@@ -69,9 +72,12 @@ export function AirportAutocomplete({
         className={inputClass}
       />
       {open && rows.length > 0 ? (
-        <ul className="absolute z-40 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-border/70 bg-card/95 p-1 text-xs shadow-2xl backdrop-blur-xl">
+        <ul
+          role="listbox"
+          className="absolute z-40 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-border/70 bg-card/95 p-1 text-xs shadow-2xl backdrop-blur-xl"
+        >
           {rows.map((r) => (
-            <li key={`${r.iata}-${r.name}`}>
+            <li key={`${r.iata}-${r.name}`} role="option" aria-selected={false}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
@@ -92,6 +98,7 @@ export function AirportAutocomplete({
           ))}
         </ul>
       ) : null}
+
     </div>
   );
 }
