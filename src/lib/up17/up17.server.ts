@@ -772,7 +772,11 @@ export async function up17SearchHotels(
     CheckOutDate: checkOut,
     NoOfNights: nights,
     DestinationCityId: city.cityId,
-    GuestNationality: input.nationality ?? city.countryCode,
+    // UP17 is an India-based consolidator: rates are contracted against an
+    // Indian guest nationality. Passing the destination country here returns
+    // "no result found" for most international cities (e.g. Dubai/AE).
+    GuestNationality: input.nationality ?? "IN",
+
     NoOfRooms: rooms,
     MinRating: input.min_rating ?? 1,
     MaxRating: input.max_rating ?? 5,
