@@ -904,43 +904,70 @@ export type Up17BusSearchResponse = {
 
 function normalizeBus(raw: Rec): Up17BusOffer {
   const rec = asRec(raw);
-  const fare = asRec(pick(rec, ["Fare", "fare"]));
-  const segmentsRaw = pick(rec, ["Segments", "segments"]);
-  const segments: Up17BusSegment[] = Array.isArray(segmentsRaw)
-    ? (segmentsRaw as Rec[]).map((s) => ({
-        operator: str(pick(s, ["Operator", "operator", "TravelsName"])),
-        busType: str(pick(s, ["BusType", "busType", "VehicleType"])),
-        vehicleNumber: str(pick(s, ["VehicleNumber", "vehicleNumber"])),
-        origin: str(pick(s, ["Origin", "origin", "Source"])),
-        destination: str(pick(s, ["Destination", "destination", "DestinationName"])),
-        departure: str(pick(s, ["DepTime", "DepartureTime", "departure"])) || null,
-        arrival: str(pick(s, ["ArrTime", "ArrivalTime", "arrival"])) || null,
-        durationMin: num(pick(s, ["Duration", "duration"])),
-        seatsAvailable: num(pick(s, ["AvailableSeats", "seatsAvailable", "Seats"])),
-        amenities: Array.isArray(pick(s, ["Amenities", "amenities"]))
-          ? (pick(s, ["Amenities", "amenities"]) as unknown[]).filter((x): x is string => typeof x === "string")
-          : [],
-      }))
+  // UP17 bus search returns a flat record: TravelName / BusType / DepartureTime /
+  // ArrivalTime / AvailableSeats / BusPrice{...} plus boarding & dropping points.
+  const fare = asRec(pick(rec, ["BusPrice", "Fare", "fare"]));
+  const boarding = pick(rec, ["BoardingPointsDetails"]);
+  const dropping = pick(rec, ["DroppingPointsDetails"]);
+  const boardRows = Array.isArray(boarding) ? (boarding as Rec[]) : [];
+  const dropRows = Array.isArray(dropping) ? (dropping as Rec[]) : [];
+  const departure =
+    str(pick(rec, ["DepartureTime", "DepTime"])) ||
+    str(pick(boardRows[0] ?? {}, ["CityPointTime"])) ||
+    "";
+  const arrival =
+    str(pick(rec, ["ArrivalTime", "ArrTime"])) ||
+    str(pick(dropRows[dropRows.length - 1] ?? {}, ["CityPointTime"])) ||
+    "";
+  const depMs = departure ? new Date(departure).getTime() : NaN;
+  const arrMs = arrival ? new Date(arrival).getTime() : NaN;
+  const durationMin =
+    Number.isFinite(depMs) && Number.isFinite(arrMs) && arrMs > depMs
+      ? Math.round((arrMs - depMs) / 60000)
+      : num(pick(rec, ["Duration", "duration"]));
+  const segments: Up17BusSegment[] = boardRows.length
+    ? [
+        {
+          operator: str(pick(rec, ["TravelName", "TravelsName", "Operator"])),
+          busType: str(pick(rec, ["BusType", "busType"])),
+          origin: str(pick(boardRows[0], ["CityPointName"])),
+          destination: str(pick(dropRows[dropRows.length - 1] ?? {}, ["CityPointName"])),
+          departure: departure || null,
+          arrival: arrival || null,
+          durationMin,
+          seatsAvailable: num(pick(rec, ["AvailableSeats"])),
+          amenities: [],
+        },
+      ]
     : [];
-  const first = segments[0];
+  const amenities = [
+    pick(rec, ["LiveTrackingAvailable"]) ? "Live tracking" : "",
+    pick(rec, ["MTicketEnabled"]) ? "M-ticket" : "",
+    pick(rec, ["IdProofRequired"]) ? "ID proof required" : "",
+    pick(rec, ["PartialCancellationAllowed"]) ? "Partial cancellation" : "",
+    str(pick(rec, ["ServiceName"])),
+  ].filter(Boolean);
+  const policies = pick(rec, ["CancellationPolicies"]);
   return {
     resultIndex: str(pick(rec, ["ResultIndex", "resultIndex"])),
-    operator: first?.operator || str(pick(rec, ["Operator", "operator", "TravelsName"])),
-    busType: first?.busType || str(pick(rec, ["BusType", "busType"])),
-    origin: first?.origin || str(pick(rec, ["Origin", "origin"])),
-    destination: first?.destination || str(pick(rec, ["Destination", "destination"])),
-    departure: first?.departure || null,
-    arrival: first?.arrival || null,
-    durationMin: first?.durationMin ?? num(pick(rec, ["Duration", "duration"])),
-    price: num(pick(fare, ["PublishedFare", "OfferedFare", "TotalFare", "Price"])),
+    operator: str(pick(rec, ["TravelName", "TravelsName", "Operator", "operator"])),
+    busType: str(pick(rec, ["BusType", "busType"])),
+    origin: str(pick(boardRows[0] ?? {}, ["CityPointName"])),
+    destination: str(pick(dropRows[dropRows.length - 1] ?? {}, ["CityPointName"])),
+    departure: departure || null,
+    arrival: arrival || null,
+    durationMin,
+    price:
+      num(pick(fare, ["OfferedPrice", "PublishedPrice", "PublishedFare", "TotalFare", "Price"])) ??
+      num(pick(fare, ["BasePrice"])),
     currency: str(pick(fare, ["Currency", "CurrencyCode"])) || "INR",
-    seatsAvailable:
-      first?.seatsAvailable ?? num(pick(rec, ["AvailableSeats", "seatsAvailable", "Seats"])),
-    refundable: Boolean(pick(rec, ["IsRefundable", "isRefundable"])),
-    amenities: first?.amenities ?? [],
+    seatsAvailable: num(pick(rec, ["AvailableSeats", "seatsAvailable", "Seats"])),
+    refundable: Array.isArray(policies) ? policies.length > 0 : Boolean(pick(rec, ["IsRefundable"])),
+    amenities,
     segments,
   };
 }
+
 
 export async function up17SearchBuses(
   input: Up17BusSearchInput,
