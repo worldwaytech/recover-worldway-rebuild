@@ -2,6 +2,12 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { up17HotelDetailLookup } from "@/lib/up17/up17.functions";
 
+/** Supplier CDNs 403 browser-origin requests; stream them through our proxy. */
+function proxied(url: string): string {
+  if (!/^https?:\/\//.test(url)) return url;
+  return `/api/public/supplier-image?url=${encodeURIComponent(url)}`;
+}
+
 type Room = {
   roomType: string;
   boardBasis: string;
@@ -227,7 +233,7 @@ function HotelCard({ hotel, token }: { hotel: Hotel; token: string | null }) {
       <div className="relative aspect-[16/9] w-full bg-muted/40">
         {cover && !imgFailed ? (
           <img
-            src={cover}
+            src={proxied(cover)}
             alt={`${hotel.name} — ${hotel.city}`}
             loading="lazy"
             onError={() => setImgFailed(true)}
@@ -331,7 +337,7 @@ function HotelCard({ hotel, token }: { hotel: Hotel; token: string | null }) {
                 {gallery.slice(1, 7).map((src) => (
                   <img
                     key={src}
-                    src={src}
+                    src={proxied(src)}
                     alt={`${hotel.name} gallery image`}
                     loading="lazy"
                     className="h-20 w-32 shrink-0 rounded-md object-cover"
