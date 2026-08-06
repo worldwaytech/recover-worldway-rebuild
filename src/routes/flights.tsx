@@ -34,7 +34,7 @@ const TRIP_TABS: { key: Trip; label: string }[] = [
 
 function FlightsPage() {
   const runFlightSearch = useServerFn(up17FlightSearch);
-  const [trip, setTrip] = useState<Trip>("round_trip");
+  const [trip, setTrip] = useState<Trip>("one_way");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [depart, setDepart] = useState("");
