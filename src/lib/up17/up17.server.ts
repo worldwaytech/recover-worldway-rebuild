@@ -871,9 +871,23 @@ export type Up17BusSegment = {
   amenities: string[];
 };
 
+export type Up17BusPoint = {
+  name: string;
+  location: string;
+  time: string | null;
+};
+
+export type Up17BusCancellationRule = {
+  policy: string;
+  charge: number | null;
+  /** 1 = flat amount, 2 = percentage of fare (UP17 convention). */
+  chargeType: number | null;
+};
+
 export type Up17BusOffer = {
   resultIndex: string;
   operator: string;
+  serviceName: string;
   busType: string;
   origin: string;
   destination: string;
@@ -881,10 +895,16 @@ export type Up17BusOffer = {
   arrival: string | null;
   durationMin: number | null;
   price: number | null;
+  basePrice: number | null;
+  tax: number | null;
   currency: string;
   seatsAvailable: number | null;
+  maxSeatsPerTicket: number | null;
   refundable: boolean;
   amenities: string[];
+  boardingPoints: Up17BusPoint[];
+  droppingPoints: Up17BusPoint[];
+  cancellationPolicies: Up17BusCancellationRule[];
   segments: Up17BusSegment[];
 };
 
@@ -948,9 +968,17 @@ function normalizeBus(raw: Rec): Up17BusOffer {
     str(pick(rec, ["ServiceName"])),
   ].filter(Boolean);
   const policies = pick(rec, ["CancellationPolicies"]);
+  const policyRows = Array.isArray(policies) ? (policies as Rec[]) : [];
+  const toPoints = (rows: Rec[]): Up17BusPoint[] =>
+    rows.map((r) => ({
+      name: str(pick(r, ["CityPointName"])),
+      location: str(pick(r, ["CityPointLocation"])),
+      time: str(pick(r, ["CityPointTime"])) || null,
+    }));
   return {
     resultIndex: str(pick(rec, ["ResultIndex", "resultIndex"])),
     operator: str(pick(rec, ["TravelName", "TravelsName", "Operator", "operator"])),
+    serviceName: str(pick(rec, ["ServiceName"])),
     busType: str(pick(rec, ["BusType", "busType"])),
     origin: str(pick(boardRows[0] ?? {}, ["CityPointName"])),
     destination: str(pick(dropRows[dropRows.length - 1] ?? {}, ["CityPointName"])),
@@ -960,10 +988,20 @@ function normalizeBus(raw: Rec): Up17BusOffer {
     price:
       num(pick(fare, ["OfferedPrice", "PublishedPrice", "PublishedFare", "TotalFare", "Price"])) ??
       num(pick(fare, ["BasePrice"])),
+    basePrice: num(pick(fare, ["BasePrice"])),
+    tax: num(pick(fare, ["Tax"])),
     currency: str(pick(fare, ["Currency", "CurrencyCode"])) || "INR",
     seatsAvailable: num(pick(rec, ["AvailableSeats", "seatsAvailable", "Seats"])),
-    refundable: Array.isArray(policies) ? policies.length > 0 : Boolean(pick(rec, ["IsRefundable"])),
+    maxSeatsPerTicket: num(pick(rec, ["MaxSeatsPerTicket"])),
+    refundable: policyRows.length > 0 || Boolean(pick(rec, ["IsRefundable"])),
     amenities,
+    boardingPoints: toPoints(boardRows),
+    droppingPoints: toPoints(dropRows),
+    cancellationPolicies: policyRows.map((r) => ({
+      policy: str(pick(r, ["PolicyString"])),
+      charge: num(pick(r, ["CancellationCharge"])),
+      chargeType: num(pick(r, ["CancellationChargeType"])),
+    })),
     segments,
   };
 }
