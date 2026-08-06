@@ -871,9 +871,23 @@ export type Up17BusSegment = {
   amenities: string[];
 };
 
+export type Up17BusPoint = {
+  name: string;
+  location: string;
+  time: string | null;
+};
+
+export type Up17BusCancellationRule = {
+  policy: string;
+  charge: number | null;
+  /** 1 = flat amount, 2 = percentage of fare (UP17 convention). */
+  chargeType: number | null;
+};
+
 export type Up17BusOffer = {
   resultIndex: string;
   operator: string;
+  serviceName: string;
   busType: string;
   origin: string;
   destination: string;
@@ -881,10 +895,16 @@ export type Up17BusOffer = {
   arrival: string | null;
   durationMin: number | null;
   price: number | null;
+  basePrice: number | null;
+  tax: number | null;
   currency: string;
   seatsAvailable: number | null;
+  maxSeatsPerTicket: number | null;
   refundable: boolean;
   amenities: string[];
+  boardingPoints: Up17BusPoint[];
+  droppingPoints: Up17BusPoint[];
+  cancellationPolicies: Up17BusCancellationRule[];
   segments: Up17BusSegment[];
 };
 
