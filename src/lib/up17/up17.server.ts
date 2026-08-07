@@ -1070,3 +1070,187 @@ export async function up17SearchBuses(
   const buses = rawBuses.map(normalizeBus);
   return { ok: true, status: res.status, data: { searchTokenId: token, buses, count: buses.length } };
 }
+
+// ---------------------------------------------------------- flight booking
+
+export type Up17FareConfirmation = {
+  priceChanged: boolean;
+  isLcc: boolean;
+  refundable: boolean | null;
+  resultIndex: string;
+  currency: string;
+  total: number | null;
+  base: number | null;
+  tax: number | null;
+  changeNote: string | null;
+};
+
+export async function up17ConfirmFare(args: {
+  resultIndex: string;
+  searchTokenId: string;
+}): Promise<Up17Result<Up17FareConfirmation>> {
+  const res = await callUp17<unknown>("/airservice/rest/fareconfirmation", {
+    ResultIndex: args.resultIndex,
+    SearchTokenId: args.searchTokenId,
+  });
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  const root = asRec(res.data);
+  const result = asRec(pick(root, ["Result", "result"]));
+  const fareRec = asRec(pick(result, ["Fare", "fare"]));
+  const base = num(pick(fareRec, ["BaseFare", "Base"]));
+  const tax = num(pick(fareRec, ["Tax", "TotalTax"]));
+  const total =
+    num(pick(fareRec, ["OfferedPrice", "PublishedPrice"])) ??
+    (base !== null ? base + (tax ?? 0) : null);
+  const changed = pick(root, ["IsPriceChanged"]);
+  return {
+    ok: true,
+    status: res.status,
+    data: {
+      priceChanged: changed === true,
+      isLcc: pick(result, ["IsLCC"]) === true,
+      refundable:
+        typeof pick(result, ["IsRefundable"]) === "boolean"
+          ? (pick(result, ["IsRefundable"]) as boolean)
+          : null,
+      resultIndex: str(pick(result, ["ResultIndex"])) || args.resultIndex,
+      currency: str(pick(fareRec, ["Currency", "CurrencyCode"])) || "INR",
+      total,
+      base,
+      tax,
+      changeNote: str(pick(root, ["FlightDetailChangeInfo"])) || null,
+    },
+  };
+}
+
+export type Up17Passenger = {
+  title: string;
+  first_name: string;
+  last_name: string;
+  pax_type: 1 | 2 | 3;
+  date_of_birth: string;
+  gender: 1 | 2;
+  nationality: string;
+  address_line1: string;
+  city: string;
+  country_code: string;
+  contact_no: string;
+  email: string;
+  is_lead: boolean;
+  passport_no?: string;
+  passport_expiry?: string;
+  passport_issue?: string;
+  pan?: string;
+  baggage_codes?: string[];
+  meal_codes?: string[];
+};
+
+export type Up17FlightBooking = {
+  bookingId: string | null;
+  pnr: string | null;
+  status: string | null;
+  isTicketed: boolean;
+  currency: string;
+  total: number | null;
+  passengers: { name: string; ticketNumber: string | null }[];
+};
+
+const isoDateTime = (value?: string): string | undefined =>
+  value ? `${value.slice(0, 10)}T00:00:00` : undefined;
+
+function toBookPassenger(p: Up17Passenger, ssr: { baggage: unknown[]; meal: unknown[] }) {
+  return {
+    Title: p.title,
+    FirstName: p.first_name,
+    LastName: p.last_name,
+    PaxType: p.pax_type,
+    DateOfBirth: isoDateTime(p.date_of_birth),
+    Gender: p.gender,
+    PassportNo: p.passport_no ?? "",
+    PassportExpiry: isoDateTime(p.passport_expiry) ?? "",
+    PassportIssue: isoDateTime(p.passport_issue) ?? "",
+    Nationality: p.nationality.toUpperCase(),
+    PAN: p.pan ?? "",
+    AddressLine1: p.address_line1,
+    AddressLine2: "",
+    City: p.city,
+    CountryCode: p.country_code.toUpperCase(),
+    CountryName: p.country_code.toUpperCase() === "IN" ? "India" : "",
+    ContactNo: p.contact_no,
+    Email: p.email,
+    IsLeadPax: p.is_lead,
+    FFAirline: "",
+    FFNumber: "",
+    Baggage: ssr.baggage,
+    Meal: ssr.meal,
+    GSTCompanyAddress: "",
+    GSTCompanyContactNumber: "",
+    GSTCompanyName: "",
+    GSTNumber: "",
+    GSTCompanyEmail: "",
+  };
+}
+
+function normalizeBooking(data: unknown): Up17FlightBooking {
+  const root = asRec(data);
+  const result = asRec(pick(root, ["Result", "result"]));
+  const response = asRec(pick(result, ["Response", "FlightItinerary"]));
+  const itinerary = Object.keys(response).length > 0 ? response : result;
+  const fareRec = asRec(pick(itinerary, ["Fare", "fare"]));
+  const paxRaw = pick(itinerary, ["Passenger", "Passengers"]);
+  const passengers = Array.isArray(paxRaw)
+    ? paxRaw.map((raw) => {
+        const p = asRec(raw);
+        const ticket = asRec(pick(p, ["Ticket"]));
+        return {
+          name: [str(pick(p, ["FirstName"])), str(pick(p, ["LastName"]))]
+            .filter(Boolean)
+            .join(" "),
+          ticketNumber: str(pick(ticket, ["TicketNumber"])) || null,
+        };
+      })
+    : [];
+  const status = str(pick(itinerary, ["Status", "BookingStatus"])) || null;
+  return {
+    bookingId: str(pick(itinerary, ["BookingId"])) || str(pick(result, ["BookingId"])) || null,
+    pnr: str(pick(itinerary, ["PNR"])) || str(pick(result, ["PNR"])) || null,
+    status,
+    isTicketed: passengers.some((p) => p.ticketNumber),
+    currency: str(pick(fareRec, ["Currency", "CurrencyCode"])) || "INR",
+    total: num(pick(fareRec, ["OfferedPrice", "PublishedPrice"])),
+    passengers,
+  };
+}
+
+export async function up17BookFlight(args: {
+  resultIndex: string;
+  searchTokenId: string;
+  passengers: Up17Passenger[];
+}): Promise<Up17Result<Up17FlightBooking>> {
+  const res = await callUp17<unknown>("/airservice/rest/book", {
+    SearchTokenId: args.searchTokenId,
+    ResultIndex: args.resultIndex,
+    Passengers: args.passengers.map((p) =>
+      toBookPassenger(p, {
+        baggage: (p.baggage_codes ?? []).map((code) => ({ Code: code })),
+        meal: (p.meal_codes ?? []).map((code) => ({ Code: code })),
+      }),
+    ),
+  });
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  return { ok: true, status: res.status, data: normalizeBooking(res.data) };
+}
+
+export async function up17FlightBookingDetail(args: {
+  searchTokenId: string;
+  bookingId?: string;
+  pnr?: string;
+}): Promise<Up17Result<Up17FlightBooking>> {
+  const res = await callUp17<unknown>("/airservice/rest/getbookingdetail", {
+    SearchTokenId: args.searchTokenId,
+    BookingId: args.bookingId ?? "",
+    PNR: args.pnr ?? "",
+  });
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  return { ok: true, status: res.status, data: normalizeBooking(res.data) };
+}
