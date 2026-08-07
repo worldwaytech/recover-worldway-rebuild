@@ -182,3 +182,72 @@ export const up17BusSearch = createServerFn({ method: "POST" })
       count: res.data?.count ?? 0,
     };
   });
+
+const paxSchema = z.object({
+  title: z.enum(["Mr", "Mrs", "Ms", "Dr", "Mstr", "Miss"]),
+  first_name: z.string().trim().min(1).max(60),
+  last_name: z.string().trim().min(1).max(60),
+  pax_type: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  gender: z.union([z.literal(1), z.literal(2)]),
+  nationality: z.string().trim().length(2),
+  address_line1: z.string().trim().min(1).max(120),
+  city: z.string().trim().min(1).max(60),
+  country_code: z.string().trim().length(2),
+  contact_no: z.string().trim().min(6).max(20),
+  email: z.string().trim().email().max(120),
+  is_lead: z.boolean(),
+  passport_no: z.string().trim().max(20).optional(),
+  passport_expiry: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  passport_issue: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  pan: z.string().trim().max(12).optional(),
+  baggage_codes: z.array(z.string().trim().max(24)).max(8).optional(),
+  meal_codes: z.array(z.string().trim().max(24)).max(8).optional(),
+});
+
+export const up17ConfirmFlightFare = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        resultIndex: z.string().trim().min(1).max(200),
+        searchTokenId: z.string().trim().min(1).max(200),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17ConfirmFare } = await import("./up17.server");
+    const res = await up17ConfirmFare(data);
+    return { ok: res.ok, error: res.error, confirmation: res.data ?? null };
+  });
+
+export const up17BookFlightTicket = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        resultIndex: z.string().trim().min(1).max(200),
+        searchTokenId: z.string().trim().min(1).max(200),
+        passengers: z.array(paxSchema).min(1).max(9),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17BookFlight } = await import("./up17.server");
+    const res = await up17BookFlight(data);
+    return { ok: res.ok, error: res.error, booking: res.data ?? null };
+  });
+
+export const up17FlightBookingLookup = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        searchTokenId: z.string().trim().min(1).max(200),
+        bookingId: z.string().trim().max(60).optional(),
+        pnr: z.string().trim().max(20).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17FlightBookingDetail } = await import("./up17.server");
+    const res = await up17FlightBookingDetail(data);
+    return { ok: res.ok, error: res.error, booking: res.data ?? null };
+  });
