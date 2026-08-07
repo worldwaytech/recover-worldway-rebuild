@@ -29,16 +29,43 @@ export function up17Configured(): boolean {
   return up17Headers() !== null;
 }
 
+// UP17 binds every SearchTokenId to the IP that issued it, so follow-up calls
+// (fare confirmation, SSR, fare rules, book) must reuse the server's real
+// egress IP. Sending a placeholder makes UP17 reply "Invalid search token".
+let egressIp: string | null = null;
+let egressIpAt = 0;
+
+export async function up17ServerIp(): Promise<string> {
+  const fresh = Date.now() - egressIpAt < 30 * 60 * 1000;
+  if (egressIp && fresh) return egressIp;
+  try {
+    const res = await fetch("https://api.ipify.org", { signal: AbortSignal.timeout(4000) });
+    const text = (await res.text()).trim();
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(text)) {
+      egressIp = text;
+      egressIpAt = Date.now();
+      return text;
+    }
+  } catch {
+    // fall through to the previous value / placeholder
+  }
+  return egressIp ?? "1.1.1.1";
+}
+
 async function callUp17<T>(path: string, payload: unknown): Promise<Up17Result<T>> {
   const headers = up17Headers();
   if (!headers) {
     return { ok: false, status: 503, error: "UP17 API credentials are not configured" };
   }
   try {
+    const body =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? { ...(payload as Rec), UserIp: await up17ServerIp() }
+        : (payload ?? {});
     const res = await fetch(`${BASE}${path}`, {
       method: "POST",
       headers,
-      body: JSON.stringify(payload ?? {}),
+      body: JSON.stringify(body),
     });
     const text = await res.text();
     let data: unknown = null;
