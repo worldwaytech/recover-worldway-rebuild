@@ -314,7 +314,7 @@ function FlightsPage() {
         </form>
       </SearchCard>
       {offers.length ? (
-        <Up17FlightResults offers={offers} searchTokenId={token} />
+        <Up17FlightResults offers={offers} searchTokenId={token} passengerCount={passengers} />
       ) : (
         <ResultsPanel loading={loading} error={error} data={data} />
       )}
