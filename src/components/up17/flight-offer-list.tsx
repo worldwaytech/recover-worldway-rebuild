@@ -405,6 +405,7 @@ export function Up17FlightResults({
                 key={offer.resultIndex || `${offer.recommendedRank}`}
                 offer={offer}
                 searchTokenId={searchTokenId}
+                passengerCount={passengerCount}
               />
             ))
           ) : (
