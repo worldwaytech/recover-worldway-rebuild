@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { up17BaggageLookup, up17FareRuleLookup } from "@/lib/up17/up17.functions";
+import { FlightBookingDialog } from "@/components/up17/flight-booking-dialog";
 
 type Baggage = {
   tier: number;
@@ -156,9 +157,11 @@ function AirlineLogo({ offer, size = 40 }: { offer: Offer; size?: number }) {
 export function Up17FlightResults({
   offers,
   searchTokenId,
+  passengerCount = 1,
 }: {
   offers: Offer[];
   searchTokenId: string | null;
+  passengerCount?: number;
 }) {
   const [sort, setSort] = useState<Sort>("recommended");
   const [airlines, setAirlines] = useState<string[]>([]);
@@ -424,7 +427,15 @@ function FilterGroup({ title, children }: { title: string; children: React.React
   );
 }
 
-function OfferCard({ offer, searchTokenId }: { offer: Offer; searchTokenId: string | null }) {
+function OfferCard({
+  offer,
+  searchTokenId,
+  passengerCount,
+}: {
+  offer: Offer;
+  searchTokenId: string | null;
+  passengerCount: number;
+}) {
   const loadBaggage = useServerFn(up17BaggageLookup);
   const loadRules = useServerFn(up17FareRuleLookup);
   const [fareIndex, setFareIndex] = useState(0);
@@ -434,6 +445,7 @@ function OfferCard({ offer, searchTokenId }: { offer: Offer; searchTokenId: stri
   const [rules, setRules] = useState<{ title: string; text: string }[] | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   const fare = offer.fares[fareIndex] ?? offer.fares[0];
   const resultIndex = fare?.fareId || offer.resultIndex;
@@ -571,11 +583,25 @@ function OfferCard({ offer, searchTokenId }: { offer: Offer; searchTokenId: stri
         </button>
         <button
           type="button"
-          className="rounded-full bg-primary px-6 py-2.5 text-[11px] uppercase tracking-[0.25em] text-primary-foreground hover:opacity-90"
+          disabled={!searchTokenId || !resultIndex}
+          onClick={() => setBookingOpen(true)}
+          className="rounded-full bg-primary px-6 py-2.5 text-[11px] uppercase tracking-[0.25em] text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
           Select fare
         </button>
       </div>
+
+      <FlightBookingDialog
+        open={bookingOpen}
+        onClose={() => setBookingOpen(false)}
+        resultIndex={resultIndex}
+        searchTokenId={searchTokenId}
+        currency={currency}
+        total={fare?.fare.total ?? offer.fare.total}
+        summary={`${offer.origin} → ${offer.destination} · ${offer.airline || offer.airlineCode} ${offer.flightNumbers.join(" ")}`}
+        passengerCount={passengerCount}
+        {...(selected ? { baggageCode: selected } : {})}
+      />
 
       {loading ? (
         <p className="mt-2 text-[10px] text-muted-foreground">Loading airline baggage options…</p>
