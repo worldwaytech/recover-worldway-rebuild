@@ -200,19 +200,26 @@ function MembershipPage() {
             </ul>
             <button
               type="button"
-              onClick={() => choose(p.id)}
-              className={`mt-6 w-full rounded-full px-5 py-2.5 text-xs uppercase tracking-[0.25em] transition ${
+              onClick={() => void choose(p.id)}
+              disabled={busy}
+              className={`mt-6 w-full rounded-full px-5 py-2.5 text-xs uppercase tracking-[0.25em] transition disabled:opacity-60 ${
                 p.featured
                   ? "text-primary-foreground"
                   : "border border-border/60 text-foreground hover:border-primary hover:text-primary"
               }`}
               style={p.featured ? { background: "var(--gradient-gold)" } : undefined}
             >
-              {p.cta}
+              {busy && p.id !== "traveler" && p.id !== "enterprise" ? "Opening checkout…" : p.cta}
             </button>
           </div>
         ))}
       </section>
+      {payError ? (
+        <p className="mx-auto mt-6 max-w-3xl px-6 text-center text-xs text-destructive">
+          {payError}
+        </p>
+      ) : null}
+
       <div className="mx-auto mt-10 max-w-3xl px-6 pb-24 text-center text-xs text-muted-foreground">
         Existing Enterprise, Agency, Company, HNI, UHNI, Corporate, White Label, and Partner
         memberships remain unchanged.{" "}
