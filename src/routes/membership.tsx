@@ -3,6 +3,9 @@ import { toast } from "sonner";
 import { PageShell, PageHero } from "@/components/search-shell";
 import { portal, type MemberTier } from "@/lib/portal-store";
 import { Check, Crown, Sparkles, Building2 } from "lucide-react";
+import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
+import { MEMBERSHIP_PLANS, formatMinor } from "@/lib/payments/plans";
+
 
 export const Route = createFileRoute("/membership")({
   head: () => ({
@@ -50,7 +53,7 @@ const PLANS: Plan[] = [
   {
     id: "travel_plus",
     name: "Travel Plus",
-    price: "$199",
+    price: formatMinor(MEMBERSHIP_PLANS.travel_plus.amountMinor, "USD"),
     cadence: "per year",
     tagline: "Member-only pricing & priority care.",
     icon: <Crown className="h-5 w-5" />,
@@ -67,7 +70,7 @@ const PLANS: Plan[] = [
   {
     id: "elite",
     name: "Elite",
-    price: "$299–399",
+    price: formatMinor(MEMBERSHIP_PLANS.elite.amountMinor, "USD"),
     cadence: "per year",
     featured: true,
     tagline: "Unlimited AI. Unlimited luxury.",
@@ -88,7 +91,7 @@ const PLANS: Plan[] = [
   {
     id: "elite_plus",
     name: "Elite Plus",
-    price: "$599",
+    price: formatMinor(MEMBERSHIP_PLANS.elite_plus.amountMinor, "USD"),
     cadence: "per year",
     tagline: "Unlimited AI Concierge. Zero limits.",
     icon: <Crown className="h-5 w-5" />,
@@ -124,8 +127,9 @@ const PLANS: Plan[] = [
 function MembershipPage() {
   const nav = useNavigate();
   const session = portal.session();
+  const { pay, busy, error: payError } = useRazorpayCheckout();
 
-  function choose(id: Plan["id"]) {
+  async function choose(id: Plan["id"]) {
     if (id === "enterprise") {
       nav({ to: "/b2b" });
       return;
@@ -138,12 +142,22 @@ function MembershipPage() {
       nav({ to: "/account" });
       return;
     }
-    // Paid tier upgrades run through a verified payment flow. Until checkout
-    // is wired, hand the member off to the concierge to complete the upgrade.
-    const label = PLANS.find((p) => p.id === id)?.name ?? "this plan";
-    toast.success(`Our concierge will help you upgrade to ${label}.`);
-    nav({ to: "/concierge" });
+
+    const plan = MEMBERSHIP_PLANS[id];
+    const result = await pay({
+      purpose: "membership",
+      planId: plan.id,
+      currency: plan.currency,
+      description: `${plan.name} membership — 1 year`,
+      ...(session.email ? { email: session.email } : {}),
+      reference: { module: "membership", plan: plan.id },
+    });
+
+    if (!result) return;
+    toast.success(`${plan.name} membership activated. Welcome to the inner circle.`);
+    nav({ to: "/account" });
   }
+
 
   return (
     <PageShell>
@@ -186,19 +200,26 @@ function MembershipPage() {
             </ul>
             <button
               type="button"
-              onClick={() => choose(p.id)}
-              className={`mt-6 w-full rounded-full px-5 py-2.5 text-xs uppercase tracking-[0.25em] transition ${
+              onClick={() => void choose(p.id)}
+              disabled={busy}
+              className={`mt-6 w-full rounded-full px-5 py-2.5 text-xs uppercase tracking-[0.25em] transition disabled:opacity-60 ${
                 p.featured
                   ? "text-primary-foreground"
                   : "border border-border/60 text-foreground hover:border-primary hover:text-primary"
               }`}
               style={p.featured ? { background: "var(--gradient-gold)" } : undefined}
             >
-              {p.cta}
+              {busy && p.id !== "traveler" && p.id !== "enterprise" ? "Opening checkout…" : p.cta}
             </button>
           </div>
         ))}
       </section>
+      {payError ? (
+        <p className="mx-auto mt-6 max-w-3xl px-6 text-center text-xs text-destructive">
+          {payError}
+        </p>
+      ) : null}
+
       <div className="mx-auto mt-10 max-w-3xl px-6 pb-24 text-center text-xs text-muted-foreground">
         Existing Enterprise, Agency, Company, HNI, UHNI, Corporate, White Label, and Partner
         memberships remain unchanged.{" "}

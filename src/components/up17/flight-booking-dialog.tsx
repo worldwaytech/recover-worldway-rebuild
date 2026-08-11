@@ -5,6 +5,8 @@ import {
   up17BookFlightTicket,
   up17FlightBookingLookup,
 } from "@/lib/up17/up17.functions";
+import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
+
 
 type PaxType = 1 | 2 | 3;
 
@@ -85,14 +87,16 @@ export function FlightBookingDialog({
   const confirmFare = useServerFn(up17ConfirmFlightFare);
   const bookTicket = useServerFn(up17BookFlightTicket);
   const lookupBooking = useServerFn(up17FlightBookingLookup);
+  const { pay, busy: paying, error: payError, setError: setPayError } = useRazorpayCheckout();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Record<string, unknown> | null>(null);
   const [booking, setBooking] = useState<Record<string, unknown> | null>(null);
-  const [paid, setPaid] = useState(false);
-  const [ack, setAck] = useState("");
+  const [payment, setPayment] = useState<{ paymentId: string; orderId: string } | null>(null);
+
+
   const [pax, setPax] = useState<PaxForm[]>(() =>
     Array.from({ length: Math.max(1, passengerCount) }, (_, i) => blankPax(i === 0)),
   );
@@ -137,7 +141,34 @@ export function FlightBookingDialog({
     return null;
   }
 
+  /** Collects payment through Razorpay, then requests the ticket only once capture is verified. */
+  async function runPayAndBook() {
+    if (!searchTokenId || !confirmedTotal) return;
+    setError(null);
+    setPayError(null);
+    const lead = pax[0];
+    const result = await pay({
+      purpose: "flight",
+      amount: confirmedTotal,
+      currency: currency || "INR",
+      description: `Flight · ${summary}`,
+      ...(lead ? { name: `${lead.first_name} ${lead.last_name}`.trim() } : {}),
+      ...(lead?.email ? { email: lead.email.trim() } : {}),
+      ...(lead?.contact_no ? { phone: lead.contact_no.trim() } : {}),
+      reference: {
+        module: "up17_flight",
+        result_index: resultIndex,
+        travellers: pax.length,
+        summary,
+      },
+    });
+    if (!result) return;
+    setPayment({ paymentId: result.paymentId, orderId: result.orderId });
+    await runBook();
+  }
+
   async function runBook() {
+
     if (!searchTokenId) return;
     setBusy(true);
     setError(null);
@@ -157,8 +188,14 @@ export function FlightBookingDialog({
         data: { resultIndex, searchTokenId, passengers: payload },
       });
       if (!res.ok || !res.booking) {
-        setError(res.error ?? "The airline declined this booking. No ticket was issued.");
+        const base = res.error ?? "The airline declined this booking. No ticket was issued.";
+        setError(
+          payment
+            ? `${base} Your payment (${payment.paymentId}) is on file and will be refunded in full — our team has been notified.`
+            : base,
+        );
         return;
+
       }
       setBooking(res.booking as Record<string, unknown>);
       setStep(4);
@@ -435,28 +472,22 @@ export function FlightBookingDialog({
               rules — there is no free hold.
             </div>
 
-            <label className="flex items-start gap-3 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={paid}
-                onChange={(e) => setPaid(e.target.checked)}
-                className="mt-0.5"
-              />
-              <span>
-                Payment of {money(confirmedTotal, currency)} has been collected and settled for this
-                booking.
-              </span>
-            </label>
+            {payment ? (
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-xs text-emerald-600">
+                Payment captured · {payment.paymentId}. Issuing your ticket…
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                You will be taken to our secure Razorpay checkout. Cards, UPI, net banking and
+                wallets are accepted. The ticket is requested the moment payment is confirmed.
+              </p>
+            )}
 
-            <label className="block">
-              <span className={labelCls}>Type ISSUE to authorise ticketing</span>
-              <input
-                value={ack}
-                onChange={(e) => setAck(e.target.value.toUpperCase())}
-                placeholder="ISSUE"
-                className={`${inputCls} max-w-[200px]`}
-              />
-            </label>
+            {payError ? (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive">
+                {payError}
+              </div>
+            ) : null}
 
             <div className="flex flex-wrap justify-between gap-3">
               <button
@@ -468,15 +499,20 @@ export function FlightBookingDialog({
               </button>
               <button
                 type="button"
-                disabled={busy || !paid || ack !== "ISSUE"}
-                onClick={runBook}
+                disabled={busy || paying || !confirmedTotal}
+                onClick={runPayAndBook}
                 className="rounded-full bg-primary px-6 py-2.5 text-[11px] uppercase tracking-[0.25em] text-primary-foreground disabled:opacity-50"
               >
-                {busy ? "Issuing ticket…" : "Pay & issue ticket"}
+                {paying
+                  ? "Awaiting payment…"
+                  : busy
+                    ? "Issuing ticket…"
+                    : `Pay ${money(confirmedTotal, currency)} & issue ticket`}
               </button>
             </div>
           </div>
         ) : null}
+
 
         {step === 4 ? (
           <div className="mt-6 space-y-4">
