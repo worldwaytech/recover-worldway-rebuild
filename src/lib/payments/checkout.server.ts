@@ -170,6 +170,11 @@ export async function confirmPayment(input: {
     return { ok: false as const, error: "The payment was not completed. Please try again." };
   }
 
+  if (record?.purpose === "membership" && record.user_id && record.plan_id) {
+    await applyVerifiedMembership(record.user_id, record.plan_id);
+  }
+
+
   return {
     ok: true as const,
     paymentId: payment.id,
