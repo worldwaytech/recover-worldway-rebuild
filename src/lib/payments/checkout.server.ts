@@ -15,11 +15,13 @@ import {
   verifyCheckoutSignature,
 } from "./razorpay.server";
 import {
+  applyVerifiedMembership,
   getPaymentByOrderId,
   insertPaymentRecord,
   markPaymentStatus,
   optionalUserId,
 } from "./payments.server";
+
 
 const ZERO_DECIMAL_CURRENCIES = new Set(["JPY", "KRW", "VND", "CLP", "ISK"]);
 
