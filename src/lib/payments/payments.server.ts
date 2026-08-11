@@ -113,3 +113,11 @@ export async function markPaymentStatus(input: {
   const { error } = await table.update(patch).eq("order_id", input.orderId);
   if (error) console.error("[payments] status update failed", error.message);
 }
+
+/** Applies a membership tier only after a payment has been verified server-side. */
+export async function applyVerifiedMembership(userId: string, tier: string): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("profiles").update({ tier }).eq("id", userId);
+  if (error) console.error("[payments] membership upgrade failed", error.message);
+}
+
