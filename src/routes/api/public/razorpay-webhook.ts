@@ -49,7 +49,9 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
               ? "failed"
               : (entity?.status ?? "pending");
 
-        const { markPaymentStatus } = await import("@/lib/payments/payments.server");
+        const { markPaymentStatus, getPaymentByOrderId, applyVerifiedMembership } = await import(
+          "@/lib/payments/payments.server"
+        );
         await markPaymentStatus({
           orderId,
           status,
@@ -67,7 +69,15 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
           verified: status === "paid",
         });
 
+        if (status === "paid") {
+          const record = await getPaymentByOrderId(orderId);
+          if (record?.purpose === "membership" && record.user_id && record.plan_id) {
+            await applyVerifiedMembership(record.user_id, record.plan_id);
+          }
+        }
+
         return Response.json({ received: true });
+
       },
     },
   },
