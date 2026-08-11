@@ -124,8 +124,9 @@ const PLANS: Plan[] = [
 function MembershipPage() {
   const nav = useNavigate();
   const session = portal.session();
+  const { pay, busy, error: payError } = useRazorpayCheckout();
 
-  function choose(id: Plan["id"]) {
+  async function choose(id: Plan["id"]) {
     if (id === "enterprise") {
       nav({ to: "/b2b" });
       return;
@@ -138,12 +139,22 @@ function MembershipPage() {
       nav({ to: "/account" });
       return;
     }
-    // Paid tier upgrades run through a verified payment flow. Until checkout
-    // is wired, hand the member off to the concierge to complete the upgrade.
-    const label = PLANS.find((p) => p.id === id)?.name ?? "this plan";
-    toast.success(`Our concierge will help you upgrade to ${label}.`);
-    nav({ to: "/concierge" });
+
+    const plan = MEMBERSHIP_PLANS[id];
+    const result = await pay({
+      purpose: "membership",
+      planId: plan.id,
+      currency: plan.currency,
+      description: `${plan.name} membership — 1 year`,
+      ...(session.email ? { email: session.email } : {}),
+      reference: { module: "membership", plan: plan.id },
+    });
+
+    if (!result) return;
+    toast.success(`${plan.name} membership activated. Welcome to the inner circle.`);
+    nav({ to: "/account" });
   }
+
 
   return (
     <PageShell>
