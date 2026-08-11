@@ -3,6 +3,9 @@ import { toast } from "sonner";
 import { PageShell, PageHero } from "@/components/search-shell";
 import { portal, type MemberTier } from "@/lib/portal-store";
 import { Check, Crown, Sparkles, Building2 } from "lucide-react";
+import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
+import { MEMBERSHIP_PLANS, formatMinor } from "@/lib/payments/plans";
+
 
 export const Route = createFileRoute("/membership")({
   head: () => ({
