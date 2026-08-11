@@ -91,7 +91,7 @@ const PLANS: Plan[] = [
   {
     id: "elite_plus",
     name: "Elite Plus",
-    price: "$599",
+    price: formatMinor(MEMBERSHIP_PLANS.elite_plus.amountMinor, "USD"),
     cadence: "per year",
     tagline: "Unlimited AI Concierge. Zero limits.",
     icon: <Crown className="h-5 w-5" />,
