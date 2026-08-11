@@ -53,7 +53,7 @@ const PLANS: Plan[] = [
   {
     id: "travel_plus",
     name: "Travel Plus",
-    price: "$199",
+    price: formatMinor(MEMBERSHIP_PLANS.travel_plus.amountMinor, "USD"),
     cadence: "per year",
     tagline: "Member-only pricing & priority care.",
     icon: <Crown className="h-5 w-5" />,
