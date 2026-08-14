@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Crumbs, LicenceNotice, Section } from "@/components/crystal/crystal-ui";
 import { voyageByCode } from "@/lib/crystal/inventory";
+import { LiveAvailabilityPanel } from "@/components/crystal/live-availability";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/quote";
 const TITLE = "Request a Crystal Cruise Quote — Worldway Travels Group";
@@ -153,6 +154,9 @@ function QuotePage() {
             </form>
           )}
           <aside className="space-y-4">
+            {voyage ? (
+              <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
+            ) : null}
             <LicenceNotice />
             <div className="rounded-xl border border-border/60 p-5 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">Prefer to talk it through?</p>

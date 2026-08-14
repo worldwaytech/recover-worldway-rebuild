@@ -60,3 +60,32 @@ export const getCrystalInventoryState = createServerFn({ method: "GET" }).handle
     generatedAt: new Date().toISOString(),
   };
 });
+
+/**
+ * Live price and availability revalidation for a single voyage, straight from
+ * the AKTG availability operation. Called before a quote or checkout so the
+ * customer never transacts on a cached fare.
+ */
+export const revalidateCrystalVoyage = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        voyageNumber: z.string().min(3).max(40),
+        currency: z.string().length(3).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { revalidateAktgVoyage } = await import("./aktg.server");
+    return revalidateAktgVoyage(data.voyageNumber, data.currency ?? "USD");
+  });
+
+/**
+ * Supplier reference catalogues (destinations, ports, ships and suite
+ * categories, fare types, promotions) used by search facets and the
+ * admin connector panel.
+ */
+export const getCrystalReferenceData = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchAktgReferenceData } = await import("./aktg.server");
+  return fetchAktgReferenceData();
+});

@@ -95,11 +95,26 @@ export interface CrystalFare {
   price: number;
   /** Per-guest fare for single occupancy, when published. */
   priceSingle?: number;
+  /** Undiscounted per-guest fare when a promotion applies. */
+  priceBeforeDiscount?: number;
+  /** Third/fourth guest sharing the suite. */
+  priceExtraGuest?: number;
+  priceChild?: number;
+  /** Past-guest (Crystal Society) fare when published. */
+  pastGuestPrice?: number;
   /** Government fees and port charges, quoted separately by the supplier. */
   portCharge?: number;
+  tax?: number;
+  maxCapacity?: number;
   fareType?: string;
+  fareCode?: string;
+  promoId?: number;
   currency: string;
   available?: boolean;
+  /** Live suite count from the availability operation. */
+  availabilityCount?: number;
+  guaranteeCount?: number;
+  sellableOnline?: boolean;
   availabilityLabel?: string;
   promotion?: string;
 }
@@ -113,27 +128,43 @@ export interface CrystalPenaltyBand {
 
 export interface CrystalVoyage {
   code: string;
+  /** Supplier voyage identifier, when the feed exposes one. */
+  voyageId?: number;
   title: string;
+  description?: string;
   subtitle: string;
   shipSlug: string;
   shipName: string;
+  shipCode?: string;
   destinationSlug: string;
   destinationName: string;
+  supplierDestinationId?: number;
   region: string;
   countries: string[];
   embarkPort: string;
+  embarkPortCode?: string;
   disembarkPort: string;
+  disembarkPortCode?: string;
   nights: number;
   departureDate: string;
   returnDate: string;
   styles: CruiseStyle[];
+  voyageType?: string;
+  voyageClass?: string;
   itinerary: CrystalVoyageDay[];
   fares: CrystalFare[];
   priceFrom?: number;
   currency: string;
   promotions: string[];
   inclusions: string[];
-  media: { hero?: string; gallery: string[] };
+  media: {
+    hero?: string;
+    gallery: string[];
+    mapSvg?: string;
+    mapPng?: string;
+    mapPdf?: string;
+    itineraryPdf?: string;
+  };
   availability: "open" | "waitlist" | "closed" | "unknown";
   /** Always "licensed" — the UI refuses to display anything else. */
   dataSource: "licensed";
@@ -141,6 +172,7 @@ export interface CrystalVoyage {
   updatedAt: string;
   fareType?: string;
   depositPercent?: number;
+  depositDueDate?: string;
   finalPaymentDate?: string;
   cancellationPolicy?: CrystalPenaltyBand[];
 }
