@@ -17,6 +17,14 @@ import { SUITE_CATEGORIES } from "@/lib/crystal/inventory";
 
 const NO_CODES: string[] = [];
 
+function money(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
   head: ({ params }) => {
     const url = `https://worldwaytravelsgroup.com/crystal-cruises/voyages/${params.code}`;
@@ -126,6 +134,18 @@ function VoyagePage() {
       </section>
 
       <Section eyebrow="Itinerary" title="Day by day">
+        {voyage.itinerary.length === 0 ? (
+          <div className="rounded-xl border border-border/60 p-6 text-sm text-muted-foreground">
+            <p>
+              This sailing departs {voyage.embarkPort} on {voyage.departureDate} and disembarks in{" "}
+              {voyage.disembarkPort} on {voyage.returnDate}, {voyage.nights} nights later.
+            </p>
+            <p className="mt-2">
+              The port-by-port schedule is confirmed on the voyage record by your Worldway cruise
+              specialist, together with overnight berths and shore-experience availability.
+            </p>
+          </div>
+        ) : null}
         <ol className="space-y-3">
           {voyage.itinerary.map((d) => (
             <li key={`${d.day}-${d.port}`} className="rounded-xl border border-border/60 p-5">
@@ -146,17 +166,33 @@ function VoyagePage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {voyage.fares.map((f, i) => (
             <div key={`${f.suiteCategory}-${i}`} className="rounded-xl border border-border/60 p-5">
-              <h3 className="font-serif text-lg">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
                 {SUITE_CATEGORIES.find((s) => s.value === f.suiteCategory)?.label ??
                   f.suiteCategory}
-              </h3>
-              <p className="mt-2 text-sm">
-                {new Intl.NumberFormat("en-US", {
-                  style: "currency",
-                  currency: f.currency || voyage.currency || "USD",
-                  maximumFractionDigits: 0,
-                }).format(f.price)}
+                {f.gradeId ? ` · ${f.gradeId}` : ""}
               </p>
+              <h3 className="mt-1 font-serif text-lg">{f.gradeName ?? f.suiteCategory}</h3>
+              <p className="mt-2 text-sm">
+                {money(f.price, f.currency || voyage.currency)}{" "}
+                <span className="text-xs text-muted-foreground">per guest, double</span>
+              </p>
+              {f.priceSingle ? (
+                <p className="text-xs text-muted-foreground">
+                  {money(f.priceSingle, f.currency || voyage.currency)} single occupancy
+                </p>
+              ) : null}
+              {f.portCharge ? (
+                <p className="text-xs text-muted-foreground">
+                  + {money(f.portCharge, f.currency || voyage.currency)} taxes, fees and port
+                  charges
+                </p>
+              ) : null}
+              {f.availabilityLabel ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {f.fareType ? `${f.fareType} · ` : ""}
+                  {f.availabilityLabel}
+                </p>
+              ) : null}
               {f.promotion ? (
                 <Badge className="mt-2" variant="secondary">
                   {f.promotion}
@@ -165,6 +201,31 @@ function VoyagePage() {
             </div>
           ))}
         </div>
+        {voyage.depositPercent || voyage.finalPaymentDate || voyage.cancellationPolicy?.length ? (
+          <div className="mt-8 rounded-xl border border-border/60 p-5 text-sm text-muted-foreground">
+            <h3 className="font-serif text-lg text-foreground">Deposit and cancellation terms</h3>
+            {voyage.depositPercent ? (
+              <p className="mt-2">Deposit: {voyage.depositPercent}% of the suite fare.</p>
+            ) : null}
+            {voyage.finalPaymentDate ? (
+              <p>Final payment due {voyage.finalPaymentDate}.</p>
+            ) : null}
+            {voyage.cancellationPolicy?.length ? (
+              <ul className="mt-2 space-y-1">
+                {voyage.cancellationPolicy.map((b) => (
+                  <li key={`${b.daysFrom}-${b.daysTo}`}>
+                    {b.daysFrom} to {b.daysTo} days before departure:{" "}
+                    {b.amountPercent != null
+                      ? `${b.amountPercent}% of fare`
+                      : b.fixedAmount != null
+                        ? money(b.fixedAmount, voyage.currency)
+                        : "per supplier terms"}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         {voyage.inclusions.length ? (
           <ul className="mt-6 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
             {voyage.inclusions.map((i) => (
