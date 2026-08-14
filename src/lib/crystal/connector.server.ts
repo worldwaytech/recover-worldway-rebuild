@@ -166,6 +166,8 @@ export async function crystalStatus(includeHealth: boolean): Promise<CrystalConn
     partnerId: cfg.id,
     partnerName: cfg.name,
     mode: aktg ? "live" : resolveMode(cfg),
+    shoppingApiStatus: CRYSTAL_SHOPPING_API_STATUS,
+    bookingApiStatus: CRYSTAL_BOOKING_API_STATUS,
     contractStatus: cfg.contractStatus,
     authKind: aktg ? "api-key-header (AKTG ApiKey)" : cfg.auth.kind,
     credentialsRequired: aktg ? ["CRYSTAL_AKTG_API_KEY"] : cfg.auth.secrets,
