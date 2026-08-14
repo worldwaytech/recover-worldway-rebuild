@@ -61,7 +61,7 @@ function headers(): Record<string, string> | null {
   };
 }
 
-async function viatorFetch<T>(
+export async function viatorFetch<T>(
   path: string,
   init: { method: "GET" | "POST"; body?: unknown },
 ): Promise<{ ok: boolean; status: number; error?: string; data?: T }> {
