@@ -15,10 +15,12 @@ import {
 } from "@/components/crystal/crystal-ui";
 
 export const Route = createFileRoute("/crystal-cruises/destinations/$slug")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const destination = destinationBySlug(params.slug);
     if (!destination) throw notFound();
-    return { destination };
+    const feed = await getCrystalVoyages({ data: {} });
+    return {
+      ...feed, destination };
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
@@ -65,13 +67,12 @@ export const Route = createFileRoute("/crystal-cruises/destinations/$slug")({
       ],
     };
   },
-  loader: () => getCrystalVoyages({ data: {} }),
   component: DestinationPage,
 });
 
 function DestinationPage() {
-  const feed = Route.useLoaderData();
-  hydrateLicensedVoyages(feed.voyages);
+  const loaderData = Route.useLoaderData();
+  hydrateLicensedVoyages(loaderData.voyages);
   const { destination: d } = Route.useLoaderData();
   const voyages = voyagesForDestination(d.slug);
   const ports = CRYSTAL_PORTS.filter((p) => d.ports.includes(p.slug));
