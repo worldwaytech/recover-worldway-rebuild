@@ -171,7 +171,7 @@ export const BROWSE_HUBS: BrowseHub[] = [
     "Ends of the earth",
     "Antarctica and the high Arctic.",
     "Ice-strengthened small-ship voyages to Antarctica, South Georgia, the Falklands and the Arctic, with expedition teams and daily landings.",
-    img("photo-1531176175280-33e81ea9b0f7"),
+    img("photo-1518156677180-95a2893f3e9f"),
     { q: "Polar" },
     [
       {
