@@ -142,11 +142,16 @@ export async function crystalStatus(includeHealth: boolean): Promise<CrystalConn
   const { missingSecrets, resolveMode, checkHealth } =
     await import("@/lib/partners/runtime.server");
   const { licensedVoyages } = await import("./inventory");
+  const { aktgConfigured, aktgHealth, fetchAktgVoyages } = await import("./aktg.server");
   const cfg = getConnector(CRYSTAL_SUPPLIER_ID);
   if (!cfg) throw new Error("Crystal connector is not registered");
-  const missing = missingSecrets(cfg);
+  const aktg = aktgConfigured();
+  const missing = aktg ? [] : missingSecrets(cfg);
   let health: { ok: boolean; message: string } | null = null;
-  if (includeHealth && missing.length === 0) {
+  if (includeHealth && aktg) {
+    health = await aktgHealth();
+    log({ at: new Date().toISOString(), action: "health", ok: health.ok, detail: health.message });
+  } else if (includeHealth && missing.length === 0) {
     const h = await checkHealth(cfg);
     health = { ok: h.reachable === true, message: h.message };
     log({ at: new Date().toISOString(), action: "health", ok: health.ok, detail: health.message });
@@ -154,10 +159,10 @@ export async function crystalStatus(includeHealth: boolean): Promise<CrystalConn
   return {
     partnerId: cfg.id,
     partnerName: cfg.name,
-    mode: resolveMode(cfg),
+    mode: aktg ? "live" : resolveMode(cfg),
     contractStatus: cfg.contractStatus,
-    authKind: cfg.auth.kind,
-    credentialsRequired: cfg.auth.secrets,
+    authKind: aktg ? "api-key-header (AKTG ApiKey)" : cfg.auth.kind,
+    credentialsRequired: aktg ? ["CRYSTAL_AKTG_API_KEY"] : cfg.auth.secrets,
     credentialsMissing: missing,
     capabilities: cfg.capabilities,
     endpoints: cfg.endpoints as Record<string, string | undefined>,
@@ -171,8 +176,10 @@ export async function crystalStatus(includeHealth: boolean): Promise<CrystalConn
           refreshCron: cfg.feed.refreshCron,
         }
       : null,
-    syncEnabled: missing.length === 0,
-    inventoryCount: licensedVoyages().length,
+    syncEnabled: aktg || missing.length === 0,
+    inventoryCount: aktg
+      ? (await fetchAktgVoyages("USD")).voyages.length
+      : licensedVoyages().length,
     lastSyncAt,
     health,
     audit: crystalAudit(),
@@ -195,6 +202,31 @@ export async function crystalSync(force = false): Promise<CrystalSyncOutcome> {
   const { missingSecrets, syncCatalogue, invalidatePartnerCache } =
     await import("@/lib/partners/runtime.server");
   const { setLicensedVoyages } = await import("./inventory");
+  const { aktgConfigured, fetchAktgVoyages, invalidateAktgCache } = await import("./aktg.server");
+  if (aktgConfigured()) {
+    if (force) invalidateAktgCache();
+    const feed = await fetchAktgVoyages("USD", { force });
+    const accepted = setLicensedVoyages(feed.voyages);
+    lastSyncAt = new Date().toISOString();
+    const durationMs = Date.now() - started;
+    log({
+      at: lastSyncAt,
+      action: feed.error ? "error" : "sync",
+      ok: !feed.error,
+      detail: feed.error
+        ? `AKTG Shopping API sync failed: ${feed.error}`
+        : `${accepted} live voyages ingested from the AKTG Shopping API`,
+      durationMs,
+    });
+    return {
+      ran: !feed.error,
+      reason: feed.error,
+      received: feed.received,
+      accepted,
+      durationMs,
+      warnings: feed.error ? [feed.error] : [],
+    };
+  }
   const cfg = getConnector(CRYSTAL_SUPPLIER_ID)!;
   const missing = missingSecrets(cfg);
   if (missing.length > 0) {
