@@ -413,7 +413,7 @@ export const CRYSTAL_SHIPS: CrystalShip[] = [
     overview:
       "The larger of the two ocean ships in the programme, used for long-range itineraries and world-cruise sectors. Worldway advisors brief clients on layout, service ratio and dining rhythm before booking.",
     hero: img("photo-1548574505-5e239809ee19"),
-    gallery: [img("photo-1544551763-46a013bb70d5"), img("photo-1559599076-9c61d8e1b77c")],
+    gallery: [img("photo-1544551763-46a013bb70d5"), img("photo-1507525428034-b723cf961d3e")],
     specs: [
       { label: "Configuration", value: "All-suite, ocean" },
       { label: "Service style", value: "Butler-supported, all-inclusive" },
@@ -460,7 +460,7 @@ export const CRYSTAL_SHIPS: CrystalShip[] = [
     classification: "Luxury ocean vessel",
     overview:
       "The more intimate ocean ship, favoured for Mediterranean, Northern Europe and Caribbean seasons where smaller harbours matter.",
-    hero: img("photo-1559599076-9c61d8e1b77c"),
+    hero: img("photo-1507525428034-b723cf961d3e"),
     gallery: [img("photo-1548574505-5e239809ee19"), img("photo-1544551763-46a013bb70d5")],
     specs: [
       { label: "Configuration", value: "All-suite, ocean" },
@@ -505,7 +505,7 @@ export const CRYSTAL_SHIPS: CrystalShip[] = [
     overview:
       "The newest ship in the Crystal programme, purpose-built for all-suite luxury cruising with expanded wellness and dining space. Worldway advisors brief clients on suite grades and seasonal deployment before booking.",
     hero: img("photo-1544551763-46a013bb70d5"),
-    gallery: [img("photo-1548574505-5e239809ee19"), img("photo-1559599076-9c61d8e1b77c")],
+    gallery: [img("photo-1548574505-5e239809ee19"), img("photo-1507525428034-b723cf961d3e")],
     specs: [
       { label: "Configuration", value: "All-suite, ocean" },
       { label: "Service style", value: "Butler-supported, all-inclusive" },
