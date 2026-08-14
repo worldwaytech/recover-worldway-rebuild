@@ -14,6 +14,7 @@ import {
 import { formatFare, relatedVoyages, voyageByCode } from "@/lib/crystal/inventory";
 import { crystalPrefs } from "@/lib/crystal/personalisation";
 import { SUITE_CATEGORIES } from "@/lib/crystal/inventory";
+import { LiveAvailabilityPanel } from "@/components/crystal/live-availability";
 
 const NO_CODES: string[] = [];
 
@@ -133,7 +134,39 @@ function VoyagePage() {
         </div>
       </section>
 
+      {voyage.description ? (
+        <Section eyebrow="Overview" title="About this voyage">
+          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            {voyage.description}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {voyage.media.itineraryPdf ? (
+              <Button asChild variant="outline" size="sm">
+                <a href={voyage.media.itineraryPdf} target="_blank" rel="noreferrer">
+                  Itinerary PDF
+                </a>
+              </Button>
+            ) : null}
+            {voyage.media.mapPdf ? (
+              <Button asChild variant="outline" size="sm">
+                <a href={voyage.media.mapPdf} target="_blank" rel="noreferrer">
+                  Route map
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </Section>
+      ) : null}
+
       <Section eyebrow="Itinerary" title="Day by day">
+        {voyage.media.mapSvg || voyage.media.mapPng ? (
+          <img
+            src={voyage.media.mapSvg ?? voyage.media.mapPng}
+            alt={`Route map for ${voyage.title}`}
+            loading="lazy"
+            className="mb-6 w-full rounded-xl border border-border/60 bg-card p-4"
+          />
+        ) : null}
         {voyage.itinerary.length === 0 ? (
           <div className="rounded-xl border border-border/60 p-6 text-sm text-muted-foreground">
             <p>
@@ -163,6 +196,9 @@ function VoyagePage() {
       </Section>
 
       <Section eyebrow="Fares" title="Suite categories and pricing">
+        <div className="mb-6">
+          <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {voyage.fares.map((f, i) => (
             <div key={`${f.suiteCategory}-${i}`} className="rounded-xl border border-border/60 p-5">
