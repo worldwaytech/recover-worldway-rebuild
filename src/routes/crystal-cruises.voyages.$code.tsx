@@ -15,6 +15,8 @@ import { formatFare, relatedVoyages, voyageByCode } from "@/lib/crystal/inventor
 import { crystalPrefs } from "@/lib/crystal/personalisation";
 import { SUITE_CATEGORIES } from "@/lib/crystal/inventory";
 
+const NO_CODES: string[] = [];
+
 export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
   head: ({ params }) => {
     const url = `https://worldwaytravelsgroup.com/crystal-cruises/voyages/${params.code}`;
@@ -58,7 +60,7 @@ function VoyagePage() {
   const wishlist = useSyncExternalStore(
     (cb) => crystalPrefs.subscribe(cb),
     () => crystalPrefs.wishlist(),
-    () => [] as string[],
+    () => NO_CODES,
   );
 
   useEffect(() => {
