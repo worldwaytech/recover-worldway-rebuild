@@ -20,7 +20,7 @@ export const Route = createFileRoute("/aircraft")({
       {
         property: "og:image",
         content:
-          "https://images.unsplash.com/photo-1583500178690-f7fd39c69217?auto=format&fit=crop&w=1600&q=80",
+          "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=1600&q=80",
       },
     ],
   }),
@@ -37,7 +37,7 @@ function AircraftCatalogue() {
         eyebrow="Aircraft Catalogue"
         title="A fleet built for anywhere."
         subtitle="From nimble very-light jets to VIP-configured airliners — each aircraft is chartered through vetted operators worldwide."
-        image="https://images.unsplash.com/photo-1583500178690-f7fd39c69217?auto=format&fit=crop&w=2000&q=80"
+        image="https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=2000&q=80"
       />
 
       <section className="mx-auto -mt-16 max-w-6xl px-6">
