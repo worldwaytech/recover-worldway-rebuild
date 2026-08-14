@@ -227,14 +227,59 @@ export const up17BookFlightTicket = createServerFn({ method: "POST" })
         resultIndex: z.string().trim().min(1).max(200),
         searchTokenId: z.string().trim().min(1).max(200),
         passengers: z.array(paxSchema).min(1).max(9),
+        /** Razorpay order + payment that funded this ticket. Both are mandatory. */
+        orderId: z.string().trim().min(6).max(80),
+        paymentId: z.string().trim().min(6).max(80),
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { claimVerifiedPaymentForFulfilment, recordFulfilment, releaseFulfilmentClaim, optionalUserId } =
+      await import("@/lib/payments/payments.server");
+
+    // Payment-before-booking: the supplier is only called once this server has
+    // verified capture with Razorpay, and only once per payment.
+    const claim = await claimVerifiedPaymentForFulfilment({
+      orderId: data.orderId,
+      paymentId: data.paymentId,
+      expectedUserId: await optionalUserId(),
+    });
+    if (!claim.ok) {
+      return { ok: false as const, error: claim.error, booking: null };
+    }
+
     const { up17BookFlight } = await import("./up17.server");
-    const res = await up17BookFlight(data);
-    return { ok: res.ok, error: res.error, booking: res.data ?? null };
+    let res: Awaited<ReturnType<typeof up17BookFlight>>;
+    try {
+      res = await up17BookFlight({
+        resultIndex: data.resultIndex,
+        searchTokenId: data.searchTokenId,
+        passengers: data.passengers,
+      });
+    } catch (e) {
+      await releaseFulfilmentClaim(data.orderId);
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : "The airline could not be reached.",
+        booking: null,
+      };
+    }
+
+    if (!res.ok) {
+      // No ticket was issued — release the claim so the guest may retry on the
+      // same payment without risking a duplicate ticket.
+      await releaseFulfilmentClaim(data.orderId);
+      return { ok: false as const, error: res.error, booking: null };
+    }
+
+    const raw = (res.data ?? null) as { pnr?: string; booking_id?: string | number } | null;
+    const reference = raw?.pnr ?? String(raw?.booking_id ?? data.paymentId);
+    await recordFulfilment(data.orderId, reference);
+
+    return { ok: true as const, error: res.error, booking: res.data ?? null };
+
   });
+
 
 export const up17FlightBookingLookup = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>

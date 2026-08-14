@@ -164,11 +164,11 @@ export function FlightBookingDialog({
     });
     if (!result) return;
     setPayment({ paymentId: result.paymentId, orderId: result.orderId });
-    await runBook();
+    await runBook({ orderId: result.orderId, paymentId: result.paymentId });
   }
 
-  async function runBook() {
-
+  /** Requests the ticket. Requires a verified payment — the server re-checks it. */
+  async function runBook(paid: { orderId: string; paymentId: string }) {
     if (!searchTokenId) return;
     setBusy(true);
     setError(null);
@@ -184,10 +184,17 @@ export function FlightBookingDialog({
         ...(p.passport_expiry ? { passport_expiry: p.passport_expiry } : {}),
         ...(baggageCode ? { baggage_codes: [baggageCode] } : {}),
       }));
-      const res = await bookTicket({
-        data: { resultIndex, searchTokenId, passengers: payload },
-      });
+      const res = (await bookTicket({
+        data: {
+          resultIndex,
+          searchTokenId,
+          passengers: payload,
+          orderId: paid.orderId,
+          paymentId: paid.paymentId,
+        },
+      })) as { ok: boolean; error?: string | undefined; booking: unknown };
       if (!res.ok || !res.booking) {
+
         const base = res.error ?? "The airline declined this booking. No ticket was issued.";
         setError(
           payment

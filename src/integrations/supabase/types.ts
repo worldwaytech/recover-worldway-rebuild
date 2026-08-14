@@ -618,6 +618,75 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount_minor: number
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_phone: string | null
+          description: string | null
+          failure_reason: string | null
+          fulfilled_at: string | null
+          fulfilment_reference: string | null
+          id: string
+          order_id: string
+          payment_id: string | null
+          plan_id: string | null
+          provider_payload: Json | null
+          purpose: string
+          reference: Json
+          status: string
+          updated_at: string
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          amount_minor: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          description?: string | null
+          failure_reason?: string | null
+          fulfilled_at?: string | null
+          fulfilment_reference?: string | null
+          id?: string
+          order_id: string
+          payment_id?: string | null
+          plan_id?: string | null
+          provider_payload?: Json | null
+          purpose: string
+          reference?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          description?: string | null
+          failure_reason?: string | null
+          fulfilled_at?: string | null
+          fulfilment_reference?: string | null
+          id?: string
+          order_id?: string
+          payment_id?: string | null
+          plan_id?: string | null
+          provider_payload?: Json | null
+          purpose?: string
+          reference?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
