@@ -30,6 +30,18 @@ export function setLicensedVoyages(voyages: CrystalVoyage[]): number {
   return LICENSED.length;
 }
 
+/**
+ * Hydrate the client/server module store from loader data. Idempotent: repeat
+ * calls with the same live feed are no-ops, so it is safe during render.
+ */
+export function hydrateLicensedVoyages(voyages: CrystalVoyage[] | undefined): void {
+  if (!voyages) return;
+  if (voyages.length === LICENSED.length && (voyages[0]?.code ?? "") === (LICENSED[0]?.code ?? "")) {
+    return;
+  }
+  setLicensedVoyages(voyages);
+}
+
 export function voyageByCode(code: string): CrystalVoyage | null {
   return LICENSED.find((v) => v.code.toLowerCase() === code.toLowerCase()) ?? null;
 }
