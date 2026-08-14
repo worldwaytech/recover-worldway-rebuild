@@ -24,6 +24,7 @@ import {
   getPricesAndPromotions,
   getPromotions,
   getShipSuiteCategories,
+  getVoyagePriceTypes,
   getVoyages,
   invalidateAktgClientCache,
   type AktgAvailabilityRow,
@@ -658,6 +659,8 @@ export interface AktgRevalidation {
   depositDueDate?: string;
   finalPaymentDate?: string;
   cancellationPolicy?: CrystalVoyage["cancellationPolicy"];
+  /** Fare types published for this voyage (get-voyage-price-types). */
+  priceTypes: { code: string; name: string; currency?: string }[];
   error?: string;
 }
 
@@ -678,24 +681,34 @@ export async function revalidateAktgVoyage(
     live: false,
     fares: [],
     availability: "unknown",
+    priceTypes: [],
   };
   if (!code) return { ...base, error: "voyageNumber is required." };
   if (!aktgConfigured()) return { ...base, error: "CRYSTAL_AKTG_API_KEY is not configured." };
   try {
-    const [avail, promos] = await Promise.all([
+    const [avail, promos, voyageFareTypes] = await Promise.all([
       getPriceAndAvailability({ currency: cur, voyageNumber: code }, { force: true }),
       getPricesAndPromotions({ currency: cur, voyageNumber: code }, { force: true }).catch(
         () => null,
       ),
+      getVoyagePriceTypes({ currency: cur, voyageNumber: code }).catch(() => null),
     ]);
     const rows = (avail.body?.availability ?? []).filter((r) => keyOf(r.voyageNumber) === code);
     const fares = rows.map((r) => fareFromAvailability(r, cur)).filter((f) => f.price > 0);
     const prices = fares.map((f) => f.price);
     const schedule = promos?.paymentSchedules?.[0];
+    const priceTypes = (voyageFareTypes?.body?.voyagePriceTypes ?? [])
+      .filter((p) => p.priceTypeCod && keyOf(p.voyageNumber || code) === code)
+      .map((p) => ({
+        code: String(p.priceTypeCod),
+        name: String(p.priceTypeName ?? "").trim(),
+        currency: p.currency ? String(p.currency) : undefined,
+      }));
     return {
       ...base,
       live: true,
       fares,
+      priceTypes,
       availability: fares.some((f) => f.available)
         ? "open"
         : fares.length
@@ -722,6 +735,7 @@ export interface AktgReferenceData {
   ports: { code: string; cityCode: string; name: string; country: string; lat?: number; lng?: number }[];
   ships: { code: string; name: string; suiteCategories: { code: string; name: string; group?: string }[] }[];
   priceTypes: { code: string; name: string }[];
+  voyagePriceTypes: { voyageNumber: string; code: string; name: string; currency?: string }[];
   promotions: { id: number; name: string; type?: string; description?: string }[];
   fetchedAt: string;
   error?: string;
@@ -734,17 +748,19 @@ export async function fetchAktgReferenceData(): Promise<AktgReferenceData> {
     ports: [],
     ships: [],
     priceTypes: [],
+    voyagePriceTypes: [],
     promotions: [],
     fetchedAt: new Date().toISOString(),
   };
   if (!aktgConfigured()) return { ...empty, error: "CRYSTAL_AKTG_API_KEY is not configured." };
   try {
-    const [dest, ports, ships, priceTypes, promos] = await Promise.all([
+    const [dest, ports, ships, priceTypes, promos, voyageFareTypes] = await Promise.all([
       getDestinations().catch(() => null),
       getPorts({ realCity: true }).catch(() => null),
       getShipSuiteCategories().catch(() => null),
       getPriceTypes().catch(() => null),
       getPromotions().catch(() => null),
+      getVoyagePriceTypes().catch(() => null),
     ]);
     return {
       destinations: (dest?.body?.destinations ?? [])
@@ -777,6 +793,14 @@ export async function fetchAktgReferenceData(): Promise<AktgReferenceData> {
       priceTypes: (priceTypes?.body?.priceTypes ?? [])
         .filter((p) => p.priceTypeCod)
         .map((p) => ({ code: String(p.priceTypeCod), name: String(p.priceTypeName ?? "").trim() })),
+      voyagePriceTypes: (voyageFareTypes?.body?.voyagePriceTypes ?? [])
+        .filter((p) => p.voyageNumber && p.priceTypeCod)
+        .map((p) => ({
+          voyageNumber: String(p.voyageNumber),
+          code: String(p.priceTypeCod),
+          name: String(p.priceTypeName ?? "").trim(),
+          currency: p.currency ? String(p.currency) : undefined,
+        })),
       promotions: (promos?.body?.promo ?? [])
         .filter((p) => p.promoID)
         .map((p) => ({
