@@ -15,6 +15,9 @@ import {
 import { CRYSTAL_DESTINATIONS, CRYSTAL_SHIPS } from "@/lib/crystal/content";
 import { crystalPrefs } from "@/lib/crystal/personalisation";
 import type { CrystalSearchFilters } from "@/lib/crystal/types";
+import type { SavedSearch } from "@/lib/crystal/personalisation";
+
+const NO_SEARCHES: SavedSearch[] = [];
 import { LicenceNotice, VoyageGrid } from "./crystal-ui";
 
 export type FinderSearch = {
@@ -78,7 +81,7 @@ export function CruiseFinder({ search }: { search: FinderSearch }) {
   const saved = useSyncExternalStore(
     (cb) => crystalPrefs.subscribe(cb),
     () => crystalPrefs.searches(),
-    () => [],
+    () => NO_SEARCHES,
   );
 
   const filters: CrystalSearchFilters = useMemo(

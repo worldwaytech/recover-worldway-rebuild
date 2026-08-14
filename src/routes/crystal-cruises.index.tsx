@@ -1,3 +1,5 @@
+import { getCrystalVoyages } from "@/lib/crystal/crystal.functions";
+import { hydrateLicensedVoyages } from "@/lib/crystal/inventory";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,10 +57,13 @@ export const Route = createFileRoute("/crystal-cruises/")({
       },
     ],
   }),
+  loader: () => getCrystalVoyages({ data: {} }),
   component: CrystalHub,
 });
 
 function CrystalHub() {
+  const feed = Route.useLoaderData();
+  hydrateLicensedVoyages(feed.voyages);
   const featured = searchVoyages({ sort: "date-asc" });
 
   return (

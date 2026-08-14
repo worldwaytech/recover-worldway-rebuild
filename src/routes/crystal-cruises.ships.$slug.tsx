@@ -1,3 +1,5 @@
+import { getCrystalVoyages } from "@/lib/crystal/crystal.functions";
+import { hydrateLicensedVoyages } from "@/lib/crystal/inventory";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { shipBySlug } from "@/lib/crystal/content";
@@ -13,10 +15,12 @@ import {
 } from "@/components/crystal/crystal-ui";
 
 export const Route = createFileRoute("/crystal-cruises/ships/$slug")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const ship = shipBySlug(params.slug);
     if (!ship) throw notFound();
-    return { ship };
+    const feed = await getCrystalVoyages({ data: {} });
+    return {
+      ...feed, ship };
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) {
@@ -77,6 +81,8 @@ function List({ title, items }: { title: string; items: string[] }) {
 }
 
 function ShipPage() {
+  const loaderData = Route.useLoaderData();
+  hydrateLicensedVoyages(loaderData.voyages);
   const { ship: s } = Route.useLoaderData();
   const voyages = voyagesForShip(s.slug);
 

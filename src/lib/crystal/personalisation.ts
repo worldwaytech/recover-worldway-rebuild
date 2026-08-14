@@ -18,14 +18,30 @@ export interface SavedSearch {
 
 const listeners = new Set<() => void>();
 
+// Snapshots must be referentially stable between reads, otherwise
+// useSyncExternalStore re-renders forever. Parsed values are cached per raw
+// payload and only replaced when the stored string actually changes.
+const EMPTY: readonly never[] = [];
+const snapshots = new Map<Key, { raw: string | null; value: unknown }>();
+
 function read<T>(key: Key, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
+  if (typeof window === "undefined") return (Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback);
+  let raw: string | null = null;
   try {
-    const raw = window.localStorage.getItem(KEYS[key]);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    raw = window.localStorage.getItem(KEYS[key]);
   } catch {
-    return fallback;
+    return Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback;
   }
+  const cached = snapshots.get(key);
+  if (cached && cached.raw === raw) return cached.value as T;
+  let value: T;
+  try {
+    value = raw ? (JSON.parse(raw) as T) : Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback;
+  } catch {
+    value = Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback;
+  }
+  snapshots.set(key, { raw, value });
+  return value;
 }
 
 function write(key: Key, value: unknown) {
@@ -35,6 +51,7 @@ function write(key: Key, value: unknown) {
   } catch {
     /* quota or private mode — personalisation is best-effort */
   }
+  snapshots.delete(key);
   listeners.forEach((l) => l());
 }
 
