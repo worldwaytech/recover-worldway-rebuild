@@ -110,10 +110,16 @@ export function normaliseVoyage(record: Record<string, unknown>): CrystalVoyage 
   };
 }
 
+/** Internal AKTG integration status (AKTG review handoff). */
+export const CRYSTAL_SHOPPING_API_STATUS = "PRODUCTION LIVE" as const;
+export const CRYSTAL_BOOKING_API_STATUS = "PENDING AKTG" as const;
+
 export interface CrystalConnectorStatus {
   partnerId: string;
   partnerName: string;
   mode: string;
+  shoppingApiStatus: string;
+  bookingApiStatus: string;
   contractStatus: string;
   authKind: string;
   credentialsRequired: string[];
