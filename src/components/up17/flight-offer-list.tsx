@@ -2,6 +2,24 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { up17BaggageLookup, up17FareRuleLookup } from "@/lib/up17/up17.functions";
 import { FlightBookingDialog } from "@/components/up17/flight-booking-dialog";
+import DOMPurify from "isomorphic-dompurify";
+
+/**
+ * Fare rules arrive as raw HTML from the UP17 partner API. Strip all scripting,
+ * event handlers and embedded content before it ever reaches the DOM.
+ */
+function sanitizeFareRuleHtml(html: string): string {
+  return DOMPurify.sanitize(html ?? "", {
+    ALLOWED_TAGS: [
+      "p", "br", "b", "strong", "i", "em", "u", "ul", "ol", "li",
+      "span", "div", "table", "thead", "tbody", "tr", "td", "th",
+      "h1", "h2", "h3", "h4", "h5", "h6", "hr", "small",
+    ],
+    ALLOWED_ATTR: [],
+    FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "form", "a", "img"],
+  });
+}
+
 
 type Baggage = {
   tier: number;
