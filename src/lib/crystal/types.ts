@@ -90,10 +90,25 @@ export interface CrystalVoyageDay {
 export interface CrystalFare {
   suiteCategory: SuiteCategory;
   gradeId?: string;
+  gradeName?: string;
+  /** Per-guest fare on double occupancy. */
   price: number;
+  /** Per-guest fare for single occupancy, when published. */
+  priceSingle?: number;
+  /** Government fees and port charges, quoted separately by the supplier. */
+  portCharge?: number;
+  fareType?: string;
   currency: string;
   available?: boolean;
+  availabilityLabel?: string;
   promotion?: string;
+}
+
+export interface CrystalPenaltyBand {
+  daysFrom: number;
+  daysTo: number;
+  amountPercent?: number;
+  fixedAmount?: number;
 }
 
 export interface CrystalVoyage {
@@ -124,6 +139,10 @@ export interface CrystalVoyage {
   dataSource: "licensed";
   supplierId: string;
   updatedAt: string;
+  fareType?: string;
+  depositPercent?: number;
+  finalPaymentDate?: string;
+  cancellationPolicy?: CrystalPenaltyBand[];
 }
 
 export interface CrystalFacetBucket {

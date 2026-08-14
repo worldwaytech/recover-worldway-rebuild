@@ -22,14 +22,40 @@ export const runCrystalSync = createServerFn({ method: "POST" })
     return crystalSync(Boolean(data.force));
   });
 
+/**
+ * Public storefront feed — live Crystal voyages from the authorised AKTG
+ * Shopping API. The subscription key stays server-side; only normalised,
+ * customer-facing voyage records cross the boundary.
+ */
+export const getCrystalVoyages = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({ currency: z.string().length(3).optional() })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { fetchAktgVoyages } = await import("./aktg.server");
+    const feed = await fetchAktgVoyages(data.currency ?? "USD");
+    return {
+      voyages: feed.voyages,
+      licensed: feed.voyages.length > 0,
+      currency: feed.currency,
+      syncedAt: feed.fetchedAt,
+      supplierRecords: feed.received,
+      configured: feed.configured,
+    };
+  });
+
 /** Public, non-sensitive licence state used by the storefront. */
 export const getCrystalInventoryState = createServerFn({ method: "GET" }).handler(async () => {
   const { licensedVoyages } = await import("./inventory");
   const { getConnector } = await import("@/lib/partners/registry");
   const cfg = getConnector("crystal-cruises");
+  const { fetchAktgVoyages } = await import("./aktg.server");
+  const feed = await fetchAktgVoyages("USD");
   return {
-    licensed: licensedVoyages().length > 0,
-    voyageCount: licensedVoyages().length,
+    licensed: feed.voyages.length > 0 || licensedVoyages().length > 0,
+    voyageCount: feed.voyages.length || licensedVoyages().length,
     contractStatus: cfg?.contractStatus ?? "prospective",
     generatedAt: new Date().toISOString(),
   };
