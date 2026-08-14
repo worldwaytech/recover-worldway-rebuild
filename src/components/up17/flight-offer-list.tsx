@@ -645,7 +645,7 @@ function OfferCard({
             rules.map((r, i) => (
               <div key={i} className="mb-3">
                 <div className="text-foreground">{r.title}</div>
-                <div dangerouslySetInnerHTML={{ __html: r.text }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeFareRuleHtml(r.text) }} />
               </div>
             ))
           ) : (
