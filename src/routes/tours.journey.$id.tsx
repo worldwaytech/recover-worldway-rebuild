@@ -255,9 +255,12 @@ function TourDetailPage() {
       } else {
         setBookingMsg(
           `${res.error ?? "Reservation could not be created."}${
-            res.captured ? " Your details have been sent to our travel desk." : ""
+            res.captured && !res.needsBookingPermission
+              ? " Your details have been sent to our travel desk."
+              : ""
           }`,
         );
+
       }
     } catch (err) {
       setBookingMsg(err instanceof Error ? err.message : "Unexpected error");
