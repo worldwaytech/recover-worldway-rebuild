@@ -1,3 +1,5 @@
+import { getCrystalVoyages } from "@/lib/crystal/crystal.functions";
+import { hydrateLicensedVoyages } from "@/lib/crystal/inventory";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
@@ -44,10 +46,13 @@ export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
       ],
     };
   },
+  loader: () => getCrystalVoyages({ data: {} }),
   component: VoyagePage,
 });
 
 function VoyagePage() {
+  const feed = Route.useLoaderData();
+  hydrateLicensedVoyages(feed.voyages);
   const { code } = Route.useParams();
   const voyage = voyageByCode(code);
   const wishlist = useSyncExternalStore(

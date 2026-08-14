@@ -1,3 +1,5 @@
+import { getCrystalVoyages } from "@/lib/crystal/crystal.functions";
+import { hydrateLicensedVoyages } from "@/lib/crystal/inventory";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { shipBySlug } from "@/lib/crystal/content";
@@ -60,6 +62,7 @@ export const Route = createFileRoute("/crystal-cruises/ships/$slug")({
       ],
     };
   },
+  loader: () => getCrystalVoyages({ data: {} }),
   component: ShipPage,
 });
 
@@ -77,6 +80,8 @@ function List({ title, items }: { title: string; items: string[] }) {
 }
 
 function ShipPage() {
+  const feed = Route.useLoaderData();
+  hydrateLicensedVoyages(feed.voyages);
   const { ship: s } = Route.useLoaderData();
   const voyages = voyagesForShip(s.slug);
 

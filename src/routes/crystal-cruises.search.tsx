@@ -1,3 +1,5 @@
+import { getCrystalVoyages } from "@/lib/crystal/crystal.functions";
+import { hydrateLicensedVoyages } from "@/lib/crystal/inventory";
 import { createFileRoute } from "@tanstack/react-router";
 import { CruiseFinder, type FinderSearch } from "@/components/crystal/cruise-finder";
 
@@ -38,10 +40,13 @@ export const Route = createFileRoute("/crystal-cruises/search")({
     ],
     links: [{ rel: "canonical", href: URL }],
   }),
+  loader: () => getCrystalVoyages({ data: {} }),
   component: SearchPage,
 });
 
 function SearchPage() {
+  const feed = Route.useLoaderData();
+  hydrateLicensedVoyages(feed.voyages);
   const search = Route.useSearch();
   return (
     <>

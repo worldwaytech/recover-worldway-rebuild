@@ -1,3 +1,5 @@
+import { getCrystalVoyages } from "@/lib/crystal/crystal.functions";
+import { hydrateLicensedVoyages } from "@/lib/crystal/inventory";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -29,10 +31,13 @@ export const Route = createFileRoute("/crystal-cruises/quote")({
     ],
     links: [{ rel: "canonical", href: URL }],
   }),
+  loader: () => getCrystalVoyages({ data: {} }),
   component: QuotePage,
 });
 
 function QuotePage() {
+  const feed = Route.useLoaderData();
+  hydrateLicensedVoyages(feed.voyages);
   const { voyage: voyageCode } = Route.useSearch();
   const voyage = voyageCode ? voyageByCode(voyageCode) : null;
   const [busy, setBusy] = useState(false);
