@@ -1,0 +1,159 @@
+/**
+ * Pure, client-safe contract helpers for the Viator hosted payment iFrame flow.
+ * Everything here is deterministic so it can be unit tested without network or
+ * database access, and reused by both the browser component and the server
+ * functions (single source of truth for validation).
+ */
+
+export const VIATOR_PAYMENT_SCRIPT_URL =
+  "https://checkout-assets.payments.tamg.cloud/stable/v2/payment.js";
+
+/** Viator requires `hostingUrl` to be the *origin* only — it is matched against window.location.origin. */
+export function normaliseHostingUrl(input: string): string {
+  const url = new URL(input.trim());
+  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+    throw new Error("hostingUrl must be https");
+  }
+  return url.origin;
+}
+
+export type PaxMix = { ageBand: "ADULT" | "CHILD" | "INFANT" | "SENIOR" | "YOUTH"; count: number }[];
+
+export type HoldRequestInput = {
+  productCode: string;
+  travelDate: string;
+  currency: string;
+  paxMix: PaxMix;
+  productOptionCode?: string | undefined;
+  startTime?: string | undefined;
+  languageGuide?: { type: string; language: string } | undefined;
+};
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const CURRENCY_RE = /^[A-Z]{3}$/;
+const PRODUCT_CODE_RE = /^[A-Za-z0-9_-]{3,40}$/;
+
+export function validateHoldInput(input: HoldRequestInput): HoldRequestInput {
+  if (!PRODUCT_CODE_RE.test(input.productCode)) throw new Error("Invalid product code.");
+  if (!DATE_RE.test(input.travelDate)) throw new Error("Travel date must be YYYY-MM-DD.");
+  const currency = input.currency.trim().toUpperCase();
+  if (!CURRENCY_RE.test(currency)) throw new Error("Currency must be a 3-letter ISO code.");
+
+  const paxMix = input.paxMix
+    .map((p) => ({ ageBand: p.ageBand, count: Math.trunc(p.count) }))
+    .filter((p) => p.count > 0);
+  const travellers = paxMix.reduce((sum, p) => sum + p.count, 0);
+  if (travellers < 1) throw new Error("At least one traveller is required.");
+  if (travellers > 30) throw new Error("Maximum 30 travellers per booking.");
+  if (!paxMix.some((p) => p.ageBand === "ADULT" || p.ageBand === "SENIOR")) {
+    throw new Error("At least one adult traveller is required.");
+  }
+
+  return {
+    productCode: input.productCode,
+    travelDate: input.travelDate,
+    currency,
+    paxMix,
+    ...(input.productOptionCode ? { productOptionCode: input.productOptionCode } : {}),
+    ...(input.startTime ? { startTime: input.startTime } : {}),
+    ...(input.languageGuide ? { languageGuide: input.languageGuide } : {}),
+  };
+}
+
+export type BillingDetails = {
+  /** ISO 3166-1 alpha-2 */
+  country: string;
+  postalCode: string;
+};
+
+const COUNTRY_RE = /^[A-Z]{2}$/;
+const POSTAL_RE = /^[A-Za-z0-9][A-Za-z0-9 -]{1,8}$/;
+
+export function validateBillingDetails(input: BillingDetails): BillingDetails {
+  const country = input.country.trim().toUpperCase();
+  if (!COUNTRY_RE.test(country)) throw new Error("Billing country must be a 2-letter ISO code.");
+  const postalCode = input.postalCode.trim();
+  if (!POSTAL_RE.test(postalCode)) throw new Error("Billing postal code is invalid.");
+  return { country, postalCode };
+}
+
+export type BookerInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | undefined;
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+export function validateBooker(input: BookerInput): Required<BookerInput> {
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+  const email = input.email.trim().toLowerCase();
+  const phone = (input.phone ?? "").trim();
+  if (firstName.length < 1 || lastName.length < 1) throw new Error("Booker name is required.");
+  if (!EMAIL_RE.test(email)) throw new Error("A valid booker email is required.");
+  return { firstName, lastName, email, phone };
+}
+
+/** UI/persistence state for an activity booking. */
+export type ActivityBookingState =
+  | "held"
+  | "hold_expired"
+  | "paid_pending_confirmation"
+  | "confirmed"
+  | "rejected"
+  | "failed";
+
+/** Maps Viator cart/book item statuses to our internal state. */
+export function mapViatorBookingStatus(statuses: readonly string[]): ActivityBookingState {
+  const upper = statuses.map((s) => (s ?? "").trim().toUpperCase()).filter(Boolean);
+  if (!upper.length) return "failed";
+  if (upper.some((s) => s === "FAILED" || s === "ERROR")) return "failed";
+  if (upper.some((s) => s === "REJECTED" || s === "DECLINED" || s === "CANCELLED")) {
+    return "rejected";
+  }
+  if (upper.every((s) => s === "CONFIRMED" || s === "AMENDED")) return "confirmed";
+  return "paid_pending_confirmation";
+}
+
+/** A hold is usable while it has not expired (with a small safety margin). */
+export function isHoldUsable(
+  expiresAtIso: string | null | undefined,
+  now: Date = new Date(),
+  safetyMarginMs = 20_000,
+): boolean {
+  if (!expiresAtIso) return true;
+  const expiry = Date.parse(expiresAtIso);
+  if (Number.isNaN(expiry)) return true;
+  return expiry - safetyMarginMs > now.getTime();
+}
+
+/** Terminal states may never be re-booked or transitioned backwards. */
+export function isTerminalState(state: ActivityBookingState): boolean {
+  return state === "confirmed" || state === "rejected" || state === "hold_expired";
+}
+
+/**
+ * Decides whether a `cart/book` call may proceed for a stored record.
+ * Fails closed: anything already paid/confirmed is never charged twice.
+ */
+export function canSubmitBooking(record: {
+  state: ActivityBookingState;
+  holdExpiresAt?: string | null;
+}): { ok: true } | { ok: false; reason: string } {
+  if (record.state === "confirmed") return { ok: false, reason: "This booking is already confirmed." };
+  if (record.state === "rejected") return { ok: false, reason: "This booking was rejected by the supplier." };
+  if (record.state === "paid_pending_confirmation") {
+    return { ok: false, reason: "This booking is already submitted and awaiting confirmation." };
+  }
+  if (record.state === "hold_expired" || !isHoldUsable(record.holdExpiresAt)) {
+    return { ok: false, reason: "The availability hold expired — please search again." };
+  }
+  return { ok: true };
+}
+
+/** Cent-safe money comparison for verifying the amount Viator quoted vs. what we show. */
+export function sameAmount(a: number, b: number, toleranceMinorUnits = 1): boolean {
+  return Math.abs(Math.round(a * 100) - Math.round(b * 100)) <= toleranceMinorUnits;
+}
