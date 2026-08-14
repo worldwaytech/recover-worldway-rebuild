@@ -98,6 +98,14 @@ function CrystalConsole() {
                 <p>{status.authKind}</p>
               </div>
               <div>
+                <p className="text-muted-foreground">Shopping API</p>
+                <p>{status.shoppingApiStatus}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Booking API</p>
+                <p>{status.bookingApiStatus}</p>
+              </div>
+              <div>
                 <p className="text-muted-foreground">Licensed voyages in cache</p>
                 <p>{status.inventoryCount}</p>
               </div>
