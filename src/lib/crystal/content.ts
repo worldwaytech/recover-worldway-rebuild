@@ -128,7 +128,7 @@ export const CRYSTAL_DESTINATIONS: CrystalDestination[] = [
       "Inside Passage navigation, tidewater glaciers and Gold Rush ports between Vancouver and the Gulf of Alaska.",
     bestTime: "May to September, with peak wildlife in July and August.",
     season: ["May", "June", "July", "August", "September"],
-    hero: img("photo-1531176175280-33e81dc9c1e0"),
+    hero: img("photo-1518156677180-95a2893f3e9f"),
     map: { lat: 58.3, lng: -134.4, zoomHint: "coast" },
     ports: ["vancouver", "juneau", "skagway", "seward", "ketchikan"],
     related: ["world-cruise", "northern-europe"],
