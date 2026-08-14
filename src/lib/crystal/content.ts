@@ -300,6 +300,30 @@ export const CRYSTAL_DESTINATIONS: CrystalDestination[] = [
     ],
   },
   {
+    slug: "north-america",
+    name: "North America",
+    region: "North America",
+    countries: ["United States", "Canada"],
+    overview:
+      "Atlantic seaboard, the St Lawrence and the Pacific coast: Boston and New York in the fall, Quebec and Montreal through the maple season, San Diego for winter repositioning.",
+    bestTime: "May to October on the Atlantic side; November to March out of San Diego.",
+    season: ["May", "June", "July", "August", "September", "October"],
+    hero: img("photo-1502920917128-1aa500764cbd"),
+    map: { lat: 45.0, lng: -73.5, zoomHint: "region" },
+    ports: ["new-york", "boston", "montreal", "quebec-city", "san-diego"],
+    related: ["alaska", "caribbean", "world-cruise"],
+    faqs: [
+      {
+        q: "Which season suits Canada and New England?",
+        a: "Late September and October for the colour; earlier summer sailings trade foliage for warmer port days.",
+      },
+      {
+        q: "Are pre-cruise stays arranged?",
+        a: "Yes — hotels, transfers and flights sit on the same Worldway booking record as the voyage.",
+      },
+    ],
+  },
+  {
     slug: "world-cruise",
     name: "World Cruise",
     region: "Global",
@@ -471,6 +495,50 @@ export const CRYSTAL_SHIPS: CrystalShip[] = [
       {
         q: "Which itineraries use Symphony?",
         a: "Seasonal deployment publishes with the licensed voyage calendar.",
+      },
+    ],
+  },
+  {
+    slug: "crystal-grace",
+    name: "Crystal Grace",
+    classification: "Luxury ocean vessel",
+    overview:
+      "The newest ship in the Crystal programme, purpose-built for all-suite luxury cruising with expanded wellness and dining space. Worldway advisors brief clients on suite grades and seasonal deployment before booking.",
+    hero: img("photo-1544551763-46a013bb70d5"),
+    gallery: [img("photo-1548574505-5e239809ee19"), img("photo-1559599076-9c61d8e1b77c")],
+    specs: [
+      { label: "Configuration", value: "All-suite, ocean" },
+      { label: "Service style", value: "Butler-supported, all-inclusive" },
+      { label: "Detailed specification", value: "Published from the licensed data feed" },
+    ],
+    decks: [
+      { name: "Accommodation decks", summary: "Suite grades from ocean view to penthouse." },
+      { name: "Public decks", summary: "Restaurants, lounges, boutiques and enrichment spaces." },
+      { name: "Wellness deck", summary: "Spa, fitness studio, salon and pool terrace." },
+    ],
+    suites: SHARED_SUITES("gra"),
+    dining: [
+      "Main dining room with open seating",
+      "Speciality restaurants (reservation-based)",
+      "Casual all-day dining and in-suite service",
+    ],
+    lounges: ["Observation lounge", "Cocktail and wine bars", "Cigar lounge"],
+    wellness: ["Spa and treatment suites", "Salon", "Fitness studio", "Pool terrace"],
+    enrichment: ["Destination lectures", "Culinary and wine programme", "Live performance"],
+    accessibility: [
+      "Accessible suites available on request",
+      "Lift access across guest decks",
+      "Tender assistance arranged in advance",
+    ],
+    sustainability: [
+      "Latest-generation fuel efficiency systems",
+      "Advanced waste-water treatment",
+      "Single-use plastic reduction programme",
+    ],
+    faqs: [
+      {
+        q: "Where does Crystal Grace sail?",
+        a: "Seasonal deployment publishes live with the voyage calendar on this page.",
       },
     ],
   },
