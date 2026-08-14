@@ -55,6 +55,27 @@ export const getTourDepartureList = createServerFn({ method: "POST" })
     return getTourDepartures(data.id, data.currency ?? "USD", data.fromDate);
   });
 
+export const checkTourAvailability = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        departureId: z.string().max(30),
+        roomCode: z.string().max(20).optional(),
+        travellers: z.number().int().min(1).max(8).optional(),
+        currency: z.string().max(3).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { checkDepartureAvailability } = await import("./tours.server");
+    return checkDepartureAvailability(
+      data.departureId,
+      data.roomCode ?? "",
+      data.travellers ?? 1,
+      data.currency ?? "USD",
+    );
+  });
+
 export const reserveTourDeparture = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
@@ -80,8 +101,40 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { createTourBooking } = await import("./tours.server");
-    return createTourBooking(data);
+    const result = await createTourBooking(data);
+    // If the supplier cannot issue the live hold (write scope pending or a
+    // transient failure), capture the traveller so the desk can complete it.
+    if (!result.ok && !("soldOut" in result && result.soldOut)) {
+      const lead = data.travellers[0]!;
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin.from("quote_requests").insert({
+          full_name: `${lead.firstName} ${lead.lastName}`.trim(),
+          email: lead.email,
+          phone: lead.phone ?? null,
+          product_kind: "tours",
+          product_slug: data.departureId,
+          product_title: data.tourName,
+          party_size: data.travellers.length,
+          travel_month: data.startDate.slice(0, 7),
+          message: `Live reservation fallback · departure ${data.departureId} · room ${data.roomCode}`,
+          status: "new",
+        });
+        return { ...result, captured: true };
+      } catch {
+        return { ...result, captured: false };
+      }
+    }
+    return result;
   });
+
+export const confirmTourReservation = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ bookingId: z.string().max(40) }).parse(d))
+  .handler(async ({ data }) => {
+    const { confirmTourBooking } = await import("./tours.server");
+    return confirmTourBooking(data.bookingId);
+  });
+
 
 export const getTourConnectorStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { toursStatus } = await import("./tours.server");

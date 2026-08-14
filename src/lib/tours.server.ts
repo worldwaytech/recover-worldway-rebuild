@@ -34,6 +34,16 @@ export type TourDay = {
   meals: string[];
 };
 
+export type TourRoom = {
+  code: string;
+  name: string;
+  status: string;
+  price: number | null;
+  deposit: number | null;
+  spaces: number | null;
+  currency: string;
+};
+
 export type TourDeparture = {
   id: string;
   startDate: string;
@@ -43,8 +53,9 @@ export type TourDeparture = {
   availableSpaces: number | null;
   price: number | null;
   currency: string;
-  rooms: { code: string; name: string; status: string; price: number | null; currency: string }[];
+  rooms: TourRoom[];
 };
+
 
 export type TourDetail = TourSummary & {
   highlights: string | null;
@@ -507,7 +518,7 @@ type RawDeparture = {
     name?: string;
     availability?: { status?: string; total?: number | null };
     price_bands?: {
-      prices?: { currency?: string; amount?: string }[];
+      prices?: { currency?: string; amount?: string; deposit?: string }[];
       dossier_segment?: string;
     }[];
   }[];
@@ -541,11 +552,14 @@ function normaliseDeparture(raw: RawDeparture, currency: string): TourDeparture 
         name: r.name ?? r.code ?? "Standard",
         status: r.availability?.status ?? "UNKNOWN",
         price: band?.amount ? Number(band.amount) : null,
+        deposit: band?.deposit ? Number(band.deposit) : null,
+        spaces: r.availability?.total ?? null,
         currency,
       };
     }),
   };
 }
+
 
 function detailBody(raw: RawDossier, label: string): string | null {
   const row = (raw.details ?? []).find((d) =>
@@ -657,6 +671,82 @@ export async function getTourDepartures(id: string, currency = "USD", fromDate?:
   };
 }
 
+// ---------- live availability check ----------
+
+export type AvailabilityCheck = {
+  ok: boolean;
+  status: number;
+  bookable: boolean;
+  reason?: string;
+  departure?: TourDeparture;
+  room?: TourRoom | null;
+  totalPrice?: number | null;
+  depositDue?: number | null;
+};
+
+/**
+ * Re-reads the departure straight from the supplier immediately before a
+ * reservation so a stale card price or a room that just sold out can never be
+ * booked. Fails closed: anything other than an AVAILABLE room with enough
+ * spaces blocks the reservation.
+ */
+export async function checkDepartureAvailability(
+  departureId: string,
+  roomCode: string,
+  travellers: number,
+  currency = "USD",
+): Promise<AvailabilityCheck> {
+  if (!toursConfigured()) {
+    return { ok: false, status: 503, bookable: false, reason: "Tour supplier not configured." };
+  }
+  const res = await gFetch<RawDeparture>(`/departures/${encodeURIComponent(departureId)}`);
+  if (!res.ok || !res.data) {
+    return {
+      ok: false,
+      status: res.status,
+      bookable: false,
+      reason: res.error ?? "Live availability could not be read.",
+    };
+  }
+  const departure = normaliseDeparture(res.data, currency);
+  const room =
+    departure.rooms.find((r) => r.code === roomCode) ??
+    departure.rooms.find((r) => r.status === "AVAILABLE") ??
+    departure.rooms[0] ??
+    null;
+  const perPerson = room?.price ?? departure.price ?? null;
+  const base = {
+    ok: true,
+    status: 200,
+    departure,
+    room,
+    totalPrice: perPerson != null ? perPerson * travellers : null,
+    depositDue: room?.deposit != null ? room.deposit * travellers : null,
+  };
+  if (departure.status !== "AVAILABLE") {
+    return { ...base, bookable: false, reason: `Departure is ${statusText(departure.status)}.` };
+  }
+  if (!room) {
+    return { ...base, bookable: false, reason: "No room types returned for this departure." };
+  }
+  if (room.status !== "AVAILABLE") {
+    return { ...base, bookable: false, reason: `${room.name} is ${statusText(room.status)}.` };
+  }
+  const spaces = room.spaces ?? departure.availableSpaces;
+  if (spaces != null && spaces < travellers) {
+    return {
+      ...base,
+      bookable: false,
+      reason: `Only ${spaces} ${spaces === 1 ? "space" : "spaces"} left in ${room.name}.`,
+    };
+  }
+  return { ...base, bookable: true };
+}
+
+function statusText(status: string) {
+  return status.replace(/_/g, " ").toLowerCase();
+}
+
 // ---------- booking ----------
 
 export type TourBookingInput = {
@@ -668,6 +758,26 @@ export type TourBookingInput = {
   currency?: string;
 };
 
+type RawBooking = {
+  id?: string;
+  external_id?: string;
+  booking_reference?: string;
+  status?: string;
+  amount_due?: string;
+  currency?: string;
+  customers?: { id?: string }[];
+};
+
+/**
+ * Live G Adventures reservation chain:
+ *   1. re-verify availability (fail closed)
+ *   2. POST /bookings          → booking envelope with customer ids
+ *   3. POST /bookings/:id/services → DEPARTURE_SERVICE hold on the departure
+ *   4. GET  /bookings/:id      → live status, reference and amount due
+ * A 403 from step 2/3 means the supplier has not enabled write scope on the
+ * application key; the caller is told explicitly so the lead is captured
+ * instead of silently lost.
+ */
 export async function createTourBooking(input: TourBookingInput) {
   if (!toursConfigured()) {
     return {
@@ -686,25 +796,58 @@ export async function createTourBooking(input: TourBookingInput) {
       error: "Agency code required before live reservations can be issued.",
     };
   }
+  const currency = (input.currency ?? "USD").toUpperCase();
   const lead = input.travellers[0];
-  const bookingRes = await gFetch<{ id?: string; href?: string }>("/bookings", {
+
+  const check = await checkDepartureAvailability(
+    input.departureId,
+    input.roomCode,
+    input.travellers.length,
+    currency,
+  );
+  if (!check.bookable) {
+    return {
+      ok: false,
+      status: 409,
+      soldOut: true,
+      error: check.reason ?? "This departure is no longer available.",
+      availability: check,
+    };
+  }
+  const roomCode = check.room?.code || input.roomCode || "STANDARD";
+
+  const externalId = `WWTG-${Date.now().toString(36).toUpperCase()}`;
+  const bookingRes = await gFetch<RawBooking>("/bookings", {
     method: "POST",
     body: {
       agency: { id: agency },
-      currency: (input.currency ?? "USD").toUpperCase(),
+      currency,
       customers: input.travellers.map((t) => ({
         given_name: t.firstName,
         surname: t.lastName,
         email_addresses: [{ type: "HOME", email_address: t.email }],
         ...(t.phone ? { telephones: [{ type: "MOBILE", number: t.phone }] } : {}),
       })),
-      external_id: `WWTG-${Date.now()}`,
+      external_id: externalId,
     },
   });
   if (!bookingRes.ok || !bookingRes.data?.id) {
-    return { ok: false, status: bookingRes.status, error: bookingRes.error };
+    return {
+      ok: false,
+      status: bookingRes.status,
+      needsBookingPermission: bookingRes.status === 403,
+      error:
+        bookingRes.status === 403
+          ? "Live reservations are not yet enabled on this supplier key (booking write scope pending). Your request has been sent to our travel desk."
+          : (bookingRes.error ?? "Reservation could not be created."),
+      availability: check,
+    };
   }
-  const bookingId = bookingRes.data.id;
+  const bookingId = String(bookingRes.data.id);
+  const customerIds = (bookingRes.data.customers ?? [])
+    .map((c) => (c.id ? String(c.id) : null))
+    .filter(Boolean) as string[];
+
   const serviceRes = await gFetch<{ id?: string; status?: string }>(
     `/bookings/${bookingId}/services`,
     {
@@ -712,21 +855,54 @@ export async function createTourBooking(input: TourBookingInput) {
       body: {
         type: "DEPARTURE_SERVICE",
         departure: { id: input.departureId },
-        room: { code: input.roomCode || "STD" },
-        travellers: input.travellers.map((_, i) => ({ id: String(i + 1) })),
+        room: { code: roomCode },
+        travellers: (customerIds.length
+          ? customerIds
+          : input.travellers.map((_, i) => String(i + 1))
+        ).map((cid) => ({ customer: { id: cid } })),
       },
     },
   );
+
+  const finalRes = await gFetch<RawBooking>(`/bookings/${bookingId}`);
+  const live = finalRes.data;
+
   return {
     ok: serviceRes.ok,
-    status: serviceRes.status,
-    error: serviceRes.error,
+    status: serviceRes.ok ? 200 : serviceRes.status,
+    needsBookingPermission: serviceRes.status === 403,
+    error: serviceRes.ok ? undefined : serviceRes.error,
     bookingId,
     serviceStatus: serviceRes.data?.status ?? null,
-    reference: `WWTG-${bookingId}`,
+    bookingStatus: live?.status ?? null,
+    amountDue: live?.amount_due ? Number(live.amount_due) : (check.depositDue ?? null),
+    currency: live?.currency ?? currency,
+    reference: live?.booking_reference ?? `WWTG-${bookingId}`,
+    externalId,
     lead: lead?.email ?? null,
+    totalPrice: check.totalPrice ?? null,
+    room: check.room?.name ?? roomCode,
   };
 }
+
+/** Confirms a held reservation with the supplier once payment is settled. */
+export async function confirmTourBooking(bookingId: string) {
+  if (!toursBookingConfigured()) {
+    return { ok: false, status: 503, error: "Live booking credentials are not configured." };
+  }
+  const res = await gFetch<{ status?: string }>(
+    `/bookings/${encodeURIComponent(bookingId)}/confirmation`,
+    { method: "POST", body: {} },
+  );
+  return {
+    ok: res.ok,
+    status: res.status,
+    needsBookingPermission: res.status === 403,
+    error: res.error,
+    bookingStatus: res.data?.status ?? null,
+  };
+}
+
 
 /** Related journeys in the same region / travel style, excluding the current one. */
 export async function getSimilarTours(

@@ -6,8 +6,10 @@ import {
   getTourDossier,
   getTourDeparture,
   reserveTourDeparture,
+  checkTourAvailability,
   getRelatedTours,
 } from "@/lib/tours.functions";
+
 import { money, TourCard, type TourCardData } from "@/components/tours/tour-card";
 import { Field, inputClass } from "@/components/search-form";
 import { recordTourView, useSavedTours } from "@/lib/tour-shortlist";
@@ -41,6 +43,15 @@ type Day = {
   accommodation: string | null;
   meals: string[];
 };
+type Room = {
+  code: string;
+  name: string;
+  status: string;
+  price: number | null;
+  deposit?: number | null;
+  spaces?: number | null;
+  currency: string;
+};
 type Departure = {
   id: string;
   startDate: string;
@@ -50,8 +61,18 @@ type Departure = {
   availableSpaces: number | null;
   price: number | null;
   currency: string;
-  rooms: { code: string; name: string; status: string; price: number | null; currency: string }[];
+  rooms: Room[];
 };
+type Availability = {
+  ok: boolean;
+  bookable: boolean;
+  reason?: string;
+  departure?: Departure;
+  room?: Room | null;
+  totalPrice?: number | null;
+  depositDue?: number | null;
+};
+
 type Detail = {
   id: string;
   name: string;
@@ -85,6 +106,7 @@ function TourDetailPage() {
   const load = useServerFn(getTourDossier);
   const loadDeparture = useServerFn(getTourDeparture);
   const reserve = useServerFn(reserveTourDeparture);
+  const checkAvailability = useServerFn(checkTourAvailability);
   const [tour, setTour] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +114,9 @@ function TourDetailPage() {
   const [roomCode, setRoomCode] = useState("");
   const [booking, setBooking] = useState(false);
   const [bookingMsg, setBookingMsg] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<Availability | null>(null);
+  const [checking, setChecking] = useState(false);
+
   const [related, setRelated] = useState<TourCardData[]>([]);
   const loadRelated = useServerFn(getRelatedTours);
   const { toggle, isSaved } = useSavedTours();
@@ -147,6 +172,36 @@ function TourDetailPage() {
     };
   }, [id, loadRelated]);
 
+  // Live availability re-check whenever the departure, room or party changes.
+  useEffect(() => {
+    if (!selected) {
+      setAvailability(null);
+      return;
+    }
+    let alive = true;
+    setChecking(true);
+    void (async () => {
+      try {
+        const res = (await checkAvailability({
+          data: {
+            departureId: selected.id,
+            roomCode: roomCode || undefined,
+            travellers,
+            currency: "USD",
+          },
+        })) as Availability;
+        if (alive) setAvailability(res);
+      } catch {
+        if (alive) setAvailability(null);
+      } finally {
+        if (alive) setChecking(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [selected, roomCode, travellers, checkAvailability]);
+
   async function onReserve(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!selected || !tour) return;
@@ -163,7 +218,7 @@ function TourDetailPage() {
       const res = (await reserve({
         data: {
           departureId: selected.id,
-          roomCode: roomCode || selected.rooms[0]?.code || "STD",
+          roomCode: roomCode || selected.rooms[0]?.code || "STANDARD",
           tourName: tour.name,
           startDate: selected.startDate,
           currency: "USD",
@@ -177,12 +232,36 @@ function TourDetailPage() {
                 },
           ),
         },
-      })) as { ok: boolean; error?: string; reference?: string; needsCredentials?: boolean };
-      setBookingMsg(
-        res.ok
-          ? `Reservation created — reference ${res.reference}. Our travel desk will confirm within the hour.`
-          : (res.error ?? "Reservation could not be created."),
-      );
+      })) as {
+        ok: boolean;
+        error?: string;
+        reference?: string;
+        bookingStatus?: string | null;
+        amountDue?: number | null;
+        currency?: string;
+        captured?: boolean;
+        soldOut?: boolean;
+        needsCredentials?: boolean;
+        needsBookingPermission?: boolean;
+        availability?: Availability;
+      };
+      if (res.availability) setAvailability(res.availability);
+      if (res.ok) {
+        const due =
+          res.amountDue != null ? ` Deposit due ${money(res.amountDue, res.currency ?? "USD")}.` : "";
+        setBookingMsg(
+          `Reservation held live with the operator — reference ${res.reference} (${(res.bookingStatus ?? "quote").toLowerCase()}).${due} Our travel desk will contact you to settle payment and issue documents.`,
+        );
+      } else {
+        setBookingMsg(
+          `${res.error ?? "Reservation could not be created."}${
+            res.captured && !res.needsBookingPermission
+              ? " Your details have been sent to our travel desk."
+              : ""
+          }`,
+        );
+
+      }
     } catch (err) {
       setBookingMsg(err instanceof Error ? err.message : "Unexpected error");
     } finally {
@@ -449,8 +528,9 @@ function TourDetailPage() {
                     onChange={(e) => setRoomCode(e.target.value)}
                   >
                     {selected.rooms.map((r) => (
-                      <option key={r.code} value={r.code}>
+                      <option key={r.code} value={r.code} disabled={r.status !== "AVAILABLE"}>
                         {r.name} — {money(r.price, r.currency)}
+                        {r.status !== "AVAILABLE" ? ` (${statusLabel(r.status)})` : ""}
                       </option>
                     ))}
                   </select>
@@ -469,14 +549,48 @@ function TourDetailPage() {
                   ))}
                 </select>
               </Field>
-              {selected.price != null ? (
-                <p className="rounded-xl border border-border/60 bg-background/40 p-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Estimated total ·{" "}
-                  <span className="text-primary">
-                    {money(selected.price * travellers, selected.currency)}
-                  </span>
-                </p>
-              ) : null}
+              <div
+                className={`space-y-1 rounded-xl border p-3 text-[11px] uppercase tracking-[0.18em] ${
+                  availability && !availability.bookable
+                    ? "border-destructive/50 bg-destructive/10 text-destructive"
+                    : "border-border/60 bg-background/40 text-muted-foreground"
+                }`}
+              >
+                {checking ? (
+                  <p>Checking live availability…</p>
+                ) : availability ? (
+                  <>
+                    <p>
+                      {availability.bookable ? "Live availability confirmed" : "Not bookable"}
+                      {availability.room?.spaces != null
+                        ? ` · ${availability.room.spaces} ${
+                            availability.room.spaces === 1 ? "space" : "spaces"
+                          } left`
+                        : ""}
+                    </p>
+                    {availability.reason ? <p className="normal-case">{availability.reason}</p> : null}
+                    {availability.totalPrice != null ? (
+                      <p>
+                        Live total ·{" "}
+                        <span className="text-primary">
+                          {money(availability.totalPrice, selected.currency)}
+                        </span>
+                      </p>
+                    ) : null}
+                    {availability.depositDue != null ? (
+                      <p>Deposit due · {money(availability.depositDue, selected.currency)}</p>
+                    ) : null}
+                  </>
+                ) : selected.price != null ? (
+                  <p>
+                    Estimated total ·{" "}
+                    <span className="text-primary">
+                      {money(selected.price * travellers, selected.currency)}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="First name">
                   <input name="firstName" required className={inputClass} />
@@ -493,11 +607,18 @@ function TourDetailPage() {
               </Field>
               <button
                 type="submit"
-                disabled={booking}
+                disabled={booking || checking || (availability ? !availability.bookable : false)}
                 className="w-full rounded-full border border-primary/50 bg-primary/10 px-6 py-2.5 text-[10px] uppercase tracking-[0.28em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
               >
-                {booking ? "Reserving" : "Request reservation"}
+                {booking
+                  ? "Reserving"
+                  : checking
+                    ? "Checking availability"
+                    : availability && !availability.bookable
+                      ? "Not available"
+                      : "Reserve live"}
               </button>
+
               {bookingMsg ? (
                 <p className="text-xs leading-relaxed text-muted-foreground">{bookingMsg}</p>
               ) : null}
