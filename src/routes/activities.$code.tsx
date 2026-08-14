@@ -11,6 +11,7 @@ import {
   searchViatorProducts,
 } from "@/lib/viator.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { ViatorActivityCheckout } from "@/components/activities/viator-activity-checkout";
 import { trackCatalogueEvent } from "@/lib/catalogue-client";
 
 export const Route = createFileRoute("/activities/$code")({
@@ -128,6 +129,7 @@ function ActivityDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [payNow, setPayNow] = useState(false);
 
   const boot = useCallback(async () => {
     setLoading(true);
@@ -679,11 +681,28 @@ function ActivityDetailPage() {
                 ) : null}
 
                 <button
+                  type="button"
+                  onClick={() => {
+                    setBookingError(null);
+                    const [firstName, ...rest] = form.full_name.trim().split(/\s+/);
+                    if (!date || !firstName || !rest.length || !form.email.trim()) {
+                      setBookingError(
+                        "Add your travel date, full name and email to pay and confirm instantly.",
+                      );
+                      return;
+                    }
+                    setPayNow(true);
+                  }}
+                  className="w-full rounded-full bg-primary px-6 py-3 text-xs uppercase tracking-[0.3em] text-primary-foreground"
+                >
+                  Pay &amp; confirm instantly
+                </button>
+                <button
                   type="submit"
                   disabled={submitting}
                   className="w-full rounded-full bg-primary px-6 py-3 text-xs uppercase tracking-[0.3em] text-primary-foreground disabled:opacity-60"
                 >
-                  {submitting ? "Submitting…" : "Confirm reservation"}
+                  {submitting ? "Submitting…" : "Request a held reservation"}
                 </button>
                 <Link
                   to="/concierge"
@@ -694,6 +713,27 @@ function ActivityDetailPage() {
                 </Link>
               </form>
             </div>
+            {payNow ? (
+              <ViatorActivityCheckout
+                productCode={product.productCode}
+                productTitle={product.title}
+                travelDate={date}
+                currency={product.currency}
+                paxMix={[
+                  { ageBand: "ADULT", count: adults },
+                  ...(children > 0
+                    ? [{ ageBand: "CHILD" as const, count: children }]
+                    : []),
+                ]}
+                booker={{
+                  firstName: form.full_name.trim().split(/\s+/)[0] ?? "",
+                  lastName: form.full_name.trim().split(/\s+/).slice(1).join(" "),
+                  email: form.email.trim(),
+                  ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
+                }}
+                onClose={() => setPayNow(false)}
+              />
+            ) : null}
           </aside>
         </div>
       </div>

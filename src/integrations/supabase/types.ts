@@ -633,6 +633,7 @@ export type Database = {
           order_id: string
           payment_id: string | null
           plan_id: string | null
+          provider: string
           provider_payload: Json | null
           purpose: string
           reference: Json
@@ -655,6 +656,7 @@ export type Database = {
           order_id: string
           payment_id?: string | null
           plan_id?: string | null
+          provider?: string
           provider_payload?: Json | null
           purpose: string
           reference?: Json
@@ -677,6 +679,7 @@ export type Database = {
           order_id?: string
           payment_id?: string | null
           plan_id?: string | null
+          provider?: string
           provider_payload?: Json | null
           purpose?: string
           reference?: Json
@@ -954,6 +957,87 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      viator_activity_bookings: {
+        Row: {
+          amount_minor: number
+          audit: Json
+          billing_country: string | null
+          billing_postal_code: string | null
+          booked_at: string | null
+          booking_reference: string | null
+          cart_reference: string
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_phone: string | null
+          failure_reason: string | null
+          hold_expires_at: string | null
+          id: string
+          itinerary_reference: string | null
+          payment_status: string
+          product_code: string
+          product_title: string | null
+          session_expires_at: string | null
+          status: string
+          travel_date: string | null
+          traveller_count: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_minor: number
+          audit?: Json
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          booked_at?: string | null
+          booking_reference?: string | null
+          cart_reference: string
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          failure_reason?: string | null
+          hold_expires_at?: string | null
+          id?: string
+          itinerary_reference?: string | null
+          payment_status?: string
+          product_code: string
+          product_title?: string | null
+          session_expires_at?: string | null
+          status?: string
+          travel_date?: string | null
+          traveller_count?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          audit?: Json
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          booked_at?: string | null
+          booking_reference?: string | null
+          cart_reference?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          failure_reason?: string | null
+          hold_expires_at?: string | null
+          id?: string
+          itinerary_reference?: string | null
+          payment_status?: string
+          product_code?: string
+          product_title?: string | null
+          session_expires_at?: string | null
+          status?: string
+          travel_date?: string | null
+          traveller_count?: number
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

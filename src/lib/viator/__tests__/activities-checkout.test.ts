@@ -1,0 +1,185 @@
+import { describe, expect, it } from "vitest";
+import { resolvePaymentRoute, isViatorHostedRoute } from "@/lib/payments/routing";
+import {
+  canSubmitBooking,
+  isHoldUsable,
+  isTerminalState,
+  mapViatorBookingStatus,
+  normaliseHostingUrl,
+  sameAmount,
+  validateBillingDetails,
+  validateBooker,
+  validateHoldInput,
+} from "@/lib/viator/checkout-contract";
+
+describe("payment routing", () => {
+  it("routes a Viator activities-only cart to the hosted iFrame", () => {
+    const d = resolvePaymentRoute([
+      { supplier: "viator", productKind: "activity" },
+      { supplier: "Viator", productKind: "ACTIVITY" },
+    ]);
+    expect(d.route).toBe("VIATOR_HOSTED_IFRAME");
+    expect(d.reason).toBe("viator_activities_only");
+  });
+
+  it("keeps mixed carts on the existing orchestrator", () => {
+    expect(
+      resolvePaymentRoute([
+        { supplier: "viator", productKind: "activity" },
+        { supplier: "up17", productKind: "flight" },
+      ]),
+    ).toEqual({ route: "EXISTING_PAYMENT_ORCHESTRATOR", reason: "mixed_supplier_cart" });
+  });
+
+  it.each([
+    "flight",
+    "hotel",
+    "transfer",
+    "bus",
+    "private_jet",
+    "cruise",
+    "rail",
+    "membership",
+    "wallet_topup",
+    "tour",
+  ])("never routes %s through Viator payments", (kind) => {
+    expect(isViatorHostedRoute([{ supplier: "up17", productKind: kind }])).toBe(false);
+  });
+
+  it("fails closed on an empty cart", () => {
+    expect(resolvePaymentRoute([]).route).toBe("EXISTING_PAYMENT_ORCHESTRATOR");
+  });
+
+  it("does not route non-activity Viator products to the iFrame", () => {
+    expect(isViatorHostedRoute([{ supplier: "viator", productKind: "tour" }])).toBe(false);
+  });
+});
+
+describe("hostingUrl", () => {
+  it("reduces any URL to its origin", () => {
+    expect(normaliseHostingUrl("https://www.worldwaytravelsgroup.com/activities/1234")).toBe(
+      "https://www.worldwaytravelsgroup.com",
+    );
+  });
+  it("rejects non-https hosts", () => {
+    expect(() => normaliseHostingUrl("http://example.com")).toThrow();
+  });
+});
+
+describe("hold input validation", () => {
+  const base = {
+    productCode: "5657LON_A",
+    travelDate: "2026-05-01",
+    currency: "usd",
+    paxMix: [{ ageBand: "ADULT" as const, count: 2 }],
+  };
+  it("normalises currency and drops empty bands", () => {
+    const out = validateHoldInput({
+      ...base,
+      paxMix: [
+        { ageBand: "ADULT", count: 2 },
+        { ageBand: "CHILD", count: 0 },
+      ],
+    });
+    expect(out.currency).toBe("USD");
+    expect(out.paxMix).toHaveLength(1);
+  });
+  it("requires an adult", () => {
+    expect(() => validateHoldInput({ ...base, paxMix: [{ ageBand: "CHILD", count: 2 }] })).toThrow(
+      /adult/i,
+    );
+  });
+  it("rejects bad dates and codes", () => {
+    expect(() => validateHoldInput({ ...base, travelDate: "01/05/2026" })).toThrow();
+    expect(() => validateHoldInput({ ...base, productCode: "no spaces!" })).toThrow();
+  });
+});
+
+describe("billing + booker validation", () => {
+  it("uppercases the ISO country", () => {
+    expect(validateBillingDetails({ country: "gb", postalCode: " sw1a 1aa " })).toEqual({
+      country: "GB",
+      postalCode: "sw1a 1aa",
+    });
+  });
+  it("rejects invalid country and postal codes", () => {
+    expect(() => validateBillingDetails({ country: "USA", postalCode: "12345" })).toThrow();
+    expect(() => validateBillingDetails({ country: "US", postalCode: "!!" })).toThrow();
+  });
+  it("requires a valid booker email", () => {
+    expect(() =>
+      validateBooker({ firstName: "A", lastName: "B", email: "not-an-email" }),
+    ).toThrow();
+    expect(validateBooker({ firstName: " Ada ", lastName: "L", email: "A@B.CO" }).email).toBe(
+      "a@b.co",
+    );
+  });
+});
+
+describe("supplier status mapping", () => {
+  it("maps confirmed", () => {
+    expect(mapViatorBookingStatus(["CONFIRMED"])).toBe("confirmed");
+  });
+  it("treats any failure as failed", () => {
+    expect(mapViatorBookingStatus(["CONFIRMED", "FAILED"])).toBe("failed");
+  });
+  it("maps rejection", () => {
+    expect(mapViatorBookingStatus(["REJECTED"])).toBe("rejected");
+  });
+  it("maps pending", () => {
+    expect(mapViatorBookingStatus(["PENDING"])).toBe("paid_pending_confirmation");
+  });
+  it("empty status is a failure, never a silent success", () => {
+    expect(mapViatorBookingStatus([])).toBe("failed");
+  });
+});
+
+describe("hold expiry + idempotency gate", () => {
+  it("treats an expired hold as unusable", () => {
+    expect(isHoldUsable(new Date(Date.now() - 1000).toISOString())).toBe(false);
+    expect(isHoldUsable(new Date(Date.now() + 600_000).toISOString())).toBe(true);
+  });
+
+  it("never re-books a confirmed cart", () => {
+    expect(canSubmitBooking({ state: "confirmed" })).toEqual({
+      ok: false,
+      reason: "This booking is already confirmed.",
+    });
+  });
+
+  it("never re-books a cart awaiting confirmation", () => {
+    expect(canSubmitBooking({ state: "paid_pending_confirmation" }).ok).toBe(false);
+  });
+
+  it("blocks a rejected or expired cart", () => {
+    expect(canSubmitBooking({ state: "rejected" }).ok).toBe(false);
+    expect(
+      canSubmitBooking({
+        state: "held",
+        holdExpiresAt: new Date(Date.now() - 5000).toISOString(),
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("allows a live hold exactly once", () => {
+    expect(
+      canSubmitBooking({
+        state: "held",
+        holdExpiresAt: new Date(Date.now() + 600_000).toISOString(),
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("marks confirmed/rejected/expired as terminal", () => {
+    expect(isTerminalState("confirmed")).toBe(true);
+    expect(isTerminalState("rejected")).toBe(true);
+    expect(isTerminalState("held")).toBe(false);
+  });
+});
+
+describe("amount comparison", () => {
+  it("is cent-safe", () => {
+    expect(sameAmount(120.0, 120.005)).toBe(true);
+    expect(sameAmount(120.0, 121.0)).toBe(false);
+  });
+});
