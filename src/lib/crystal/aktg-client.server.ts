@@ -533,7 +533,12 @@ export async function getCruiseSuiteCategoryPrices(
   });
 }
 
-/** price-feed-flat-file: CSV price feed, used for operational reconciliation. */
+/**
+ * price-feed-flat-file: CSV price feed. Implemented for operational
+ * reconciliation only — per AKTG guidance the structured endpoints
+ * (voyages + prices/promotions + availability) are the source of truth for
+ * catalogue synchronisation, so this is never used by customer-facing code.
+ */
 export async function getPriceFeedFlatFile(
   params: { currency?: string; priceTypeCod?: string } = {},
 ): Promise<string> {
@@ -673,7 +678,11 @@ export async function getPricesAndPromotions(
   };
 }
 
-/** Package Experience (supplier-labelled TEST operation, exposed for ops use). */
+/**
+ * Package Experience — supplier-labelled TEST operation. Not production
+ * approved by AKTG, so it is intentionally not wired into any customer or
+ * admin surface; kept only so the client mirrors the specification.
+ */
 export async function getPackageExperience(
   params: { priceTypeCod?: string } = {},
 ): Promise<AktgEnvelope<Record<string, unknown>>> {

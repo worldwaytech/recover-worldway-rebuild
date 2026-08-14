@@ -37,6 +37,7 @@ interface LiveState {
   depositPercent?: number;
   depositDueDate?: string;
   finalPaymentDate?: string;
+  priceTypes?: { code: string; name: string; currency?: string }[];
   error?: string;
 }
 
@@ -99,6 +100,12 @@ export function LiveAvailabilityPanel({
               {state.depositPercent ? `Deposit ${state.depositPercent}%` : ""}
               {state.depositDueDate ? ` due ${state.depositDueDate}` : ""}
               {state.finalPaymentDate ? ` · final payment ${state.finalPaymentDate}` : ""}
+            </p>
+          ) : null}
+          {state.priceTypes?.length ? (
+            <p className="text-xs text-muted-foreground">
+              Fare types published for this sailing:{" "}
+              {state.priceTypes.map((p) => p.name || p.code).join(" · ")}
             </p>
           ) : null}
           <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
