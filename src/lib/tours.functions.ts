@@ -102,11 +102,14 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { createTourBooking } = await import("./tours.server");
+    const { fallbackMessage } = await import("./tours-scope");
     const result = await createTourBooking(data);
     // If the supplier cannot issue the live hold (write scope pending or a
     // transient failure), capture the traveller so the desk can complete it.
     if (!result.ok && !("soldOut" in result && result.soldOut)) {
       const lead = data.travellers[0]!;
+      const denied = "needsBookingPermission" in result && Boolean(result.needsBookingPermission);
+      let captured = false;
       try {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         await supabaseAdmin.from("quote_requests").insert({
@@ -118,13 +121,27 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
           product_title: data.tourName,
           party_size: data.travellers.length,
           travel_month: data.startDate.slice(0, 7),
-          message: `Live reservation fallback · departure ${data.departureId} · room ${data.roomCode}`,
+          message: `Live reservation fallback · departure ${data.departureId} · room ${data.roomCode} · ${
+            denied ? "supplier write scope pending" : `supplier error ${result.status}`
+          }`,
           status: "new",
         });
-        return { ...result, captured: true };
+        captured = true;
       } catch {
-        return { ...result, captured: false };
+        captured = false;
       }
+      return {
+        ...result,
+        captured,
+        deskAssist: true,
+        // No booking exists in any of these paths.
+        reference: undefined,
+        travellerMessage: fallbackMessage({
+          writeScopeDenied: denied,
+          captured,
+          supplierError: denied ? undefined : result.error,
+        }),
+      };
     }
     return result;
   });
