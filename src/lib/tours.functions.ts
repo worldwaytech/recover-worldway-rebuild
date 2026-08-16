@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const searchSchema = z.object({
   q: z.string().max(120).optional(),
@@ -177,4 +178,22 @@ export const getRelatedTours = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { getSimilarTours } = await import("./tours.server");
     return getSimilarTours(data.id, data.currency ?? "USD", data.limit ?? 3);
+  });
+
+/**
+ * Admin-only diagnostics: reports whether the supplier application key is
+ * READ_ONLY or BOOKING_ENABLED. Never creates a booking.
+ */
+export const getToursWriteScope = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ force: z.boolean().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { probeToursWriteScope, toursStatus } = await import("./tours.server");
+    const [scope, status] = await Promise.all([
+      probeToursWriteScope(data.force ?? false),
+      Promise.resolve(toursStatus()),
+    ]);
+    return { scope, status };
   });

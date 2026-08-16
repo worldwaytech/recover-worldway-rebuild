@@ -2,6 +2,12 @@
 // Auth: `X-Application-Key` header. Never expose the key to the browser.
 // Secrets: TOURS_API_KEY, TOURS_API_ENV, TOURS_AGENCY_CODE, TOURS_WEBHOOK_KEY.
 
+import {
+  classifyWriteScope,
+  isWriteScopeDenied,
+  type ToursWriteScope,
+} from "./tours-scope";
+
 const BASE = "https://rest.gadventures.com";
 
 export type TourSummary = {
@@ -92,6 +98,86 @@ export function toursStatus() {
       process.env.TOURS_AGENCY_CODE ? null : "TOURS_AGENCY_CODE",
       process.env.TOURS_WEBHOOK_KEY ? null : "TOURS_WEBHOOK_KEY",
     ].filter(Boolean) as string[],
+  };
+}
+
+// ---------- booking (write) permission diagnostics ----------
+
+let scopeCache: { scope: ToursWriteScope; at: number; detail: string } | null = null;
+const SCOPE_TTL = 5 * 60 * 1000;
+
+/** Records the scope observed during a real reservation attempt. */
+export function recordWriteScope(scope: ToursWriteScope, detail = "Observed during reservation") {
+  scopeCache = { scope, at: Date.now(), detail };
+}
+
+export type ToursWriteScopeReport = {
+  scope: ToursWriteScope;
+  label: string;
+  checkedAt: string;
+  cached: boolean;
+  status: number | null;
+  detail: string;
+  environment: "sandbox" | "production";
+  agencyConfigured: boolean;
+  bookingFlowReady: boolean;
+};
+
+/**
+ * Probes the supplier's booking write scope without ever creating a booking:
+ * posts a deliberately invalid `/bookings` payload. A 401/403 proves the key is
+ * read-only; a validation error (400/409/422) proves writes are accepted, so the
+ * live reservation flow will work with no code change.
+ */
+export async function probeToursWriteScope(force = false): Promise<ToursWriteScopeReport> {
+  const environment = toursEnvironment();
+  const agencyConfigured = Boolean(process.env.TOURS_AGENCY_CODE);
+  if (!toursConfigured()) {
+    return {
+      scope: "UNKNOWN",
+      label: "Unknown",
+      checkedAt: new Date().toISOString(),
+      cached: false,
+      status: null,
+      detail: "Supplier API key is not configured.",
+      environment,
+      agencyConfigured,
+      bookingFlowReady: false,
+    };
+  }
+  if (!force && scopeCache && Date.now() - scopeCache.at < SCOPE_TTL) {
+    return {
+      scope: scopeCache.scope,
+      label: scopeCache.scope === "BOOKING_ENABLED" ? "Booking enabled" : scopeCache.scope === "READ_ONLY" ? "Read only" : "Unknown",
+      checkedAt: new Date(scopeCache.at).toISOString(),
+      cached: true,
+      status: null,
+      detail: scopeCache.detail,
+      environment,
+      agencyConfigured,
+      bookingFlowReady: scopeCache.scope === "BOOKING_ENABLED" && agencyConfigured,
+    };
+  }
+  // Intentionally invalid body: no agency, no customers — cannot create a booking.
+  const res = await gFetch<unknown>("/bookings", { method: "POST", body: {} });
+  const scope = classifyWriteScope(res.status);
+  const detail =
+    scope === "READ_ONLY"
+      ? "Supplier rejected the write probe with a permission error — booking scope is not enabled on this application key."
+      : scope === "BOOKING_ENABLED"
+        ? "Supplier validated the write probe, so booking scope is enabled; the live reservation flow is active."
+        : (res.error ?? "Supplier did not return a conclusive response.");
+  scopeCache = { scope, at: Date.now(), detail };
+  return {
+    scope,
+    label: scope === "BOOKING_ENABLED" ? "Booking enabled" : scope === "READ_ONLY" ? "Read only" : "Unknown",
+    checkedAt: new Date().toISOString(),
+    cached: false,
+    status: res.status,
+    detail,
+    environment,
+    agencyConfigured,
+    bookingFlowReady: scope === "BOOKING_ENABLED" && agencyConfigured,
   };
 }
 
@@ -832,14 +918,16 @@ export async function createTourBooking(input: TourBookingInput) {
     },
   });
   if (!bookingRes.ok || !bookingRes.data?.id) {
+    const denied = isWriteScopeDenied(bookingRes.status);
+    if (denied) recordWriteScope("READ_ONLY");
     return {
       ok: false,
       status: bookingRes.status,
-      needsBookingPermission: bookingRes.status === 403,
-      error:
-        bookingRes.status === 403
-          ? "Live reservations are not yet enabled on this supplier key (booking write scope pending). Your request has been sent to our travel desk."
-          : (bookingRes.error ?? "Reservation could not be created."),
+      needsBookingPermission: denied,
+      writeScope: (denied ? "READ_ONLY" : "UNKNOWN") as ToursWriteScope,
+      error: denied
+        ? "Instant confirmation is not available for this departure right now."
+        : (bookingRes.error ?? "Reservation could not be created."),
       availability: check,
     };
   }
@@ -866,12 +954,19 @@ export async function createTourBooking(input: TourBookingInput) {
 
   const finalRes = await gFetch<RawBooking>(`/bookings/${bookingId}`);
   const live = finalRes.data;
+  const serviceDenied = isWriteScopeDenied(serviceRes.status);
+  recordWriteScope(serviceDenied ? "READ_ONLY" : "BOOKING_ENABLED");
 
   return {
     ok: serviceRes.ok,
     status: serviceRes.ok ? 200 : serviceRes.status,
-    needsBookingPermission: serviceRes.status === 403,
-    error: serviceRes.ok ? undefined : serviceRes.error,
+    needsBookingPermission: serviceDenied,
+    writeScope: (serviceDenied ? "READ_ONLY" : "BOOKING_ENABLED") as ToursWriteScope,
+    error: serviceRes.ok
+      ? undefined
+      : serviceDenied
+        ? "Instant confirmation is not available for this departure right now."
+        : serviceRes.error,
     bookingId,
     serviceStatus: serviceRes.data?.status ?? null,
     bookingStatus: live?.status ?? null,
@@ -894,11 +989,14 @@ export async function confirmTourBooking(bookingId: string) {
     `/bookings/${encodeURIComponent(bookingId)}/confirmation`,
     { method: "POST", body: {} },
   );
+  const denied = isWriteScopeDenied(res.status);
+  if (denied) recordWriteScope("READ_ONLY");
   return {
     ok: res.ok,
     status: res.status,
-    needsBookingPermission: res.status === 403,
-    error: res.error,
+    needsBookingPermission: denied,
+    writeScope: (denied ? "READ_ONLY" : res.ok ? "BOOKING_ENABLED" : "UNKNOWN") as ToursWriteScope,
+    error: denied ? "Instant confirmation is not available for this reservation." : res.error,
     bookingStatus: res.data?.status ?? null,
   };
 }
