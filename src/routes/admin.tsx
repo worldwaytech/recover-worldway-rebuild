@@ -38,6 +38,7 @@ const NAV = [
   { to: "/admin/api", label: "API Management", icon: <KeyRound className="h-4 w-4" /> },
   { to: "/admin/partners", label: "Partner connectors", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/crystal", label: "Crystal Cruises", icon: <PlugZap className="h-4 w-4" /> },
+  { to: "/admin/tours", label: "Tours connector", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/users", label: "Users", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/agents", label: "Agents", icon: <Briefcase className="h-4 w-4" /> },
   { to: "/admin/kyc", label: "KYC & Compliance", icon: <BadgeCheck className="h-4 w-4" /> },
