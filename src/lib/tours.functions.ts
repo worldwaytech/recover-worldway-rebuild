@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const searchSchema = z.object({
   q: z.string().max(120).optional(),
@@ -101,11 +102,14 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { createTourBooking } = await import("./tours.server");
+    const { fallbackMessage } = await import("./tours-scope");
     const result = await createTourBooking(data);
     // If the supplier cannot issue the live hold (write scope pending or a
     // transient failure), capture the traveller so the desk can complete it.
     if (!result.ok && !("soldOut" in result && result.soldOut)) {
       const lead = data.travellers[0]!;
+      const denied = "needsBookingPermission" in result && Boolean(result.needsBookingPermission);
+      let captured = false;
       try {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         await supabaseAdmin.from("quote_requests").insert({
@@ -117,13 +121,27 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
           product_title: data.tourName,
           party_size: data.travellers.length,
           travel_month: data.startDate.slice(0, 7),
-          message: `Live reservation fallback · departure ${data.departureId} · room ${data.roomCode}`,
+          message: `Live reservation fallback · departure ${data.departureId} · room ${data.roomCode} · ${
+            denied ? "supplier write scope pending" : `supplier error ${result.status}`
+          }`,
           status: "new",
         });
-        return { ...result, captured: true };
+        captured = true;
       } catch {
-        return { ...result, captured: false };
+        captured = false;
       }
+      return {
+        ...result,
+        captured,
+        deskAssist: true,
+        // No booking exists in any of these paths.
+        reference: undefined,
+        travellerMessage: fallbackMessage({
+          writeScopeDenied: denied,
+          captured,
+          supplierError: denied ? undefined : result.error,
+        }),
+      };
     }
     return result;
   });
@@ -177,4 +195,22 @@ export const getRelatedTours = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { getSimilarTours } = await import("./tours.server");
     return getSimilarTours(data.id, data.currency ?? "USD", data.limit ?? 3);
+  });
+
+/**
+ * Admin-only diagnostics: reports whether the supplier application key is
+ * READ_ONLY or BOOKING_ENABLED. Never creates a booking.
+ */
+export const getToursWriteScope = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ force: z.boolean().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { probeToursWriteScope, toursStatus } = await import("./tours.server");
+    const [scope, status] = await Promise.all([
+      probeToursWriteScope(data.force ?? false),
+      Promise.resolve(toursStatus()),
+    ]);
+    return { scope, status };
   });

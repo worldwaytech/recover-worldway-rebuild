@@ -243,6 +243,8 @@ function TourDetailPage() {
         soldOut?: boolean;
         needsCredentials?: boolean;
         needsBookingPermission?: boolean;
+        deskAssist?: boolean;
+        travellerMessage?: string;
         availability?: Availability;
       };
       if (res.availability) setAvailability(res.availability);
@@ -253,14 +255,10 @@ function TourDetailPage() {
           `Reservation held live with the operator — reference ${res.reference} (${(res.bookingStatus ?? "quote").toLowerCase()}).${due} Our travel desk will contact you to settle payment and issue documents.`,
         );
       } else {
+        // No booking exists on any failure path — never imply one was created.
         setBookingMsg(
-          `${res.error ?? "Reservation could not be created."}${
-            res.captured && !res.needsBookingPermission
-              ? " Your details have been sent to our travel desk."
-              : ""
-          }`,
+          res.travellerMessage ?? res.error ?? "Reservation could not be created.",
         );
-
       }
     } catch (err) {
       setBookingMsg(err instanceof Error ? err.message : "Unexpected error");

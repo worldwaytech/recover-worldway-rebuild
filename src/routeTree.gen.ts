@@ -137,6 +137,7 @@ import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
 import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminToursRouteImport } from './routes/admin.tours'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
@@ -823,6 +824,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminToursRoute = AdminToursRouteImport.update({
+  id: '/tours',
+  path: '/tours',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSuperRoute = AdminSuperRouteImport.update({
   id: '/super',
   path: '/super',
@@ -1138,6 +1144,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tours': typeof AdminToursRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1286,6 +1293,7 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tours': typeof AdminToursRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1459,6 +1467,7 @@ export interface FileRoutesById {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tours': typeof AdminToursRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1635,6 +1644,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tours'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -1783,6 +1793,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tours'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -1955,6 +1966,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tours'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -3020,6 +3032,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/tours': {
+      id: '/admin/tours'
+      path: '/tours'
+      fullPath: '/admin/tours'
+      preLoaderRoute: typeof AdminToursRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/super': {
       id: '/admin/super'
       path: '/super'
@@ -3372,6 +3391,7 @@ interface AdminRouteChildren {
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
+  AdminToursRoute: typeof AdminToursRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -3392,6 +3412,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
+  AdminToursRoute: AdminToursRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
