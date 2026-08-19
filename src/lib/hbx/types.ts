@@ -132,10 +132,17 @@ export const hbxActivitySchema = z
           .array(
             z
               .object({
-                code: z.string().optional(),
+                code: z.union([z.number(), z.string()]).optional(),
                 name: hbxText.optional(),
                 items: z
-                  .array(z.object({ code: z.string().optional(), name: hbxText.optional() }).passthrough())
+                  .array(
+                    z
+                      .object({
+                        code: z.union([z.number(), z.string()]).optional(),
+                        name: hbxText.optional(),
+                      })
+                      .passthrough(),
+                  )
                   .optional(),
               })
               .passthrough(),
@@ -143,7 +150,11 @@ export const hbxActivitySchema = z
           .optional(),
         highlights: z.array(hbxText).optional(),
         scheduling: z
-          .object({ duration: z.union([z.string(), z.number()]).optional() })
+          .object({
+            duration: z
+              .union([z.string(), z.number(), z.object({}).passthrough(), z.array(z.unknown())])
+              .optional(),
+          })
           .passthrough()
           .optional(),
         location: z

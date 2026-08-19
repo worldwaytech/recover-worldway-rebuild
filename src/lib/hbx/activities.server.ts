@@ -30,18 +30,28 @@ export async function fetchActivityContentPage(params: {
   if (params.destination)
     filters.push({ searchFilterItems: [{ type: "destination", value: params.destination }] });
 
+  // The HBX Activities *content* operation is code-driven (`codes` required),
+  // so the enumerable catalogue feed is the cache/availability operation. A
+  // date window and at least one filter are mandatory.
+  const day = 24 * 60 * 60 * 1000;
+  const from = params.from ?? new Date(Date.now() + 30 * day).toISOString().slice(0, 10);
+  const to = params.to ?? new Date(Date.now() + 37 * day).toISOString().slice(0, 10);
+
   const res = await hbxCall<unknown>({
     suite: "activities",
-    path: CFG.contentEndpoints["activities"]!,
+    api: "booking",
+    path: CFG.bookingEndpoints["availability"]!,
     method: "POST",
     body: {
       language: params.language ?? "en",
       pagination: { itemsPerPage: params.limit, page: Math.floor(params.offset / params.limit) + 1 },
-      ...(filters.length ? { filters } : {}),
-      ...(params.from && params.to ? { from: params.from, to: params.to } : {}),
+      filters,
+      from,
+      to,
     },
     operation: "activities.content.page",
   });
+
   if (!res.ok) return res as HbxResult<HbxActivityPage>;
 
   const parsed = hbxActivitiesResponseSchema.safeParse(res.data);

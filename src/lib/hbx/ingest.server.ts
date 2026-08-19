@@ -281,26 +281,36 @@ export async function syncHbxActivities(opts: {
   let status: HbxSyncOutcome["status"] = "completed";
   let cursor: string | null = null;
 
+  // The HBX experiences feed requires at least one filter, so with no explicit
+  // scope we walk a seed destination list.
+  const scopes: { country?: string; destination?: string }[] =
+    opts.country || opts.destination
+      ? [{ ...(opts.country ? { country: opts.country } : {}), ...(opts.destination ? { destination: opts.destination } : {}) }]
+      : ["PMI", "BCN", "MAD", "AGP", "TFS", "LPA"].map((destination) => ({ destination }));
+
   try {
-    for (let page = 0; page < maxPages; page += 1) {
-      const res = await fetchActivityContentPage({
-        offset: page * pageSize,
-        limit: pageSize,
-        ...(opts.country ? { country: opts.country } : {}),
-        ...(opts.destination ? { destination: opts.destination } : {}),
-      });
-      pages += 1;
-      if (!res.ok || !res.data) {
-        failed += 1;
-        status = received > 0 ? "partial" : "failed";
-        message = res.error?.message ?? "HBX experience content could not be retrieved.";
-        break;
+    outer: for (const scope of scopes) {
+      for (let page = 0; page < maxPages; page += 1) {
+        const res = await fetchActivityContentPage({
+          offset: page * pageSize,
+          limit: pageSize,
+          ...(scope.country ? { country: scope.country } : {}),
+          ...(scope.destination ? { destination: scope.destination } : {}),
+        });
+        pages += 1;
+        if (!res.ok || !res.data) {
+          failed += 1;
+          status = received > 0 ? "partial" : "failed";
+          message = res.error?.message ?? "HBX experience content could not be retrieved.";
+          break outer;
+        }
+        received += res.data.activities.length;
+        written += await upsert("hbx_activities", res.data.activities.map(activityRow));
+        cursor = String(res.data.offset + res.data.activities.length);
+        if (res.data.activities.length < pageSize || received >= res.data.total) break;
       }
-      received += res.data.activities.length;
-      written += await upsert("hbx_activities", res.data.activities.map(activityRow));
-      cursor = String(res.data.offset + res.data.activities.length);
-      if (res.data.activities.length < pageSize || received >= res.data.total) break;
     }
+
   } catch (e) {
     status = "failed";
     failed += 1;

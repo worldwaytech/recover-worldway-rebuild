@@ -88,11 +88,12 @@ export const HBX_SUITE_CONFIG: Record<HbxSuite, HbxSuiteConfig> = {
     bookingBasePath: "/activity-api/3.0",
     contentEndpoints: {
       activities: "/activities",
-      countries: "/countries",
-      currencies: "/currencies",
+      countries: "/countries/en",
+      currencies: "/currencies/en",
       languages: "/languages",
-      segments: "/segments",
+      segments: "/segments/en",
     },
+
     bookingEndpoints: {
       availability: "/activities",
       detail: "/activities/details",
@@ -102,7 +103,7 @@ export const HBX_SUITE_CONFIG: Record<HbxSuite, HbxSuiteConfig> = {
     cacheTtlSeconds: 10800,
     timeoutMs: 30000,
     maxRetries: 3,
-    pageSize: 500,
+    pageSize: 100,
   },
   transfers: {
     suite: "transfers",
