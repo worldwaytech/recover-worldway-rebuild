@@ -27,7 +27,7 @@ export const Route = createFileRoute("/admin/hbx")({
       },
     ],
   }),
-  component: HbxConsole;
+  component: HbxConsole,
 });
 
 function HbxConsole() {

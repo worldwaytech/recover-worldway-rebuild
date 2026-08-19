@@ -147,6 +147,7 @@ import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as AdminHbxRouteImport } from './routes/admin.hbx'
 import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
@@ -876,6 +877,11 @@ const AdminKycRoute = AdminKycRouteImport.update({
   path: '/kyc',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminHbxRoute = AdminHbxRouteImport.update({
+  id: '/hbx',
+  path: '/hbx',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCrystalRoute = AdminCrystalRouteImport.update({
   id: '/crystal',
   path: '/crystal',
@@ -1149,6 +1155,7 @@ export interface FileRoutesByFullPath {
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
+  '/admin/hbx': typeof AdminHbxRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -1299,6 +1306,7 @@ export interface FileRoutesByTo {
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
+  '/admin/hbx': typeof AdminHbxRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -1475,6 +1483,7 @@ export interface FileRoutesById {
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
+  '/admin/hbx': typeof AdminHbxRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -1654,6 +1663,7 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
+    | '/admin/hbx'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
@@ -1804,6 +1814,7 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
+    | '/admin/hbx'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
@@ -1979,6 +1990,7 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
+    | '/admin/hbx'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
@@ -3124,6 +3136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKycRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/hbx': {
+      id: '/admin/hbx'
+      path: '/hbx'
+      fullPath: '/admin/hbx'
+      preLoaderRoute: typeof AdminHbxRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/crystal': {
       id: '/admin/crystal'
       path: '/crystal'
@@ -3420,6 +3439,7 @@ interface AdminRouteChildren {
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
   AdminCrystalRoute: typeof AdminCrystalRoute
+  AdminHbxRoute: typeof AdminHbxRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
@@ -3441,6 +3461,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
   AdminCrystalRoute: AdminCrystalRoute,
+  AdminHbxRoute: AdminHbxRoute,
   AdminKycRoute: AdminKycRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,
