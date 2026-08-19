@@ -81,6 +81,7 @@ import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PolarExpeditionsIndexRouteImport } from './routes/polar-expeditions.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
+import { Route as HotelsIndexRouteImport } from './routes/hotels.index'
 import { Route as HoneymoonIndexRouteImport } from './routes/honeymoon.index'
 import { Route as FamilyIndexRouteImport } from './routes/family.index'
 import { Route as ExpeditionCruisesIndexRouteImport } from './routes/expedition-cruises.index'
@@ -118,6 +119,7 @@ import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
+import { Route as HotelsHbxRouteImport } from './routes/hotels.hbx'
 import { Route as HoneymoonSlugRouteImport } from './routes/honeymoon.$slug'
 import { Route as FamilySlugRouteImport } from './routes/family.$slug'
 import { Route as ExpeditionCruisesSlugRouteImport } from './routes/expedition-cruises.$slug'
@@ -145,6 +147,7 @@ import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as AdminHbxRouteImport } from './routes/admin.hbx'
 import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
@@ -543,6 +546,11 @@ const InsuranceIndexRoute = InsuranceIndexRouteImport.update({
   path: '/',
   getParentRoute: () => InsuranceRoute,
 } as any)
+const HotelsIndexRoute = HotelsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HotelsRoute,
+} as any)
 const HoneymoonIndexRoute = HoneymoonIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -729,6 +737,11 @@ const InsuranceSlugRoute = InsuranceSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => InsuranceRoute,
 } as any)
+const HotelsHbxRoute = HotelsHbxRouteImport.update({
+  id: '/hbx',
+  path: '/hbx',
+  getParentRoute: () => HotelsRoute,
+} as any)
 const HoneymoonSlugRoute = HoneymoonSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -862,6 +875,11 @@ const AdminOperationsRoute = AdminOperationsRouteImport.update({
 const AdminKycRoute = AdminKycRouteImport.update({
   id: '/kyc',
   path: '/kyc',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHbxRoute = AdminHbxRouteImport.update({
+  id: '/hbx',
+  path: '/hbx',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCrystalRoute = AdminCrystalRouteImport.update({
@@ -1088,7 +1106,7 @@ export interface FileRoutesByFullPath {
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/honeymoon': typeof HoneymoonRouteWithChildren
-  '/hotels': typeof HotelsRoute
+  '/hotels': typeof HotelsRouteWithChildren
   '/insurance': typeof InsuranceRouteWithChildren
   '/journeys': typeof JourneysRouteWithChildren
   '/kyc': typeof KycRoute
@@ -1137,6 +1155,7 @@ export interface FileRoutesByFullPath {
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
+  '/admin/hbx': typeof AdminHbxRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -1164,6 +1183,7 @@ export interface FileRoutesByFullPath {
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
+  '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
@@ -1201,6 +1221,7 @@ export interface FileRoutesByFullPath {
   '/expedition-cruises/': typeof ExpeditionCruisesIndexRoute
   '/family/': typeof FamilyIndexRoute
   '/honeymoon/': typeof HoneymoonIndexRoute
+  '/hotels/': typeof HotelsIndexRoute
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
@@ -1252,7 +1273,6 @@ export interface FileRoutesByTo {
   '/fd-flights': typeof FdFlightsRoute
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
-  '/hotels': typeof HotelsRoute
   '/kyc': typeof KycRoute
   '/mcp': typeof McpRoute
   '/membership': typeof MembershipRoute
@@ -1286,6 +1306,7 @@ export interface FileRoutesByTo {
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
+  '/admin/hbx': typeof AdminHbxRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -1312,6 +1333,7 @@ export interface FileRoutesByTo {
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
+  '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
@@ -1349,6 +1371,7 @@ export interface FileRoutesByTo {
   '/expedition-cruises': typeof ExpeditionCruisesIndexRoute
   '/family': typeof FamilyIndexRoute
   '/honeymoon': typeof HoneymoonIndexRoute
+  '/hotels': typeof HotelsIndexRoute
   '/insurance': typeof InsuranceIndexRoute
   '/journeys': typeof JourneysIndexRoute
   '/polar-expeditions': typeof PolarExpeditionsIndexRoute
@@ -1411,7 +1434,7 @@ export interface FileRoutesById {
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/honeymoon': typeof HoneymoonRouteWithChildren
-  '/hotels': typeof HotelsRoute
+  '/hotels': typeof HotelsRouteWithChildren
   '/insurance': typeof InsuranceRouteWithChildren
   '/journeys': typeof JourneysRouteWithChildren
   '/kyc': typeof KycRoute
@@ -1460,6 +1483,7 @@ export interface FileRoutesById {
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
+  '/admin/hbx': typeof AdminHbxRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -1487,6 +1511,7 @@ export interface FileRoutesById {
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
+  '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
@@ -1524,6 +1549,7 @@ export interface FileRoutesById {
   '/expedition-cruises/': typeof ExpeditionCruisesIndexRoute
   '/family/': typeof FamilyIndexRoute
   '/honeymoon/': typeof HoneymoonIndexRoute
+  '/hotels/': typeof HotelsIndexRoute
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
@@ -1637,6 +1663,7 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
+    | '/admin/hbx'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
@@ -1664,6 +1691,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/honeymoon/$slug'
+    | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
@@ -1701,6 +1729,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/'
     | '/family/'
     | '/honeymoon/'
+    | '/hotels/'
     | '/insurance/'
     | '/journeys/'
     | '/polar-expeditions/'
@@ -1752,7 +1781,6 @@ export interface FileRouteTypes {
     | '/fd-flights'
     | '/flights'
     | '/help'
-    | '/hotels'
     | '/kyc'
     | '/mcp'
     | '/membership'
@@ -1786,6 +1814,7 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
+    | '/admin/hbx'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
@@ -1812,6 +1841,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/honeymoon/$slug'
+    | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
@@ -1849,6 +1879,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises'
     | '/family'
     | '/honeymoon'
+    | '/hotels'
     | '/insurance'
     | '/journeys'
     | '/polar-expeditions'
@@ -1959,6 +1990,7 @@ export interface FileRouteTypes {
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
+    | '/admin/hbx'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
@@ -1986,6 +2018,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/honeymoon/$slug'
+    | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
@@ -2023,6 +2056,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/'
     | '/family/'
     | '/honeymoon/'
+    | '/hotels/'
     | '/insurance/'
     | '/journeys/'
     | '/polar-expeditions/'
@@ -2086,7 +2120,7 @@ export interface RootRouteChildren {
   FlightsRoute: typeof FlightsRoute
   HelpRoute: typeof HelpRoute
   HoneymoonRoute: typeof HoneymoonRouteWithChildren
-  HotelsRoute: typeof HotelsRoute
+  HotelsRoute: typeof HotelsRouteWithChildren
   InsuranceRoute: typeof InsuranceRouteWithChildren
   JourneysRoute: typeof JourneysRouteWithChildren
   KycRoute: typeof KycRoute
@@ -2640,6 +2674,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsuranceIndexRouteImport
       parentRoute: typeof InsuranceRoute
     }
+    '/hotels/': {
+      id: '/hotels/'
+      path: '/'
+      fullPath: '/hotels/'
+      preLoaderRoute: typeof HotelsIndexRouteImport
+      parentRoute: typeof HotelsRoute
+    }
     '/honeymoon/': {
       id: '/honeymoon/'
       path: '/'
@@ -2899,6 +2940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsuranceSlugRouteImport
       parentRoute: typeof InsuranceRoute
     }
+    '/hotels/hbx': {
+      id: '/hotels/hbx'
+      path: '/hbx'
+      fullPath: '/hotels/hbx'
+      preLoaderRoute: typeof HotelsHbxRouteImport
+      parentRoute: typeof HotelsRoute
+    }
     '/honeymoon/$slug': {
       id: '/honeymoon/$slug'
       path: '/$slug'
@@ -3086,6 +3134,13 @@ declare module '@tanstack/react-router' {
       path: '/kyc'
       fullPath: '/admin/kyc'
       preLoaderRoute: typeof AdminKycRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/hbx': {
+      id: '/admin/hbx'
+      path: '/hbx'
+      fullPath: '/admin/hbx'
+      preLoaderRoute: typeof AdminHbxRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/crystal': {
@@ -3384,6 +3439,7 @@ interface AdminRouteChildren {
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
   AdminCrystalRoute: typeof AdminCrystalRoute
+  AdminHbxRoute: typeof AdminHbxRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
@@ -3405,6 +3461,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
   AdminCrystalRoute: AdminCrystalRoute,
+  AdminHbxRoute: AdminHbxRoute,
   AdminKycRoute: AdminKycRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,
@@ -3593,6 +3650,19 @@ const HoneymoonRouteChildren: HoneymoonRouteChildren = {
 const HoneymoonRouteWithChildren = HoneymoonRoute._addFileChildren(
   HoneymoonRouteChildren,
 )
+
+interface HotelsRouteChildren {
+  HotelsHbxRoute: typeof HotelsHbxRoute
+  HotelsIndexRoute: typeof HotelsIndexRoute
+}
+
+const HotelsRouteChildren: HotelsRouteChildren = {
+  HotelsHbxRoute: HotelsHbxRoute,
+  HotelsIndexRoute: HotelsIndexRoute,
+}
+
+const HotelsRouteWithChildren =
+  HotelsRoute._addFileChildren(HotelsRouteChildren)
 
 interface InsuranceRouteChildren {
   InsuranceSlugRoute: typeof InsuranceSlugRoute
@@ -3841,7 +3911,7 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsRoute: FlightsRoute,
   HelpRoute: HelpRoute,
   HoneymoonRoute: HoneymoonRouteWithChildren,
-  HotelsRoute: HotelsRoute,
+  HotelsRoute: HotelsRouteWithChildren,
   InsuranceRoute: InsuranceRouteWithChildren,
   JourneysRoute: JourneysRouteWithChildren,
   KycRoute: KycRoute,

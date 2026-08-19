@@ -535,6 +535,348 @@ export type Database = {
         }
         Relationships: []
       }
+      hbx_activities: {
+        Row: {
+          amount_from: number | null
+          categories: Json
+          city: string | null
+          code: string
+          country_code: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          destination_code: string | null
+          destination_name: string | null
+          duration: string | null
+          environment: string
+          highlights: Json
+          id: string
+          images: Json
+          languages: Json
+          latitude: number | null
+          longitude: number | null
+          name: string
+          supplier_payload: Json
+          supplier_updated_at: string | null
+          synced_at: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_from?: number | null
+          categories?: Json
+          city?: string | null
+          code: string
+          country_code?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          destination_code?: string | null
+          destination_name?: string | null
+          duration?: string | null
+          environment?: string
+          highlights?: Json
+          id?: string
+          images?: Json
+          languages?: Json
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          supplier_payload?: Json
+          supplier_updated_at?: string | null
+          synced_at?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_from?: number | null
+          categories?: Json
+          city?: string | null
+          code?: string
+          country_code?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          destination_code?: string | null
+          destination_name?: string | null
+          duration?: string | null
+          environment?: string
+          highlights?: Json
+          id?: string
+          images?: Json
+          languages?: Json
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          supplier_payload?: Json
+          supplier_updated_at?: string | null
+          synced_at?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hbx_destinations: {
+        Row: {
+          code: string
+          country_code: string | null
+          created_at: string
+          environment: string
+          id: string
+          name: string
+          supplier_payload: Json
+          synced_at: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          country_code?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          name: string
+          supplier_payload?: Json
+          synced_at?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          country_code?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          name?: string
+          supplier_payload?: Json
+          synced_at?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hbx_hotels: {
+        Row: {
+          address: string | null
+          board_codes: Json
+          category_code: string | null
+          category_name: string | null
+          city: string | null
+          code: string
+          country_code: string | null
+          created_at: string
+          description: string | null
+          destination_code: string | null
+          destination_name: string | null
+          environment: string
+          facilities: Json
+          id: string
+          images: Json
+          latitude: number | null
+          longitude: number | null
+          name: string
+          phones: Json
+          postal_code: string | null
+          ranking: number | null
+          segment_codes: Json
+          star_rating: number | null
+          state_code: string | null
+          supplier_payload: Json
+          supplier_updated_at: string | null
+          synced_at: string
+          updated_at: string
+          zone_code: string | null
+          zone_name: string | null
+        }
+        Insert: {
+          address?: string | null
+          board_codes?: Json
+          category_code?: string | null
+          category_name?: string | null
+          city?: string | null
+          code: string
+          country_code?: string | null
+          created_at?: string
+          description?: string | null
+          destination_code?: string | null
+          destination_name?: string | null
+          environment?: string
+          facilities?: Json
+          id?: string
+          images?: Json
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          phones?: Json
+          postal_code?: string | null
+          ranking?: number | null
+          segment_codes?: Json
+          star_rating?: number | null
+          state_code?: string | null
+          supplier_payload?: Json
+          supplier_updated_at?: string | null
+          synced_at?: string
+          updated_at?: string
+          zone_code?: string | null
+          zone_name?: string | null
+        }
+        Update: {
+          address?: string | null
+          board_codes?: Json
+          category_code?: string | null
+          category_name?: string | null
+          city?: string | null
+          code?: string
+          country_code?: string | null
+          created_at?: string
+          description?: string | null
+          destination_code?: string | null
+          destination_name?: string | null
+          environment?: string
+          facilities?: Json
+          id?: string
+          images?: Json
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          phones?: Json
+          postal_code?: string | null
+          ranking?: number | null
+          segment_codes?: Json
+          star_rating?: number | null
+          state_code?: string | null
+          supplier_payload?: Json
+          supplier_updated_at?: string | null
+          synced_at?: string
+          updated_at?: string
+          zone_code?: string | null
+          zone_name?: string | null
+        }
+        Relationships: []
+      }
+      hbx_sync_runs: {
+        Row: {
+          created: number
+          created_at: string
+          cursor: string | null
+          detail: Json
+          environment: string
+          error: string | null
+          failed: number
+          finished_at: string | null
+          id: string
+          received: number
+          resource: string
+          started_at: string
+          status: string
+          suite: string
+          unchanged: number
+          updated: number
+          updated_at: string
+        }
+        Insert: {
+          created?: number
+          created_at?: string
+          cursor?: string | null
+          detail?: Json
+          environment?: string
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          received?: number
+          resource?: string
+          started_at?: string
+          status?: string
+          suite: string
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Update: {
+          created?: number
+          created_at?: string
+          cursor?: string | null
+          detail?: Json
+          environment?: string
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          received?: number
+          resource?: string
+          started_at?: string
+          status?: string
+          suite?: string
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hbx_transfer_routes: {
+        Row: {
+          code: string
+          content: Json
+          country_code: string | null
+          created_at: string
+          destination_code: string | null
+          destination_name: string | null
+          environment: string
+          from_code: string | null
+          from_name: string | null
+          from_type: string | null
+          id: string
+          supplier_payload: Json
+          synced_at: string
+          to_code: string | null
+          to_name: string | null
+          to_type: string | null
+          updated_at: string
+          vehicle_categories: Json
+        }
+        Insert: {
+          code: string
+          content?: Json
+          country_code?: string | null
+          created_at?: string
+          destination_code?: string | null
+          destination_name?: string | null
+          environment?: string
+          from_code?: string | null
+          from_name?: string | null
+          from_type?: string | null
+          id?: string
+          supplier_payload?: Json
+          synced_at?: string
+          to_code?: string | null
+          to_name?: string | null
+          to_type?: string | null
+          updated_at?: string
+          vehicle_categories?: Json
+        }
+        Update: {
+          code?: string
+          content?: Json
+          country_code?: string | null
+          created_at?: string
+          destination_code?: string | null
+          destination_name?: string | null
+          environment?: string
+          from_code?: string | null
+          from_name?: string | null
+          from_type?: string | null
+          id?: string
+          supplier_payload?: Json
+          synced_at?: string
+          to_code?: string | null
+          to_name?: string | null
+          to_type?: string | null
+          updated_at?: string
+          vehicle_categories?: Json
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
