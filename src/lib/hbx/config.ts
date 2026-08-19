@@ -103,7 +103,7 @@ export const HBX_SUITE_CONFIG: Record<HbxSuite, HbxSuiteConfig> = {
     cacheTtlSeconds: 10800,
     timeoutMs: 30000,
     maxRetries: 3,
-    pageSize: 500,
+    pageSize: 100,
   },
   transfers: {
     suite: "transfers",
