@@ -9,7 +9,7 @@ import { up17HotelSearch } from "@/lib/up17/up17.functions";
 import { portal } from "@/lib/portal-store";
 import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
 
-export const Route = createFileRoute("/hotels")({
+export const Route = createFileRoute("/hotels/")({
   head: () => ({
     meta: [
       { title: "Hotels — Worldway Travels Group" },

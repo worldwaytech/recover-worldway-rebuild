@@ -40,7 +40,6 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as KycRouteImport } from './routes/kyc'
 import { Route as JourneysRouteImport } from './routes/journeys'
 import { Route as InsuranceRouteImport } from './routes/insurance'
-import { Route as HotelsRouteImport } from './routes/hotels'
 import { Route as HoneymoonRouteImport } from './routes/honeymoon'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as FlightsRouteImport } from './routes/flights'
@@ -81,6 +80,7 @@ import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PolarExpeditionsIndexRouteImport } from './routes/polar-expeditions.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
+import { Route as HotelsIndexRouteImport } from './routes/hotels.index'
 import { Route as HoneymoonIndexRouteImport } from './routes/honeymoon.index'
 import { Route as FamilyIndexRouteImport } from './routes/family.index'
 import { Route as ExpeditionCruisesIndexRouteImport } from './routes/expedition-cruises.index'
@@ -338,11 +338,6 @@ const InsuranceRoute = InsuranceRouteImport.update({
   path: '/insurance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HotelsRoute = HotelsRouteImport.update({
-  id: '/hotels',
-  path: '/hotels',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const HoneymoonRoute = HoneymoonRouteImport.update({
   id: '/honeymoon',
   path: '/honeymoon',
@@ -542,6 +537,11 @@ const InsuranceIndexRoute = InsuranceIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => InsuranceRoute,
+} as any)
+const HotelsIndexRoute = HotelsIndexRouteImport.update({
+  id: '/hotels/',
+  path: '/hotels/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const HoneymoonIndexRoute = HoneymoonIndexRouteImport.update({
   id: '/',
@@ -1088,7 +1088,6 @@ export interface FileRoutesByFullPath {
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/honeymoon': typeof HoneymoonRouteWithChildren
-  '/hotels': typeof HotelsRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/journeys': typeof JourneysRouteWithChildren
   '/kyc': typeof KycRoute
@@ -1201,6 +1200,7 @@ export interface FileRoutesByFullPath {
   '/expedition-cruises/': typeof ExpeditionCruisesIndexRoute
   '/family/': typeof FamilyIndexRoute
   '/honeymoon/': typeof HoneymoonIndexRoute
+  '/hotels/': typeof HotelsIndexRoute
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
@@ -1252,7 +1252,6 @@ export interface FileRoutesByTo {
   '/fd-flights': typeof FdFlightsRoute
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
-  '/hotels': typeof HotelsRoute
   '/kyc': typeof KycRoute
   '/mcp': typeof McpRoute
   '/membership': typeof MembershipRoute
@@ -1349,6 +1348,7 @@ export interface FileRoutesByTo {
   '/expedition-cruises': typeof ExpeditionCruisesIndexRoute
   '/family': typeof FamilyIndexRoute
   '/honeymoon': typeof HoneymoonIndexRoute
+  '/hotels': typeof HotelsIndexRoute
   '/insurance': typeof InsuranceIndexRoute
   '/journeys': typeof JourneysIndexRoute
   '/polar-expeditions': typeof PolarExpeditionsIndexRoute
@@ -1411,7 +1411,6 @@ export interface FileRoutesById {
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/honeymoon': typeof HoneymoonRouteWithChildren
-  '/hotels': typeof HotelsRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/journeys': typeof JourneysRouteWithChildren
   '/kyc': typeof KycRoute
@@ -1524,6 +1523,7 @@ export interface FileRoutesById {
   '/expedition-cruises/': typeof ExpeditionCruisesIndexRoute
   '/family/': typeof FamilyIndexRoute
   '/honeymoon/': typeof HoneymoonIndexRoute
+  '/hotels/': typeof HotelsIndexRoute
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
@@ -1588,7 +1588,6 @@ export interface FileRouteTypes {
     | '/flights'
     | '/help'
     | '/honeymoon'
-    | '/hotels'
     | '/insurance'
     | '/journeys'
     | '/kyc'
@@ -1701,6 +1700,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/'
     | '/family/'
     | '/honeymoon/'
+    | '/hotels/'
     | '/insurance/'
     | '/journeys/'
     | '/polar-expeditions/'
@@ -1752,7 +1752,6 @@ export interface FileRouteTypes {
     | '/fd-flights'
     | '/flights'
     | '/help'
-    | '/hotels'
     | '/kyc'
     | '/mcp'
     | '/membership'
@@ -1849,6 +1848,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises'
     | '/family'
     | '/honeymoon'
+    | '/hotels'
     | '/insurance'
     | '/journeys'
     | '/polar-expeditions'
@@ -1910,7 +1910,6 @@ export interface FileRouteTypes {
     | '/flights'
     | '/help'
     | '/honeymoon'
-    | '/hotels'
     | '/insurance'
     | '/journeys'
     | '/kyc'
@@ -2023,6 +2022,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/'
     | '/family/'
     | '/honeymoon/'
+    | '/hotels/'
     | '/insurance/'
     | '/journeys/'
     | '/polar-expeditions/'
@@ -2086,7 +2086,6 @@ export interface RootRouteChildren {
   FlightsRoute: typeof FlightsRoute
   HelpRoute: typeof HelpRoute
   HoneymoonRoute: typeof HoneymoonRouteWithChildren
-  HotelsRoute: typeof HotelsRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
   JourneysRoute: typeof JourneysRouteWithChildren
   KycRoute: typeof KycRoute
@@ -2125,6 +2124,7 @@ export interface RootRouteChildren {
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  HotelsIndexRoute: typeof HotelsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
@@ -2351,13 +2351,6 @@ declare module '@tanstack/react-router' {
       path: '/insurance'
       fullPath: '/insurance'
       preLoaderRoute: typeof InsuranceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hotels': {
-      id: '/hotels'
-      path: '/hotels'
-      fullPath: '/hotels'
-      preLoaderRoute: typeof HotelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/honeymoon': {
@@ -2639,6 +2632,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/insurance/'
       preLoaderRoute: typeof InsuranceIndexRouteImport
       parentRoute: typeof InsuranceRoute
+    }
+    '/hotels/': {
+      id: '/hotels/'
+      path: '/hotels'
+      fullPath: '/hotels/'
+      preLoaderRoute: typeof HotelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/honeymoon/': {
       id: '/honeymoon/'
@@ -3841,7 +3841,6 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsRoute: FlightsRoute,
   HelpRoute: HelpRoute,
   HoneymoonRoute: HoneymoonRouteWithChildren,
-  HotelsRoute: HotelsRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
   JourneysRoute: JourneysRouteWithChildren,
   KycRoute: KycRoute,
@@ -3881,6 +3880,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
+  HotelsIndexRoute: HotelsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
