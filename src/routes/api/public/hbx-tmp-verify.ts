@@ -57,6 +57,11 @@ export const Route = createFileRoute("/api/public/hbx-tmp-verify")({
           const text = await res.text();
           return Response.json({ status: res.status, body: text.slice(0, 800) });
         }
+        if (mode === "actpage") {
+          const { fetchActivityContentPage } = await import("@/lib/hbx/activities.server");
+          const r = await fetchActivityContentPage({ offset: 0, limit: 100, destination: "PMI" });
+          return new Response(JSON.stringify(r).slice(0, 1200), { headers: { "content-type": "application/json" } });
+        }
         const ingest = await import("@/lib/hbx/ingest.server");
         if (mode === "sync-hotels") {
           return Response.json(await ingest.syncHbxHotels({ maxPages: 1 }));
