@@ -179,7 +179,6 @@ import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
 import { Route as ApiPublicSupplierImageRouteImport } from './routes/api/public/supplier-image'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
-import { Route as ApiPublicHbxTmpVerifyRouteImport } from './routes/api/public/hbx-tmp-verify'
 import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -1046,11 +1045,6 @@ const ApiPublicRazorpayWebhookRoute =
     path: '/api/public/razorpay-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHbxTmpVerifyRoute = ApiPublicHbxTmpVerifyRouteImport.update({
-  id: '/api/public/hbx-tmp-verify',
-  path: '/api/public/hbx-tmp-verify',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AccountBookingIdRoute = AccountBookingIdRouteImport.update({
   id: '/booking/$id',
   path: '/booking/$id',
@@ -1246,7 +1240,6 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
-  '/api/public/hbx-tmp-verify': typeof ApiPublicHbxTmpVerifyRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1397,7 +1390,6 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
-  '/api/public/hbx-tmp-verify': typeof ApiPublicHbxTmpVerifyRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1576,7 +1568,6 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
-  '/api/public/hbx-tmp-verify': typeof ApiPublicHbxTmpVerifyRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1757,7 +1748,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
-    | '/api/public/hbx-tmp-verify'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -1908,7 +1898,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
-    | '/api/public/hbx-tmp-verify'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2086,7 +2075,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
-    | '/api/public/hbx-tmp-verify'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2173,7 +2161,6 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
-  ApiPublicHbxTmpVerifyRoute: typeof ApiPublicHbxTmpVerifyRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
@@ -3373,13 +3360,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hbx-tmp-verify': {
-      id: '/api/public/hbx-tmp-verify'
-      path: '/api/public/hbx-tmp-verify'
-      fullPath: '/api/public/hbx-tmp-verify'
-      preLoaderRoute: typeof ApiPublicHbxTmpVerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/account/booking/$id': {
       id: '/account/booking/$id'
       path: '/booking/$id'
@@ -3973,7 +3953,6 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
-  ApiPublicHbxTmpVerifyRoute: ApiPublicHbxTmpVerifyRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
