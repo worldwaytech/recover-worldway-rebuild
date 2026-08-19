@@ -119,6 +119,7 @@ import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
+import { Route as HotelsHbxRouteImport } from './routes/hotels.hbx'
 import { Route as HoneymoonSlugRouteImport } from './routes/honeymoon.$slug'
 import { Route as FamilySlugRouteImport } from './routes/family.$slug'
 import { Route as ExpeditionCruisesSlugRouteImport } from './routes/expedition-cruises.$slug'
@@ -735,6 +736,11 @@ const InsuranceSlugRoute = InsuranceSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => InsuranceRoute,
 } as any)
+const HotelsHbxRoute = HotelsHbxRouteImport.update({
+  id: '/hbx',
+  path: '/hbx',
+  getParentRoute: () => HotelsRoute,
+} as any)
 const HoneymoonSlugRoute = HoneymoonSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -1170,6 +1176,7 @@ export interface FileRoutesByFullPath {
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
+  '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
@@ -1318,6 +1325,7 @@ export interface FileRoutesByTo {
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
+  '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
@@ -1494,6 +1502,7 @@ export interface FileRoutesById {
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
+  '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
@@ -1672,6 +1681,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/honeymoon/$slug'
+    | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
@@ -1820,6 +1830,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/honeymoon/$slug'
+    | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
@@ -1995,6 +2006,7 @@ export interface FileRouteTypes {
     | '/expedition-cruises/$slug'
     | '/family/$slug'
     | '/honeymoon/$slug'
+    | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/polar-expeditions/$slug'
@@ -2916,6 +2928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsuranceSlugRouteImport
       parentRoute: typeof InsuranceRoute
     }
+    '/hotels/hbx': {
+      id: '/hotels/hbx'
+      path: '/hbx'
+      fullPath: '/hotels/hbx'
+      preLoaderRoute: typeof HotelsHbxRouteImport
+      parentRoute: typeof HotelsRoute
+    }
     '/honeymoon/$slug': {
       id: '/honeymoon/$slug'
       path: '/$slug'
@@ -3612,10 +3631,12 @@ const HoneymoonRouteWithChildren = HoneymoonRoute._addFileChildren(
 )
 
 interface HotelsRouteChildren {
+  HotelsHbxRoute: typeof HotelsHbxRoute
   HotelsIndexRoute: typeof HotelsIndexRoute
 }
 
 const HotelsRouteChildren: HotelsRouteChildren = {
+  HotelsHbxRoute: HotelsHbxRoute,
   HotelsIndexRoute: HotelsIndexRoute,
 }
 
