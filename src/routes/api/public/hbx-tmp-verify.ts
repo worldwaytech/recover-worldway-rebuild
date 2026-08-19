@@ -50,6 +50,7 @@ export const Route = createFileRoute("/api/public/hbx-tmp-verify")({
               "Api-key": key,
               "X-Signature": sig,
               Accept: "application/json",
+              "Accept-Encoding": "gzip",
               ...(bodyParam ? { "Content-Type": "application/json" } : {}),
             },
             ...(bodyParam ? { body: bodyParam } : {}),
