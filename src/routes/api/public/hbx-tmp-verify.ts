@@ -59,8 +59,12 @@ export const Route = createFileRoute("/api/public/hbx-tmp-verify")({
         }
         if (mode === "actpage") {
           const { fetchActivityContentPage } = await import("@/lib/hbx/activities.server");
-          const r = await fetchActivityContentPage({ offset: 0, limit: 100, destination: "PMI" });
-          return new Response(JSON.stringify(r).slice(0, 1200), { headers: { "content-type": "application/json" } });
+          void fetchActivityContentPage;
+          const { hbxCall } = await import("@/lib/hbx/client.server");
+          const { hbxActivitiesResponseSchema } = await import("@/lib/hbx/types");
+          const raw = await hbxCall<unknown>({ suite: "activities", api: "booking", path: "/activities", method: "POST", cacheTtlSeconds: 0, body: { language: "en", pagination: { itemsPerPage: 5, page: 1 }, filters: [{ searchFilterItems: [{ type: "destination", value: "PMI" }] }], from: "2026-09-18", to: "2026-09-25" }, operation: "diag" });
+          const parsed = hbxActivitiesResponseSchema.safeParse((raw as { data?: unknown }).data);
+          return new Response(JSON.stringify({ ok: raw.ok, issues: parsed.success ? null : parsed.error.issues.slice(0, 6) }).slice(0, 1500), { headers: { "content-type": "application/json" } });
         }
         const ingest = await import("@/lib/hbx/ingest.server");
         if (mode === "sync-hotels") {
