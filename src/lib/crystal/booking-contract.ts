@@ -35,7 +35,6 @@ export type CrystalBookingOperation =
   | "prebook"
   | "quote"
   | "option"
-  | "create"
   | "retrieve"
   | "history"
   | "list"
@@ -112,7 +111,7 @@ export const CRYSTAL_BOOKING_SPEC: CrystalOperationSpec[] = [
 /** Operations that must be reachable before the rail can arm. */
 export const CRYSTAL_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
   "prebook",
-  "create",
+  "option",
   "retrieve",
   "cancel",
 ];
