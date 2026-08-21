@@ -168,6 +168,59 @@ function CrystalConsole() {
             </Card>
           ) : null}
 
+          {booking ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Booking rail</CardTitle>
+                <Badge variant={booking.capability.live ? "default" : "secondary"}>
+                  {booking.capability.live ? "ARMED" : "DISABLED"}
+                </Badge>
+              </CardHeader>
+              <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="text-muted-foreground">Shopping API</p>
+                  <p>{booking.capability.shoppingApiStatus}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Booking API</p>
+                  <p>{booking.capability.bookingApiStatus}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Configured operations</p>
+                  <p>{booking.capability.operations.join(", ") || "None"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Block reason</p>
+                  <p>{booking.capability.reason ?? "—"}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground">Detail</p>
+                  <p>{booking.capability.detail}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground">Recent booking calls</p>
+                  {booking.audit.length === 0 ? (
+                    <p>No supplier booking calls have been made.</p>
+                  ) : (
+                    <ul className="mt-1 space-y-1">
+                      {booking.audit.map((a, i) => (
+                        <li key={`${a.at}-${i}`} className="flex flex-wrap gap-2">
+                          <span className="text-muted-foreground">{a.at}</span>
+                          <Badge variant={a.ok ? "secondary" : "destructive"}>{a.operation}</Badge>
+                          <span>
+                            {a.status ?? "—"} · {a.attempts} attempt(s) · {a.durationMs}ms
+                            {a.detail ? ` · ${a.detail}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+
           <Card>
             <CardHeader>
               <CardTitle>Audit trail</CardTitle>
