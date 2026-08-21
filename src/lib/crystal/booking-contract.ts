@@ -35,7 +35,6 @@ export type CrystalBookingOperation =
   | "prebook"
   | "quote"
   | "option"
-  | "create"
   | "retrieve"
   | "history"
   | "list"
@@ -46,12 +45,73 @@ export type CrystalBookingOperation =
   | "netfares"
   | "pricetypes"
   | "promotions"
-  | "pastguest";
+  | "pastguest"
+  | "invoice"
+  | "paymentlink"
+  | "paymentlinkretrieve"
+  | "paymentstatus"
+  | "pricebreakdown";
 
-/** Operations that must be configured before the rail can arm. */
+/**
+ * Documented PROD operations from the AKTG Booking API specification
+ * (the supplied YAML). Holds the exact paths, HTTP methods, and required
+ * path parameters used to reach each operation. The server adapter treats this
+ * as the source of truth and only ever calls a documented operation.
+ *
+ * - `path`: exact path from the spec. Path parameters are expressed as
+ *   `{name}` and substituted from caller-supplied values at request time.
+ * - `method`: exact HTTP method from the spec.
+ * - `requiredPathParams`: path parameters the spec marks required.
+ * - `envVar`: optional server-side override so an agency can pin a different
+ *   deployed path; empty by default, meaning the spec path is used verbatim.
+ */
+export interface CrystalOperationSpec {
+  operation: CrystalBookingOperation;
+  path: string;
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  requiredPathParams: string[];
+  /** Name of the optional server-side env override for the path ("" = none). */
+  envVar: string;
+}
+
+/**
+ * The operation catalogue, derived solely from the supplied AKTG Booking API
+ * (PROD) specification. Clone paths and net-fare-only variants are excluded;
+ * every endpoint listed here is a real, documented operation in the spec.
+ */
+export const CRYSTAL_BOOKING_SPEC: CrystalOperationSpec[] = [
+  // Hold / release suites (Hold and Release are separate ops, same path)
+  { operation: "prebook", path: "/v1/Bookings/suites", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PREBOOK" },
+  { operation: "suites", path: "/v1/Bookings/suites", method: "DELETE", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_SUITES" },
+  // Quote / Option / Promote lifecycle
+  { operation: "quote", path: "/v1/Bookings/quote", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_QUOTE" },
+  { operation: "option", path: "/v1/Bookings/option", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_OPTION" },
+  { operation: "modify", path: "/v1/Bookings/{bookingId}/promote", method: "PUT", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_MODIFY" },
+  // Retrieve / cancel a specific booking
+  { operation: "retrieve", path: "/v1/Bookings/{bookingId}", method: "GET", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_RETRIEVE" },
+  { operation: "cancel", path: "/v1/Bookings/{bookingId}", method: "DELETE", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_CANCEL" },
+  { operation: "history", path: "/v1/bookings/history/{bookingId}", method: "GET", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_HISTORY" },
+  // List bookings created by the agency
+  { operation: "list", path: "/v1/Bookings", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_LIST" },
+  // Availability / suites / pricing
+  { operation: "availability", path: "/d/v1/cruises/availability", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_AVAILABILITY" },
+  { operation: "netfares", path: "/d/v1/netfare/availablesuites", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_NETFARES" },
+  { operation: "pricetypes", path: "/v1/Bookings/pricetypescurrencies", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PRICETYPES" },
+  { operation: "promotions", path: "/d/v1/wsPromo/CruiseCategoryPromo", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PROMOTIONS" },
+  // Guest and pricing helpers
+  { operation: "pastguest", path: "/v1/PastGuests/search", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PASTGUEST" },
+  { operation: "pricebreakdown", path: "/v2/bookings/pricebreakdown", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PRICEBREAKDOWN" },
+  // Document / payment delivery + retrieval
+  { operation: "invoice", path: "/v1/Bookings/{bookingId}/invoice", method: "POST", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_INVOICE" },
+  { operation: "paymentlink", path: "/v1/Bookings/{bookingId}/paymentlink", method: "POST", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_PAYMENTLINK" },
+  { operation: "paymentlinkretrieve", path: "/v1/RetrievePaymentLink/paymentlink", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PAYMENTLINKRETRIEVE" },
+  { operation: "paymentstatus", path: "/v1/payments/requestInfo", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PAYMENTSTATUS" },
+];
+
+/** Operations that must be reachable before the rail can arm. */
 export const CRYSTAL_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
   "prebook",
-  "create",
+  "option",
   "retrieve",
   "cancel",
 ];
@@ -67,32 +127,20 @@ export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
   "pricetypes",
   "promotions",
   "pastguest",
+  "pricebreakdown",
 ];
 
-export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] = [
-  "prebook",
-  "quote",
-  "option",
-  "create",
-  "retrieve",
-  "history",
-  "list",
-  "modify",
-  "cancel",
-  "availability",
-  "suites",
-  "netfares",
-  "pricetypes",
-  "promotions",
-  "pastguest",
-];
+export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] =
+  CRYSTAL_BOOKING_SPEC.map((s) => s.operation);
 
 export interface CrystalOperationStatus {
   operation: CrystalBookingOperation;
   configured: boolean;
   required: boolean;
   readOnly: boolean;
-  /** Name of the server-side env var that supplies this operation's PROD path. */
+  /** Documented PROD method for this operation (never guessed). */
+  method: string;
+  /** Name of the optional server-side env var that overrides this path ("" = none). */
   envVar: string;
 }
 

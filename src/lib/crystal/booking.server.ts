@@ -324,7 +324,7 @@ export async function confirmCrystalBooking(
   }
 
   const raw = await bookingCall<unknown>({
-    operation: "create",
+    operation: "option",
     body: { bookingReference: row.supplier_reference },
     idempotencyKey,
     reference: row.reference,
