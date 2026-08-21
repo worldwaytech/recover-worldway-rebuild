@@ -36,8 +36,20 @@ const PATH_ENV: Record<CrystalBookingOperation, string> = {
   create: "CRYSTAL_BOOKING_PATH_CREATE",
   retrieve: "CRYSTAL_BOOKING_PATH_RETRIEVE",
   list: "CRYSTAL_BOOKING_PATH_LIST",
+  modify: "CRYSTAL_BOOKING_PATH_MODIFY",
   cancel: "CRYSTAL_BOOKING_PATH_CANCEL",
+  availability: "CRYSTAL_BOOKING_PATH_AVAILABILITY",
+  suites: "CRYSTAL_BOOKING_PATH_SUITES",
+  netfares: "CRYSTAL_BOOKING_PATH_NETFARES",
+  pricetypes: "CRYSTAL_BOOKING_PATH_PRICETYPES",
+  promotions: "CRYSTAL_BOOKING_PATH_PROMOTIONS",
+  pastguest: "CRYSTAL_BOOKING_PATH_PASTGUEST",
 };
+
+/** Env var that supplies each operation's documented PROD path. */
+export function operationEnvVar(op: CrystalBookingOperation): string {
+  return PATH_ENV[op];
+}
 
 export interface CrystalBookingAuditEntry {
   at: string;
