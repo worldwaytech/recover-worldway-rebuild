@@ -120,10 +120,16 @@ function VoyagePage() {
             <span className="font-serif text-2xl">{formatFare(voyage)}</span>
             <Badge variant="secondary">{voyage.availability}</Badge>
             <Button asChild>
-              <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
-                Reserve or request a quote
+              <Link to="/crystal-cruises/book/$code" params={{ code: voyage.code }}>
+                Select suite &amp; reserve
               </Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
+                Request a quote
+              </Link>
+            </Button>
+
             <Button variant="outline" onClick={() => crystalPrefs.toggleWishlist(voyage.code)}>
               {saved ? "Saved" : "Save voyage"}
             </Button>
