@@ -190,6 +190,15 @@ function CrystalConsole() {
                   <p>{booking.capability.operations.join(", ") || "None"}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground">Channel context</p>
+                  <p>
+                    X-SalesChannel{" "}
+                    {booking.capability.channel.salesChannelConfigured ? "set" : "missing"} ·
+                    X-OfficeID{" "}
+                    {booking.capability.channel.officeIdConfigured ? "set" : "missing"}
+                  </p>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Block reason</p>
                   <p>{booking.capability.reason ?? "—"}</p>
                 </div>
