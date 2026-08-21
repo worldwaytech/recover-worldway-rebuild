@@ -356,6 +356,7 @@ export type Database = {
           deposit_amount: number | null
           details: Json
           id: string
+          idempotency_key: string | null
           product_type: string
           reference: string
           sla_due_at: string | null
@@ -380,6 +381,7 @@ export type Database = {
           deposit_amount?: number | null
           details?: Json
           id?: string
+          idempotency_key?: string | null
           product_type: string
           reference: string
           sla_due_at?: string | null
@@ -404,6 +406,7 @@ export type Database = {
           deposit_amount?: number | null
           details?: Json
           id?: string
+          idempotency_key?: string | null
           product_type?: string
           reference?: string
           sla_due_at?: string | null
@@ -1423,6 +1426,7 @@ export type Database = {
           deposit_amount: number | null
           details: Json
           id: string
+          idempotency_key: string | null
           product_type: string
           reference: string
           sla_due_at: string | null

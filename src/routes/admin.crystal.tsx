@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCrystalConnectorStatus, runCrystalSync } from "@/lib/crystal/crystal.functions";
+import { getCrystalBookingDiagnostics } from "@/lib/crystal/crystal-booking.functions";
 import type { CrystalConnectorStatus } from "@/lib/crystal/connector.server";
+
 
 export const Route = createFileRoute("/admin/crystal")({
   head: () => ({
@@ -22,10 +24,14 @@ export const Route = createFileRoute("/admin/crystal")({
   component: CrystalConsole,
 });
 
+type BookingDiagnostics = Awaited<ReturnType<typeof getCrystalBookingDiagnostics>>;
+
 function CrystalConsole() {
   const fetchStatus = useServerFn(getCrystalConnectorStatus);
   const sync = useServerFn(runCrystalSync);
+  const fetchBooking = useServerFn(getCrystalBookingDiagnostics);
   const [status, setStatus] = useState<CrystalConnectorStatus | null>(null);
+  const [booking, setBooking] = useState<BookingDiagnostics | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -33,6 +39,7 @@ function CrystalConsole() {
     setLoading(true);
     try {
       setStatus((await fetchStatus({ data: { health } })) as CrystalConnectorStatus);
+      setBooking(await fetchBooking());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load connector status.");
     } finally {
@@ -44,6 +51,7 @@ function CrystalConsole() {
     void refresh(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   async function onSync() {
     setBusy(true);
@@ -159,6 +167,59 @@ function CrystalConsole() {
               </CardContent>
             </Card>
           ) : null}
+
+          {booking ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Booking rail</CardTitle>
+                <Badge variant={booking.capability.live ? "default" : "secondary"}>
+                  {booking.capability.live ? "ARMED" : "DISABLED"}
+                </Badge>
+              </CardHeader>
+              <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="text-muted-foreground">Shopping API</p>
+                  <p>{booking.capability.shoppingApiStatus}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Booking API</p>
+                  <p>{booking.capability.bookingApiStatus}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Configured operations</p>
+                  <p>{booking.capability.operations.join(", ") || "None"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Block reason</p>
+                  <p>{booking.capability.reason ?? "—"}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground">Detail</p>
+                  <p>{booking.capability.detail}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground">Recent booking calls</p>
+                  {booking.audit.length === 0 ? (
+                    <p>No supplier booking calls have been made.</p>
+                  ) : (
+                    <ul className="mt-1 space-y-1">
+                      {booking.audit.map((a, i) => (
+                        <li key={`${a.at}-${i}`} className="flex flex-wrap gap-2">
+                          <span className="text-muted-foreground">{a.at}</span>
+                          <Badge variant={a.ok ? "secondary" : "destructive"}>{a.operation}</Badge>
+                          <span>
+                            {a.status ?? "—"} · {a.attempts} attempt(s) · {a.durationMs}ms
+                            {a.detail ? ` · ${a.detail}` : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
 
           <Card>
             <CardHeader>

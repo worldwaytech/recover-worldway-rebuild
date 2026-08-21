@@ -175,6 +175,7 @@ import { Route as DestinationsRegionCountryRouteImport } from './routes/destinat
 import { Route as CrystalCruisesVoyagesCodeRouteImport } from './routes/crystal-cruises.voyages.$code'
 import { Route as CrystalCruisesShipsSlugRouteImport } from './routes/crystal-cruises.ships.$slug'
 import { Route as CrystalCruisesDestinationsSlugRouteImport } from './routes/crystal-cruises.destinations.$slug'
+import { Route as CrystalCruisesBookCodeRouteImport } from './routes/crystal-cruises.book.$code'
 import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
 import { Route as ApiPublicSupplierImageRouteImport } from './routes/api/public/supplier-image'
@@ -1024,6 +1025,11 @@ const CrystalCruisesDestinationsSlugRoute =
     path: '/destinations/$slug',
     getParentRoute: () => CrystalCruisesRoute,
   } as any)
+const CrystalCruisesBookCodeRoute = CrystalCruisesBookCodeRouteImport.update({
+  id: '/book/$code',
+  path: '/book/$code',
+  getParentRoute: () => CrystalCruisesRoute,
+} as any)
 const BookKindSlugRoute = BookKindSlugRouteImport.update({
   id: '/book/$kind/$slug',
   path: '/book/$kind/$slug',
@@ -1244,6 +1250,7 @@ export interface FileRoutesByFullPath {
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
+  '/crystal-cruises/book/$code': typeof CrystalCruisesBookCodeRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
@@ -1394,6 +1401,7 @@ export interface FileRoutesByTo {
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
+  '/crystal-cruises/book/$code': typeof CrystalCruisesBookCodeRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
@@ -1572,6 +1580,7 @@ export interface FileRoutesById {
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
+  '/crystal-cruises/book/$code': typeof CrystalCruisesBookCodeRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
@@ -1752,6 +1761,7 @@ export interface FileRouteTypes {
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
     | '/book/$kind/$slug'
+    | '/crystal-cruises/book/$code'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
@@ -1902,6 +1912,7 @@ export interface FileRouteTypes {
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
     | '/book/$kind/$slug'
+    | '/crystal-cruises/book/$code'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
@@ -2079,6 +2090,7 @@ export interface FileRouteTypes {
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
     | '/book/$kind/$slug'
+    | '/crystal-cruises/book/$code'
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
@@ -3332,6 +3344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrystalCruisesDestinationsSlugRouteImport
       parentRoute: typeof CrystalCruisesRoute
     }
+    '/crystal-cruises/book/$code': {
+      id: '/crystal-cruises/book/$code'
+      path: '/book/$code'
+      fullPath: '/crystal-cruises/book/$code'
+      preLoaderRoute: typeof CrystalCruisesBookCodeRouteImport
+      parentRoute: typeof CrystalCruisesRoute
+    }
     '/book/$kind/$slug': {
       id: '/book/$kind/$slug'
       path: '/book/$kind/$slug'
@@ -3531,6 +3550,7 @@ interface CrystalCruisesRouteChildren {
   CrystalCruisesQuoteRoute: typeof CrystalCruisesQuoteRoute
   CrystalCruisesSearchRoute: typeof CrystalCruisesSearchRoute
   CrystalCruisesIndexRoute: typeof CrystalCruisesIndexRoute
+  CrystalCruisesBookCodeRoute: typeof CrystalCruisesBookCodeRoute
   CrystalCruisesDestinationsSlugRoute: typeof CrystalCruisesDestinationsSlugRoute
   CrystalCruisesShipsSlugRoute: typeof CrystalCruisesShipsSlugRoute
   CrystalCruisesVoyagesCodeRoute: typeof CrystalCruisesVoyagesCodeRoute
@@ -3542,6 +3562,7 @@ const CrystalCruisesRouteChildren: CrystalCruisesRouteChildren = {
   CrystalCruisesQuoteRoute: CrystalCruisesQuoteRoute,
   CrystalCruisesSearchRoute: CrystalCruisesSearchRoute,
   CrystalCruisesIndexRoute: CrystalCruisesIndexRoute,
+  CrystalCruisesBookCodeRoute: CrystalCruisesBookCodeRoute,
   CrystalCruisesDestinationsSlugRoute: CrystalCruisesDestinationsSlugRoute,
   CrystalCruisesShipsSlugRoute: CrystalCruisesShipsSlugRoute,
   CrystalCruisesVoyagesCodeRoute: CrystalCruisesVoyagesCodeRoute,
