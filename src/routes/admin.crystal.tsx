@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCrystalConnectorStatus, runCrystalSync } from "@/lib/crystal/crystal.functions";
+import { getCrystalBookingDiagnostics } from "@/lib/crystal/crystal-booking.functions";
 import type { CrystalConnectorStatus } from "@/lib/crystal/connector.server";
+
 
 export const Route = createFileRoute("/admin/crystal")({
   head: () => ({
