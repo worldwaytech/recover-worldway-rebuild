@@ -19,6 +19,12 @@ import type {
   CrystalBookingBlockReason,
   CrystalBookingCapability,
   CrystalBookingOperation,
+  CrystalOperationStatus,
+} from "./booking-contract";
+import {
+  CRYSTAL_ALL_OPERATIONS,
+  CRYSTAL_READ_ONLY_OPERATIONS,
+  CRYSTAL_REQUIRED_OPERATIONS,
 } from "./booking-contract";
 import { CRYSTAL_BOOKING_API_STATUS, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
 
