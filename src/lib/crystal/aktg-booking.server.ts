@@ -1,18 +1,20 @@
 // AKTG (A&K Travel Group) Booking API adapter — server only.
 //
 // The Shopping API (see aktg-client.server.ts) is production live. The Booking
-// API is configuration-driven and FAIL-CLOSED: no endpoint path is hard-coded or
-// guessed. Every documented operation is called only when its production path is
-// supplied through runtime configuration, so no undocumented endpoint can ever
-// be invoked and no unauthorised booking can be attempted.
+// API is driven by the supplied AKTG Booking API (PROD) specification: the
+// exact PROD paths, HTTP methods and required path parameters in that spec are
+// the single source of truth (see CRYSTAL_BOOKING_SPEC in booking-contract.ts).
+// The rail is FAIL-CLOSED: no endpoint is ever guessed, no booking is placed
+// while the rail is disabled, and every state-changing call is gated on the
+// rail being armed with a valid channel context and API key.
 //
 // Runtime configuration (all server-side secrets/env, never in the bundle):
 //   CRYSTAL_BOOKING_ENABLED         "true" to arm the rail
-//   CRYSTAL_BOOKING_BASE_URL        AKTG Booking API base URL (PROD)
-//   CRYSTAL_BOOKING_PATH_<OP>       documented operation path (see PATH_ENV)
-//   CRYSTAL_BOOKING_METHOD_<OP>     documented HTTP method for the operation
+//   CRYSTAL_BOOKING_BASE_URL        optional override; defaults to the PROD base
 //   CRYSTAL_BOOKING_SALES_CHANNEL   X-SalesChannel value (from AKTG contract)
 //   CRYSTAL_BOOKING_OFFICE_ID       X-OfficeID value (from AKTG contract)
+//   CRYSTAL_BOOKING_PATH_<OP>       optional per-operation path override
+//   CRYSTAL_BOOKING_METHOD_<OP>     optional per-operation method override
 // Authentication reuses the authorised CRYSTAL_AKTG_API_KEY ApiKey header.
 import type {
   CrystalBookingBlockReason,
@@ -22,36 +24,34 @@ import type {
   CrystalOperationStatus,
 } from "./booking-contract";
 import {
+  CRYSTAL_BOOKING_SPEC,
   CRYSTAL_ALL_OPERATIONS,
   CRYSTAL_READ_ONLY_OPERATIONS,
   CRYSTAL_REQUIRED_OPERATIONS,
 } from "./booking-contract";
 import { CRYSTAL_BOOKING_API_STATUS, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
 
+/** Documented PROD base URL for the AKTG Booking API (from the supplied spec). */
+const DEFAULT_BASE_URL = "https://api.aktravelgroup.com/bookingapi";
+
 const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_ATTEMPTS = 3;
 
-const PATH_ENV: Record<CrystalBookingOperation, string> = {
-  prebook: "CRYSTAL_BOOKING_PATH_PREBOOK",
-  quote: "CRYSTAL_BOOKING_PATH_QUOTE",
-  option: "CRYSTAL_BOOKING_PATH_OPTION",
-  create: "CRYSTAL_BOOKING_PATH_CREATE",
-  retrieve: "CRYSTAL_BOOKING_PATH_RETRIEVE",
-  history: "CRYSTAL_BOOKING_PATH_HISTORY",
-  list: "CRYSTAL_BOOKING_PATH_LIST",
-  modify: "CRYSTAL_BOOKING_PATH_MODIFY",
-  cancel: "CRYSTAL_BOOKING_PATH_CANCEL",
-  availability: "CRYSTAL_BOOKING_PATH_AVAILABILITY",
-  suites: "CRYSTAL_BOOKING_PATH_SUITES",
-  netfares: "CRYSTAL_BOOKING_PATH_NETFARES",
-  pricetypes: "CRYSTAL_BOOKING_PATH_PRICETYPES",
-  promotions: "CRYSTAL_BOOKING_PATH_PROMOTIONS",
-  pastguest: "CRYSTAL_BOOKING_PATH_PASTGUEST",
-};
-
-/** Env var that supplies each operation's documented PROD path. */
+/** Env var that may override a documented operation's PROD path ("" = none). */
 export function operationEnvVar(op: CrystalBookingOperation): string {
-  return PATH_ENV[op];
+  return specFor(op)?.envVar ?? "";
+}
+
+function specFor(op: CrystalBookingOperation) {
+  return CRYSTAL_BOOKING_SPEC.find((s) => s.operation === op);
+}
+
+/** The exact documented PROD path, unless a server-side override is supplied. */
+function operationPath(op: CrystalBookingOperation): string | undefined {
+  const spec = specFor(op);
+  if (!spec) return undefined;
+  const override = env(spec.envVar);
+  return override || spec.path;
 }
 
 /**
@@ -116,11 +116,10 @@ export class CrystalBookingUnavailableError extends Error {
   }
 }
 
+/** Documented operations are always "reachable" once a base URL is set. */
 export function configuredOperations(): CrystalBookingOperation[] {
-  if (!env("CRYSTAL_BOOKING_BASE_URL")) return [];
-  return (Object.keys(PATH_ENV) as CrystalBookingOperation[]).filter((op) =>
-    Boolean(env(PATH_ENV[op])),
-  );
+  if (!env("CRYSTAL_BOOKING_BASE_URL") && DEFAULT_BASE_URL.length === 0) return [];
+  return [...CRYSTAL_ALL_OPERATIONS];
 }
 
 export function bookingCapability(): CrystalBookingCapability {
@@ -158,8 +157,7 @@ export function bookingCapability(): CrystalBookingCapability {
       live: false,
       operations: [],
       reason: "booking_api_not_configured",
-      detail:
-        "No AKTG Booking API base URL or documented operation paths have been supplied, so no booking endpoint can be called.",
+      detail: "No AKTG Booking API base URL has been supplied, so no booking endpoint can be called.",
     };
   }
   if (!channel.salesChannelConfigured || !channel.officeIdConfigured) {
@@ -195,13 +193,17 @@ export function bookingCapability(): CrystalBookingCapability {
  */
 export function bookingOperationCatalog(): CrystalOperationStatus[] {
   const configured = new Set(configuredOperations());
-  return CRYSTAL_ALL_OPERATIONS.map((operation) => ({
-    operation,
-    configured: configured.has(operation),
-    required: CRYSTAL_REQUIRED_OPERATIONS.includes(operation),
-    readOnly: CRYSTAL_READ_ONLY_OPERATIONS.includes(operation),
-    envVar: PATH_ENV[operation],
-  }));
+  return CRYSTAL_ALL_OPERATIONS.map((operation) => {
+    const spec = specFor(operation);
+    return {
+      operation,
+      configured: configured.has(operation),
+      required: CRYSTAL_REQUIRED_OPERATIONS.includes(operation),
+      readOnly: CRYSTAL_READ_ONLY_OPERATIONS.includes(operation),
+      method: spec?.method ?? "GET",
+      envVar: spec?.envVar ?? "",
+    };
+  });
 }
 
 /** True when an operation is safe to call without mutating supplier state. */
@@ -210,19 +212,16 @@ export function isReadOnlyOperation(op: CrystalBookingOperation): boolean {
 }
 
 /**
- * Documented HTTP method for an operation. AKTG methods are supplied per
- * operation through configuration so no method is ever guessed; when absent we
- * fall back to the request shape (body ⇒ POST, otherwise GET).
+ * HTTP method for an operation. Uses the exact method documented in the spec;
+ * a server-side override can pin a different method when AKTG updates a
+ * contract before the code is redeployed. Never guessed.
  */
-export function operationMethod(
-  op: CrystalBookingOperation,
-  hasBody: boolean,
-): "GET" | "POST" | "PUT" | "DELETE" {
+export function operationMethod(op: CrystalBookingOperation): "GET" | "POST" | "PUT" | "DELETE" {
   const configured = env(`CRYSTAL_BOOKING_METHOD_${op.toUpperCase()}`).toUpperCase();
   if (configured === "GET" || configured === "POST" || configured === "PUT" || configured === "DELETE") {
     return configured;
   }
-  return hasBody ? "POST" : "GET";
+  return specFor(op)?.method ?? "GET";
 }
 
 export function assertBookingLive(op: CrystalBookingOperation) {
@@ -237,9 +236,10 @@ export function assertBookingLive(op: CrystalBookingOperation) {
 
 interface CallOptions {
   operation: CrystalBookingOperation;
-  method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   query?: Record<string, string | number | undefined>;
+  /** Path parameters named in the spec (e.g. bookingId), substituted into the path. */
+  pathParams?: Record<string, string | number>;
   /** Supplier-side idempotency key; also used for our own audit correlation. */
   idempotencyKey?: string;
   reference?: string;
@@ -250,12 +250,27 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
   assertBookingLive(opts.operation);
   const started = Date.now();
   const key = apiKey();
-  const path = env(PATH_ENV[opts.operation]);
-  const url = new URL(path, env("CRYSTAL_BOOKING_BASE_URL").replace(/\/?$/, "/"));
+  const spec = specFor(opts.operation);
+  if (!spec) throw new Error(`Unknown Crystal booking operation: ${opts.operation}`);
+
+  const base = (env("CRYSTAL_BOOKING_BASE_URL") || DEFAULT_BASE_URL).replace(/\/?$/, "/");
+  // Substitute documented path parameters; refuse to call when one is missing.
+  let path = operationPath(opts.operation) ?? spec.path;
+  for (const token of spec.requiredPathParams) {
+    const value = opts.pathParams?.[token];
+    if (value === undefined) {
+      throw new Error(
+        `Crystal booking ${opts.operation} requires path parameter '${token}' and none was supplied.`,
+      );
+    }
+    path = path.replace(`{${token}}`, encodeURIComponent(String(value)));
+  }
+  const url = new URL(path.replace(/^\//, ""), base);
   for (const [k, v] of Object.entries(opts.query ?? {})) {
     if (v !== undefined && v !== "") url.searchParams.set(k, String(v));
   }
 
+  const method = operationMethod(opts.operation);
   let attempts = 0;
   let lastStatus: number | undefined;
   let lastDetail = "";
@@ -274,7 +289,7 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
       if (opts.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
 
       const res = await fetch(url.toString(), {
-        method: opts.method ?? operationMethod(opts.operation, opts.body !== undefined),
+        method,
         headers,
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
         signal: controller.signal,
@@ -371,9 +386,9 @@ export interface CrystalReadOnlyProbe {
 }
 
 /**
- * Safe PROD validation: calls only configured READ-ONLY documented operations,
- * never a state-changing one, and never while the rail is disabled. Returns a
- * credential-free result per operation.
+ * Safe PROD validation: calls only configured READ-ONLY documented operations
+ * that require no path parameters, never a state-changing one, and never while
+ * the rail is disabled. Returns a credential-free result per operation.
  */
 export async function verifyBookingReadOnly(
   operations: CrystalBookingOperation[] = CRYSTAL_READ_ONLY_OPERATIONS,
@@ -391,6 +406,16 @@ export async function verifyBookingReadOnly(
       });
       continue;
     }
+    const spec = specFor(operation);
+    if (spec && spec.requiredPathParams.length > 0) {
+      results.push({
+        operation,
+        attempted: false,
+        ok: false,
+        detail: "Skipped: requires a bookingId that is only available after a booking exists.",
+      });
+      continue;
+    }
     if (!cap.live || !configured.has(operation)) {
       results.push({
         operation,
@@ -401,7 +426,7 @@ export async function verifyBookingReadOnly(
       continue;
     }
     try {
-      await bookingCall({ operation, method: operationMethod(operation, false) });
+      await bookingCall({ operation });
       results.push({ operation, attempted: true, ok: true, detail: "Authenticated read succeeded." });
     } catch (err) {
       results.push({
