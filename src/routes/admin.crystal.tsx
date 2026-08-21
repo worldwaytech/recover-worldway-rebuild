@@ -24,10 +24,14 @@ export const Route = createFileRoute("/admin/crystal")({
   component: CrystalConsole,
 });
 
+type BookingDiagnostics = Awaited<ReturnType<typeof getCrystalBookingDiagnostics>>;
+
 function CrystalConsole() {
   const fetchStatus = useServerFn(getCrystalConnectorStatus);
   const sync = useServerFn(runCrystalSync);
+  const fetchBooking = useServerFn(getCrystalBookingDiagnostics);
   const [status, setStatus] = useState<CrystalConnectorStatus | null>(null);
+  const [booking, setBooking] = useState<BookingDiagnostics | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -35,6 +39,7 @@ function CrystalConsole() {
     setLoading(true);
     try {
       setStatus((await fetchStatus({ data: { health } })) as CrystalConnectorStatus);
+      setBooking(await fetchBooking({ data: {} }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load connector status.");
     } finally {
@@ -46,6 +51,7 @@ function CrystalConsole() {
     void refresh(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   async function onSync() {
     setBusy(true);
