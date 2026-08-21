@@ -156,7 +156,7 @@ function BookPage() {
   }
 
   async function onHold() {
-    if (!selected) return toast.error("Select a suite grade first.");
+    if (!selected || !voyage) return toast.error("Select a suite grade first.");
     if (guests.some((g) => !g.firstName.trim() || !g.lastName.trim()))
       return toast.error("Enter each guest's full name.");
     setBusy(true);

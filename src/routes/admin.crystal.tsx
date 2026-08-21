@@ -39,7 +39,7 @@ function CrystalConsole() {
     setLoading(true);
     try {
       setStatus((await fetchStatus({ data: { health } })) as CrystalConnectorStatus);
-      setBooking(await fetchBooking({ data: {} }));
+      setBooking(await fetchBooking());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load connector status.");
     } finally {

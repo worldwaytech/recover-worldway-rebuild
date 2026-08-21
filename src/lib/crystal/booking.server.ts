@@ -26,6 +26,13 @@ const SUPPLIER = "Crystal Cruises (AKTG)";
 /** Tolerance on the price the customer saw versus the live supplier fare. */
 const PRICE_TOLERANCE = 0.02;
 
+type Json = Database["public"]["Tables"]["bookings"]["Insert"]["details"];
+
+/** Serialise a plain object into the jsonb column type. */
+function json(value: unknown): Json {
+  return value as Json;
+}
+
 function reference(): string {
   const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `CRZ-${new Date().getFullYear()}-${rand}`;
@@ -69,7 +76,7 @@ async function event(
 ) {
   await client
     .from("booking_events")
-    .insert({ booking_id: bookingId, event_type: eventType, summary, detail });
+    .insert({ booking_id: bookingId, event_type: eventType, summary, detail: json(detail) });
 }
 
 async function findByIdempotency(client: Client, key: string): Promise<BookingRow | null> {
@@ -190,7 +197,7 @@ export async function holdCrystalVoyage(
         ? Math.round(((total * live.depositPercent) / 100) * 100) / 100
         : null,
     idempotency_key: input.idempotencyKey,
-    details: {
+    details: json({
       voyageNumber: input.voyageNumber,
       shipName: input.shipName ?? null,
       suiteCategory: match.suiteCategory,
@@ -215,7 +222,7 @@ export async function holdCrystalVoyage(
       supplierPending: !supplierReference,
       supplierBlockedReason: blockedReason ?? null,
       revalidatedAt: live.checkedAt,
-    },
+    }),
   };
 
   const { data, error } = await client.from("bookings").insert(insert).select("*").single();
@@ -330,11 +337,11 @@ export async function confirmCrystalBooking(
       status,
       supplier_reference: norm.supplierReference ?? row.supplier_reference,
       supplier_status: norm.supplierStatus ?? row.supplier_status,
-      details: {
+      details: json({
         ...(row.details as Record<string, unknown>),
         supplierPending: false,
         confirmedAt: new Date().toISOString(),
-      },
+      }),
     })
     .eq("id", row.id)
     .select("*")
