@@ -318,3 +318,56 @@ export function normaliseSupplierBooking(raw: unknown): SupplierBookingResult {
     raw,
   };
 }
+
+export interface CrystalReadOnlyProbe {
+  operation: CrystalBookingOperation;
+  attempted: boolean;
+  ok: boolean;
+  status?: number;
+  detail: string;
+}
+
+/**
+ * Safe PROD validation: calls only configured READ-ONLY documented operations,
+ * never a state-changing one, and never while the rail is disabled. Returns a
+ * credential-free result per operation.
+ */
+export async function verifyBookingReadOnly(
+  operations: CrystalBookingOperation[] = CRYSTAL_READ_ONLY_OPERATIONS,
+): Promise<CrystalReadOnlyProbe[]> {
+  const cap = bookingCapability();
+  const configured = new Set(cap.operations);
+  const results: CrystalReadOnlyProbe[] = [];
+  for (const operation of operations) {
+    if (!isReadOnlyOperation(operation)) {
+      results.push({
+        operation,
+        attempted: false,
+        ok: false,
+        detail: "Skipped: operation mutates supplier state.",
+      });
+      continue;
+    }
+    if (!cap.live || !configured.has(operation)) {
+      results.push({
+        operation,
+        attempted: false,
+        ok: false,
+        detail: cap.live ? "Not configured." : cap.detail,
+      });
+      continue;
+    }
+    try {
+      await bookingCall({ operation, method: operationMethod(operation, false) });
+      results.push({ operation, attempted: true, ok: true, detail: "Authenticated read succeeded." });
+    } catch (err) {
+      results.push({
+        operation,
+        attempted: true,
+        ok: false,
+        detail: err instanceof Error ? err.message : "read failed",
+      });
+    }
+  }
+  return results;
+}
