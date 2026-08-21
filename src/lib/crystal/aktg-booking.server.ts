@@ -9,16 +9,16 @@
 // Runtime configuration (all server-side secrets/env, never in the bundle):
 //   CRYSTAL_BOOKING_ENABLED         "true" to arm the rail
 //   CRYSTAL_BOOKING_BASE_URL        AKTG Booking API base URL (PROD)
-//   CRYSTAL_BOOKING_PATH_PREBOOK    hold / pre-book operation path
-//   CRYSTAL_BOOKING_PATH_CREATE     booking creation operation path
-//   CRYSTAL_BOOKING_PATH_RETRIEVE   retrieve / history operation path
-//   CRYSTAL_BOOKING_PATH_LIST       booking list operation path
-//   CRYSTAL_BOOKING_PATH_CANCEL     cancellation operation path
+//   CRYSTAL_BOOKING_PATH_<OP>       documented operation path (see PATH_ENV)
+//   CRYSTAL_BOOKING_METHOD_<OP>     documented HTTP method for the operation
+//   CRYSTAL_BOOKING_SALES_CHANNEL   X-SalesChannel value (from AKTG contract)
+//   CRYSTAL_BOOKING_OFFICE_ID       X-OfficeID value (from AKTG contract)
 // Authentication reuses the authorised CRYSTAL_AKTG_API_KEY ApiKey header.
 import type {
   CrystalBookingBlockReason,
   CrystalBookingCapability,
   CrystalBookingOperation,
+  CrystalChannelContextState,
   CrystalOperationStatus,
 } from "./booking-contract";
 import {
@@ -33,8 +33,11 @@ const MAX_ATTEMPTS = 3;
 
 const PATH_ENV: Record<CrystalBookingOperation, string> = {
   prebook: "CRYSTAL_BOOKING_PATH_PREBOOK",
+  quote: "CRYSTAL_BOOKING_PATH_QUOTE",
+  option: "CRYSTAL_BOOKING_PATH_OPTION",
   create: "CRYSTAL_BOOKING_PATH_CREATE",
   retrieve: "CRYSTAL_BOOKING_PATH_RETRIEVE",
+  history: "CRYSTAL_BOOKING_PATH_HISTORY",
   list: "CRYSTAL_BOOKING_PATH_LIST",
   modify: "CRYSTAL_BOOKING_PATH_MODIFY",
   cancel: "CRYSTAL_BOOKING_PATH_CANCEL",
@@ -49,6 +52,28 @@ const PATH_ENV: Record<CrystalBookingOperation, string> = {
 /** Env var that supplies each operation's documented PROD path. */
 export function operationEnvVar(op: CrystalBookingOperation): string {
   return PATH_ENV[op];
+}
+
+/**
+ * Presence-only view of the server-side supplier channel context
+ * (X-SalesChannel / X-OfficeID). The actual values are read from env inside
+ * request construction and never cross the client boundary.
+ */
+export function channelContextState(): CrystalChannelContextState {
+  return {
+    salesChannelConfigured: Boolean(env("CRYSTAL_BOOKING_SALES_CHANNEL")),
+    officeIdConfigured: Boolean(env("CRYSTAL_BOOKING_OFFICE_ID")),
+  };
+}
+
+/** Header values supplied by the AKTG contract; empty strings are omitted. */
+function channelHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const salesChannel = env("CRYSTAL_BOOKING_SALES_CHANNEL");
+  const officeId = env("CRYSTAL_BOOKING_OFFICE_ID");
+  if (salesChannel) headers["X-SalesChannel"] = salesChannel;
+  if (officeId) headers["X-OfficeID"] = officeId;
+  return headers;
 }
 
 export interface CrystalBookingAuditEntry {
@@ -103,10 +128,12 @@ export function bookingCapability(): CrystalBookingCapability {
     shoppingApiStatus: CRYSTAL_SHOPPING_API_STATUS,
     bookingApiStatus: CRYSTAL_BOOKING_API_STATUS,
   };
+  const channel = channelContextState();
   const ops = configuredOperations();
   if (!apiKey()) {
     return {
       ...base,
+      channel,
       live: false,
       operations: [],
       reason: "credentials_missing",
@@ -116,6 +143,7 @@ export function bookingCapability(): CrystalBookingCapability {
   if (env("CRYSTAL_BOOKING_ENABLED").toLowerCase() !== "true") {
     return {
       ...base,
+      channel,
       live: false,
       operations: ops,
       reason: "booking_api_disabled",
@@ -126,6 +154,7 @@ export function bookingCapability(): CrystalBookingCapability {
   if (ops.length === 0) {
     return {
       ...base,
+      channel,
       live: false,
       operations: [],
       reason: "booking_api_not_configured",
@@ -133,17 +162,30 @@ export function bookingCapability(): CrystalBookingCapability {
         "No AKTG Booking API base URL or documented operation paths have been supplied, so no booking endpoint can be called.",
     };
   }
+  if (!channel.salesChannelConfigured || !channel.officeIdConfigured) {
+    return {
+      ...base,
+      channel,
+      live: false,
+      operations: ops,
+      reason: "channel_context_missing",
+      detail: !channel.salesChannelConfigured
+        ? "X-SalesChannel is not configured for the Crystal booking rail."
+        : "X-OfficeID is not configured for the Crystal booking rail.",
+    };
+  }
   const missing = CRYSTAL_REQUIRED_OPERATIONS.filter((op) => !ops.includes(op));
   if (missing.length) {
     return {
       ...base,
+      channel,
       live: false,
       operations: ops,
       reason: "booking_api_not_authorised",
       detail: `AKTG Booking API operations still missing: ${missing.join(", ")}.`,
     };
   }
-  return { ...base, live: true, operations: ops, detail: "AKTG Booking API armed." };
+  return { ...base, channel, live: true, operations: ops, detail: "AKTG Booking API armed." };
 }
 
 /**
@@ -226,6 +268,7 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
       const headers: Record<string, string> = {
         ApiKey: key,
         Accept: "application/json",
+        ...channelHeaders(),
       };
       if (opts.body !== undefined) headers["Content-Type"] = "application/json";
       if (opts.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
