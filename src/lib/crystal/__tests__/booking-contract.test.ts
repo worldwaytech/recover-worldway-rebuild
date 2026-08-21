@@ -101,3 +101,72 @@ describe("booking rail is fail-closed", () => {
     expect(bookingCapability().live).toBe(true);
   });
 });
+
+describe("documented operation mapping", () => {
+  const ALL = [
+    "prebook",
+    "create",
+    "retrieve",
+    "list",
+    "modify",
+    "cancel",
+    "availability",
+    "suites",
+    "netfares",
+    "pricetypes",
+    "promotions",
+    "pastguest",
+  ] as const;
+
+  it("exposes an env-driven path slot for every documented operation", async () => {
+    const { operationEnvVar, bookingOperationCatalog } = await import("../aktg-booking.server");
+    for (const op of ALL) {
+      expect(operationEnvVar(op)).toMatch(/^CRYSTAL_BOOKING_PATH_/);
+    }
+    process.env["CRYSTAL_BOOKING_BASE_URL"] = "";
+    const catalog = bookingOperationCatalog();
+    expect(catalog).toHaveLength(ALL.length);
+    expect(catalog.every((c) => c.configured === false)).toBe(true);
+    expect(catalog.filter((c) => c.required).map((c) => c.operation).sort()).toEqual(
+      ["cancel", "create", "prebook", "retrieve"],
+    );
+  });
+
+  it("reports configured versus unconfigured operations", async () => {
+    const { bookingOperationCatalog } = await import("../aktg-booking.server");
+    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
+    process.env["CRYSTAL_BOOKING_BASE_URL"] = "https://api.example.com/booking/";
+    process.env["CRYSTAL_BOOKING_PATH_AVAILABILITY"] = "v1/availability";
+    const catalog = bookingOperationCatalog();
+    expect(catalog.find((c) => c.operation === "availability")?.configured).toBe(true);
+    expect(catalog.find((c) => c.operation === "create")?.configured).toBe(false);
+    delete process.env["CRYSTAL_BOOKING_PATH_AVAILABILITY"];
+  });
+
+  it("classifies mutating operations as not read-only", async () => {
+    const { isReadOnlyOperation } = await import("../aktg-booking.server");
+    for (const op of ["prebook", "create", "modify", "cancel"] as const) {
+      expect(isReadOnlyOperation(op)).toBe(false);
+    }
+    for (const op of ["retrieve", "list", "availability", "pastguest"] as const) {
+      expect(isReadOnlyOperation(op)).toBe(true);
+    }
+  });
+
+  it("never guesses an HTTP method away from the documented configuration", async () => {
+    const { operationMethod } = await import("../aktg-booking.server");
+    delete process.env["CRYSTAL_BOOKING_METHOD_RETRIEVE"];
+    expect(operationMethod("retrieve", false)).toBe("GET");
+    expect(operationMethod("create", true)).toBe("POST");
+    process.env["CRYSTAL_BOOKING_METHOD_CANCEL"] = "delete";
+    expect(operationMethod("cancel", false)).toBe("DELETE");
+    delete process.env["CRYSTAL_BOOKING_METHOD_CANCEL"];
+  });
+
+  it("performs no supplier read while the rail is disabled", async () => {
+    const { verifyBookingReadOnly } = await import("../aktg-booking.server");
+    process.env["CRYSTAL_BOOKING_ENABLED"] = "false";
+    const probes = await verifyBookingReadOnly();
+    expect(probes.every((p) => p.attempted === false)).toBe(true);
+  });
+});
