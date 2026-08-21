@@ -146,6 +146,43 @@ export function bookingCapability(): CrystalBookingCapability {
   return { ...base, live: true, operations: ops, detail: "AKTG Booking API armed." };
 }
 
+/**
+ * Full documented-operation catalogue with per-operation configuration state.
+ * Used by the admin rail to report configured vs unconfigured operations without
+ * ever revealing a URL, path or credential.
+ */
+export function bookingOperationCatalog(): CrystalOperationStatus[] {
+  const configured = new Set(configuredOperations());
+  return CRYSTAL_ALL_OPERATIONS.map((operation) => ({
+    operation,
+    configured: configured.has(operation),
+    required: CRYSTAL_REQUIRED_OPERATIONS.includes(operation),
+    readOnly: CRYSTAL_READ_ONLY_OPERATIONS.includes(operation),
+    envVar: PATH_ENV[operation],
+  }));
+}
+
+/** True when an operation is safe to call without mutating supplier state. */
+export function isReadOnlyOperation(op: CrystalBookingOperation): boolean {
+  return CRYSTAL_READ_ONLY_OPERATIONS.includes(op);
+}
+
+/**
+ * Documented HTTP method for an operation. AKTG methods are supplied per
+ * operation through configuration so no method is ever guessed; when absent we
+ * fall back to the request shape (body ⇒ POST, otherwise GET).
+ */
+export function operationMethod(
+  op: CrystalBookingOperation,
+  hasBody: boolean,
+): "GET" | "POST" | "PUT" | "DELETE" {
+  const configured = env(`CRYSTAL_BOOKING_METHOD_${op.toUpperCase()}`).toUpperCase();
+  if (configured === "GET" || configured === "POST" || configured === "PUT" || configured === "DELETE") {
+    return configured;
+  }
+  return hasBody ? "POST" : "GET";
+}
+
 export function assertBookingLive(op: CrystalBookingOperation) {
   const cap = bookingCapability();
   if (!cap.live || !cap.operations.includes(op)) {
