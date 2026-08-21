@@ -59,6 +59,22 @@ export const getCrystalBookingDiagnostics = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { isAdmin } = await import("@/lib/wwl.server");
     if (!(await isAdmin(context as never))) throw new Error("Forbidden");
-    const { bookingCapability, crystalBookingAudit } = await import("./aktg-booking.server");
-    return { capability: bookingCapability(), audit: crystalBookingAudit(20) };
+    const { bookingCapability, bookingOperationCatalog, crystalBookingAudit } = await import(
+      "./aktg-booking.server"
+    );
+    return {
+      capability: bookingCapability(),
+      catalog: bookingOperationCatalog(),
+      audit: crystalBookingAudit(20),
+    };
+  });
+
+/** Admin-only safe PROD validation: read-only documented operations only. */
+export const verifyCrystalBookingReadOnly = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { verifyBookingReadOnly } = await import("./aktg-booking.server");
+    return { probes: await verifyBookingReadOnly() };
   });

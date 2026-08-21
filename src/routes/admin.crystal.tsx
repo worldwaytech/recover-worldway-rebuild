@@ -198,6 +198,22 @@ function CrystalConsole() {
                   <p>{booking.capability.detail}</p>
                 </div>
                 <div className="sm:col-span-2">
+                  <p className="text-muted-foreground">Documented operation map</p>
+                  <ul className="mt-1 grid gap-1 sm:grid-cols-2">
+                    {booking.catalog.map((op) => (
+                      <li key={op.operation} className="flex items-center gap-2">
+                        <Badge variant={op.configured ? "secondary" : "destructive"}>
+                          {op.configured ? "mapped" : "unconfigured"}
+                        </Badge>
+                        <span>{op.operation}</span>
+                        <span className="text-muted-foreground">
+                          {op.required ? "required" : op.readOnly ? "read-only" : "optional"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="sm:col-span-2">
                   <p className="text-muted-foreground">Recent booking calls</p>
                   {booking.audit.length === 0 ? (
                     <p>No supplier booking calls have been made.</p>

@@ -27,7 +27,58 @@ export type CrystalBookingOperation =
   | "create"
   | "retrieve"
   | "list"
-  | "cancel";
+  | "modify"
+  | "cancel"
+  | "availability"
+  | "suites"
+  | "netfares"
+  | "pricetypes"
+  | "promotions"
+  | "pastguest";
+
+/** Operations that must be configured before the rail can arm. */
+export const CRYSTAL_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
+  "prebook",
+  "create",
+  "retrieve",
+  "cancel",
+];
+
+/** Supporting operations: optional, and safe to call read-only when configured. */
+export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
+  "retrieve",
+  "list",
+  "availability",
+  "suites",
+  "netfares",
+  "pricetypes",
+  "promotions",
+  "pastguest",
+];
+
+export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] = [
+  "prebook",
+  "create",
+  "retrieve",
+  "list",
+  "modify",
+  "cancel",
+  "availability",
+  "suites",
+  "netfares",
+  "pricetypes",
+  "promotions",
+  "pastguest",
+];
+
+export interface CrystalOperationStatus {
+  operation: CrystalBookingOperation;
+  configured: boolean;
+  required: boolean;
+  readOnly: boolean;
+  /** Name of the server-side env var that supplies this operation's PROD path. */
+  envVar: string;
+}
 
 export const guestSchema = z.object({
   firstName: z.string().trim().min(1).max(60),
