@@ -231,7 +231,7 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
       if (opts.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
 
       const res = await fetch(url.toString(), {
-        method: opts.method ?? (opts.body !== undefined ? "POST" : "GET"),
+        method: opts.method ?? operationMethod(opts.operation, opts.body !== undefined),
         headers,
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
         signal: controller.signal,
