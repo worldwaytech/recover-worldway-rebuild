@@ -9,7 +9,14 @@ export type CrystalBookingBlockReason =
   | "booking_api_not_authorised"
   | "booking_api_not_configured"
   | "booking_api_disabled"
+  | "channel_context_missing"
   | "credentials_missing";
+
+/** Server-side supplier channel context required on every booking call. */
+export interface CrystalChannelContextState {
+  salesChannelConfigured: boolean;
+  officeIdConfigured: boolean;
+}
 
 export interface CrystalBookingCapability {
   /** True only when every documented booking operation is configured and enabled. */
@@ -20,12 +27,17 @@ export interface CrystalBookingCapability {
   detail: string;
   shoppingApiStatus: string;
   bookingApiStatus: string;
+  /** Presence-only view of X-SalesChannel / X-OfficeID (values never leave the server). */
+  channel: CrystalChannelContextState;
 }
 
 export type CrystalBookingOperation =
   | "prebook"
+  | "quote"
+  | "option"
   | "create"
   | "retrieve"
+  | "history"
   | "list"
   | "modify"
   | "cancel"
@@ -47,6 +59,7 @@ export const CRYSTAL_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
 /** Supporting operations: optional, and safe to call read-only when configured. */
 export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
   "retrieve",
+  "history",
   "list",
   "availability",
   "suites",
@@ -58,8 +71,11 @@ export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
 
 export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] = [
   "prebook",
+  "quote",
+  "option",
   "create",
   "retrieve",
+  "history",
   "list",
   "modify",
   "cancel",

@@ -5,10 +5,23 @@ const ENV_KEYS = [
   "CRYSTAL_AKTG_API_KEY",
   "CRYSTAL_BOOKING_ENABLED",
   "CRYSTAL_BOOKING_BASE_URL",
+  "CRYSTAL_BOOKING_SALES_CHANNEL",
+  "CRYSTAL_BOOKING_OFFICE_ID",
   "CRYSTAL_BOOKING_PATH_PREBOOK",
+  "CRYSTAL_BOOKING_PATH_QUOTE",
+  "CRYSTAL_BOOKING_PATH_OPTION",
   "CRYSTAL_BOOKING_PATH_CREATE",
   "CRYSTAL_BOOKING_PATH_RETRIEVE",
+  "CRYSTAL_BOOKING_PATH_HISTORY",
+  "CRYSTAL_BOOKING_PATH_LIST",
+  "CRYSTAL_BOOKING_PATH_MODIFY",
   "CRYSTAL_BOOKING_PATH_CANCEL",
+  "CRYSTAL_BOOKING_PATH_AVAILABILITY",
+  "CRYSTAL_BOOKING_PATH_SUITES",
+  "CRYSTAL_BOOKING_PATH_NETFARES",
+  "CRYSTAL_BOOKING_PATH_PRICETYPES",
+  "CRYSTAL_BOOKING_PATH_PROMOTIONS",
+  "CRYSTAL_BOOKING_PATH_PASTGUEST",
 ] as const;
 
 const snapshot: Record<string, string | undefined> = {};
@@ -91,6 +104,8 @@ describe("booking rail is fail-closed", () => {
     process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
     process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
     process.env["CRYSTAL_BOOKING_BASE_URL"] = "https://api.example.com/booking/";
+    process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
+    process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
     process.env["CRYSTAL_BOOKING_PATH_PREBOOK"] = "v1/prebook";
     const partial = bookingCapability();
     expect(partial.live).toBe(false);
@@ -100,13 +115,40 @@ describe("booking rail is fail-closed", () => {
     process.env["CRYSTAL_BOOKING_PATH_CANCEL"] = "v1/cancel";
     expect(bookingCapability().live).toBe(true);
   });
+
+  it("stays fail-closed until the supplier channel context is configured", async () => {
+    const { bookingCapability } = await import("../aktg-booking.server");
+    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
+    process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
+    process.env["CRYSTAL_BOOKING_BASE_URL"] = "https://api.example.com/booking/";
+    process.env["CRYSTAL_BOOKING_PATH_PREBOOK"] = "v1/prebook";
+    process.env["CRYSTAL_BOOKING_PATH_CREATE"] = "v1/create";
+    process.env["CRYSTAL_BOOKING_PATH_RETRIEVE"] = "v1/retrieve";
+    process.env["CRYSTAL_BOOKING_PATH_CANCEL"] = "v1/cancel";
+    delete process.env["CRYSTAL_BOOKING_SALES_CHANNEL"];
+    delete process.env["CRYSTAL_BOOKING_OFFICE_ID"];
+    const noChannel = bookingCapability();
+    expect(noChannel.live).toBe(false);
+    expect(noChannel.reason).toBe("channel_context_missing");
+    expect(noChannel.channel).toEqual({
+      salesChannelConfigured: false,
+      officeIdConfigured: false,
+    });
+    process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
+    expect(bookingCapability().reason).toBe("channel_context_missing");
+    process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    expect(bookingCapability().live).toBe(true);
+  });
 });
 
 describe("documented operation mapping", () => {
   const ALL = [
     "prebook",
+    "quote",
+    "option",
     "create",
     "retrieve",
+    "history",
     "list",
     "modify",
     "cancel",

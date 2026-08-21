@@ -1,0 +1,2361 @@
+openapi: 3.0.1
+info:
+  title: Shopping API (Prod)
+  description: '*** Production *** APIs to retrieve information about Crystal Cruises sailings, itineraries, prices and availability.'
+  version: '1.0'
+servers:
+  - url: https://api.aktravelgroup.com/shopping
+paths:
+  /v1/flatfiles/cruiseprices:
+    get:
+      summary: Price Feed Flat File
+      description: "This endpoint provides a CSV-style response of cruise prices, per price type, currency and suite category.\nThe fields are comma separated and if a field contains a comma in its value it will be surrounded by double quotes. If a field value contains a double quote, it will be escaped with a backslash (\\\\\").\nThe first row represents the header, with the column names."
+      operationId: price-feed-flat-file
+      parameters:
+        - name: currency
+          in: query
+          description: Currency Code
+          required: true
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Price Type Code
+          schema:
+            enum:
+              - FIT
+            type: string
+            default: FIT
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'null'
+  /d/v1/products/cruises:
+    get:
+      summary: Voyages
+      description: Get all available voyages
+      operationId: get-voyages
+      parameters:
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: pageNum
+          in: query
+          description: Page number
+          schema:
+            enum:
+              - 1
+            type: int
+        - name: pageSize
+          in: query
+          description: Number of items per page
+          schema:
+            enum:
+              - 20
+            type: int
+        - name: priceTypeCod
+          in: query
+          description: Price Type Code
+          schema:
+            enum:
+              - FIT
+            type: string
+            default: FIT
+        - name: voyageNumber
+          in: query
+          description: Voyage Number
+          schema:
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of voyages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIVoyagesResponse'
+              example:
+                body:
+                  - voyageID: 284
+                    ship: Crystal Serenity
+                    shipCod: CSE
+                    cruiseLine: Crystal Cruises
+                    cruiseLineCod: CYC
+                    voyageNumber: CSE-009-230830
+                    voyageName: 
+                    description: 
+                    duration: 9
+                    embarkDate: '2023-08-30T12:00:00.0000000+00:00'
+                    embarkPortCod: REK
+                    embarkPort: Reykjavik
+                    debarkDate: '2023-09-08T12:00:00.0000000+00:00'
+                    debarkPortCod: REK
+                    debarkPort: Reykjavik
+                    destinationID: 17130
+                    isAvailable: true
+                    price: 4700
+                    currency: USD
+                    priceTypeName: FIT Regular Fare
+                    priceTypeCod: FIT
+                    voyageType: Ocean Cruise
+                    map: https://mapserver.com/voyagemap.pdf
+                    title: Reykjavik to Reykjavik
+                    voyageDescription: 'This week-long voyage is perfect for nonconformists and those who love breathtaking scenery. The journey through Iceland will start and end in Reykjavik and you will be carried in our cherished vessel Crystal Serenity. From small but charismatic port towns such as Grundarfjordur, to fjord towns such as Isafjordur and Akureyri, you will be surrounded by verdant locations and stunning landscapes, including Europe’s largest glacier, Vatnajökull. Immerse yourself in the wonders of Iceland and return to Reykjavik to finish the journey on a high note.'
+                    image1: https://imageserver.com/image1.jpg
+                    image2: https://imageserver.com/image2.jpg
+                    mapSVG: https://mapserver.com/map.svg
+                    mapPNG: https://mapserver.com/map.png
+                    mapPNG2: https://mapserver.com/map2.png
+                    mapPNG3: https://mapserver.com/map3.png
+                    itineraryPdf: https://itineraryserver.com/itinerary.pdf
+                    previousVoyageID: 283
+                    nextVoyageID: 285
+                    itineraries:
+                      - voyageID: 284
+                        cityCod: ISREY
+                        portCod: REK
+                        cityName: REYKJAVIK ICELAND
+                        latitude: 64.151961
+                        longitude: -21.939737
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 1
+                        day: 1
+                        itineraryDate: '2023-08-30T12:00:00.0000000+00:00'
+                        arrivalTime: 
+                        embarkFrom: '2023-01-09'
+                        embarkTo: '2023-01-09'
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISGRF
+                        portCod: GRF
+                        cityName: Grundarfjordur
+                        latitude: 64.924658
+                        longitude: -23.260406
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 2
+                        day: 2
+                        itineraryDate: '2023-08-31T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISISA
+                        portCod: ISA
+                        cityName: 'Isafjordur, Iceland'
+                        latitude: 66.068801
+                        longitude: -23.118258
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 3
+                        day: 3
+                        itineraryDate: '2023-09-01T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISAKU
+                        portCod: AKU
+                        cityName: 'Akureyri, Iceland'
+                        latitude: 65.695768
+                        longitude: -18.103849
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 4
+                        day: 4
+                        itineraryDate: '2023-09-02T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISSEY
+                        portCod: SEY
+                        cityName: 'Seydisfjordur, Iceland'
+                        latitude: 65.264663
+                        longitude: -13.997563
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 5
+                        day: 5
+                        itineraryDate: '2023-09-03T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISDJU
+                        portCod: DJU
+                        cityName: 'Djupivogur, Iceland'
+                        latitude: 64.657417
+                        longitude: -14.29848
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 6
+                        day: 6
+                        itineraryDate: '2023-09-04T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Anchor
+                      - voyageID: 284
+                        cityCod: FOTHO
+                        portCod: THO
+                        cityName: Tórshavn (Faroe Islands)
+                        latitude: 62.008267
+                        longitude: -6.772934
+                        countryCodISO2: FO
+                        countryCodISO3: FRO
+                        country: Faeroe Islands
+                        pos: 7
+                        day: 7
+                        itineraryDate: '2023-09-05T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: '2023-01-09'
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ZZC36
+                        portCod: CRU
+                        cityName: Day at Sea
+                        latitude: 
+                        longitude: 
+                        countryCodISO2: ZZ
+                        countryCodISO3: 
+                        country: At sea
+                        pos: 8
+                        day: 8
+                        itineraryDate: '2023-09-06T12:00:00.0000000+00:00'
+                        arrivalTime: 
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: 
+                        isRealCity: false
+                        isOvernight: false
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISREY
+                        portCod: REK
+                        cityName: 'Rekjavik, Iceland'
+                        latitude: 64.151961
+                        longitude: -21.939737
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 9
+                        day: 9
+                        itineraryDate: '2023-09-07T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-01-09'
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: 
+                        debarkTo: 
+                        departTime: 
+                        isRealCity: true
+                        isOvernight: true
+                        dockAnchor: Dock
+                      - voyageID: 284
+                        cityCod: ISREY
+                        portCod: REK
+                        cityName: 'REYKJAVIK, ICELAND'
+                        latitude: 64.151961
+                        longitude: -21.939737
+                        countryCodISO2: IS
+                        countryCodISO3: ISL
+                        country: Iceland
+                        pos: 10
+                        day: 10
+                        itineraryDate: '2023-09-08T12:00:00.0000000+00:00'
+                        arrivalTime: 
+                        embarkFrom: 
+                        embarkTo: 
+                        debarkFrom: '2023-01-09'
+                        debarkTo: '2023-01-09'
+                        departTime: 
+                        isRealCity: true
+                        isOvernight: false
+                        dockAnchor: Dock
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/cruises/availability:
+    get:
+      summary: Price and Availability
+      description: Get voyage suite availabilities
+      operationId: get-price-suite-availability
+      parameters:
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: voyageNumber
+          in: query
+          description: Voyage number
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Price type code
+          schema:
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price and availability for the selected cruise
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIPriceAndAvailabilityResponse'
+              example:
+                body:
+                  availability:
+                    - voyageNumber: CSE-009-230830
+                      sailDate: '2023-08-30T12:00:00.0000000+00:00'
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      categoryCod: CHV5
+                      category: CHV5 - Chairmans Penthouse Suites w/Veranda
+                      totAV: 4
+                      totGTY: 0
+                      sgl: 0
+                      sglGTY: 0
+                      dbl: 0
+                      dblGTY: 0
+                      trip: 0
+                      tripGTY: 0
+                      quad: 4
+                      quadGTY: 0
+                      quin: 0
+                      quinGTY: 0
+                      six: 0
+                      sixGTY: 0
+                      priceTypeName: FIT Regular Fare
+                      priceTypeCod: FIT
+                      priceSingle: 37700
+                      priceDouble: 18800
+                      priceExtraGuest: 13200
+                      priceChild: 7500
+                      pastCCPriceSingle: 36757.5
+                      pastCCPriceDouble: 18330
+                      pastCCPriceExtraGuest: 12870
+                      pastCCPriceChild: 7312.5
+                      pastGuestDiscount: 2.5
+                      currency: USD
+                      tax: 0
+                      portCharge: 600
+                      ncf: 0
+                      displayPrice: 37600
+                      isStartingPrice: false
+                      maxCapacity: 4
+                    - voyageNumber: CSE-009-230830
+                      sailDate: '2023-08-30T12:00:00.0000000+00:00'
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      categoryCod: RYVF
+                      category: RYVF - Royal Penthouse Suites w/Veranda
+                      totAV: 6
+                      totGTY: 0
+                      sgl: 0
+                      sglGTY: 0
+                      dbl: 0
+                      dblGTY: 0
+                      trip: 0
+                      tripGTY: 0
+                      quad: 6
+                      quadGTY: 0
+                      quin: 0
+                      quinGTY: 0
+                      six: 0
+                      sixGTY: 0
+                      priceTypeName: FIT Regular Fare
+                      priceTypeCod: FIT
+                      priceSingle: 21800
+                      priceDouble: 12400
+                      priceExtraGuest: 8700
+                      priceChild: 5000
+                      pastCCPriceSingle: 21255
+                      pastCCPriceDouble: 12090
+                      pastCCPriceExtraGuest: 8482.5
+                      pastCCPriceChild: 4875
+                      pastGuestDiscount: 2.5
+                      currency: USD
+                      tax: 0
+                      portCharge: 600
+                      ncf: 0
+                      displayPrice: 24800
+                      isStartingPrice: false
+                      maxCapacity: 4
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 2
+                pageTotal: 1
+                errors: [ ]
+  /v1/cruiseprices:
+    get:
+      summary: Cruise Suite Category Prices
+      description: Get a list of suite category prices and availability
+      operationId: get-cruise-suite-category-prices-json
+      parameters:
+        - name: currency
+          in: query
+          description: Currency Code
+          required: true
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Price Type Code
+          schema:
+            enum:
+              - FIT
+            type: string
+            default: FIT
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of suite category prices and availability
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPICruisePriceJsonResponse'
+              example:
+                body:
+                  voyagePrices:
+                    - voyageNumber: CSE-009-230830
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      sailDate: '2023-08-30'
+                      duration: 9
+                      embarkPortCod: REK
+                      embarkPort: Reykjavik
+                      debarkPortCod: REK
+                      debarkPort: Reykjavik
+                      prices:
+                        - priceTypeCod: FIT
+                          priceTypeName: FIT Regular Fare
+                          categoryCod: CHV5
+                          category: CHV5 - Chairmans Penthouse Suites w/Veranda
+                          priceSingle: 3770
+                          priceDouble: 1880
+                          priceExtraGuest: 1320
+                          priceChild: 750
+                          pastGuestPriceSingle: 3581.5
+                          pastGuestPriceDouble: 1786
+                          pastGuestPriceExtraGuest: 1254
+                          pastGuestPriceChild: 712.5
+                          portCharge: 60
+                          pastGuestDiscount: 5
+                          availability: Available
+                        - priceTypeCod: FIT
+                          priceTypeName: FIT Regular Fare
+                          categoryCod: RYVF
+                          category: RYVF - Royal Penthouse Suites w/Veranda
+                          priceSingle: 2180
+                          priceDouble: 1240
+                          priceExtraGuest: 870
+                          priceChild: 500
+                          pastGuestPriceSingle: 2071
+                          pastGuestPriceDouble: 1178
+                          pastGuestPriceExtraGuest: 826.5
+                          pastGuestPriceChild: 475
+                          portCharge: 60
+                          pastGuestDiscount: 5
+                          availability: Available
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/cruises/ports:
+    get:
+      summary: Ports
+      description: Get all available ports
+      operationId: get-ports
+      parameters:
+        - name: realCity
+          in: query
+          description: Is a real city?
+          schema:
+            type: boolean
+        - name: cityCod
+          in: query
+          description: City code
+          schema:
+            type: string
+        - name: pageNum
+          in: query
+          description: Page number
+          schema:
+            enum:
+              - 1
+            type: int
+        - name: pageSize
+          in: query
+          description: Page size
+          schema:
+            enum:
+              - 20
+            type: int
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Port list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIPortsResponse'
+              example:
+                body:
+                  ports:
+                    - city: Boo Islands
+                      cityCod: IDOOI
+                      portCod: 00I
+                      country: Indonesia
+                      countryCodISO3: IDN
+                      latitude: -1.17214
+                      longitude: 129.367305
+                      isRealCity: true
+                      name: 
+                      description: Boo Islands description
+                      image1: https://imageserver.com/port1image1.png
+                      image2: https://imageserver.com/port1image2.png
+                      image3: https://imageserver.com/port1image3.png
+                    - city: Cape Cod Canal Transit (Canal Transit)
+                      cityCod: USC03
+                      portCod: 01C
+                      country: United States of America
+                      countryCodISO3: USA
+                      latitude: 41.7642
+                      longitude: -70.5684
+                      isRealCity: false
+                      name: 
+                      description: Cape Cod description
+                      image1: https://imageserver.com/port2image1.png
+                      image2: https://imageserver.com/port2image2.png
+                      image3: https://imageserver.com/port2image3.png
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 2
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/cruises/suitecategories:
+    get:
+      summary: Ship and Suite Categories
+      description: Get ship and suite categories
+      operationId: get-ship-suite-categories
+      parameters:
+        - name: shipCod
+          in: query
+          description: Ship code
+          schema:
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ship and Suite Category list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingApiShipCategoriesResponse'
+              example:
+                body:
+                  ships:
+                    - shipCod: CSE
+                      ship: Crystal Serenity
+                      suiteCategories:
+                        - shipCod: CSE
+                          suiteCategoryCod: CHV5
+                          suiteCategory: CHV5 - Chairmans Penthouse Suites w/Veranda
+                        - shipCod: CSE
+                          suiteCategoryCod: RYVF
+                          suiteCategory: RYVF - Royal Penthouse Suites w/Veranda
+                        - shipCod: CSE
+                          suiteCategoryCod: GSVM
+                          suiteCategory: GSVM - Grand Suites w/Veranda
+                        - shipCod: CSE
+                          suiteCategoryCod: SSVM
+                          suiteCategory: SSVM - Superior Suites w/Veranda
+                        - shipCod: CSE
+                          suiteCategoryCod: CSVM
+                          suiteCategory: CSVM - Classic Staterooms w/Veranda
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/general/pricetypes:
+    get:
+      summary: Price Types
+      description: Get all available price types
+      operationId: get-price-types
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price Type list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIPriceTypesResponse'
+              example:
+                body:
+                  priceTypes:
+                    - priceTypeID: 3
+                      priceTypeName: FIT Regular Fare (CRYSTAL CRUISES)
+                      priceTypeCod: FIT
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/products/destinations:
+    get:
+      summary: Destinations
+      description: Get all available destinations
+      operationId: get-available-destinations
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Destination list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIDestinationsResponse'
+              example:
+                body:
+                  destinations:
+                    - destinationID: 6001
+                      destinationName: Asia
+                      destinationDescription: Asia description
+                      destinationImage1: https://imageserver.com/destination1image1.png
+                      destinationImage2: https://imageserver.com/destination1image2.png
+                      destinationImage3: https://imageserver.com/destination1image3.png
+                    - destinationID: 6002
+                      destinationName: Australia & New Zealand
+                      destinationDescription: Australia & New Zealand description
+                      destinationImage1: https://imageserver.com/destination2image1.png
+                      destinationImage2: https://imageserver.com/destination2image2.png
+                      destinationImage3: https://imageserver.com/destination2image3.png
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 2
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/cruises/voyagepricetypes:
+    get:
+      summary: Voyage Price Types
+      description: Get all voyage price types
+      operationId: 65fc68e011197b40436516e7
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price Type list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIPriceTypesResponse'
+              example:
+                body:
+                  priceTypes:
+                    - priceTypeID: 3
+                      priceTypeName: FIT Regular Fare (CRYSTAL CRUISES)
+                      priceTypeCod: FIT
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/wsPromo/promoCrystalNew:
+    get:
+      summary: Promo
+      description: Promo
+      operationId: 67da94284bbbd1dbd492d31f
+      parameters:
+        - name: priceTypeCod
+          in: query
+          description: Price Type Code
+          schema:
+            enum:
+              - FIT
+            type: string
+            default: FIT
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of suite category prices and availability
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPICruisePriceJsonResponse'
+              example:
+                body:
+                  voyagePrices:
+                    - voyageNumber: CSE-009-230830
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      sailDate: '2023-08-30'
+                      duration: 9
+                      embarkPortCod: REK
+                      embarkPort: Reykjavik
+                      debarkPortCod: REK
+                      debarkPort: Reykjavik
+                      prices:
+                        - priceTypeCod: FIT
+                          priceTypeName: FIT Regular Fare
+                          categoryCod: CHV5
+                          category: CHV5 - Chairmans Penthouse Suites w/Veranda
+                          priceSingle: 3770
+                          priceDouble: 1880
+                          priceExtraGuest: 1320
+                          priceChild: 750
+                          pastGuestPriceSingle: 3581.5
+                          pastGuestPriceDouble: 1786
+                          pastGuestPriceExtraGuest: 1254
+                          pastGuestPriceChild: 712.5
+                          portCharge: 60
+                          pastGuestDiscount: 5
+                          availability: Available
+                        - priceTypeCod: FIT
+                          priceTypeName: FIT Regular Fare
+                          categoryCod: RYVF
+                          category: RYVF - Royal Penthouse Suites w/Veranda
+                          priceSingle: 2180
+                          priceDouble: 1240
+                          priceExtraGuest: 870
+                          priceChild: 500
+                          pastGuestPriceSingle: 2071
+                          pastGuestPriceDouble: 1178
+                          pastGuestPriceExtraGuest: 826.5
+                          pastGuestPriceChild: 475
+                          portCharge: 60
+                          pastGuestDiscount: 5
+                          availability: Available
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/wsPackage/experienceTEST:
+    get:
+      summary: Package Experience TEST
+      description: Promo
+      operationId: 67da9c40744f5abc6825f774
+      parameters:
+        - name: priceTypeCod
+          in: query
+          description: Price Type Code
+          schema:
+            enum:
+              - FIT
+            type: string
+            default: FIT
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of suite category prices and availability
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPICruisePriceJsonResponse'
+              example:
+                body:
+                  voyagePrices:
+                    - voyageNumber: CSE-009-230830
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      sailDate: '2023-08-30'
+                      duration: 9
+                      embarkPortCod: REK
+                      embarkPort: Reykjavik
+                      debarkPortCod: REK
+                      debarkPort: Reykjavik
+                      prices:
+                        - priceTypeCod: FIT
+                          priceTypeName: FIT Regular Fare
+                          categoryCod: CHV5
+                          category: CHV5 - Chairmans Penthouse Suites w/Veranda
+                          priceSingle: 3770
+                          priceDouble: 1880
+                          priceExtraGuest: 1320
+                          priceChild: 750
+                          pastGuestPriceSingle: 3581.5
+                          pastGuestPriceDouble: 1786
+                          pastGuestPriceExtraGuest: 1254
+                          pastGuestPriceChild: 712.5
+                          portCharge: 60
+                          pastGuestDiscount: 5
+                          availability: Available
+                        - priceTypeCod: FIT
+                          priceTypeName: FIT Regular Fare
+                          categoryCod: RYVF
+                          category: RYVF - Royal Penthouse Suites w/Veranda
+                          priceSingle: 2180
+                          priceDouble: 1240
+                          priceExtraGuest: 870
+                          priceChild: 500
+                          pastGuestPriceSingle: 2071
+                          pastGuestPriceDouble: 1178
+                          pastGuestPriceExtraGuest: 826.5
+                          pastGuestPriceChild: 475
+                          portCharge: 60
+                          pastGuestDiscount: 5
+                          availability: Available
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/cruises/pricespromotions:
+    get:
+      summary: Prices and Promotions
+      description: Get voyage prices and promotions
+      operationId: 687bad63ada114ea2e7f860b
+      parameters:
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: voyageNumber
+          in: query
+          description: Voyage number
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Price type code
+          schema:
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price and promotions for the selected cruise
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingAPIPricesAndPromotionsResponse'
+              example:
+                body:
+                  dT0:
+                    - voyageNumber: CSE-009-260707
+                      sailDate: '2026-07-07T00:00:00.0000000+00:00'
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      embarkPortCod: SOU
+                      embarkPort: Southampton
+                      debarkPortCod: CPH
+                      debarkPort: Copenhagen
+                      duration: 9
+                      categoryCod: CHV5
+                      category: CHV5 - Crystal Penthouse Suite
+                      priceTypeName: FIT Regular Fare
+                      priceTypeCod: FIT
+                      priceSingle: 38800
+                      priceDouble: 21200
+                      priceExtraGuest: 5900
+                      priceChild: 3800
+                      pastCCPriceSingle: 37830
+                      pastCCPriceDouble: 20670
+                      pastCCPriceExtraGuest: 5752.5
+                      pastCCPriceChild: 3705
+                      pastGuestDiscount: 2.5
+                      comboSavPriceSingle: 36860
+                      comboSavPriceDouble: 20140
+                      comboSavPriceExtraGuest: 5605
+                      comboSavPriceChild: 3610
+                      comboSaving: 5
+                      cbPastCCPriceSingle: 35890
+                      cbPastCCPriceDouble: 19610
+                      cbPastCCPriceExtraGuest: 5457.5
+                      cbPastCCPriceChild: 3515
+                      priceSingleEBB10: 34920
+                      priceDoubleEBB10: 19080
+                      priceExtraGuestEBB10: 5310
+                      priceChildEBB10: 3420
+                      priceSingleEBB20: 0
+                      priceDoubleEBB20: 0
+                      priceExtraGuestEBB20: 0
+                      priceChildEBB20: 0
+                      comboSavingAndPastGuestDiscount: 7.5
+                      currency: USD
+                      portCharge: 500
+                      availability: Waitlist
+                      itemsCount: 1
+                      airCredit: 0
+                      promoID: 247
+                      promoDescription: Save & Indulge
+                      discountPriceSingle: 37800
+                      discountPriceDouble: 20200
+                      discountPriceExtraGuest: 5900
+                      discountPriceChild: 3800
+                      pastCCDiscPriceSingle: 36830
+                      pastCCDiscPriceDouble: 19670
+                      pastCCDiscPriceExtraGuest: 5752.5
+                      pastCCDiscPriceChild: 3705
+                      cbDiscPriceSingle: 35860
+                      cbDiscPriceDouble: 19140
+                      cbDiscPriceExtraGuest: 5605
+                      cbDiscPriceChild: 3610
+                      cbPastCCDiscPriceSingle: 34890
+                      cbPastCCDiscPriceDouble: 18610
+                      cbPastCCDiscPriceExtraGuest: 5457.5
+                      cbPastCCDiscPriceChild: 3515
+                      discountSingleAmount: -1000
+                      discountDoubleAmount: -1000
+                      discountExtraGuestAmount: 0
+                      discountChildAmount: 0
+                      bonus1: B1
+                      bonus2: B2
+                      bonus3: B£
+                      bonus4: 
+                      bonus5: 
+                  dT1:
+                    - voyageNumber: CSE-009-260707
+                      categoryType: LOWER
+                      optionDueDate: '2025-09-22T00:00:00.0000000+00:00'
+                      optionPerc: 25
+                      finalPaymentDate: '2026-03-08T00:00:00.0000000+00:00'
+                    - voyageNumber: CSE-009-260707
+                      categoryType: UPPER
+                      optionDueDate: '2025-09-20T00:00:00.0000000+00:00'
+                      optionPerc: 25
+                      finalPaymentDate: '2026-03-08T00:00:00.0000000+00:00'
+                  dT2:
+                    - voyageNumber: CSE-009-260707
+                      suiteCategoryCod: ALL
+                      daysFrom: 999
+                      daysTo: 121
+                      amountPerc: 
+                      fixedAmount: 250
+                    - voyageNumber: CSE-009-260707
+                      suiteCategoryCod: ALL
+                      daysFrom: 120
+                      daysTo: 91
+                      amountPerc: 25
+                      fixedAmount: 
+                    - voyageNumber: CSE-009-260707
+                      suiteCategoryCod: ALL
+                      daysFrom: 90
+                      daysTo: 76
+                      amountPerc: 50
+                      fixedAmount: 
+                    - voyageNumber: CSE-009-260707
+                      suiteCategoryCod: ALL
+                      daysFrom: 75
+                      daysTo: 51
+                      amountPerc: 75
+                      fixedAmount: 
+                    - voyageNumber: CSE-009-260707
+                      suiteCategoryCod: ALL
+                      daysFrom: 50
+                      daysTo: 0
+                      amountPerc: 100
+                      fixedAmount: 
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+components:
+  schemas:
+    ShoppingAPIVoyagesResponse:
+      type: object
+      properties:
+        body:
+          type: array
+          items:
+            required:
+              - voyageID
+              - ship
+              - shipCod
+              - cruiseLine
+              - cruiseLineCod
+              - voyageNumber
+              - voyageName
+              - description
+              - duration
+              - embarkDate
+              - embarkPortCod
+              - embarkPort
+              - debarkDate
+              - debarkPortCod
+              - debarkPort
+              - destinationID
+              - isAvailable
+              - price
+              - currency
+              - priceTypeName
+              - priceTypeCod
+              - voyageType
+              - map
+              - title
+              - voyageDescription
+              - image1
+              - image2
+              - mapSVG
+              - mapPNG
+              - mapPNG2
+              - mapPNG3
+              - itineraryPdf
+              - previousVoyageID
+              - nextVoyageID
+              - itineraries
+            type: object
+            properties:
+              voyageID:
+                type: integer
+                description: Voyage unique identifier
+              ship:
+                type: string
+                description: Ship name
+              shipCod:
+                type: string
+                description: Ship code
+              cruiseLine:
+                type: string
+                description: Cruise line name
+              cruiseLineCod:
+                type: string
+                description: Cruise line code
+              voyageNumber:
+                type: string
+                description: Voyage code
+              voyageName:
+                type: string
+                description: Voyage short description (name)
+              description:
+                type: string
+                description: Voyage long description
+              duration:
+                type: integer
+                description: Duration in days
+              embarkDate:
+                type: string
+                description: Embarkation date (yyyy-MM-dd format)
+              embarkPortCod:
+                type: string
+                description: Embarkation port code
+              embarkPort:
+                type: string
+                description: Embarkation port name
+              debarkDate:
+                type: string
+                description: Debarkation date (yyyy-MM-dd format)
+              debarkPortCod:
+                type: string
+                description: Debarkation port code
+              debarkPort:
+                type: string
+                description: Debarkation port name
+              destinationID:
+                type: integer
+              isAvailable:
+                type: boolean
+                description: Destination unique identifier
+              price:
+                type: integer
+                description: Starting price
+              currency:
+                type: string
+                description: Currency
+              priceTypeName:
+                type: string
+                description: Price type (fare) name
+              priceTypeCod:
+                type: string
+                description: Price type (fare) code
+              voyageType:
+                type: string
+                description: Type of the voyage
+              map:
+                type: string
+                description: Map URL
+              title:
+                type: string
+                description: Voyage title
+              voyageDescription:
+                type: string
+                description: Voyage long description 2
+              image1:
+                type: string
+                description: First image URL
+              image2:
+                type: string
+                description: Second image URL
+              mapSVG:
+                type: string
+                description: SVG map URL
+              mapPNG:
+                type: string
+                description: PNG map URL
+              mapPNG2:
+                type: string
+                description: Second PNG map URL
+              mapPNG3:
+                type: string
+                description: Third PNG map URL
+              itineraryPdf:
+                type: string
+                description: Itinerary PDF document URL
+              previousVoyageID:
+                type: integer
+                description: Unique identifier of previous voyage
+              nextVoyageID:
+                type: integer
+                description: Unique identifier of next voyage
+              itineraries:
+                type: array
+                items:
+                  required:
+                    - voyageID
+                    - cityCod
+                    - portCod
+                    - cityName
+                    - latitude
+                    - longitude
+                    - countryCodISO2
+                    - countryCodISO3
+                    - country
+                    - pos
+                    - day
+                    - itineraryDate
+                    - arrivalTime
+                    - embarkFrom
+                    - embarkTo
+                    - debarkFrom
+                    - debarkTo
+                    - departTime
+                    - isRealCity
+                    - isOvernight
+                    - dockAnchor
+                  type: object
+                  properties:
+                    voyageID:
+                      type: integer
+                      description: Voyage unique identifier
+                    cityCod:
+                      type: string
+                      description: City code
+                    portCod:
+                      type: string
+                      description: Port code
+                    cityName:
+                      type: string
+                      description: City name
+                    latitude:
+                      type: number
+                      description: City/port latitude
+                    longitude:
+                      type: number
+                      description: City/port longitude
+                    countryCodISO2:
+                      type: string
+                      description: City/port ISO2 country code
+                    countryCodISO3:
+                      type: string
+                      description: City/port ISO3 country code
+                    country:
+                      type: string
+                      description: City/port country name
+                    pos:
+                      type: integer
+                      description: Itinerary item position (for sorting purpose)
+                    day:
+                      type: integer
+                      description: Itinerary day sequential number
+                    itineraryDate:
+                      type: string
+                      description: Date in yyyy-MM-dd format
+                    arrivalTime:
+                      type: string
+                      description: City/port arrival time
+                    embarkFrom:
+                      type: string
+                      description: Embarkation start time
+                    embarkTo:
+                      type: string
+                      description: Embarkation end time
+                    debarkFrom:
+                      type: string
+                      description: Debarkation start time
+                    debarkTo:
+                      type: string
+                      description: Debarkation end time
+                    departTime:
+                      type: string
+                      description: Departure time
+                    isRealCity:
+                      type: boolean
+                      description: Is the city/port a real city?
+                    isOvernight:
+                      type: boolean
+                      description: Overnight itinerary item
+                    dockAnchor:
+                      type: string
+                      description: Dock or Anchor itinerary item
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+    ShoppingAPIPriceTypesResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            priceTypes:
+              type: array
+              items:
+                required:
+                  - priceTypeID
+                  - priceTypeName
+                  - priceTypeCod
+                type: object
+                properties:
+                  priceTypeID:
+                    type: integer
+                    description: Price type (fare) unique identifier
+                  priceTypeName:
+                    type: string
+                    description: Price type (fare) name
+                  priceTypeCod:
+                    type: string
+                    description: Price type (fare) code
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+    ShoppingAPIPortsResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            ports:
+              type: array
+              items:
+                required:
+                  - city
+                  - cityCod
+                  - portCod
+                  - country
+                  - countryCodISO3
+                  - latitude
+                  - longitude
+                  - isRealCity
+                  - name
+                  - description
+                  - image1
+                  - image2
+                  - image3
+                type: object
+                properties:
+                  city:
+                    type: string
+                    description: City name
+                  cityCod:
+                    type: string
+                    description: City code
+                  portCod:
+                    type: string
+                    description: Port code
+                  country:
+                    type: string
+                    description: City/port country name
+                  countryCodISO3:
+                    type: string
+                    description: City/port ISO3 country code
+                  latitude:
+                    type: number
+                    description: City/port latitude
+                  longitude:
+                    type: number
+                    description: City/port longitude
+                  isRealCity:
+                    type: boolean
+                    description: Is the city/port a real city?
+                  name:
+                    type: string
+                    description: Port name
+                  description:
+                    type: string
+                    description: Port long description
+                  image1:
+                    type: string
+                    description: First image URL
+                  image2:
+                    type: string
+                    description: Second image URL
+                  image3:
+                    type: string
+                    description: Third image URL
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+    ShoppingAPIDestinationsResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            destinations:
+              type: array
+              items:
+                required:
+                  - destinationID
+                  - destinationName
+                  - destinationDescription
+                  - destinationImage1
+                  - destinationImage2
+                  - destinationImage3
+                type: object
+                properties:
+                  destinationID:
+                    type: integer
+                    description: Destination unique identifier
+                  destinationName:
+                    type: string
+                    description: Destination name
+                  destinationDescription:
+                    type: string
+                    description: Destination long description
+                  destinationImage1:
+                    type: string
+                    description: First image URL
+                  destinationImage2:
+                    type: string
+                    description: Second image URL
+                  destinationImage3:
+                    type: string
+                    description: Third image URL
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+    ShoppingApiShipCategoriesResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            ships:
+              type: array
+              items:
+                required:
+                  - shipCod
+                  - ship
+                  - suiteCategories
+                type: object
+                properties:
+                  shipCod:
+                    type: string
+                    description: Ship code
+                  ship:
+                    type: string
+                    description: Ship name
+                  suiteCategories:
+                    type: array
+                    items:
+                      required:
+                        - shipCod
+                        - suiteCategoryCod
+                        - suiteCategory
+                      type: object
+                      properties:
+                        shipCod:
+                          type: string
+                          description: Ship code
+                        suiteCategoryCod:
+                          type: string
+                          description: Suite category code
+                        suiteCategory:
+                          type: string
+                          description: Suite category name
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+      example:
+        body:
+          ships:
+            - shipCod: CSE
+              ship: Crystal Serenity
+              suiteCategories:
+                - shipCod: CSE
+                  suiteCategoryCod: CHV5
+                  suiteCategory: CHV5 - Chairmans Penthouse Suites w/Veranda
+                - shipCod: CSE
+                  suiteCategoryCod: RYVF
+                  suiteCategory: RYVF - Royal Penthouse Suites w/Veranda
+                - shipCod: CSE
+                  suiteCategoryCod: GSVM
+                  suiteCategory: GSVM - Grand Suites w/Veranda
+                - shipCod: CSE
+                  suiteCategoryCod: SSVM
+                  suiteCategory: SSVM - Superior Suites w/Veranda
+                - shipCod: CSE
+                  suiteCategoryCod: CSVM
+                  suiteCategory: CSVM - Classic Staterooms w/Veranda
+        statusMessage: OK
+        statusCod: 200
+        apiVersion: 1
+        pageNumber: 1
+        recordsCount: 1
+        pageTotal: 1
+        errors: [ ]
+    ShoppingAPIPriceAndAvailabilityResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            availability:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - sailDate
+                  - shipCod
+                  - ship
+                  - categoryCod
+                  - category
+                  - totAV
+                  - totGTY
+                  - sgl
+                  - sglGTY
+                  - dbl
+                  - dblGTY
+                  - trip
+                  - tripGTY
+                  - quad
+                  - quadGTY
+                  - quin
+                  - quinGTY
+                  - six
+                  - sixGTY
+                  - priceTypeName
+                  - priceTypeCod
+                  - priceSingle
+                  - priceDouble
+                  - priceExtraGuest
+                  - priceChild
+                  - pastCCPriceSingle
+                  - pastCCPriceDouble
+                  - pastCCPriceExtraGuest
+                  - pastCCPriceChild
+                  - pastGuestDiscount
+                  - currency
+                  - tax
+                  - portCharge
+                  - ncf
+                  - displayPrice
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                    description: Voyage code
+                  sailDate:
+                    type: string
+                    description: Departure date
+                  shipCod:
+                    type: string
+                    description: Ship code
+                  ship:
+                    type: string
+                    description: Ship name
+                  categoryCod:
+                    type: string
+                    description: Suite category code
+                  category:
+                    type: string
+                    description: Suite category name
+                  totAV:
+                    type: integer
+                    description: Total suites available
+                  totGTY:
+                    type: integer
+                    description: Total guarantees available
+                  sgl:
+                    type: integer
+                    description: Total single suites available
+                  sglGTY:
+                    type: integer
+                    description: Total single guarantees available
+                  dbl:
+                    type: integer
+                    description: Total double suites available
+                  dblGTY:
+                    type: integer
+                    description: Total double guarantees available
+                  trip:
+                    type: integer
+                    description: Total triple suites available
+                  tripGTY:
+                    type: integer
+                    description: Total triple guarantees available
+                  quad:
+                    type: integer
+                    description: Total quadruple suites available
+                  quadGTY:
+                    type: integer
+                    description: Total quadruple guarantees available
+                  quin:
+                    type: integer
+                    description: Total quintuple suites available
+                  quinGTY:
+                    type: integer
+                    description: Total quintuple guarantees available
+                  six:
+                    type: integer
+                    description: Total six-guests suites available
+                  sixGTY:
+                    type: integer
+                    description: Total six-guests guarantees available
+                  priceTypeName:
+                    type: string
+                    description: Price type (fare) name
+                  priceTypeCod:
+                    type: string
+                    description: Price type (fare) code
+                  priceSingle:
+                    type: number
+                    description: Single occupancy price
+                  priceDouble:
+                    type: number
+                    description: 'Double occupancy (standard) price, per guest'
+                  priceExtraGuest:
+                    type: number
+                    description: Extra guest price
+                  priceChild:
+                    type: number
+                    description: Child price
+                  pastCCPriceSingle:
+                    type: number
+                    description: Single occupancy Past Guest price
+                  pastCCPriceDouble:
+                    type: number
+                    description: 'Double occupancy (standard) Past Guest price, per guest'
+                  pastCCPriceExtraGuest:
+                    type: number
+                    description: Extra guest Past Guest price
+                  pastCCPriceChild:
+                    type: number
+                    description: Child Past Guest price
+                  pastGuestDiscount:
+                    type: number
+                    description: Past guest loyalty discount
+                  currency:
+                    type: string
+                    description: Currency code
+                  tax:
+                    type: number
+                    description: Tax amount
+                  portCharge:
+                    type: number
+                    description: Port charge
+                  ncf:
+                    type: number
+                    description: Non commissionable fees amount
+                  displayPrice:
+                    type: number
+                    description: Price to be displayed
+                  isStartingPrice:
+                    type: boolean
+                    description: Starting price
+                  maxCapacity:
+                    type: integer
+                    description: Suite category max capacity
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+      example:
+        body:
+          availability:
+            - voyageNumber: CSE-009-230830
+              sailDate: '2023-08-30T00:00:00Z'
+              shipCod: CSE
+              ship: Crystal Serenity
+              categoryCod: CHV5
+              category: CHV5 - Chairmans Penthouse Suites w/Veranda
+              totAV: 4
+              totGTY: 0
+              sgl: 0
+              sglGTY: 0
+              dbl: 0
+              dblGTY: 0
+              trip: 0
+              tripGTY: 0
+              quad: 4
+              quadGTY: 0
+              quin: 0
+              quinGTY: 0
+              six: 0
+              sixGTY: 0
+              priceTypeName: FIT Regular Fare
+              priceTypeCod: FIT
+              priceSingle: 37700
+              priceDouble: 18800
+              priceExtraGuest: 13200
+              priceChild: 7500
+              pastCCPriceSingle: 36757.5
+              pastCCPriceDouble: 18330
+              pastCCPriceExtraGuest: 12870
+              pastCCPriceChild: 7312.5
+              pastGuestDiscount: 2.5
+              currency: USD
+              tax: 0
+              portCharge: 600
+              ncf: 0
+              displayPrice: 37600
+              isStartingPrice: false
+              maxCapacity: 4
+            - voyageNumber: CSE-009-230830
+              sailDate: '2023-08-30T00:00:00Z'
+              shipCod: CSE
+              ship: Crystal Serenity
+              categoryCod: RYVF
+              category: RYVF - Royal Penthouse Suites w/Veranda
+              totAV: 6
+              totGTY: 0
+              sgl: 0
+              sglGTY: 0
+              dbl: 0
+              dblGTY: 0
+              trip: 0
+              tripGTY: 0
+              quad: 6
+              quadGTY: 0
+              quin: 0
+              quinGTY: 0
+              six: 0
+              sixGTY: 0
+              priceTypeName: FIT Regular Fare
+              priceTypeCod: FIT
+              priceSingle: 21800
+              priceDouble: 12400
+              priceExtraGuest: 8700
+              priceChild: 5000
+              pastCCPriceSingle: 21255
+              pastCCPriceDouble: 12090
+              pastCCPriceExtraGuest: '8482.5'
+              pastCCPriceChild: 4875
+              pastGuestDiscount: 2.5
+              currency: USD
+              tax: 0
+              portCharge: 600
+              ncf: 0
+              displayPrice: 24800
+              isStartingPrice: false
+              maxCapacity: 4
+        statusMessage: OK
+        statusCod: 200
+        apiVersion: 1
+        pageNumber: 1
+        recordsCount: 2
+        pageTotal: 1
+        errors: [ ]
+    ShoppingAPICruisePriceJsonResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            voyagePrices:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - shipCod
+                  - ship
+                  - sailDate
+                  - duration
+                  - embarkPortCod
+                  - embarkPort
+                  - debarkPortCod
+                  - debarkPort
+                  - prices
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                    description: Voyage number
+                  shipCod:
+                    type: string
+                    description: Ship code
+                  ship:
+                    type: string
+                    description: Ship name
+                  sailDate:
+                    type: string
+                    description: Sail date
+                  duration:
+                    type: integer
+                    description: Duration in days
+                  embarkPortCod:
+                    type: string
+                    description: Embarkation port code
+                  embarkPort:
+                    type: string
+                    description: Embarkation port name
+                  debarkPortCod:
+                    type: string
+                    description: Debarkation port code
+                  debarkPort:
+                    type: string
+                    description: Debarkation port name
+                  prices:
+                    type: array
+                    items:
+                      required:
+                        - priceTypeCod
+                        - priceTypeName
+                        - categoryCod
+                        - category
+                        - priceSingle
+                        - priceDouble
+                        - priceExtraGuest
+                        - priceChild
+                        - pastGuestPriceSingle
+                        - pastGuestPriceDouble
+                        - pastGuestPriceExtraGuest
+                        - pastGuestPriceChild
+                        - portCharge
+                        - pastGuestDiscount
+                        - availability
+                      type: object
+                      properties:
+                        priceTypeCod:
+                          type: string
+                          description: Price type code (fare code)
+                        priceTypeName:
+                          type: string
+                          description: Price type name (fare)
+                        categoryCod:
+                          type: string
+                          description: Suite category code
+                        category:
+                          type: string
+                          description: Suite category name
+                        priceSingle:
+                          type: integer
+                          description: Price single occupancy
+                        priceDouble:
+                          type: integer
+                          description: 'Price double occupancy (standard), per guest'
+                        priceExtraGuest:
+                          type: integer
+                          description: Price for extra guest
+                        priceChild:
+                          type: integer
+                          description: Child price
+                        pastGuestPriceSingle:
+                          type: number
+                          description: Price single occupancy with past guest discount
+                        pastGuestPriceDouble:
+                          type: integer
+                          description: 'Price double occupancy (standard), per guest, with past guest discount'
+                        pastGuestPriceExtraGuest:
+                          type: integer
+                          description: Price for extra guest with past guest discount
+                        pastGuestPriceChild:
+                          type: number
+                          description: Child price with past guest discount
+                        portCharge:
+                          type: integer
+                          description: Port charge
+                        pastGuestDiscount:
+                          type: integer
+                          description: Past guest discount percentage
+                        availability:
+                          type: string
+                          description: Suite category availability
+        statusMessage:
+          type: string
+        statusCod:
+          type: integer
+        apiVersion:
+          type: integer
+        pageNumber:
+          type: integer
+        recordsCount:
+          type: integer
+        pageTotal:
+          type: integer
+        errors:
+          type: array
+      example:
+        body:
+          voyagePrices:
+            - voyageNumber: CSE-009-230830
+              shipCod: CSE
+              ship: Crystal Serenity
+              sailDate: '2023-08-30'
+              duration: 9
+              embarkPortCod: REK
+              embarkPort: Reykjavik
+              debarkPortCod: REK
+              debarkPort: Reykjavik
+              prices:
+                - priceTypeCod: FIT
+                  priceTypeName: FIT Regular Fare
+                  categoryCod: CHV5
+                  category: CHV5 - Chairmans Penthouse Suites w/Veranda
+                  priceSingle: 3770
+                  priceDouble: 1880
+                  priceExtraGuest: 1320
+                  priceChild: 750
+                  pastGuestPriceSingle: 3581.5
+                  pastGuestPriceDouble: 1786
+                  pastGuestPriceExtraGuest: 1254
+                  pastGuestPriceChild: 712.5
+                  portCharge: 60
+                  pastGuestDiscount: 5
+                  availability: Available
+                - priceTypeCod: FIT
+                  priceTypeName: FIT Regular Fare
+                  categoryCod: RYVF
+                  category: RYVF - Royal Penthouse Suites w/Veranda
+                  priceSingle: 2180
+                  priceDouble: 1240
+                  priceExtraGuest: 870
+                  priceChild: 500
+                  pastGuestPriceSingle: 2071
+                  pastGuestPriceDouble: 1178
+                  pastGuestPriceExtraGuest: '826.5'
+                  pastGuestPriceChild: 475
+                  portCharge: 60
+                  pastGuestDiscount: 5
+                  availability: Available
+        statusMessage: OK
+        statusCod: 200
+        apiVersion: 1
+        pageNumber: 1
+        recordsCount: 1
+        pageTotal: 1
+        errors: [ ]
+    ShoppingAPIPricesAndPromotionsResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            dT0:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - sailDate
+                  - shipCod
+                  - ship
+                  - embarkPortCod
+                  - embarkPort
+                  - debarkPortCod
+                  - debarkPort
+                  - duration
+                  - categoryCod
+                  - category
+                  - priceTypeName
+                  - priceTypeCod
+                  - priceSingle
+                  - priceDouble
+                  - priceExtraGuest
+                  - priceChild
+                  - pastCCPriceSingle
+                  - pastCCPriceDouble
+                  - pastCCPriceExtraGuest
+                  - pastCCPriceChild
+                  - pastGuestDiscount
+                  - comboSavPriceSingle
+                  - comboSavPriceDouble
+                  - comboSavPriceExtraGuest
+                  - comboSavPriceChild
+                  - comboSaving
+                  - cbPastCCPriceSingle
+                  - cbPastCCPriceDouble
+                  - cbPastCCPriceExtraGuest
+                  - cbPastCCPriceChild
+                  - priceSingleEBB10
+                  - priceDoubleEBB10
+                  - priceExtraGuestEBB10
+                  - priceChildEBB10
+                  - priceSingleEBB20
+                  - priceDoubleEBB20
+                  - priceExtraGuestEBB20
+                  - priceChildEBB20
+                  - comboSavingAndPastGuestDiscount
+                  - currency
+                  - portCharge
+                  - availability
+                  - itemsCount
+                  - airCredit
+                  - promoID
+                  - promoDescription
+                  - discountPriceSingle
+                  - discountPriceDouble
+                  - discountPriceExtraGuest
+                  - discountPriceChild
+                  - pastCCDiscPriceSingle
+                  - pastCCDiscPriceDouble
+                  - pastCCDiscPriceExtraGuest
+                  - pastCCDiscPriceChild
+                  - cbDiscPriceSingle
+                  - cbDiscPriceDouble
+                  - cbDiscPriceExtraGuest
+                  - cbDiscPriceChild
+                  - cbPastCCDiscPriceSingle
+                  - cbPastCCDiscPriceDouble
+                  - cbPastCCDiscPriceExtraGuest
+                  - cbPastCCDiscPriceChild
+                  - discountSingleAmount
+                  - discountDoubleAmount
+                  - discountExtraGuestAmount
+                  - discountChildAmount
+                  - bonus1
+                  - bonus2
+                  - bonus3
+                  - bonus4
+                  - bonus5
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                  sailDate:
+                    type: string
+                  shipCod:
+                    type: string
+                  ship:
+                    type: string
+                  embarkPortCod:
+                    type: string
+                  embarkPort:
+                    type: string
+                  debarkPortCod:
+                    type: string
+                  debarkPort:
+                    type: string
+                  duration:
+                    type: integer
+                  categoryCod:
+                    type: string
+                  category:
+                    type: string
+                  priceTypeName:
+                    type: string
+                  priceTypeCod:
+                    type: string
+                  priceSingle:
+                    type: integer
+                  priceDouble:
+                    type: integer
+                  priceExtraGuest:
+                    type: integer
+                  priceChild:
+                    type: integer
+                  pastCCPriceSingle:
+                    type: integer
+                  pastCCPriceDouble:
+                    type: integer
+                  pastCCPriceExtraGuest:
+                    type: number
+                  pastCCPriceChild:
+                    type: integer
+                  pastGuestDiscount:
+                    type: number
+                  comboSavPriceSingle:
+                    type: integer
+                  comboSavPriceDouble:
+                    type: integer
+                  comboSavPriceExtraGuest:
+                    type: integer
+                  comboSavPriceChild:
+                    type: integer
+                  comboSaving:
+                    type: integer
+                  cbPastCCPriceSingle:
+                    type: integer
+                  cbPastCCPriceDouble:
+                    type: integer
+                  cbPastCCPriceExtraGuest:
+                    type: number
+                  cbPastCCPriceChild:
+                    type: integer
+                  priceSingleEBB10:
+                    type: integer
+                  priceDoubleEBB10:
+                    type: integer
+                  priceExtraGuestEBB10:
+                    type: integer
+                  priceChildEBB10:
+                    type: integer
+                  priceSingleEBB20:
+                    type: integer
+                  priceDoubleEBB20:
+                    type: integer
+                  priceExtraGuestEBB20:
+                    type: integer
+                  priceChildEBB20:
+                    type: integer
+                  comboSavingAndPastGuestDiscount:
+                    type: number
+                  currency:
+                    type: string
+                  portCharge:
+                    type: integer
+                  availability:
+                    type: string
+                  itemsCount:
+                    type: integer
+                  airCredit:
+                    type: integer
+                  promoID:
+                    type: integer
+                  promoDescription:
+                    type: string
+                  discountPriceSingle:
+                    type: integer
+                  discountPriceDouble:
+                    type: integer
+                  discountPriceExtraGuest:
+                    type: integer
+                  discountPriceChild:
+                    type: integer
+                  pastCCDiscPriceSingle:
+                    type: integer
+                  pastCCDiscPriceDouble:
+                    type: integer
+                  pastCCDiscPriceExtraGuest:
+                    type: number
+                  pastCCDiscPriceChild:
+                    type: integer
+                  cbDiscPriceSingle:
+                    type: integer
+                  cbDiscPriceDouble:
+                    type: integer
+                  cbDiscPriceExtraGuest:
+                    type: integer
+                  cbDiscPriceChild:
+                    type: integer
+                  cbPastCCDiscPriceSingle:
+                    type: integer
+                  cbPastCCDiscPriceDouble:
+                    type: integer
+                  cbPastCCDiscPriceExtraGuest:
+                    type: number
+                  cbPastCCDiscPriceChild:
+                    type: integer
+                  discountSingleAmount:
+                    type: integer
+                  discountDoubleAmount:
+                    type: integer
+                  discountExtraGuestAmount:
+                    type: integer
+                  discountChildAmount:
+                    type: integer
+                  bonus1:
+                    type: string
+                  bonus2:
+                    type: string
+                  bonus3:
+                    type: string
+                  bonus4: { }
+                  bonus5: { }
+            dT1:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - categoryType
+                  - optionDueDate
+                  - optionPerc
+                  - finalPaymentDate
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                  categoryType:
+                    type: string
+                  optionDueDate:
+                    type: string
+                  optionPerc:
+                    type: integer
+                  finalPaymentDate:
+                    type: string
+            dT2:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - suiteCategoryCod
+                  - daysFrom
+                  - daysTo
+                  - amountPerc
+                  - fixedAmount
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                  suiteCategoryCod:
+                    type: string
+                  daysFrom:
+                    type: integer
+                  daysTo:
+                    type: integer
+                  amountPerc: { }
+                  fixedAmount:
+                    type: integer
+        statusMessage:
+          type: string
+        statusCod:
+          type: integer
+        apiVersion:
+          type: integer
+        pageNumber:
+          type: integer
+        recordsCount:
+          type: integer
+        pageTotal:
+          type: integer
+        errors:
+          type: array
