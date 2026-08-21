@@ -133,8 +133,7 @@ export function bookingCapability(): CrystalBookingCapability {
         "No AKTG Booking API base URL or documented operation paths have been supplied, so no booking endpoint can be called.",
     };
   }
-  const required: CrystalBookingOperation[] = ["prebook", "create", "retrieve", "cancel"];
-  const missing = required.filter((op) => !ops.includes(op));
+  const missing = CRYSTAL_REQUIRED_OPERATIONS.filter((op) => !ops.includes(op));
   if (missing.length) {
     return {
       ...base,
