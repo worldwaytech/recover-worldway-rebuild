@@ -465,7 +465,7 @@ export async function cancelCrystalBooking(
   if (capability.live && row.supplier_reference) {
     const raw = await bookingCall<unknown>({
       operation: "cancel",
-      body: { bookingReference: row.supplier_reference, reason },
+      pathParams: { bookingId: row.supplier_reference },
       reference: row.reference,
     });
     const norm = normaliseSupplierBooking(raw);
