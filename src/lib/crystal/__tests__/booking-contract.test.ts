@@ -73,21 +73,22 @@ describe("hold input validation", () => {
 });
 
 describe("booking rail is fail-closed", () => {
-  it("reports not configured when no operation paths exist", async () => {
-    const { bookingCapability } = await import("../aktg-booking.server");
-    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
-    process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
-    delete process.env["CRYSTAL_BOOKING_BASE_URL"];
-    const cap = bookingCapability();
-    expect(cap.live).toBe(false);
-    expect(cap.reason).toBe("booking_api_not_configured");
-  });
-
   it("stays disabled unless explicitly enabled", async () => {
     const { bookingCapability } = await import("../aktg-booking.server");
     process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
     process.env["CRYSTAL_BOOKING_ENABLED"] = "false";
+    expect(bookingCapability().live).toBe(false);
     expect(bookingCapability().reason).toBe("booking_api_disabled");
+  });
+
+  it("reports missing credentials before anything else", async () => {
+    const { bookingCapability } = await import("../aktg-booking.server");
+    delete process.env["CRYSTAL_AKTG_API_KEY"];
+    process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
+    const cap = bookingCapability();
+    expect(cap.live).toBe(false);
+    expect(cap.reason).toBe("credentials_missing");
+    expect(cap.operations).toHaveLength(0);
   });
 
   it("refuses any supplier call while disabled", async () => {
@@ -96,35 +97,14 @@ describe("booking rail is fail-closed", () => {
     );
     process.env["CRYSTAL_BOOKING_ENABLED"] = "false";
     process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
-    expect(() => assertBookingLive("create")).toThrow(CrystalBookingUnavailableError);
-  });
-
-  it("requires every mandatory operation before going live", async () => {
-    const { bookingCapability } = await import("../aktg-booking.server");
-    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
-    process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
-    process.env["CRYSTAL_BOOKING_BASE_URL"] = "https://api.example.com/booking/";
-    process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
-    process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
-    process.env["CRYSTAL_BOOKING_PATH_PREBOOK"] = "v1/prebook";
-    const partial = bookingCapability();
-    expect(partial.live).toBe(false);
-    expect(partial.reason).toBe("booking_api_not_authorised");
-    process.env["CRYSTAL_BOOKING_PATH_CREATE"] = "v1/create";
-    process.env["CRYSTAL_BOOKING_PATH_RETRIEVE"] = "v1/retrieve";
-    process.env["CRYSTAL_BOOKING_PATH_CANCEL"] = "v1/cancel";
-    expect(bookingCapability().live).toBe(true);
+    expect(() => assertBookingLive("option")).toThrow(CrystalBookingUnavailableError);
+    expect(() => assertBookingLive("cancel")).toThrow(CrystalBookingUnavailableError);
   });
 
   it("stays fail-closed until the supplier channel context is configured", async () => {
     const { bookingCapability } = await import("../aktg-booking.server");
     process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
     process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
-    process.env["CRYSTAL_BOOKING_BASE_URL"] = "https://api.example.com/booking/";
-    process.env["CRYSTAL_BOOKING_PATH_PREBOOK"] = "v1/prebook";
-    process.env["CRYSTAL_BOOKING_PATH_CREATE"] = "v1/create";
-    process.env["CRYSTAL_BOOKING_PATH_RETRIEVE"] = "v1/retrieve";
-    process.env["CRYSTAL_BOOKING_PATH_CANCEL"] = "v1/cancel";
     delete process.env["CRYSTAL_BOOKING_SALES_CHANNEL"];
     delete process.env["CRYSTAL_BOOKING_OFFICE_ID"];
     const noChannel = bookingCapability();
@@ -141,74 +121,101 @@ describe("booking rail is fail-closed", () => {
   });
 });
 
-describe("documented operation mapping", () => {
-  const ALL = [
-    "prebook",
-    "quote",
-    "option",
-    "create",
-    "retrieve",
-    "history",
-    "list",
-    "modify",
-    "cancel",
-    "availability",
-    "suites",
-    "netfares",
-    "pricetypes",
-    "promotions",
-    "pastguest",
-  ] as const;
-
-  it("exposes an env-driven path slot for every documented operation", async () => {
-    const { operationEnvVar, bookingOperationCatalog } = await import("../aktg-booking.server");
-    for (const op of ALL) {
-      expect(operationEnvVar(op)).toMatch(/^CRYSTAL_BOOKING_PATH_/);
+describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
+  it("maps every documented operation to its exact spec path and method", async () => {
+    const { CRYSTAL_BOOKING_SPEC } = await import("../booking-contract");
+    const byOp = new Map(CRYSTAL_BOOKING_SPEC.map((s) => [s.operation, s]));
+    const expected: Record<string, [string, string]> = {
+      prebook: ["/v1/Bookings/suites", "POST"],
+      suites: ["/v1/Bookings/suites", "DELETE"],
+      quote: ["/v1/Bookings/quote", "POST"],
+      option: ["/v1/Bookings/option", "POST"],
+      modify: ["/v1/Bookings/{bookingId}/promote", "PUT"],
+      retrieve: ["/v1/Bookings/{bookingId}", "GET"],
+      cancel: ["/v1/Bookings/{bookingId}", "DELETE"],
+      history: ["/v1/bookings/history/{bookingId}", "GET"],
+      list: ["/v1/Bookings", "GET"],
+      availability: ["/d/v1/cruises/availability", "GET"],
+      netfares: ["/d/v1/netfare/availablesuites", "GET"],
+      pricetypes: ["/v1/Bookings/pricetypescurrencies", "GET"],
+      promotions: ["/d/v1/wsPromo/CruiseCategoryPromo", "GET"],
+      pastguest: ["/v1/PastGuests/search", "GET"],
+      pricebreakdown: ["/v2/bookings/pricebreakdown", "POST"],
+      invoice: ["/v1/Bookings/{bookingId}/invoice", "POST"],
+      paymentlink: ["/v1/Bookings/{bookingId}/paymentlink", "POST"],
+      paymentlinkretrieve: ["/v1/RetrievePaymentLink/paymentlink", "POST"],
+      paymentstatus: ["/v1/payments/requestInfo", "POST"],
+    };
+    for (const [op, [path, method]] of Object.entries(expected)) {
+      expect(byOp.get(op as never)?.path).toBe(path);
+      expect(byOp.get(op as never)?.method).toBe(method);
     }
-    process.env["CRYSTAL_BOOKING_BASE_URL"] = "";
-    const catalog = bookingOperationCatalog();
-    expect(catalog).toHaveLength(ALL.length);
-    expect(catalog.every((c) => c.configured === false)).toBe(true);
-    expect(catalog.filter((c) => c.required).map((c) => c.operation).sort()).toEqual(
-      ["cancel", "create", "prebook", "retrieve"],
-    );
+    expect(CRYSTAL_BOOKING_SPEC).toHaveLength(Object.keys(expected).length);
   });
 
-  it("reports configured versus unconfigured operations", async () => {
-    const { bookingOperationCatalog } = await import("../aktg-booking.server");
-    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
-    process.env["CRYSTAL_BOOKING_BASE_URL"] = "https://api.example.com/booking/";
-    process.env["CRYSTAL_BOOKING_PATH_AVAILABILITY"] = "v1/availability";
-    const catalog = bookingOperationCatalog();
-    expect(catalog.find((c) => c.operation === "availability")?.configured).toBe(true);
-    expect(catalog.find((c) => c.operation === "create")?.configured).toBe(false);
-    delete process.env["CRYSTAL_BOOKING_PATH_AVAILABILITY"];
+  it("declares the documented path parameters for booking-scoped operations", async () => {
+    const { CRYSTAL_BOOKING_SPEC } = await import("../booking-contract");
+    for (const op of ["retrieve", "cancel", "history", "modify", "invoice", "paymentlink"]) {
+      const spec = CRYSTAL_BOOKING_SPEC.find((s) => s.operation === op);
+      expect(spec?.requiredPathParams).toEqual(["bookingId"]);
+    }
+  });
+
+  it("uses the documented method and never guesses", async () => {
+    const { operationMethod } = await import("../aktg-booking.server");
+    delete process.env["CRYSTAL_BOOKING_METHOD_RETRIEVE"];
+    expect(operationMethod("retrieve")).toBe("GET");
+    expect(operationMethod("option")).toBe("POST");
+    expect(operationMethod("cancel")).toBe("DELETE");
+    expect(operationMethod("modify")).toBe("PUT");
   });
 
   it("classifies mutating operations as not read-only", async () => {
     const { isReadOnlyOperation } = await import("../aktg-booking.server");
-    for (const op of ["prebook", "create", "modify", "cancel"] as const) {
+    for (const op of ["prebook", "option", "quote", "modify", "cancel", "invoice", "paymentlink"] as const) {
       expect(isReadOnlyOperation(op)).toBe(false);
     }
-    for (const op of ["retrieve", "list", "availability", "pastguest"] as const) {
+    for (const op of ["retrieve", "list", "availability", "pastguest", "pricetypes"] as const) {
       expect(isReadOnlyOperation(op)).toBe(true);
     }
   });
 
-  it("never guesses an HTTP method away from the documented configuration", async () => {
-    const { operationMethod } = await import("../aktg-booking.server");
-    delete process.env["CRYSTAL_BOOKING_METHOD_RETRIEVE"];
-    expect(operationMethod("retrieve", false)).toBe("GET");
-    expect(operationMethod("create", true)).toBe("POST");
-    process.env["CRYSTAL_BOOKING_METHOD_CANCEL"] = "delete";
-    expect(operationMethod("cancel", false)).toBe("DELETE");
-    delete process.env["CRYSTAL_BOOKING_METHOD_CANCEL"];
+  it("exposes a catalogue covering every documented operation", async () => {
+    const { bookingOperationCatalog } = await import("../aktg-booking.server");
+    const { CRYSTAL_BOOKING_SPEC } = await import("../booking-contract");
+    const catalog = bookingOperationCatalog();
+    expect(catalog).toHaveLength(CRYSTAL_BOOKING_SPEC.length);
+    expect(catalog.filter((c) => c.required).map((c) => c.operation).sort()).toEqual([
+      "cancel",
+      "option",
+      "prebook",
+      "retrieve",
+    ]);
+  });
+
+  it("refuses a booking-scoped call without its documented path parameter", async () => {
+    const { bookingCall } = await import("../aktg-booking.server");
+    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
+    process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
+    process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
+    process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    await expect(bookingCall({ operation: "retrieve" })).rejects.toThrow(/bookingId/);
   });
 
   it("performs no supplier read while the rail is disabled", async () => {
     const { verifyBookingReadOnly } = await import("../aktg-booking.server");
     process.env["CRYSTAL_BOOKING_ENABLED"] = "false";
     const probes = await verifyBookingReadOnly();
+    expect(probes.every((p) => p.attempted === false)).toBe(true);
+  });
+
+  it("never probes an operation that needs a bookingId", async () => {
+    const { verifyBookingReadOnly } = await import("../aktg-booking.server");
+    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
+    process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
+    process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
+    process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    const probes = await verifyBookingReadOnly(["retrieve", "history"]);
     expect(probes.every((p) => p.attempted === false)).toBe(true);
   });
 });
