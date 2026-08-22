@@ -203,6 +203,7 @@ export async function holdCrystalVoyage(
       voyageNumber: input.voyageNumber,
       shipName: input.shipName ?? null,
       suiteCategory: match.suiteCategory,
+      suiteNumber: input.suiteNumber ?? null,
       gradeId: match.gradeId ?? null,
       gradeName: match.gradeName ?? null,
       fareCode: match.fareCode ?? null,
