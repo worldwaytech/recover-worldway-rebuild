@@ -414,8 +414,7 @@ export async function retrieveCrystalBooking(
   try {
     const raw = await bookingCall<unknown>({
       operation: "retrieve",
-      method: "GET",
-      query: { bookingReference: row.supplier_reference },
+      pathParams: { bookingId: row.supplier_reference },
       reference: row.reference,
     });
     const norm = normaliseSupplierBooking(raw);
