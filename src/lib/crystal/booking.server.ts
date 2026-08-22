@@ -523,12 +523,12 @@ export async function cancelCrystalBooking(
 export async function crystalBookingHistory(
   client: Client,
   bookingId: string,
-): Promise<{ history: unknown | null; supplierSynced: boolean }> {
+): Promise<{ history: Record<string, unknown> | null; supplierSynced: boolean }> {
   const row = await ownedBooking(client, bookingId);
   const capability = bookingCapability();
   if (!capability.live || !row.supplier_reference) return { history: null, supplierSynced: false };
   try {
-    const raw = await bookingCall<unknown>({
+    const raw = await bookingCall<Record<string, unknown>>({
       operation: "history",
       pathParams: { bookingId: row.supplier_reference },
       reference: row.reference,
