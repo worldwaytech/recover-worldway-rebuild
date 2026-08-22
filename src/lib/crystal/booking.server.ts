@@ -515,3 +515,26 @@ export async function cancelCrystalBooking(
       "Cancellation requested — our Crystal desk will process it with the cruise line and confirm penalties.",
   };
 }
+
+/**
+ * Booking history (spec: GET /v1/bookings/history/{bookingId}) — read-only.
+ * Returns null when the rail is not armed or no supplier reference exists.
+ */
+export async function crystalBookingHistory(
+  client: Client,
+  bookingId: string,
+): Promise<{ history: unknown | null; supplierSynced: boolean }> {
+  const row = await ownedBooking(client, bookingId);
+  const capability = bookingCapability();
+  if (!capability.live || !row.supplier_reference) return { history: null, supplierSynced: false };
+  try {
+    const raw = await bookingCall<unknown>({
+      operation: "history",
+      pathParams: { bookingId: row.supplier_reference },
+      reference: row.reference,
+    });
+    return { history: raw, supplierSynced: true };
+  } catch {
+    return { history: null, supplierSynced: false };
+  }
+}
