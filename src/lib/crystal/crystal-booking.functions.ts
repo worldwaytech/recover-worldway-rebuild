@@ -85,5 +85,10 @@ export const getCrystalBookingHistory = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ bookingId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { crystalBookingHistory } = await import("./booking.server");
-    return crystalBookingHistory(context.supabase, data.bookingId);
+    const result = await crystalBookingHistory(context.supabase, data.bookingId);
+    // Serialised as JSON text: the supplier payload shape is supplier-defined.
+    return {
+      supplierSynced: result.supplierSynced,
+      history: result.history ? JSON.stringify(result.history) : null,
+    };
   });
