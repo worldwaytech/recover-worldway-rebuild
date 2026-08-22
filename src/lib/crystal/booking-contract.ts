@@ -169,6 +169,8 @@ export const holdInputSchema = z.object({
   fareCode: z.string().trim().max(40).optional(),
   gradeId: z.string().trim().max(40).optional(),
   suiteCategory: z.string().trim().max(40),
+  /** Allocated suite number (AKTG VoyageSuiteRequest.suiteNumber, int32). */
+  suiteNumber: z.number().int().positive().max(999_999).optional(),
   /** Per-guest fare the customer saw; re-validated server-side before any hold. */
   quotedPricePerGuest: z.number().finite().positive().max(2_000_000),
   guests: z.array(guestSchema).min(1).max(4),

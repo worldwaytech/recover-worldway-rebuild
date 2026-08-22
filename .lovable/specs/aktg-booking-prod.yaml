@@ -1,0 +1,3530 @@
+openapi: 3.0.1
+info:
+  title: Booking API (PROD)
+  description: Set of API related to the booking process. Please go <a href='https://apiportal.aktravelgroup.com/booking-api'>this page</a> for further information
+  version: '1.0'
+servers:
+  - url: https://api.aktravelgroup.com/bookingapi
+paths:
+  /v1/Bookings/option:
+    post:
+      tags:
+        - Bookings
+      summary: Send an Option creation request
+      description: Send an Option creation request
+      operationId: post-v1-bookings-option
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Details about option creation request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptionCreationRequest'
+            example:
+              guests:
+                - title: Mr
+                  firstName: John
+                  lastName: Doe
+                  email: john.doe@example.com
+                  phone: +1 (123) 456-7890
+                  gender: string
+                  countryISO3Code: USA
+                  guestType: Adult
+                  crystalSocietyMember: true
+                  crystaSocietyNumber: '12345678'
+              agentEmail: jane.doe@travelagency.com
+              priceTypeCode: FIT
+              currency: USD
+              voyages:
+                - voyageNumber: CSE-012-230609
+                  suiteCategoryCode: SVVM
+                  suiteNumber: 10040
+              note: Booking notes
+      responses:
+        '201':
+          description: Option created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteOptionCreationResponse'
+              example:
+                id: 0
+        '400':
+          description: Option creation request has missing/invalid values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: One of the selected suites is not available/found or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  '/v1/Bookings/{bookingId}':
+    get:
+      tags:
+        - Bookings
+      summary: 'Retrieve a specific booking, if created by the connected partner'
+      description: 'Retrieve a specific booking, if created by the connected partner'
+      operationId: get-v1-bookings-bookingid
+      parameters:
+        - name: bookingId
+          in: path
+          description: Format - int32. Id of the booking
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBookingResponse'
+              example:
+                bookingInfo:
+                  bookingId: 1200
+                  status: Option
+                  currency: USD
+                  priceType: Crystal Entry Level Fare
+                  creationDate: '2022-12-28'
+                  travelStartDate: '2023-07-31'
+                  travelEndDate: '2023-08-22'
+                owner:
+                  type: Direct
+                  agency: Test Agency
+                  lastName: Doe
+                  middleName: K.
+                  firstName: John
+                  email: john.doe@example.com
+                  phone: +1 123456789
+                  address: 1411 Opus Place Executive Tower
+                  zip: 60515-1098
+                  city: Downers Grove
+                  countryCode: USA
+                  country: United States of America
+                financialRecap:
+                  totalCharges: 35000
+                  totalPaid: 12500
+                  totalDue: 22500
+                  commission: 2750
+                  tax: 1154
+                  portCharges: 750
+                  ncf: 145
+                guests:
+                  - guestCode: 1
+                    title: Mr.
+                    lastName: Doe
+                    middleName: K.
+                    firstName: John
+                    address: 1411 Opus Place Executive Tower
+                    zip: 60515-1098
+                    city: Downers Grove
+                    countryCode: USA
+                    country: United States of America
+                    stateCode: IL
+                    countyCode: ''
+                    email: john.doe@example.com
+                    phone: +1 123456789
+                    nationalityCode: USA
+                    birthDate: '1980-01-01'
+                    birthPlace: Springfield
+                    birthNation: USA
+                    passportNumber: E00007734
+                    passportIssuePlace: Washington
+                    passportIssueCountryCode: USA
+                    passportIssueDate: '2022-01-01'
+                    passportExpireDate: '2032-01-01'
+                    gender: M
+                    type: Adult
+                    occupation: Manager
+                    language: EN
+                    insuranceStatus: ''
+                    insuranceDeclineDate: '2022-12-01'
+                    prices:
+                      - description: Destination Fees
+                        amount: 1200
+                        voyageNumber: 
+                      - description: CruisePrice
+                        amount: 6600
+                        voyageNumber: CSE-012-230609
+                      - description: PRIVATE TRANSFER FROM HOTEL/PIER TO AIRPORT
+                        amount: 0
+                        voyageNumber: CSE-012-230609
+                    flightsDetails:
+                      - pnr: '111111'
+                        pnrStatus: RESERVED
+                        recordLocator: UAT999
+                        airClass: BUSINESS
+                        validatingCarrier: TK
+                        flightNumber: '1841'
+                        carrier: TURK HAVA YOLLARI
+                        tripType: OPENJAW
+                        departureCity: Istanbul
+                        departureGateway: IST
+                        departureAirportName: ATATÜRK INTERNATIONAL AIRPORT
+                        departureDate: '2023-07-30T12:00:00.0000000+00:00'
+                        departureTime: '2023-07-07'
+                        arrivalCity: Athens
+                        arrivalGateway: ATH
+                        arrivalAirportName: ELEFTHERIOS VENIZELOS INTERNATIONAL AIRPORT
+                        arrivalTerminal: ''
+                        arrivalDate: '2023-07-30T12:00:00.0000000+00:00'
+                        arrivalTime: '2023-07-07'
+                        fareTypeCode: CDN
+                        fareType: Cash Discounted Net Rate
+                        airType: OUTBOUND
+                prices:
+                  - description: Destination Fees
+                    amount: 2400
+                    voyageNumber: 
+                  - description: CruisePrice
+                    amount: 13200
+                    voyageNumber: CSE-012-230609
+                  - description: PRIVATE TRANSFER FROM HOTEL/PIER TO AIRPORT
+                    amount: 0
+                    voyageNumber: CSE-012-230609
+                voyages:
+                  - voyageNumber: CSE-012-230609
+                    voyageName: A star is born - Inaugural Crystal Voyage
+                    voyageType: Classic
+                    shipCode: CSE
+                    ship: Crystal Serenity
+                    suiteCategoryCode: G6
+                    suiteCategory: Grand Suite - MID/AFT
+                    suiteNo: '105'
+                    isGty: false
+                    suiteCapacity: Double
+                    embarkDate: '2023-06-09'
+                    debarkDate: '2023-06-21'
+                    duration: 12
+                    embarkPortCode: Venice
+                    embarkPort: Venice
+                    debarkPortCode: Venice
+                    debarkPort: Barcelona
+                    note: string
+                payments:
+                  - dueDate: '2023-01-09'
+                    amount: 3500
+                    currency: USD
+                    finalPayment: true
+                penalties:
+                  - packageName: string
+                    daysFrom: 120
+                    daysTo: 75
+                    percentage: 20
+                    fixedAmount: 200
+                    amount: 7000
+                commissions:
+                  - commission: 5
+                    valueType: Percentage
+                    commissionType: Cruise
+                commissionsItemsBreakdown:
+                  - sectionID: 1
+                    commissionTypeID: 2
+                    commission: 0
+                    serviceTypeName: Flights
+                    serviceName: Flights
+                    optionName: BUSINESS CLASS OUTBOUND
+                    sellingPriceCurrency: USD
+                    sellingPrice: 1395.1
+                    portCharge: 
+                    sellingPriceTax: 0
+                    itineraryDate: '2023-07-30T12:00:00.0000000+00:00'
+                    guestCode: 1
+                commissionsVoyagesBreakdown:
+                  - sectionID: 1
+                    voyageName: RETURN TO SERVICE
+                    voyageID: 438
+                    commissionTypeID: 1
+                    commission: 0
+                    serviceTypeName: Cruise
+                    sellingPrice: 30200
+                    tax: 0
+                    portCharge: 2400
+                    ncf: 0
+                    commissionBase: 20200
+                    totalCruiseDiscount: -10000
+                    travelStartDate: '2023-07-31T12:00:00.0000000+00:00'
+                    travelEndDate: '2023-08-22T12:00:00.0000000+00:00'
+                    sellingPriceCurrency: USD
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+    delete:
+      tags:
+        - Bookings
+      summary: 'Cancel a specific booking, if created by the connected partner'
+      description: 'Cancel a specific booking, if created by the connected partner'
+      operationId: delete-v1-bookings-bookingid
+      parameters:
+        - name: bookingId
+          in: path
+          description: Format - int32. Booking unique identifier
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking successfully cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelBookingResponse'
+              example:
+                bookingId: 7123
+                bookingStatus: Cancelled With Penalty
+        '404':
+          description: Booking not found or booking doesn't belong to the agency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '409':
+          description: Errors during booking cancellation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /v1/Bookings/pricetypescurrencies:
+    get:
+      tags:
+        - Bookings
+      summary: Gets all bookable price type - currency combinations for the agency
+      description: Gets all bookable price type - currency combinations for the agency
+      operationId: get-v1-bookings-pricetypescurrencies
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price types and currencies successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceTypeAndCurrency'
+              example:
+                - currencyCode: string
+                  priceTypeCode: string
+                  priceTypeName: string
+        '204':
+          description: No price types / currencies found
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: Agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /v1/Bookings/suites:
+    post:
+      tags:
+        - Bookings
+      summary: Hold one or more suite before the booking creation
+      description: Hold one or more suite before the booking creation
+      operationId: post-v1-bookings-suites
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The list of suites to be held
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoyageSuiteRequest'
+            example:
+              - voyageNumber: CSE-012-230731
+                suiteNumber: 11028
+      responses:
+        '200':
+          description: Suites successfully held
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldReleaseSuiteResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: One of the selected suites is not available/found or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+    delete:
+      tags:
+        - Bookings
+      summary: Release one or more suite previously held
+      description: Release one or more suite previously held
+      operationId: delete-v1-bookings-suites
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The list of suites to be released
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoyageSuiteRequest'
+            example:
+              - voyageNumber: CSE-012-230731
+                suiteNumber: 11028
+      responses:
+        '200':
+          description: Suites successfully released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldReleaseSuiteResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: One of the selected suites is not available/found or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  '/v1/Bookings/{bookingId}/invoice':
+    post:
+      tags:
+        - Bookings
+      summary: Send the booking invoice to the requested email address
+      description: Send the booking invoice to the requested email address
+      operationId: post-v1-bookings-bookingid-invoice
+      parameters:
+        - name: bookingId
+          in: path
+          description: Format - int32. Booking unique identifier
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Send booking invoice request details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBookingInvoiceRequest'
+            example:
+              emailAddress: john.doe@example.com
+              ccEmailAddress: jane.doe@example.com
+      responses:
+        '200':
+          description: Invoice successfully sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoolResultResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: Booking or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  '/v1/Bookings/{bookingId}/paymentlink':
+    post:
+      tags:
+        - Bookings
+      summary: Send the booking payment link to requested email address
+      description: Send the booking payment link to requested email address
+      operationId: post-v1-bookings-bookingid-paymentlink
+      parameters:
+        - name: bookingId
+          in: path
+          description: Format - int32. Booking unique identifier
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Send booking payment link request details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBookingPaymentLinkRequest'
+            example:
+              emailAddress: john.doe@example.com
+      responses:
+        '200':
+          description: Payment link successfully sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoolResultResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: Booking or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /d/v1/cruises/availablesuites:
+    get:
+      tags:
+        - Bookings
+      summary: 'Gets the available suites for a given combination of voyage, category, price type and currency'
+      description: 'Gets the available suites for a given combination of voyage, category, price type and currency'
+      operationId: get-v1-cruise-available-suites
+      parameters:
+        - name: voyageNumber
+          in: query
+          description: Number of the voyage
+          required: true
+          schema:
+            type: string
+        - name: suiteCategoryCod
+          in: query
+          description: Code of the suite category
+          required: true
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Code of the price type
+          required: true
+          schema:
+            type: string
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: onlyAda
+          in: query
+          description: 'To show only suites for people with disabilities (true or false, default false)'
+          schema:
+            enum:
+              - 'false'
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available suites successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingApiAvailableSuitesResponse'
+              example:
+                body:
+                  suiteAvailability:
+                    - voyageNumber: CSE-012-230731
+                      sailDate: '2023-07-31T12:00:00.0000000+00:00'
+                      ship: Crystal Serenity
+                      suiteCategoryCod: SSVM
+                      suiteCategory: SSVM - Aquamarine Veranda Suite
+                      suiteNumber: '10047'
+                      suiteStatus: ''
+                      statusDesc: Available
+                      suiteCapacity: Double
+                      ada: false
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/cruises/availability:
+    get:
+      tags:
+        - Bookings
+      summary: 'Gets the available categories and prices for a given combination of voyage, price type and currency'
+      description: 'Gets the available categories for a given combination of voyage, price type and currency'
+      operationId: get-v1-cruise-availability
+      parameters:
+        - name: voyageNumber
+          in: query
+          description: Number of the voyage
+          required: true
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Code of the price type
+          required: true
+          schema:
+            type: string
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available categories and prices successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingApiAvailabilityResponse'
+              example:
+                body:
+                  availability:
+                    - voyageNumber: CSE-012-230731
+                      sailDate: '2023-07-31T12:00:00.0000000+00:00'
+                      shipCod: CSE
+                      ship: Crystal Serenity
+                      categoryCod: CHV5
+                      category: CHV5 - Crystal Penthouse Suite
+                      totAV: 0
+                      totGTY: 38
+                      sgl: 0
+                      sglGTY: 0
+                      dbl: 0
+                      dblGTY: 27
+                      trip: 0
+                      tripGTY: 0
+                      quad: 0
+                      quadGTY: 11
+                      quin: 0
+                      quinGTY: 0
+                      six: 0
+                      sixGTY: 0
+                      priceTypeName: FIT Regular Fare
+                      priceTypeCod: FIT
+                      priceSingle: 44200
+                      priceDouble: 25400
+                      priceExtraGuest: 17600
+                      priceChild: 10000
+                      pastCCPriceSingle: 41990
+                      pastCCPriceDouble: 24130
+                      pastCCPriceExtraGuest: 16720
+                      pastCCPriceChild: 9500
+                      pastGuestDiscount: 5
+                      currency: USD
+                      tax: 0
+                      portCharge: 700
+                      ncf: 0
+                      displayPrice: 50800
+                      isStartingPrice: false
+                      maxCapacity: 4
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /v1/Bookings/quote:
+    post:
+      tags:
+        - Bookings
+      summary: Send a Quote Creation request
+      description: Send a Quote Creation request
+      operationId: post-v1-bookings-quote
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Details about Quote Creation request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteCreationRequest'
+            example:
+              guests:
+                - title: Mr
+                  firstName: John
+                  lastName: Doe
+                  email: john.doe@example.com
+                  phone: +1 (123) 456-7890
+                  gender: string
+                  countryISO3Code: USA
+                  guestType: Adult
+                  crystalSocietyMember: true
+                  crystaSocietyNumber: '12345678'
+              agentEmail: jane.doe@travelagency.com
+              priceTypeCode: FIT
+              currency: USD
+              voyages:
+                - voyageNumber: CSE-012-230609
+                  suiteCategoryCode: G6
+                  suiteCapacity: 2
+              note: Open Deposit notes
+      responses:
+        '201':
+          description: Quote created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteOptionCreationResponse'
+              example:
+                bookingId: 0
+        '400':
+          description: Quote creation request has missing/invalid values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /v1/Bookings:
+    get:
+      tags:
+        - Bookings
+      summary: Retrieve the list of bookings created by the current agency
+      description: Retrieve the list of bookings created by the current agency
+      operationId: get-v1-bookings
+      parameters:
+        - name: PageNum
+          in: query
+          description: Format - int32. Selected Page
+          schema:
+            type: integer
+            format: int32
+        - name: PageSize
+          in: query
+          description: Format - int32. Selected Page Size
+          schema:
+            type: integer
+            format: int32
+        - name: StartDateFrom
+          in: query
+          description: 'Format - date-time (as date-time in RFC3339). Optional, only returns bookings with Start Date greater than or equal this parameter - format yyyy-MM-dd'
+          schema:
+            type: string
+            format: date-time
+            example: '2023-09-15T12:00:00.0000000+00:00'
+          example: '2023-09-15T12:00:00.0000000+00:00'
+        - name: StartDateTo
+          in: query
+          description: 'Format - date-time (as date-time in RFC3339). Optional, only returns bookings with Start Date lower than or equal this parameter - format yyyy-MM-dd'
+          schema:
+            type: string
+            format: date-time
+            example: '2023-09-15T12:00:00.0000000+00:00'
+          example: '2023-09-15T12:00:00.0000000+00:00'
+        - name: CreationDateFrom
+          in: query
+          description: 'Format - date-time (as date-time in RFC3339). Optional, only returns bookings with Creation Date greater than or equal this parameter - format yyyy-MM-dd'
+          schema:
+            type: string
+            format: date-time
+            example: '2023-09-15T12:00:00.0000000+00:00'
+          example: '2023-09-15T12:00:00.0000000+00:00'
+        - name: CreationDateTo
+          in: query
+          description: 'Format - date-time (as date-time in RFC3339). Optional, only returns bookings with Creation Date lower than or equal this parameter - format yyyy-MM-dd'
+          schema:
+            type: string
+            format: date-time
+            example: '2023-09-15T12:00:00.0000000+00:00'
+          example: '2023-09-15T12:00:00.0000000+00:00'
+      responses:
+        '200':
+          description: Booking list successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingHeaderDTOIEnumerableApiResponseWrapper'
+              example:
+                body:
+                  - bookingId: 12345
+                    bookingName: BOOKING NAME
+                    bookingStatus: Booked
+                    currency: USD
+                    agency: Agency Name
+                    startDate: '2023-09-08'
+                    endDate: '2023-09-19'
+                    days: 11
+                    priceType: FIT Regular Fare
+                    voyageDetail: CSE-011-230908
+                    creationDate: '2023-08-31'
+                    depositDate: '2023-09-02'
+                    confirmationDate: '2023-08-31'
+                    cancelDate: 
+                    suiteNumber: '10032'
+                    suiteCategory: CSWF - Double Guest Room with Ocean View
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+        '404':
+          description: Agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /v1/PastGuests/search:
+    get:
+      tags:
+        - PastGuests
+      summary: Past guest search
+      description: "Search for guests who have already booked a voyage.\r\nYou can search using different set of parameters in querystring:\r\n- Crystal Society number\r\n- Last name, first name\r\n- Last name, first name, date of birth\r\n- Last name, first name, email address\r\n\r\nIn case search will be performed using unique criteria:\r\n- Crystal Society Number\r\n- Last name, first name, date of birth\r\n- Last name, first name, email address\r\nAPI will return guest data, no matter of last travel agency used by the guest\r\n\r\nIn case search will be performed using generic criteria (Last Name, First Name), \r\nAPI will ONLY return Travel Agency's guest information"
+      operationId: get-v1-pastguests-search
+      parameters:
+        - name: LastName
+          in: query
+          description: Past guest last name
+          schema:
+            type: string
+        - name: FirstName
+          in: query
+          description: Past guest first name
+          schema:
+            type: string
+        - name: Email
+          in: query
+          description: Past guest email address
+          schema:
+            type: string
+        - name: CrystalSocietyNumber
+          in: query
+          description: Past guest Crystal Society Number
+          schema:
+            type: string
+        - name: BirthDate
+          in: query
+          description: Format - date (as full-date in RFC3339). Past guest birth date in the yyyy-MM-dd format
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Price types and currencies successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PastGuestSearchResponse'
+              example:
+                - firstName: John
+                  lastName: Doe
+                  birthDate: '1980-01-01'
+                  email: test@example.com
+                  crystalSocietyNumber: '123456'
+                  loyaltyDays: 25
+  '/v1/Bookings/{bookingId}/promote':
+    put:
+      tags:
+        - Bookings
+      summary: Promote a booking from Quote to Option
+      description: Promote a booking from Quote to Option
+      operationId: put-v1-bookings-bookingid-promote
+      parameters:
+        - name: bookingId
+          in: path
+          description: Format - int32. The booking unique identifier
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The list of voyage/suite
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoyageSuite'
+            example:
+              - voyageNumber: CSE-012-230731
+                suiteCategoryCode: CSWM
+                suiteNumber: 11028
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteOptionCreationResponse'
+              example:
+                bookingId: 1234
+        '404':
+          description: 'Booking not found, booking doesn''t belong to the agency, cabin not available or cabin not found'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: cabin-not-available
+                title: Cabin not available
+                status: 404
+                detail: One of the selected suites is not available
+                instance: ''
+        '409':
+          description: Booking locked by another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: locked-booking
+                title: Locked Booking
+                status: 409
+                detail: The booking is locked by another user
+                instance: ''
+        '422':
+          description: Wrong booking code or wrong voyage(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: wrong-voyage
+                title: Wrong Voyage
+                status: 422
+                detail: One of the selected voyages does not exist or it's wrong
+                instance: ''
+  /v1/RetrievePaymentLink/paymentlink:
+    post:
+      tags:
+        - Bookings
+      summary: Retrieve the booking payment link
+      description: Retrieve the booking payment link
+      operationId: 6571f0c22440f13383a25efa
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The list of suites to be held
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoyageSuiteRequest'
+            example:
+              - voyageNumber: CSE-012-230731
+                suiteNumber: 11028
+      responses:
+        '200':
+          description: Suites successfully held
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldReleaseSuiteResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: One of the selected suites is not available/found or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /clone-659d6/d/v1/cruises/availablesuites:
+    get:
+      summary: 'Gets the available suites for a given combination of voyage, category, price type and currency (clone)'
+      description: 'Gets the available suites for a given combination of voyage, category, price type and currency'
+      operationId: 659d66b3f27f1ca529b556af
+      parameters:
+        - name: voyageNumber
+          in: query
+          description: Number of the voyage
+          required: true
+          schema:
+            type: string
+        - name: suiteCategoryCod
+          in: query
+          description: Code of the suite category
+          required: true
+          schema:
+            type: string
+        - name: priceTypeCod
+          in: query
+          description: Code of the price type
+          required: true
+          schema:
+            type: string
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: onlyAda
+          in: query
+          description: 'To show only suites for people with disabilities (true or false, default false)'
+          schema:
+            enum:
+              - 'false'
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available suites successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingApiAvailableSuitesResponse'
+              example:
+                body:
+                  suiteAvailability:
+                    - voyageNumber: CSE-012-230731
+                      sailDate: '2023-07-31T12:00:00.0000000+00:00'
+                      ship: Crystal Serenity
+                      suiteCategoryCod: SSVM
+                      suiteCategory: SSVM - Aquamarine Veranda Suite
+                      suiteNumber: '10047'
+                      suiteStatus: ''
+                      statusDesc: Available
+                      suiteCapacity: Double
+                      ada: false
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /clone-65a67/v1/Bookings/suites:
+    post:
+      summary: Hold one or more suite before the booking creation (clone)
+      description: Hold one or more suite before the booking creation
+      operationId: 65a67463310fb503372fb4d2
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The list of suites to be held
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoyageSuiteRequest'
+            example:
+              - voyageNumber: CSE-012-230731
+                suiteNumber: 11028
+      responses:
+        '200':
+          description: Suites successfully held
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldReleaseSuiteResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: One of the selected suites is not available/found or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /v2/bookings/pricebreakdown:
+    post:
+      summary: Price breakdown
+      description: Price breakdown
+      operationId: 65fd54e9880a2baf5e80bc8c
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available suites successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingApiAvailableSuitesResponse'
+              example:
+                body:
+                  suiteAvailability:
+                    - voyageNumber: CSE-012-230731
+                      sailDate: '2023-07-31T12:00:00.0000000+00:00'
+                      ship: Crystal Serenity
+                      suiteCategoryCod: SSVM
+                      suiteCategory: SSVM - Aquamarine Veranda Suite
+                      suiteNumber: '10047'
+                      suiteStatus: ''
+                      statusDesc: Available
+                      suiteCapacity: Double
+                      ada: false
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  '/v1/bookings/history/{bookingId}':
+    get:
+      summary: Booking history
+      description: Booking history
+      operationId: 6603e794f1c80cbe2525be11
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: ''
+        - name: LastName
+          in: query
+          description: Past guest last name
+          schema:
+            type: string
+        - name: FirstName
+          in: query
+          description: Past guest first name
+          schema:
+            type: string
+        - name: Email
+          in: query
+          description: Past guest email address
+          schema:
+            type: string
+        - name: CrystalSocietyNumber
+          in: query
+          description: Past guest Crystal Society Number
+          schema:
+            type: string
+        - name: BirthDate
+          in: query
+          description: Format - date (as full-date in RFC3339). Past guest birth date in the yyyy-MM-dd format
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Price types and currencies successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PastGuestSearchResponse'
+              example:
+                - firstName: John
+                  lastName: Doe
+                  birthDate: '1980-01-01'
+                  email: test@example.com
+                  crystalSocietyNumber: '123456'
+                  loyaltyDays: 25
+  /d/v1/netfare/availablesuites:
+    get:
+      summary: Gets the available suites Net Fare
+      description: Gets the available suites with Net Fare as Pricetype
+      operationId: 6695322e07c5b0fe76f21d2f
+      parameters:
+        - name: voyageNumber
+          in: query
+          description: Number of the voyage
+          required: true
+          schema:
+            type: string
+        - name: currency
+          in: query
+          description: Currency code
+          required: true
+          schema:
+            type: string
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available suites successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingApiAvailableSuitesResponse'
+              example:
+                body:
+                  suiteAvailability:
+                    - voyageNumber: CSE-012-230731
+                      sailDate: '2023-07-31T12:00:00.0000000+00:00'
+                      ship: Crystal Serenity
+                      suiteCategoryCod: SSVM
+                      suiteCategory: SSVM - Aquamarine Veranda Suite
+                      suiteNumber: '10047'
+                      suiteStatus: ''
+                      statusDesc: Available
+                      suiteCapacity: Double
+                      ada: false
+                statusMessage: OK
+                statusCod: 200
+                apiVersion: 1
+                pageNumber: 1
+                recordsCount: 1
+                pageTotal: 1
+                errors: [ ]
+  /d/v1/wsPromo/CruiseCategoryPromo:
+    get:
+      summary: Gets Cruise Category Promo
+      description: Gets Cruise Category Promo
+      operationId: 6996cf6954a3aefa4849305f
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price types and currencies successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceTypeAndCurrency'
+              example:
+                - currencyCode: string
+                  priceTypeCode: string
+                  priceTypeName: string
+        '204':
+          description: No price types / currencies found
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: Agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+  /v1/payments/requestInfo:
+    post:
+      summary: Retrieve payment status
+      description: Retrieve payment status
+      operationId: 6a16b8b460b6ada564adf117
+      parameters:
+        - name: ApiKey
+          in: header
+          description: The provided ApiKey to access the API
+          required: true
+          schema:
+            type: string
+        - name: X-SalesChannel
+          in: header
+          description: The provided SalesChannel for accessing the booking API
+          required: true
+          schema:
+            type: string
+        - name: X-OfficeID
+          in: header
+          description: The code to identify the calling agency
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The list of suites to be held
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoyageSuiteRequest'
+            example:
+              - voyageNumber: CSE-012-230731
+                suiteNumber: 11028
+      responses:
+        '200':
+          description: Suites successfully held
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldReleaseSuiteResponse'
+              example:
+                result: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+        '404':
+          description: One of the selected suites is not available/found or agency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: string
+                title: string
+                status: 0
+                detail: string
+                instance: string
+components:
+  schemas:
+    BookingCommissionDto:
+      type: object
+      properties:
+        commission:
+          type: number
+          description: Commission value
+          format: double
+          nullable: true
+          example: 5
+        valueType:
+          type: string
+          description: Commission value type (Amount/Percentage)
+          nullable: true
+          example: Percentage
+        commissionTypeID:
+          type: integer
+          description: Commission type ID
+          format: int32
+          nullable: true
+          example: 10
+        commissionType:
+          type: string
+          description: Commission type
+          nullable: true
+          example: Cruise
+      additionalProperties: false
+      description: Details about a commission
+    BookingCommissionItemBreakdownDto:
+      type: object
+      properties:
+        sectionID:
+          type: integer
+          description: Section ID of the booking
+          format: int32
+          nullable: true
+          example: 1
+        commissionTypeID:
+          type: integer
+          description: Commission type ID of the item
+          format: int32
+          nullable: true
+          example: 10
+        commission:
+          type: number
+          description: Commission value of item
+          format: double
+          nullable: true
+          example: 5
+        serviceTypeName:
+          type: string
+          description: Name of the service type which the commission was applied to
+          nullable: true
+          example: '5.00'
+        serviceName:
+          type: string
+          description: Name of the service which the commission was applied to
+          nullable: true
+          example: '5.00'
+        optionName:
+          type: string
+          description: Name of the option which the commission was applied to
+          nullable: true
+          example: '5.00'
+        sellingPriceCurrency:
+          type: string
+          description: Selling price currency of the item
+          nullable: true
+          example: USD0
+        sellingPrice:
+          type: number
+          description: Selling price of the item
+          format: double
+          nullable: true
+          example: 1
+        portCharge:
+          type: number
+          description: Port charge amount of the voyage
+          format: double
+          nullable: true
+          example: 1
+        sellingPriceTax:
+          type: number
+          description: NCF amount of the voyage
+          format: double
+          nullable: true
+          example: 1
+        itineraryDate:
+          type: string
+          description: Date of the item which the commission was applied to
+          format: date-time
+          nullable: true
+          example: '2023-10-25T12:00:00.0000000+00:00'
+        guestCode:
+          type: integer
+          description: ''
+          format: int32
+          nullable: true
+      additionalProperties: false
+      description: Details about a commission breakdown
+    BookingCommissionVoyageBreakdownDto:
+      type: object
+      properties:
+        sectionID:
+          type: integer
+          description: Section ID of the booking
+          format: int32
+          nullable: true
+          example: 1
+        voyageName:
+          type: string
+          description: Name of the voyage which the commission was applied to
+          nullable: true
+          example: Magic trip
+        voyageID:
+          type: integer
+          description: Id of the voyage which the commission was applied to
+          format: int32
+          nullable: true
+          example: 1
+        commissionTypeID:
+          type: integer
+          description: Commission type ID
+          format: int32
+          nullable: true
+          example: 10
+        commission:
+          type: number
+          description: Commission value
+          format: double
+          nullable: true
+          example: 5
+        serviceTypeName:
+          type: string
+          description: Name of the service type which the commission was applied to
+          nullable: true
+          example: '5.00'
+        sellingPrice:
+          type: number
+          description: Selling price of the voyage
+          format: double
+          nullable: true
+          example: 1
+        tax:
+          type: number
+          description: Tax amount of the voyage
+          format: double
+          nullable: true
+          example: 1
+        portCharge:
+          type: number
+          description: Port charge amount of the voyage
+          format: double
+          nullable: true
+          example: 1
+        ncf:
+          type: number
+          description: NCF amount of the voyage
+          format: double
+          nullable: true
+          example: 1
+        commissionBase:
+          type: number
+          description: Commission base amount of the voyage
+          format: double
+          nullable: true
+          example: 1
+        totalCruiseDiscount:
+          type: number
+          description: Total discount of the voyage
+          format: double
+          nullable: true
+          example: -1
+        travelStartDate:
+          type: string
+          description: Travel start date of the voyage
+          format: date-time
+          nullable: true
+          example: '2023-10-25T12:00:00.0000000+00:00'
+        travelEndDate:
+          type: string
+          description: Travel end date of the voyage
+          format: date-time
+          nullable: true
+          example: '2023-10-25T12:00:00.0000000+00:00'
+        sellingPriceCurrency:
+          type: string
+          description: Selling price currency of the voyage
+          nullable: true
+          example: USD0
+      additionalProperties: false
+      description: Details about a commission breakdown
+    BookingFinancialRecapDto:
+      type: object
+      properties:
+        totalCharges:
+          type: number
+          description: Total amount charged to the guest
+          format: double
+          nullable: true
+          example: 35000
+        totalPaid:
+          type: number
+          description: Total paid amount
+          format: double
+          nullable: true
+          example: 12500
+        totalDue:
+          type: number
+          description: Total amount to be paid
+          format: double
+          nullable: true
+          example: 22500
+        commission:
+          type: number
+          description: Commission amount
+          format: double
+          nullable: true
+          example: 2750
+        tax:
+          type: number
+          description: Tax amound
+          format: double
+          nullable: true
+          example: 1154
+        portCharges:
+          type: number
+          description: Port charges
+          format: double
+          nullable: true
+          example: 750
+        ncf:
+          type: number
+          description: Non-commissionable fees amount
+          format: double
+          nullable: true
+          example: 145
+      additionalProperties: false
+      description: Financial recap
+    BookingGeneralInformationDto:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          description: Booking unique identifier
+          format: int32
+          example: 1200
+        status:
+          type: string
+          description: 'Booking status: Quote, Option, Booked or Cancelled'
+          nullable: true
+          example: Option
+        currency:
+          type: string
+          description: Booking currency
+          nullable: true
+          example: USD
+        priceType:
+          type: string
+          description: Represents the applied fare
+          nullable: true
+          example: Crystal Entry Level Fare
+        creationDate:
+          type: string
+          description: Date of creation
+          format: date
+          nullable: true
+          example: '2022-12-28'
+        travelStartDate:
+          type: string
+          description: Start date of the journey
+          format: date
+          nullable: true
+          example: '2023-07-31'
+        travelEndDate:
+          type: string
+          description: End date of the journey
+          format: date
+          nullable: true
+          example: '2023-08-22'
+      additionalProperties: false
+      description: General details
+    BookingGuestDto:
+      type: object
+      properties:
+        guestCode:
+          type: integer
+          description: Guest code
+          format: int32
+          nullable: true
+          example: 1
+        title:
+          type: string
+          description: Guest title
+          nullable: true
+          example: Mr.
+        lastName:
+          type: string
+          description: Guest last name
+          nullable: true
+          example: Doe
+        middleName:
+          type: string
+          description: Guest middle name
+          nullable: true
+          example: K.
+        firstName:
+          type: string
+          description: Guest first name
+          nullable: true
+          example: John
+        address:
+          type: string
+          description: Guest address
+          nullable: true
+          example: 1411 Opus Place Executive Tower
+        zip:
+          type: string
+          description: Guest ZIP code
+          nullable: true
+          example: 60515-1098
+        city:
+          type: string
+          description: Guest city
+          nullable: true
+          example: Downers Grove
+        countryCode:
+          type: string
+          description: Guest country code
+          nullable: true
+          example: USA
+        country:
+          type: string
+          description: Guest country
+          nullable: true
+          example: United States of America
+        stateCode:
+          type: string
+          description: Guest state code (if applicable)
+          nullable: true
+          example: IL
+        countyCode:
+          type: string
+          description: Guest county code (if applicable)
+          nullable: true
+          example: ''
+        email:
+          type: string
+          description: Guest email address
+          nullable: true
+          example: john.doe@example.com
+        phone:
+          type: string
+          description: Guest phone number
+          nullable: true
+          example: +1 123456789
+        nationalityCode:
+          type: string
+          description: Guest nationality country code
+          nullable: true
+          example: USA
+        birthDate:
+          type: string
+          description: Guest date of birth
+          format: date
+          nullable: true
+          example: '1980-01-01'
+        birthPlace:
+          type: string
+          description: Guest place of birth
+          nullable: true
+          example: Springfield
+        birthNation:
+          type: string
+          description: Guest nation of birth
+          nullable: true
+          example: USA
+        passportNumber:
+          type: string
+          description: Guest passport number
+          nullable: true
+          example: E00007734
+        passportIssuePlace:
+          type: string
+          description: Where the passport has been issued
+          nullable: true
+          example: Washington
+        passportIssueCountryCode:
+          type: string
+          description: The country code where the passport has been issued
+          nullable: true
+          example: USA
+        passportIssueDate:
+          type: string
+          description: When the passport has been issued
+          format: date
+          nullable: true
+          example: '2022-01-01'
+        passportExpireDate:
+          type: string
+          description: When the passport will expire
+          format: date
+          nullable: true
+          example: '2032-01-01'
+        gender:
+          type: string
+          description: 'Guest genger: M or F'
+          nullable: true
+          example: M
+        type:
+          type: string
+          description: 'Guest type: Adult or Child'
+          nullable: true
+          example: Adult
+        occupation:
+          type: string
+          description: Guest occupation
+          nullable: true
+          example: Manager
+        language:
+          type: string
+          description: Guest main language
+          nullable: true
+          example: EN
+        insuranceStatus:
+          type: string
+          description: Status of the insurance
+          nullable: true
+          example: ''
+        insuranceDeclineDate:
+          type: string
+          description: When the insurance has been declined (if applicable)
+          format: date
+          nullable: true
+          example: '2022-12-01'
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingPriceDto'
+          description: List of booking prices for the given guest
+          nullable: true
+        flightsDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingGuestFlightDto'
+          description: Details about flights
+          nullable: true
+      additionalProperties: false
+      description: Details about a guest
+    BookingGuestFlightDto:
+      type: object
+      properties:
+        pnr:
+          type: string
+          description: PNR code
+          nullable: true
+          example: '111111'
+        pnrStatus:
+          type: string
+          description: PNR status
+          nullable: true
+          example: RESERVED
+        recordLocator:
+          type: string
+          description: ''
+          nullable: true
+          example: OUTB1
+        airClass:
+          type: string
+          description: Air class of the flight
+          nullable: true
+          example: BUSINESS
+        validatingCarrier:
+          type: string
+          description: Validating carrier of the flight
+          nullable: true
+          example: TK
+        flightNumber:
+          type: string
+          description: Validating carrier of the flight
+          nullable: true
+          example: '78'
+        carrier:
+          type: string
+          description: Carrier of the flight
+          nullable: true
+          example: TURK HAVA YOLLARI
+        tripType:
+          type: string
+          description: Trip type of the flight
+          nullable: true
+          example: OPENJAW
+        departureCity:
+          type: string
+          description: Departure city of the flight
+          nullable: true
+          example: Miami
+        departureGateway:
+          type: string
+          description: Departure airport gateway of the flight
+          nullable: true
+          example: MIA
+        departureAirportName:
+          type: string
+          description: Departure airport name of the flight
+          nullable: true
+          example: MIAMI INTERNATIONAL AIRPORT
+        departureDate:
+          type: string
+          description: Departure date of the flight
+          format: date-time
+          nullable: true
+          example: '2023-07-30T12:00:00.0000000+00:00'
+        departureTime:
+          $ref: '#/components/schemas/TimeSpan'
+        arrivalCity:
+          type: string
+          description: Arrival city of the flight
+          nullable: true
+          example: Istanbul
+        arrivalGateway:
+          type: string
+          description: Arrival airport gateway of the flight
+          nullable: true
+          example: IST
+        arrivalAirportName:
+          type: string
+          description: Arrival airport name of the flight
+          nullable: true
+          example: ATATÜRK INTERNATIONAL AIRPORT
+        arrivalTerminal:
+          type: string
+          description: Arrival terminal of the flight
+          nullable: true
+          example: ''
+        arrivalDate:
+          type: string
+          description: Arrival date of the flight
+          format: date-time
+          nullable: true
+          example: '2023-07-31T12:00:00.0000000+00:00'
+        arrivalTime:
+          $ref: '#/components/schemas/TimeSpan'
+        fareTypeCode:
+          type: string
+          description: Fare type code
+          nullable: true
+          example: CDN
+        fareType:
+          type: string
+          description: Fare type name
+          nullable: true
+          example: Cash Discounted Net Rate
+        airType:
+          type: string
+          description: Flight type (OUTBOUND/INBOUND)
+          nullable: true
+          example: OUTBOUND
+      additionalProperties: false
+      description: Details about guest flights
+    BookingHeaderDTO:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          description: The booking unique identifier
+          format: int32
+        bookingName:
+          type: string
+          description: Booking name
+          nullable: true
+        bookingStatus:
+          type: string
+          description: 'Booking status - Quote, Option, Booked, Cancelled, Cancelled with penalty'
+          nullable: true
+        currency:
+          type: string
+          description: Booking currency
+          nullable: true
+        agency:
+          type: string
+          description: Agency who created the booking
+          nullable: true
+        startDate:
+          type: string
+          description: Booking start date
+          format: date
+          nullable: true
+        endDate:
+          type: string
+          description: Booking end date
+          format: date
+          nullable: true
+        days:
+          type: integer
+          description: Duration in days
+          format: int32
+        priceType:
+          type: string
+          description: Booking price type (fare)
+          nullable: true
+        voyageDetail:
+          type: string
+          description: Details of cruises
+          nullable: true
+        creationDate:
+          type: string
+          description: Date of creation
+          format: date
+          nullable: true
+        depositDate:
+          type: string
+          description: Date of the deposit
+          format: date
+          nullable: true
+        confirmationDate:
+          type: string
+          description: Date of confirmation
+          format: date
+          nullable: true
+        cancelDate:
+          type: string
+          description: 'If cancelled, cancel date'
+          format: date
+          nullable: true
+        suiteNumber:
+          type: string
+          description: Suite number
+          nullable: true
+        suiteCategory:
+          type: string
+          description: Suite category
+          nullable: true
+      additionalProperties: false
+    BookingHeaderDTOIEnumerableApiResponseWrapper:
+      type: object
+      properties:
+        body:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingHeaderDTO'
+          description: ''
+          nullable: true
+        statusMessage:
+          type: string
+          description: Http Status Message
+          nullable: true
+        statusCod:
+          type: integer
+          description: Http Status Code
+          format: int32
+        apiVersion:
+          type: number
+          description: Version of the API
+          format: float
+        pageNumber:
+          type: integer
+          description: Current Page Number
+          format: int32
+        recordsCount:
+          type: integer
+          description: Total Number of Items
+          format: int32
+        pageTotal:
+          type: integer
+          description: Total Number of Pages
+          format: int32
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/IApiResponseError'
+          description: Response Errors
+          nullable: true
+      additionalProperties: false
+      description: Generic response wrapper
+    BookingOwnerDto:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 'Owner type: Agency or Direct'
+          nullable: true
+          example: Direct
+        agency:
+          type: string
+          description: Agency name
+          nullable: true
+          example: My Travel Agency
+        lastName:
+          type: string
+          description: Owner last name
+          nullable: true
+          example: Doe
+        middleName:
+          type: string
+          description: Owner middle name
+          nullable: true
+          example: K.
+        firstName:
+          type: string
+          description: Owner first name
+          nullable: true
+          example: John
+        email:
+          type: string
+          description: Owner email address
+          nullable: true
+          example: john.doe@example.com
+        phone:
+          type: string
+          description: Owner phone number
+          nullable: true
+          example: +1 123456789
+        address:
+          type: string
+          description: Owner address
+          nullable: true
+          example: 1411 Opus Place Executive Tower
+        zip:
+          type: string
+          description: Owner ZIP code
+          nullable: true
+          example: 60515-1098
+        city:
+          type: string
+          description: Owner city
+          nullable: true
+          example: Downers Grove
+        countryCode:
+          type: string
+          description: Owner country code
+          nullable: true
+          example: USA
+        country:
+          type: string
+          description: Owner country name
+          nullable: true
+          example: United States of America
+      additionalProperties: false
+      description: Details about the booking owner
+    BookingPaymentDto:
+      type: object
+      properties:
+        dueDate:
+          type: string
+          description: Payment due date
+          format: date
+          nullable: true
+          example: '2023-01-09'
+        amount:
+          type: number
+          description: Payment amount
+          format: double
+          nullable: true
+          example: 3500
+        currency:
+          type: string
+          description: Payment currency
+          nullable: true
+          example: USD
+        finalPayment:
+          type: boolean
+          description: Is this the final payment?
+          example: true
+      additionalProperties: false
+      description: Details about a payment
+    BookingPenaltyDto:
+      type: object
+      properties:
+        packageName:
+          type: string
+          description: Name of the package if applicable
+          nullable: true
+        daysFrom:
+          type: integer
+          description: Number of days before the sailing date from which the penalty is applied in case of cancellation
+          format: int32
+          nullable: true
+          example: 120
+        daysTo:
+          type: integer
+          description: Number of days before the sailing date to which the penalty is applied in case of cancellation
+          format: int32
+          nullable: true
+          example: 75
+        percentage:
+          type: integer
+          description: 'Penaly percentage, if applicable.'
+          format: int32
+          nullable: true
+          example: 20
+        fixedAmount:
+          type: integer
+          description: 'Penalty fixed amount, if applicable'
+          format: int32
+          nullable: true
+          example: 200
+        amount:
+          type: number
+          description: 'Penalty calculated amount from percentage, if applicable'
+          format: double
+          nullable: true
+          example: 7000
+      additionalProperties: false
+      description: Details about a penalty
+    BookingPriceDto:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Price description
+          nullable: true
+          example: Cruise Price
+        amount:
+          type: number
+          description: Price amount
+          format: double
+          nullable: true
+          example: 17500
+        voyageNumber:
+          type: string
+          description: Voyage Number referred to the price
+          nullable: true
+          example: CSE-012-230731
+        message:
+          type: string
+          description: Item message (only for Ship Board Credit items)
+          nullable: true
+      additionalProperties: false
+      description: Details about price
+    BookingVoyageDto:
+      type: object
+      properties:
+        voyageNumber:
+          type: string
+          description: Code of the voyage
+          nullable: true
+          example: CSE-012-230609
+        voyageName:
+          type: string
+          description: Name of the voyage
+          nullable: true
+          example: A star is born - Inaugural Crystal Voyage
+        voyageType:
+          type: string
+          description: Type of the voyage
+          nullable: true
+          example: Classic
+        shipCode:
+          type: string
+          description: Ship code
+          nullable: true
+          example: CSE
+        ship:
+          type: string
+          description: Ship name
+          nullable: true
+          example: Crystal Serenity
+        suiteCategoryCode:
+          type: string
+          description: Code of the suite category
+          nullable: true
+          example: G6
+        suiteCategory:
+          type: string
+          description: Suite category name
+          nullable: true
+          example: Grand Suite - MID/AFT
+        suiteNo:
+          type: string
+          description: Suite number
+          nullable: true
+          example: '105'
+        isGty:
+          type: boolean
+          description: Is a Guarantee?
+          example: false
+        suiteCapacity:
+          type: string
+          description: Capacity of the suite
+          nullable: true
+          example: Double
+        embarkDate:
+          type: string
+          description: Date of embarkation
+          format: date
+          nullable: true
+          example: '2023-06-09'
+        debarkDate:
+          type: string
+          description: Date of debarkation
+          format: date
+          nullable: true
+          example: '2023-06-21'
+        duration:
+          type: integer
+          description: Durantion in days
+          format: int32
+          nullable: true
+          example: 12
+        embarkPortCode:
+          type: string
+          description: Code of port of embarkation
+          nullable: true
+          example: Venice
+        embarkPort:
+          type: string
+          description: Port of embarkation
+          nullable: true
+          example: Venice
+        debarkPortCode:
+          type: string
+          description: Code of port of debarkation
+          nullable: true
+          example: Venice
+        debarkPort:
+          type: string
+          description: Port of debarkation
+          nullable: true
+          example: Barcelona
+        note:
+          type: string
+          description: Booking notes
+          nullable: true
+      additionalProperties: false
+      description: Details about a voyage in a booking
+    BoolResultResponse:
+      type: object
+      properties:
+        result:
+          type: boolean
+          description: Operation result
+      additionalProperties: false
+      description: Response with a boolean result
+    CancelBookingResponse:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          description: The cancelled booking id
+          format: int32
+        bookingStatus:
+          type: string
+          description: The cancelled booking status
+          nullable: true
+      additionalProperties: false
+    GetBookingResponse:
+      type: object
+      properties:
+        bookingInfo:
+          $ref: '#/components/schemas/BookingGeneralInformationDto'
+        owner:
+          $ref: '#/components/schemas/BookingOwnerDto'
+        financialRecap:
+          $ref: '#/components/schemas/BookingFinancialRecapDto'
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingGuestDto'
+          description: Details about guests
+          nullable: true
+        voyages:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingVoyageDto'
+          description: Voyages included in the booking
+          nullable: true
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingPaymentDto'
+          description: Payment schedule
+          nullable: true
+        penalties:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingPenaltyDto'
+          description: Penalties informations
+          nullable: true
+        commissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingCommissionDto'
+          description: Commissions informations
+          nullable: true
+        commissionsItemsBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingCommissionItemBreakdownDto'
+          description: Commissions on the items breakdown
+          nullable: true
+        commissionsVoyagesBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingCommissionVoyageBreakdownDto'
+          description: Commissions on the voyages breakdown
+          nullable: true
+      additionalProperties: false
+      description: Contains information about the requested booking
+    VoyageSuiteRequest:
+      required:
+        - suiteNumber
+        - voyageNumber
+      type: object
+      properties:
+        voyageNumber:
+          maxLength: 15
+          minLength: 1
+          type: string
+          description: Voyage number where the suite has to be held
+          example: CSE-012-230731
+        suiteNumber:
+          type: integer
+          description: Suite number to hold
+          format: int32
+          example: 11028
+      additionalProperties: false
+      description: Information about a suite to hold
+    HoldReleaseSuiteResponse:
+      type: object
+      properties:
+        result:
+          type: boolean
+          description: Operation result
+      additionalProperties: false
+      description: Hold/Release suites operation response
+    IApiResponseError:
+      type: object
+      properties:
+        errorCod:
+          type: string
+          description: Error Code
+          nullable: true
+        errorDesc:
+          type: string
+          description: Error Description
+          nullable: true
+      additionalProperties: false
+      description: Api Response Error
+    OptionCreationRequest:
+      required:
+        - agentEmail
+        - currency
+        - priceTypeCode
+        - voyages
+      type: object
+      properties:
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteOptionGuest'
+          description: Guest list
+          nullable: true
+        agentEmail:
+          maxLength: 80
+          minLength: 1
+          type: string
+          description: Travel Agent email
+          example: jane.doe@travelagency.com
+        priceTypeCode:
+          maxLength: 5
+          minLength: 1
+          type: string
+          description: Price Type Code
+          example: FIT
+        currency:
+          maxLength: 10
+          minLength: 1
+          type: string
+          description: Quote currency
+          example: USD
+        voyages:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoyageSuite'
+          description: Voyage detail list
+        note:
+          maxLength: 255
+          type: string
+          description: Request notes
+          nullable: true
+          example: Open Deposit notes
+      additionalProperties: false
+      description: Booking creation request details
+    PastGuestSearchResponse:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: Past guest first name
+          nullable: true
+          example: John
+        lastName:
+          type: string
+          description: Past guest last name
+          nullable: true
+          example: Doe
+        birthDate:
+          type: string
+          description: Past guest birth date
+          format: date
+          nullable: true
+          example: '1980-01-01'
+        email:
+          type: string
+          description: Past guest email
+          nullable: true
+          example: test@example.com
+        crystalSocietyNumber:
+          type: string
+          description: Crystal Society (loyalty) number
+          nullable: true
+          example: '123456'
+        loyaltyDays:
+          type: integer
+          description: Days earned with the loyalty program
+          format: int32
+          example: 25
+      additionalProperties: false
+      description: Details about a past guest
+    PriceTypeAndCurrency:
+      type: object
+      properties:
+        currencyCode:
+          type: string
+          description: Code of the currency
+          nullable: true
+        priceTypeCode:
+          type: string
+          description: Code of the price type
+          nullable: true
+        priceTypeName:
+          type: string
+          description: Code of the price name
+          nullable: true
+      additionalProperties: false
+      description: Price type and currency combination available for the booking
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: { }
+    QuoteCreationRequest:
+      required:
+        - currency
+        - priceTypeCode
+        - voyages
+      type: object
+      properties:
+        guests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteOptionGuest'
+          description: Guest list
+          nullable: true
+        agentEmail:
+          maxLength: 80
+          type: string
+          description: Travel Agent email
+          nullable: true
+          example: jane.doe@travelagency.com
+        priceTypeCode:
+          maxLength: 5
+          minLength: 1
+          type: string
+          description: Price Type Code
+          example: FIT
+        currency:
+          maxLength: 10
+          minLength: 1
+          type: string
+          description: Quote currency
+          example: USD
+        voyages:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteVoyage'
+          description: Voyage detail list
+        note:
+          maxLength: 255
+          type: string
+          description: Request notes
+          nullable: true
+          example: Open Deposit notes
+      additionalProperties: false
+      description: Website Quote Creation Request details
+    QuoteOptionCreationResponse:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          description: Id of the newly created booking
+          format: int64
+          nullable: true
+      additionalProperties: false
+      description: Option creation response
+    QuoteVoyage:
+      required:
+        - suiteCapacity
+        - suiteCategoryCode
+        - voyageNumber
+      type: object
+      properties:
+        voyageNumber:
+          maxLength: 15
+          minLength: 1
+          type: string
+          description: Voyage number
+          example: CSE-012-230609
+        suiteCategoryCode:
+          maxLength: 6
+          minLength: 1
+          type: string
+          description: Suite Category Code
+          example: G6
+        suiteCapacity:
+          maximum: 6
+          minimum: 1
+          type: integer
+          description: Suite Capacity
+          format: int32
+          example: 2
+      additionalProperties: false
+      description: Details about voyage to quote
+    SendBookingInvoiceRequest:
+      required:
+        - emailAddress
+      type: object
+      properties:
+        emailAddress:
+          maxLength: 80
+          minLength: 1
+          type: string
+          description: The email address to send the invoice
+          format: email
+          example: john.doe@example.com
+        ccEmailAddress:
+          maxLength: 80
+          type: string
+          description: The CC email address to send the invoice
+          format: email
+          nullable: true
+          example: jane.doe@example.com
+      additionalProperties: false
+      description: Send booking invoice request details
+    SendBookingPaymentLinkRequest:
+      required:
+        - emailAddress
+      type: object
+      properties:
+        emailAddress:
+          maxLength: 80
+          minLength: 1
+          type: string
+          description: The email address to send the payment link
+          format: email
+          example: john.doe@example.com
+      additionalProperties: false
+      description: Send booking payment link request details
+    TimeSpan:
+      type: object
+      properties:
+        ticks:
+          type: integer
+          format: int64
+        days:
+          type: integer
+          format: int32
+          readOnly: true
+        hours:
+          type: integer
+          format: int32
+          readOnly: true
+        milliseconds:
+          type: integer
+          format: int32
+          readOnly: true
+        minutes:
+          type: integer
+          format: int32
+          readOnly: true
+        seconds:
+          type: integer
+          format: int32
+          readOnly: true
+        totalDays:
+          type: number
+          format: double
+          readOnly: true
+        totalHours:
+          type: number
+          format: double
+          readOnly: true
+        totalMilliseconds:
+          type: number
+          format: double
+          readOnly: true
+        totalMinutes:
+          type: number
+          format: double
+          readOnly: true
+        totalSeconds:
+          type: number
+          format: double
+          readOnly: true
+      additionalProperties: false
+    VoyageSuite:
+      required:
+        - suiteCategoryCode
+        - suiteNumber
+        - voyageNumber
+      type: object
+      properties:
+        voyageNumber:
+          maxLength: 15
+          minLength: 1
+          type: string
+          description: Voyage number
+          example: CSE-012-230609
+        suiteCategoryCode:
+          maxLength: 6
+          minLength: 1
+          type: string
+          description: Suite Category Code
+          example: SVVM
+        suiteNumber:
+          type: integer
+          description: Suite number
+          format: int32
+          example: 10040
+      additionalProperties: false
+      description: Details about voyage to quote
+    BookingApiAvailableSuitesResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            availability:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - sailDate
+                  - ship
+                  - suiteCategoryCod
+                  - suiteCategory
+                  - suiteNumber
+                  - suiteStatus
+                  - statusDesc
+                  - suiteCapacity
+                  - ada
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                    description: Voyage code
+                  sailDate:
+                    type: string
+                    description: Departure date
+                    format: date-time
+                  ship:
+                    type: string
+                    description: Ship name
+                  suiteCategoryCod:
+                    type: string
+                    description: Suite category code
+                  suiteCategory:
+                    type: string
+                    description: Suite category name
+                  suiteNumber:
+                    type: string
+                    description: Suite number
+                  suiteStatus:
+                    type: string
+                    description: Status of the suite
+                  statusDesc:
+                    type: string
+                    description: Description of suite status
+                  suiteCapacity:
+                    type: string
+                    description: 'Suite capacity: Double, Triple, Quad...'
+                  ada:
+                    type: boolean
+                    description: Suite for people with disabilities
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+      example:
+        body:
+          suiteAvailability:
+            - voyageNumber: CSE-012-230731
+              sailDate: '2023-07-31T12:00:00.0000000+00:00'
+              ship: Crystal Serenity
+              suiteCategoryCod: SSVM
+              suiteCategory: SSVM - Aquamarine Veranda Suite
+              suiteNumber: '10047'
+              suiteStatus: ''
+              statusDesc: Available
+              suiteCapacity: Double
+              ada: false
+        statusMessage: OK
+        statusCod: 200
+        apiVersion: 1
+        pageNumber: 1
+        recordsCount: 1
+        pageTotal: 1
+        errors: [ ]
+    BookingApiAvailabilityResponse:
+      type: object
+      properties:
+        body:
+          type: object
+          properties:
+            availability:
+              type: array
+              items:
+                required:
+                  - voyageNumber
+                  - sailDate
+                  - shipCod
+                  - ship
+                  - categoryCod
+                  - category
+                  - totAV
+                  - totGTY
+                  - sgl
+                  - sglGTY
+                  - dbl
+                  - dblGTY
+                  - trip
+                  - tripGTY
+                  - quad
+                  - quadGTY
+                  - quin
+                  - quinGTY
+                  - six
+                  - sixGTY
+                  - priceTypeName
+                  - priceTypeCod
+                  - priceSingle
+                  - priceDouble
+                  - priceExtraGuest
+                  - priceChild
+                  - pastCCPriceSingle
+                  - pastCCPriceDouble
+                  - pastCCPriceExtraGuest
+                  - pastCCPriceChild
+                  - pastGuestDiscount
+                  - currency
+                  - tax
+                  - portCharge
+                  - ncf
+                  - displayPrice
+                type: object
+                properties:
+                  voyageNumber:
+                    type: string
+                    description: Voyage code
+                  sailDate:
+                    type: string
+                    description: Departure date
+                  shipCod:
+                    type: string
+                    description: Ship code
+                  ship:
+                    type: string
+                    description: Ship name
+                  categoryCod:
+                    type: string
+                    description: Suite category code
+                  category:
+                    type: string
+                    description: Suite category name
+                  totAV:
+                    type: integer
+                    description: Total suites available
+                  totGTY:
+                    type: integer
+                    description: Total guarantees available
+                  sgl:
+                    type: integer
+                    description: Total single suites available
+                  sglGTY:
+                    type: integer
+                    description: Total single guarantees available
+                  dbl:
+                    type: integer
+                    description: Total double suites available
+                  dblGTY:
+                    type: integer
+                    description: Total double guarantees available
+                  trip:
+                    type: integer
+                    description: Total triple suites available
+                  tripGTY:
+                    type: integer
+                    description: Total triple guarantees available
+                  quad:
+                    type: integer
+                    description: Total quadruple suites available
+                  quadGTY:
+                    type: integer
+                    description: Total quadruple guarantees available
+                  quin:
+                    type: integer
+                    description: Total quintuple suites available
+                  quinGTY:
+                    type: integer
+                    description: Total quintuple guarantees available
+                  six:
+                    type: integer
+                    description: Total six-guests suites available
+                  sixGTY:
+                    type: integer
+                    description: Total six-guests guarantees available
+                  priceTypeName:
+                    type: string
+                    description: Price type (fare) name
+                  priceTypeCod:
+                    type: string
+                    description: Price type (fare) code
+                  priceSingle:
+                    type: number
+                    description: Single occupancy price
+                  priceDouble:
+                    type: number
+                    description: 'Double occupancy (standard) price, per guest'
+                  priceExtraGuest:
+                    type: number
+                    description: Extra guest price
+                  priceChild:
+                    type: number
+                    description: Child price
+                  pastCCPriceSingle:
+                    type: number
+                    description: Single occupancy Past Guest price
+                  pastCCPriceDouble:
+                    type: number
+                    description: 'Double occupancy (standard) Past Guest price, per guest'
+                  pastCCPriceExtraGuest:
+                    type: number
+                    description: Extra guest Past Guest price
+                  pastCCPriceChild:
+                    type: number
+                    description: Child Past Guest price
+                  pastGuestDiscount:
+                    type: number
+                    description: Past guest loyalty discount
+                  currency:
+                    type: string
+                    description: Currency code
+                  tax:
+                    type: number
+                    description: Tax amount
+                  portCharge:
+                    type: number
+                    description: Port charge
+                  ncf:
+                    type: number
+                    description: Non commissionable fees amount
+                  displayPrice:
+                    type: number
+                    description: Price to be displayed
+                  isStartingPrice:
+                    type: boolean
+                    description: Starting price
+                  maxCapacity:
+                    type: integer
+                    description: Suite category max capacity
+        statusMessage:
+          type: string
+          description: OK or KO
+        statusCod:
+          type: integer
+          description: HTTP status code
+        apiVersion:
+          type: integer
+          description: Api version number
+        pageNumber:
+          type: integer
+          description: Current page number
+        recordsCount:
+          type: integer
+          description: Total number of retrieved items
+        pageTotal:
+          type: integer
+          description: 'Total page number, based on selected page size'
+        errors:
+          type: array
+          description: List of errors
+      example:
+        body:
+          availability:
+            - voyageNumber: CSE-012-230731
+              sailDate: '2023-07-31T00:00:00Z'
+              shipCod: CSE
+              ship: Crystal Serenity
+              categoryCod: CHV5
+              category: CHV5 - Crystal Penthouse Suite
+              totAV: 0
+              totGTY: 38
+              sgl: 0
+              sglGTY: 0
+              dbl: 0
+              dblGTY: 27
+              trip: 0
+              tripGTY: 0
+              quad: 0
+              quadGTY: 11
+              quin: 0
+              quinGTY: 0
+              six: 0
+              sixGTY: 0
+              priceTypeName: FIT Regular Fare
+              priceTypeCod: FIT
+              priceSingle: 44200
+              priceDouble: 25400
+              priceExtraGuest: 17600
+              priceChild: 10000
+              pastCCPriceSingle: 41990
+              pastCCPriceDouble: 24130
+              pastCCPriceExtraGuest: 16720
+              pastCCPriceChild: 9500
+              pastGuestDiscount: 5
+              currency: USD
+              tax: 0
+              portCharge: 700
+              ncf: 0
+              displayPrice: 50800
+              isStartingPrice: false
+              maxCapacity: 4
+        statusMessage: OK
+        statusCod: 200
+        apiVersion: 1
+        pageNumber: 1
+        recordsCount: 1
+        pageTotal: 1
+        errors: [ ]
+    QuoteOptionGuest:
+      required:
+        - firstName
+        - lastName
+      type: object
+      properties:
+        title:
+          type: string
+          description: Guest title
+          nullable: true
+          example: Mr
+        firstName:
+          maxLength: 128
+          minLength: 1
+          type: string
+          description: Guest first name
+          example: John
+        lastName:
+          maxLength: 128
+          minLength: 1
+          type: string
+          description: Guest last name
+          example: Doe
+        email:
+          maxLength: 80
+          type: string
+          description: Guest email - For Option creation at least one guest should have a valid email address
+          format: email
+          example: john.doe@example.com
+        phone:
+          maxLength: 25
+          type: string
+          description: Guest phone
+          nullable: true
+          example: +1 (123) 456-7890
+        gender:
+          maxLength: 1
+          pattern: M|F
+          type: string
+          description: Guest gender - M or F
+          nullable: true
+        countryISO3Code:
+          maxLength: 3
+          minLength: 3
+          type: string
+          description: Guest country ISO3 code
+          nullable: true
+          example: USA
+        zip:
+          type: string
+          description: Guest ZIP code
+          nullable: true
+          example: 60515-1098
+        city:
+          type: string
+          description: Guest city
+          nullable: true
+          example: Downers Grove
+        countryCode:
+          type: string
+          description: Guest country code
+          nullable: true
+          example: USA
+        country:
+          type: string
+          description: Guest country
+          nullable: true
+          example: United States of America
+        stateCode:
+          type: string
+          description: Guest state code (if applicable)
+          nullable: true
+          example: IL
+        guestType:
+          pattern: Adult|Child
+          type: string
+          description: 'Guest type, Adult or Child - Default Adult'
+          nullable: true
+          example: Adult
+        crystalSocietyMember:
+          type: boolean
+          description: True if the guest is a Crystal Society member
+          example: true
+        crystaSocietyNumber:
+          maxLength: 30
+          type: string
+          description: 'PLEASE NOTE: Not yet used. Guest Crystal Society Number, if you don''t remember the number leave it empty and set to true the CrystalSocietyMember property'
+          nullable: true
+          example: '12345678'
+      additionalProperties: false
+      description: Details about guest
+tags:
+  - name: Bookings
+    description: API To create bookings

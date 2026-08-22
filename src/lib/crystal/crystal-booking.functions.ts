@@ -78,3 +78,17 @@ export const verifyCrystalBookingReadOnly = createServerFn({ method: "POST" })
     const { verifyBookingReadOnly } = await import("./aktg-booking.server");
     return { probes: await verifyBookingReadOnly() };
   });
+
+/** Read-only supplier booking history for a reservation the caller owns. */
+export const getCrystalBookingHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ bookingId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { crystalBookingHistory } = await import("./booking.server");
+    const result = await crystalBookingHistory(context.supabase, data.bookingId);
+    // Serialised as JSON text: the supplier payload shape is supplier-defined.
+    return {
+      supplierSynced: result.supplierSynced,
+      history: result.history ? JSON.stringify(result.history) : null,
+    };
+  });

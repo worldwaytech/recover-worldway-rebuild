@@ -147,24 +147,26 @@ export async function holdCrystalVoyage(
   let holdExpiresAt: string | undefined;
   let blockedReason: string | undefined;
 
-  if (capability.live) {
+  // Spec: POST /v1/Bookings/suites holds one or more suites before booking
+  // creation, and requires an integer suiteNumber per voyage. Without an
+  // allocated suite number we never call the supplier (fail-closed) and the
+  // request is routed to the Crystal desk instead.
+  const suiteNumber = input.suiteNumber;
+  if (capability.live && suiteNumber === undefined) {
+    blockedReason = "booking_api_not_configured";
+  } else if (capability.live) {
     try {
       const raw = await bookingCall<unknown>({
         operation: "prebook",
-        body: {
-          voyageNumber: input.voyageNumber,
-          currency: input.currency,
-          fareCode: match.fareCode,
-          gradeId: match.gradeId,
-          guests: input.guests,
-          leadContact: { email: input.leadEmail, phone: input.leadPhone },
-          notes: input.notes,
-        },
+        body: [{ voyageNumber: input.voyageNumber, suiteNumber }],
         idempotencyKey: input.idempotencyKey,
       });
       const norm = normaliseSupplierBooking(raw);
-      supplierReference = norm.supplierReference;
-      supplierStatusRaw = norm.supplierStatus ?? "held";
+      const held =
+        norm.supplierReference !== undefined ||
+        (raw as { result?: boolean } | null)?.result === true;
+      supplierReference = norm.supplierReference ?? (held ? String(suiteNumber) : undefined);
+      supplierStatusRaw = norm.supplierStatus ?? (held ? "held" : undefined);
       holdExpiresAt = norm.holdExpiresAt;
     } catch (err) {
       if (err instanceof CrystalBookingUnavailableError) blockedReason = err.reason;
@@ -201,6 +203,7 @@ export async function holdCrystalVoyage(
       voyageNumber: input.voyageNumber,
       shipName: input.shipName ?? null,
       suiteCategory: match.suiteCategory,
+      suiteNumber: input.suiteNumber ?? null,
       gradeId: match.gradeId ?? null,
       gradeName: match.gradeName ?? null,
       fareCode: match.fareCode ?? null,
@@ -323,9 +326,52 @@ export async function confirmCrystalBooking(
     };
   }
 
+  // Spec: POST /v1/Bookings/option — creates the firm booking (Option) from the
+  // held suite. agentEmail, priceTypeCode, currency and voyages are required.
+  const d = row.details as Record<string, unknown>;
+  const agentEmail = (process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] ?? "").trim();
+  const priceTypeCode = String(d.fareCode ?? "").trim();
+  const suiteCategoryCode = String(d.suiteCategory ?? "").trim();
+  const suiteNumber = Number(d.suiteNumber ?? NaN);
+  if (!agentEmail || !priceTypeCode || !suiteCategoryCode || !Number.isFinite(suiteNumber)) {
+    await event(client, row.id, "booking-request", "Option creation deferred to the Crystal desk.", {
+      missing: {
+        agentEmail: !agentEmail,
+        priceTypeCode: !priceTypeCode,
+        suiteCategoryCode: !suiteCategoryCode,
+        suiteNumber: !Number.isFinite(suiteNumber),
+      },
+    });
+    return {
+      booking: toRecord(row),
+      confirmed: false,
+      blockedReason: "booking_api_not_configured",
+      message:
+        "Your reservation is with our Crystal desk — the supplier option payload is not fully configured for this account.",
+    };
+  }
   const raw = await bookingCall<unknown>({
     operation: "option",
-    body: { bookingReference: row.supplier_reference },
+    body: {
+      guests: (Array.isArray(d.guests) ? (d.guests as Record<string, unknown>[]) : []).map((g) => ({
+        firstName: g.firstName,
+        lastName: g.lastName,
+        ...(g.email ? { email: g.email } : {}),
+        ...(g.phone ? { phone: g.phone } : {}),
+        ...(g.nationality ? { countryISO3Code: g.nationality } : {}),
+      })),
+      agentEmail,
+      priceTypeCode,
+      currency: row.currency,
+      voyages: [
+        {
+          voyageNumber: String(d.voyageNumber ?? ""),
+          suiteCategoryCode,
+          suiteNumber,
+        },
+      ],
+      ...(d.notes ? { note: String(d.notes).slice(0, 255) } : {}),
+    },
     idempotencyKey,
     reference: row.reference,
   });
@@ -369,8 +415,7 @@ export async function retrieveCrystalBooking(
   try {
     const raw = await bookingCall<unknown>({
       operation: "retrieve",
-      method: "GET",
-      query: { bookingReference: row.supplier_reference },
+      pathParams: { bookingId: row.supplier_reference },
       reference: row.reference,
     });
     const norm = normaliseSupplierBooking(raw);
@@ -421,7 +466,7 @@ export async function cancelCrystalBooking(
   if (capability.live && row.supplier_reference) {
     const raw = await bookingCall<unknown>({
       operation: "cancel",
-      body: { bookingReference: row.supplier_reference, reason },
+      pathParams: { bookingId: row.supplier_reference },
       reference: row.reference,
     });
     const norm = normaliseSupplierBooking(raw);
@@ -469,4 +514,27 @@ export async function cancelCrystalBooking(
     message:
       "Cancellation requested — our Crystal desk will process it with the cruise line and confirm penalties.",
   };
+}
+
+/**
+ * Booking history (spec: GET /v1/bookings/history/{bookingId}) — read-only.
+ * Returns null when the rail is not armed or no supplier reference exists.
+ */
+export async function crystalBookingHistory(
+  client: Client,
+  bookingId: string,
+): Promise<{ history: Record<string, unknown> | null; supplierSynced: boolean }> {
+  const row = await ownedBooking(client, bookingId);
+  const capability = bookingCapability();
+  if (!capability.live || !row.supplier_reference) return { history: null, supplierSynced: false };
+  try {
+    const raw = await bookingCall<Record<string, unknown>>({
+      operation: "history",
+      pathParams: { bookingId: row.supplier_reference },
+      reference: row.reference,
+    });
+    return { history: raw, supplierSynced: true };
+  } catch {
+    return { history: null, supplierSynced: false };
+  }
 }
