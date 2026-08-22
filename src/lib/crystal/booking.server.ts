@@ -147,24 +147,26 @@ export async function holdCrystalVoyage(
   let holdExpiresAt: string | undefined;
   let blockedReason: string | undefined;
 
-  if (capability.live) {
+  // Spec: POST /v1/Bookings/suites holds one or more suites before booking
+  // creation, and requires an integer suiteNumber per voyage. Without an
+  // allocated suite number we never call the supplier (fail-closed) and the
+  // request is routed to the Crystal desk instead.
+  const suiteNumber = input.suiteNumber;
+  if (capability.live && suiteNumber === undefined) {
+    blockedReason = "booking_api_not_configured";
+  } else if (capability.live) {
     try {
       const raw = await bookingCall<unknown>({
         operation: "prebook",
-        body: {
-          voyageNumber: input.voyageNumber,
-          currency: input.currency,
-          fareCode: match.fareCode,
-          gradeId: match.gradeId,
-          guests: input.guests,
-          leadContact: { email: input.leadEmail, phone: input.leadPhone },
-          notes: input.notes,
-        },
+        body: [{ voyageNumber: input.voyageNumber, suiteNumber }],
         idempotencyKey: input.idempotencyKey,
       });
       const norm = normaliseSupplierBooking(raw);
-      supplierReference = norm.supplierReference;
-      supplierStatusRaw = norm.supplierStatus ?? "held";
+      const held =
+        norm.supplierReference !== undefined ||
+        (raw as { result?: boolean } | null)?.result === true;
+      supplierReference = norm.supplierReference ?? (held ? String(suiteNumber) : undefined);
+      supplierStatusRaw = norm.supplierStatus ?? (held ? "held" : undefined);
       holdExpiresAt = norm.holdExpiresAt;
     } catch (err) {
       if (err instanceof CrystalBookingUnavailableError) blockedReason = err.reason;
