@@ -10,7 +10,45 @@ export type CrystalBookingBlockReason =
   | "booking_api_not_configured"
   | "booking_api_disabled"
   | "channel_context_missing"
+  | "egress_not_confirmed"
+  | "not_certified"
   | "credentials_missing";
+
+/** One activation gate in the Crystal PROD readiness check. */
+export type CrystalGateState = "green" | "amber" | "red" | "unknown";
+
+export interface CrystalReadinessGate {
+  id:
+    | "connectivity"
+    | "entitlement"
+    | "sales_channel"
+    | "office_id"
+    | "egress"
+    | "operations_mapped"
+    | "read_only_verification"
+    | "certification"
+    | "activation";
+  label: string;
+  state: CrystalGateState;
+  /** Human-readable status shown in the admin console (never a credential). */
+  detail: string;
+  /** Exact remaining blocker when the gate is not green. */
+  blocker?: string;
+}
+
+export interface CrystalProdReadiness {
+  generatedAt: string;
+  /** True only when every gate is green; LIVE activation is refused otherwise. */
+  readyForLive: boolean;
+  /** Current value of the CRYSTAL_BOOKING_ENABLED switch. */
+  bookingEnabledFlag: boolean;
+  /** Whether the rail is actually armed right now (capability.live). */
+  railArmed: boolean;
+  gates: CrystalReadinessGate[];
+  blockers: string[];
+  /** Whether live read-only PROD probes were executed for this report. */
+  probed: boolean;
+}
 
 /** Server-side supplier channel context required on every booking call. */
 export interface CrystalChannelContextState {
@@ -116,18 +154,20 @@ export const CRYSTAL_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
   "cancel",
 ];
 
-/** Supporting operations: optional, and safe to call read-only when configured. */
+/**
+ * Supporting operations that never mutate supplier state, so they are safe to
+ * call during PROD verification. `suites` (DELETE = release hold) and
+ * `pricebreakdown` (POST) are deliberately excluded because they are not reads.
+ */
 export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
   "retrieve",
   "history",
   "list",
   "availability",
-  "suites",
   "netfares",
   "pricetypes",
   "promotions",
   "pastguest",
-  "pricebreakdown",
 ];
 
 export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] =
