@@ -154,18 +154,20 @@ export const CRYSTAL_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
   "cancel",
 ];
 
-/** Supporting operations: optional, and safe to call read-only when configured. */
+/**
+ * Supporting operations that never mutate supplier state, so they are safe to
+ * call during PROD verification. `suites` (DELETE = release hold) and
+ * `pricebreakdown` (POST) are deliberately excluded because they are not reads.
+ */
 export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
   "retrieve",
   "history",
   "list",
   "availability",
-  "suites",
   "netfares",
   "pricetypes",
   "promotions",
   "pastguest",
-  "pricebreakdown",
 ];
 
 export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] =
