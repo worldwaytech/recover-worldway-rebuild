@@ -183,7 +183,50 @@ export function bookingCapability(): CrystalBookingCapability {
       detail: `AKTG Booking API operations still missing: ${missing.join(", ")}.`,
     };
   }
+  // Activation gates: our server egress must be confirmed on AKTG's allowlist,
+  // and AKTG must have certified this account, before the rail may arm.
+  if (!egressConfirmed()) {
+    return {
+      ...base,
+      channel,
+      live: false,
+      operations: ops,
+      reason: "egress_not_confirmed",
+      detail:
+        "AKTG has not confirmed that our server egress IP is allowlisted on the Booking API host.",
+    };
+  }
+  if (!certified()) {
+    return {
+      ...base,
+      channel,
+      live: false,
+      operations: ops,
+      reason: "not_certified",
+      detail: "AKTG Booking API certification sign-off has not been recorded for this account.",
+    };
+  }
   return { ...base, channel, live: true, operations: ops, detail: "AKTG Booking API armed." };
+}
+
+/** Set to "true" only after AKTG confirms our outbound IP is allowlisted. */
+export function egressConfirmed(): boolean {
+  return env("CRYSTAL_BOOKING_EGRESS_CONFIRMED").toLowerCase() === "true";
+}
+
+/** Set to "true" only after AKTG signs off Booking API certification. */
+export function certified(): boolean {
+  return env("CRYSTAL_BOOKING_CERTIFIED").toLowerCase() === "true";
+}
+
+/** Whether the operator has flipped the LIVE switch (gates still apply). */
+export function bookingEnabledFlag(): boolean {
+  return env("CRYSTAL_BOOKING_ENABLED").toLowerCase() === "true";
+}
+
+/** Presence-only credential state for the readiness report. */
+export function bookingCredentialConfigured(): boolean {
+  return Boolean(apiKey());
 }
 
 /**
