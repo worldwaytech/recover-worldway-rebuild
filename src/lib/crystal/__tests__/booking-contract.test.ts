@@ -265,6 +265,8 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
     process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
     process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
     process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
+    process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
     await expect(bookingCall({ operation: "retrieve" })).rejects.toThrow(/bookingId/);
   });
 
