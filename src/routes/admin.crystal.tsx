@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCrystalConnectorStatus, runCrystalSync } from "@/lib/crystal/crystal.functions";
-import { getCrystalBookingDiagnostics } from "@/lib/crystal/crystal-booking.functions";
+import {
+  getCrystalBookingDiagnostics,
+  getCrystalProdReadiness,
+} from "@/lib/crystal/crystal-booking.functions";
 import type { CrystalConnectorStatus } from "@/lib/crystal/connector.server";
+import type { CrystalGateState, CrystalProdReadiness } from "@/lib/crystal/booking-contract";
 
 
 export const Route = createFileRoute("/admin/crystal")({
@@ -26,14 +30,95 @@ export const Route = createFileRoute("/admin/crystal")({
 
 type BookingDiagnostics = Awaited<ReturnType<typeof getCrystalBookingDiagnostics>>;
 
+const GATE_VARIANT: Record<CrystalGateState, "default" | "secondary" | "destructive" | "outline"> = {
+  green: "default",
+  amber: "secondary",
+  red: "destructive",
+  unknown: "outline",
+};
+
+function ReadinessPanel({
+  readiness,
+  onProbe,
+  busy,
+}: {
+  readiness: CrystalProdReadiness;
+  onProbe: () => void;
+  busy: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+        <CardTitle>Crystal PROD readiness check</CardTitle>
+        <div className="flex items-center gap-2">
+          <Badge variant={readiness.readyForLive ? "default" : "destructive"}>
+            {readiness.readyForLive ? "ALL GATES GREEN" : "NOT READY FOR LIVE"}
+          </Badge>
+          <Button variant="outline" size="sm" onClick={onProbe} disabled={busy}>
+            {busy ? "Checking…" : "Run read-only PROD check"}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <p className="text-muted-foreground">
+          Generated {readiness.generatedAt} · CRYSTAL_BOOKING_ENABLED ={" "}
+          {String(readiness.bookingEnabledFlag)} · rail{" "}
+          {readiness.railArmed ? "armed" : "fail-closed"} ·{" "}
+          {readiness.probed ? "read-only PROD probe executed" : "no supplier call made"}
+        </p>
+        <ul className="space-y-2">
+          {readiness.gates.map((g) => (
+            <li key={g.id} className="flex flex-wrap items-start gap-2">
+              <Badge variant={GATE_VARIANT[g.state]}>{g.state.toUpperCase()}</Badge>
+              <span className="font-medium">{g.label}</span>
+              <span className="text-muted-foreground">{g.detail}</span>
+              {g.blocker ? (
+                <span className="w-full text-xs text-destructive">Blocker: {g.blocker}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <div>
+          <p className="text-muted-foreground">Remaining blockers before LIVE activation</p>
+          {readiness.blockers.length === 0 ? (
+            <p>
+              None. Every gate is green — CRYSTAL_BOOKING_ENABLED=true may now be set to go LIVE.
+            </p>
+          ) : (
+            <ol className="mt-1 list-decimal space-y-1 pl-5">
+              {readiness.blockers.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function CrystalConsole() {
   const fetchStatus = useServerFn(getCrystalConnectorStatus);
   const sync = useServerFn(runCrystalSync);
   const fetchBooking = useServerFn(getCrystalBookingDiagnostics);
+  const fetchReadiness = useServerFn(getCrystalProdReadiness);
   const [status, setStatus] = useState<CrystalConnectorStatus | null>(null);
   const [booking, setBooking] = useState<BookingDiagnostics | null>(null);
+  const [readiness, setReadiness] = useState<CrystalProdReadiness | null>(null);
+  const [probing, setProbing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+
+  async function runReadiness(probe: boolean) {
+    setProbing(true);
+    try {
+      setReadiness((await fetchReadiness({ data: { probe } })) as CrystalProdReadiness);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Readiness check failed.");
+    } finally {
+      setProbing(false);
+    }
+  }
 
   async function refresh(health = false) {
     setLoading(true);
@@ -49,6 +134,7 @@ function CrystalConsole() {
 
   useEffect(() => {
     void refresh(false);
+    void runReadiness(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -87,6 +173,15 @@ function CrystalConsole() {
       </div>
 
       {loading && !status ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
+
+      {readiness ? (
+        <ReadinessPanel
+          readiness={readiness}
+          busy={probing}
+          onProbe={() => void runReadiness(true)}
+        />
+      ) : null}
+
 
       {status ? (
         <>

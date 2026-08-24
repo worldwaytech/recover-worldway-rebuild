@@ -79,6 +79,20 @@ export const verifyCrystalBookingReadOnly = createServerFn({ method: "POST" })
     return { probes: await verifyBookingReadOnly() };
   });
 
+/**
+ * Admin-only Crystal PROD readiness check. Never mutates supplier state:
+ * with `probe: true` it performs one documented parameter-free GET only.
+ */
+export const getCrystalProdReadiness = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ probe: z.boolean().default(false) }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { crystalProdReadiness } = await import("./readiness.server");
+    return crystalProdReadiness(data.probe);
+  });
+
 /** Read-only supplier booking history for a reservation the caller owns. */
 export const getCrystalBookingHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

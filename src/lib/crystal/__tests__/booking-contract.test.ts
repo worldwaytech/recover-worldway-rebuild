@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { holdInputSchema, mapSupplierStatus } from "../booking-contract";
 
 const ENV_KEYS = [
@@ -22,6 +22,8 @@ const ENV_KEYS = [
   "CRYSTAL_BOOKING_PATH_PRICETYPES",
   "CRYSTAL_BOOKING_PATH_PROMOTIONS",
   "CRYSTAL_BOOKING_PATH_PASTGUEST",
+  "CRYSTAL_BOOKING_EGRESS_CONFIRMED",
+  "CRYSTAL_BOOKING_CERTIFIED",
 ] as const;
 
 const snapshot: Record<string, string | undefined> = {};
@@ -117,7 +119,71 @@ describe("booking rail is fail-closed", () => {
     process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
     expect(bookingCapability().reason).toBe("channel_context_missing");
     process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    // Egress + certification gates keep the rail closed even with credentials.
+    expect(bookingCapability().reason).toBe("egress_not_confirmed");
+    process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
+    expect(bookingCapability().reason).toBe("not_certified");
+    process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
     expect(bookingCapability().live).toBe(true);
+  });
+});
+
+describe("Crystal PROD readiness check", () => {
+  it("reports every gate and refuses LIVE while blockers remain", async () => {
+    const { crystalProdReadiness } = await import("../readiness.server");
+    delete process.env["CRYSTAL_BOOKING_SALES_CHANNEL"];
+    delete process.env["CRYSTAL_BOOKING_OFFICE_ID"];
+    delete process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"];
+    delete process.env["CRYSTAL_BOOKING_CERTIFIED"];
+    delete process.env["CRYSTAL_BOOKING_ENABLED"];
+    const report = await crystalProdReadiness(false);
+    expect(report.probed).toBe(false);
+    expect(report.readyForLive).toBe(false);
+    expect(report.railArmed).toBe(false);
+    expect(report.gates.map((g) => g.id)).toEqual([
+      "connectivity",
+      "entitlement",
+      "sales_channel",
+      "office_id",
+      "egress",
+      "operations_mapped",
+      "read_only_verification",
+      "certification",
+      "activation",
+    ]);
+    expect(report.blockers.length).toBeGreaterThan(0);
+    expect(report.gates.find((g) => g.id === "activation")?.state).toBe("red");
+  });
+
+  it("only turns every gate green when all AKTG gates are satisfied", async () => {
+    process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
+    process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
+    process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
+    process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
+    const { crystalProdReadiness } = await import("../readiness.server");
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}", { status: 200 }));
+    try {
+      const report = await crystalProdReadiness(true);
+      expect(report.probed).toBe(true);
+      expect(report.blockers).toEqual([]);
+      expect(report.readyForLive).toBe(true);
+      // Enabled flag still false → activation is amber, never auto-enabled.
+      expect(report.gates.find((g) => g.id === "activation")?.state).toBe("amber");
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it("never probes a mutating operation", async () => {
+    const { probeBookingConnectivity } = await import("../aktg-booking.server");
+    for (const op of ["option", "cancel", "prebook", "suites", "invoice"] as const) {
+      const res = await probeBookingConnectivity(op);
+      expect(res.attempted).toBe(false);
+      expect(res.detail).toContain("GET");
+    }
   });
 });
 
@@ -199,6 +265,8 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
     process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
     process.env["CRYSTAL_BOOKING_SALES_CHANNEL"] = "channel";
     process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
+    process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
+    process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
     await expect(bookingCall({ operation: "retrieve" })).rejects.toThrow(/bookingId/);
   });
 

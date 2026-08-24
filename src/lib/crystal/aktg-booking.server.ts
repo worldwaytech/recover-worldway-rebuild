@@ -482,3 +482,95 @@ export async function verifyBookingReadOnly(
   }
   return results;
 }
+
+/**
+ * Strictly GET-only PROD probe used by the admin readiness check.
+ *
+ * Unlike `verifyBookingReadOnly` this runs even while the rail is disabled — it
+ * is the only way to establish connectivity and entitlement *before* activation.
+ * It refuses anything that is not a documented, parameter-free GET operation, so
+ * it can never mutate supplier state or place a booking.
+ */
+export async function probeBookingConnectivity(
+  operation: CrystalBookingOperation = "pricetypes",
+): Promise<CrystalReadOnlyProbe & { authenticated: boolean; reachable: boolean }> {
+  const spec = specFor(operation);
+  const method = operationMethod(operation);
+  if (!spec || method !== "GET" || spec.requiredPathParams.length > 0 || !isReadOnlyOperation(operation)) {
+    return {
+      operation,
+      attempted: false,
+      ok: false,
+      authenticated: false,
+      reachable: false,
+      detail: "Skipped: only documented parameter-free GET operations may be probed.",
+    };
+  }
+  const key = apiKey();
+  if (!key) {
+    return {
+      operation,
+      attempted: false,
+      ok: false,
+      authenticated: false,
+      reachable: false,
+      detail: "The authorised AKTG subscription key is not present in this environment.",
+    };
+  }
+  const base = (env("CRYSTAL_BOOKING_BASE_URL") || DEFAULT_BASE_URL).replace(/\/?$/, "/");
+  const url = new URL((operationPath(operation) ?? spec.path).replace(/^\//, ""), base);
+  const started = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      headers: { ApiKey: key, Accept: "application/json", ...channelHeaders() },
+      signal: controller.signal,
+    });
+    const ok = res.ok;
+    const authenticated = res.status !== 401 && res.status !== 403;
+    audit({
+      at: new Date().toISOString(),
+      operation: "capability",
+      ok,
+      status: res.status,
+      attempts: 1,
+      durationMs: Date.now() - started,
+      detail: `readiness probe ${operation}`,
+    });
+    return {
+      operation,
+      attempted: true,
+      ok,
+      status: res.status,
+      reachable: true,
+      authenticated,
+      detail: ok
+        ? "Authenticated read succeeded."
+        : `Supplier responded ${res.status}${
+            authenticated ? "." : " — not authorised for the Booking API on this key."
+          }`,
+    };
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "request failed";
+    audit({
+      at: new Date().toISOString(),
+      operation: "capability",
+      ok: false,
+      attempts: 1,
+      durationMs: Date.now() - started,
+      detail: `readiness probe ${operation}: ${detail}`,
+    });
+    return {
+      operation,
+      attempted: true,
+      ok: false,
+      reachable: false,
+      authenticated: false,
+      detail,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
