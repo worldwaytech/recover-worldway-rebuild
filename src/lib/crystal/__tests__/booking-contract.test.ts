@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { holdInputSchema, mapSupplierStatus } from "../booking-contract";
 
 const ENV_KEYS = [
@@ -22,6 +22,8 @@ const ENV_KEYS = [
   "CRYSTAL_BOOKING_PATH_PRICETYPES",
   "CRYSTAL_BOOKING_PATH_PROMOTIONS",
   "CRYSTAL_BOOKING_PATH_PASTGUEST",
+  "CRYSTAL_BOOKING_EGRESS_CONFIRMED",
+  "CRYSTAL_BOOKING_CERTIFIED",
 ] as const;
 
 const snapshot: Record<string, string | undefined> = {};
