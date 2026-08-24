@@ -134,6 +134,7 @@ function CrystalConsole() {
 
   useEffect(() => {
     void refresh(false);
+    void runReadiness(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
