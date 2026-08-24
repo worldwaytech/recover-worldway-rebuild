@@ -174,6 +174,15 @@ function CrystalConsole() {
 
       {loading && !status ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
 
+      {readiness ? (
+        <ReadinessPanel
+          readiness={readiness}
+          busy={probing}
+          onProbe={() => void runReadiness(true)}
+        />
+      ) : null}
+
+
       {status ? (
         <>
           <Card>
