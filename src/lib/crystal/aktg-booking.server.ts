@@ -460,6 +460,16 @@ export async function verifyBookingReadOnly(
       });
       continue;
     }
+    if (CRYSTAL_CRITERIA_REQUIRED_OPERATIONS.includes(operation)) {
+      results.push({
+        operation,
+        attempted: false,
+        ok: false,
+        detail:
+          "Not applicable: the supplier requires voyage or guest search criteria, which a parameter-free verification call cannot supply.",
+      });
+      continue;
+    }
     if (!cap.live || !configured.has(operation)) {
       results.push({
         operation,
