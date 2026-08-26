@@ -109,6 +109,8 @@ describe("booking rail is fail-closed", () => {
     process.env["CRYSTAL_BOOKING_ENABLED"] = "true";
     delete process.env["CRYSTAL_BOOKING_SALES_CHANNEL"];
     delete process.env["CRYSTAL_BOOKING_OFFICE_ID"];
+    delete process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"];
+    delete process.env["CRYSTAL_BOOKING_CERTIFIED"];
     const noChannel = bookingCapability();
     expect(noChannel.live).toBe(false);
     expect(noChannel.reason).toBe("channel_context_missing");
@@ -161,6 +163,7 @@ describe("Crystal PROD readiness check", () => {
     process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
     process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
     process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
+    process.env["CRYSTAL_BOOKING_ENABLED"] = "false";
     const { crystalProdReadiness } = await import("../readiness.server");
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
