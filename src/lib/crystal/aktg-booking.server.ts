@@ -30,7 +30,7 @@ import {
   CRYSTAL_READ_ONLY_OPERATIONS,
   CRYSTAL_REQUIRED_OPERATIONS,
 } from "./booking-contract";
-import { CRYSTAL_BOOKING_API_STATUS, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
+import { crystalBookingApiStatus, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
 
 /** Documented PROD base URL for the AKTG Booking API (from the supplied spec). */
 const DEFAULT_BASE_URL = "https://api.aktravelgroup.com/bookingapi";
@@ -126,7 +126,7 @@ export function configuredOperations(): CrystalBookingOperation[] {
 export function bookingCapability(): CrystalBookingCapability {
   const base: Pick<CrystalBookingCapability, "shoppingApiStatus" | "bookingApiStatus"> = {
     shoppingApiStatus: CRYSTAL_SHOPPING_API_STATUS,
-    bookingApiStatus: CRYSTAL_BOOKING_API_STATUS,
+    bookingApiStatus: crystalBookingApiStatus(),
   };
   const channel = channelContextState();
   const ops = configuredOperations();
