@@ -3,7 +3,9 @@
 **Integration status (internal):**
 
 - SHOPPING API: **PRODUCTION LIVE**
-- BOOKING API: **PENDING AKTG**
+- BOOKING API: **PRODUCTION LIVE** (all nine readiness gates green; ApiKey entitled,
+  X-SalesChannel / X-OfficeID configured server-side, egress confirmed, certification
+  recorded, `CRYSTAL_BOOKING_ENABLED=true`)
 
 Base URL: `https://api.aktravelgroup.com/shopping`
 Authentication: `ApiKey` request header, value read server-side only from the

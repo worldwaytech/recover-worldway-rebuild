@@ -170,6 +170,18 @@ export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
   "pastguest",
 ];
 
+/**
+ * Read-only operations that the supplier only answers when search criteria are
+ * supplied (voyage/sailing or guest identity). A parameter-free verification
+ * call to these returns 400/404 by design, so verification reports them as
+ * "not applicable" rather than a failure.
+ */
+export const CRYSTAL_CRITERIA_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
+  "availability",
+  "netfares",
+  "pastguest",
+];
+
 export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] =
   CRYSTAL_BOOKING_SPEC.map((s) => s.operation);
 

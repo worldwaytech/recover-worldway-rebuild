@@ -26,10 +26,11 @@ import type {
 import {
   CRYSTAL_BOOKING_SPEC,
   CRYSTAL_ALL_OPERATIONS,
+  CRYSTAL_CRITERIA_REQUIRED_OPERATIONS,
   CRYSTAL_READ_ONLY_OPERATIONS,
   CRYSTAL_REQUIRED_OPERATIONS,
 } from "./booking-contract";
-import { CRYSTAL_BOOKING_API_STATUS, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
+import { crystalBookingApiStatus, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
 
 /** Documented PROD base URL for the AKTG Booking API (from the supplied spec). */
 const DEFAULT_BASE_URL = "https://api.aktravelgroup.com/bookingapi";
@@ -125,7 +126,7 @@ export function configuredOperations(): CrystalBookingOperation[] {
 export function bookingCapability(): CrystalBookingCapability {
   const base: Pick<CrystalBookingCapability, "shoppingApiStatus" | "bookingApiStatus"> = {
     shoppingApiStatus: CRYSTAL_SHOPPING_API_STATUS,
-    bookingApiStatus: CRYSTAL_BOOKING_API_STATUS,
+    bookingApiStatus: crystalBookingApiStatus(),
   };
   const channel = channelContextState();
   const ops = configuredOperations();
@@ -456,6 +457,16 @@ export async function verifyBookingReadOnly(
         attempted: false,
         ok: false,
         detail: "Skipped: requires a bookingId that is only available after a booking exists.",
+      });
+      continue;
+    }
+    if (CRYSTAL_CRITERIA_REQUIRED_OPERATIONS.includes(operation)) {
+      results.push({
+        operation,
+        attempted: false,
+        ok: false,
+        detail:
+          "Not applicable: the supplier requires voyage or guest search criteria, which a parameter-free verification call cannot supply.",
       });
       continue;
     }

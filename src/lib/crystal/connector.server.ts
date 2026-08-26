@@ -112,7 +112,25 @@ export function normaliseVoyage(record: Record<string, unknown>): CrystalVoyage 
 
 /** Internal AKTG integration status (AKTG review handoff). */
 export const CRYSTAL_SHOPPING_API_STATUS = "PRODUCTION LIVE" as const;
-export const CRYSTAL_BOOKING_API_STATUS = "PENDING AKTG" as const;
+
+/**
+ * Reported Booking API status, derived from runtime configuration only — never
+ * from a credential value. Reads presence/flags so the console cannot claim the
+ * rail is live while it is fail-closed.
+ */
+export function crystalBookingApiStatus(): string {
+  const flag = (process.env["CRYSTAL_BOOKING_ENABLED"] ?? "").toLowerCase() === "true";
+  const key = Boolean(process.env["CRYSTAL_AKTG_API_KEY"]);
+  const channel =
+    Boolean(process.env["CRYSTAL_BOOKING_SALES_CHANNEL"]) &&
+    Boolean(process.env["CRYSTAL_BOOKING_OFFICE_ID"]);
+  const cleared =
+    (process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] ?? "").toLowerCase() === "true" &&
+    (process.env["CRYSTAL_BOOKING_CERTIFIED"] ?? "").toLowerCase() === "true";
+  if (flag && key && channel && cleared) return "PRODUCTION LIVE";
+  if (key && channel && cleared) return "READY — awaiting CRYSTAL_BOOKING_ENABLED";
+  return "PENDING AKTG";
+}
 
 export interface CrystalConnectorStatus {
   partnerId: string;
@@ -167,7 +185,7 @@ export async function crystalStatus(includeHealth: boolean): Promise<CrystalConn
     partnerName: cfg.name,
     mode: aktg ? "live" : resolveMode(cfg),
     shoppingApiStatus: CRYSTAL_SHOPPING_API_STATUS,
-    bookingApiStatus: CRYSTAL_BOOKING_API_STATUS,
+    bookingApiStatus: crystalBookingApiStatus(),
     contractStatus: cfg.contractStatus,
     authKind: aktg ? "api-key-header (AKTG ApiKey)" : cfg.auth.kind,
     credentialsRequired: aktg ? ["CRYSTAL_AKTG_API_KEY"] : cfg.auth.secrets,
