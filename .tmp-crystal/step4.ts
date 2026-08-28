@@ -1,6 +1,6 @@
 /** Confirms whether the missing allocated-suite feed is voyage-specific or channel-wide. */
 import { bookingCall } from "../src/lib/crystal/aktg-booking.server";
-import { fetchCrystalVoyages } from "../src/lib/crystal/aktg.server";
+import { fetchAktgVoyages } from "../src/lib/crystal/aktg.server";
 
 const L: string[] = [];
 const log = (...a: unknown[]) => {
@@ -11,7 +11,7 @@ const log = (...a: unknown[]) => {
 
 let codes: string[] = [];
 try {
-  const feed = await fetchCrystalVoyages({});
+  const feed = await fetchAktgVoyages({});
   codes = (feed?.voyages ?? []).slice(0, 5).map((v: { code: string }) => v.code);
 } catch (e) {
   log("shopping feed error", String(e));
