@@ -11,7 +11,7 @@ const log = (...a: unknown[]) => {
 
 let codes: string[] = [];
 try {
-  const feed = await fetchAktgVoyages({});
+  const feed = await fetchAktgVoyages("USD");
   codes = (feed?.voyages ?? []).slice(0, 5).map((v: { code: string }) => v.code);
 } catch (e) {
   log("shopping feed error", String(e));
