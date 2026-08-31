@@ -140,6 +140,7 @@ import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
 import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminToursRouteImport } from './routes/admin.tours'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -845,6 +846,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTtcRoute = AdminTtcRouteImport.update({
+  id: '/ttc',
+  path: '/ttc',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminToursRoute = AdminToursRouteImport.update({
   id: '/tours',
   path: '/tours',
@@ -1182,6 +1188,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1336,6 +1343,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1516,6 +1524,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1699,6 +1708,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/ttc'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -1853,6 +1863,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/ttc'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -2032,6 +2043,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/ttc'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -3125,6 +3137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ttc': {
+      id: '/admin/ttc'
+      path: '/ttc'
+      fullPath: '/admin/ttc'
+      preLoaderRoute: typeof AdminTtcRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/tours': {
       id: '/admin/tours'
       path: '/tours'
@@ -3507,6 +3526,7 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
   AdminToursRoute: typeof AdminToursRoute
+  AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -3529,6 +3549,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
   AdminToursRoute: AdminToursRoute,
+  AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
