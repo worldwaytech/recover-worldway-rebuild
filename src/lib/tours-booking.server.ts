@@ -18,6 +18,9 @@ import {
 } from "./tours.server";
 import { isWriteScopeDenied, type ToursWriteScope } from "./tours-scope";
 
+/** JSON-safe supplier payload (server functions must return serialisable data). */
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
 export type TourTraveller = {
   firstName: string;
   lastName: string;
@@ -113,7 +116,7 @@ function normaliseService(raw: RawService | undefined | null) {
     room: roomOf(raw),
     bookingId: raw.booking?.id ? String(raw.booking.id) : null,
     incompleteRequirements: mapRequirements(raw),
-    documents: (raw.documents ?? []) ?? [],
+    documents: raw.documents ?? [],
   };
 }
 
@@ -451,11 +454,11 @@ export async function getTourBooking(bookingId: string) {
   const [booking, services, invoices, payments, refunds, documents, checkins] = await Promise.all([
     gFetch<RawBooking>(`/bookings/${id}`),
     gFetch<{ results?: RawService[] }>(`/bookings/${id}/services`),
-    gFetch<{ results?: unknown[] }>(`/bookings/${id}/invoices`),
-    gFetch<{ results?: unknown[] }>(`/bookings/${id}/payments`),
-    gFetch<{ results?: unknown[] }>(`/bookings/${id}/refunds`),
-    gFetch<{ results?: unknown[] }>(`/bookings/${id}/documents`),
-    gFetch<{ results?: unknown[] }>(`/bookings/${id}/checkins`),
+    gFetch<{ results?: Json[] }>(`/bookings/${id}/invoices`),
+    gFetch<{ results?: Json[] }>(`/bookings/${id}/payments`),
+    gFetch<{ results?: Json[] }>(`/bookings/${id}/refunds`),
+    gFetch<{ results?: Json[] }>(`/bookings/${id}/documents`),
+    gFetch<{ results?: Json[] }>(`/bookings/${id}/checkins`),
   ]);
   if (!booking.ok || !booking.data) {
     return { ok: false, status: booking.status, error: booking.error };
@@ -483,7 +486,7 @@ export async function getTourBooking(bookingId: string) {
 
 /** Full requirement reference for a code surfaced on a service. */
 export async function getTourRequirement(requirementId: string) {
-  const res = await gFetch<Record<string, unknown>>(
+  const res = await gFetch<Record<string, Json>>(
     `/requirements/${encodeURIComponent(requirementId)}`,
   );
   return { ok: res.ok, status: res.status, error: res.error, requirement: res.data ?? null };
@@ -514,7 +517,7 @@ export async function getTourCancellationTerms(departureId: string) {
   if (!termId) {
     return { ok: dep.ok, status: dep.status, error: dep.error, terms: null };
   }
-  const res = await gFetch<Record<string, unknown>>(
+  const res = await gFetch<Record<string, Json>>(
     `/cancellation_terms/${encodeURIComponent(String(termId))}`,
   );
   return { ok: res.ok, status: res.status, error: res.error, terms: res.data ?? null };
