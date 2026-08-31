@@ -103,6 +103,8 @@ import { Route as WorldCruisesSlugRouteImport } from './routes/world-cruises.$sl
 import { Route as WellnessSlugRouteImport } from './routes/wellness.$slug'
 import { Route as VisaSlugRouteImport } from './routes/visa.$slug'
 import { Route as VillasSlugRouteImport } from './routes/villas.$slug'
+import { Route as TripTripsafeservicesRouteImport } from './routes/trip.tripsafeservices'
+import { Route as TripCabservicesRouteImport } from './routes/trip.cabservices'
 import { Route as ToursSlugRouteImport } from './routes/tours.$slug'
 import { Route as TailorMadeSlugRouteImport } from './routes/tailor-made.$slug'
 import { Route as SmallGroupSlugRouteImport } from './routes/small-group.$slug'
@@ -662,6 +664,16 @@ const VillasSlugRoute = VillasSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => VillasRoute,
+} as any)
+const TripTripsafeservicesRoute = TripTripsafeservicesRouteImport.update({
+  id: '/trip/tripsafeservices',
+  path: '/trip/tripsafeservices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TripCabservicesRoute = TripCabservicesRouteImport.update({
+  id: '/trip/cabservices',
+  path: '/trip/cabservices',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ToursSlugRoute = ToursSlugRouteImport.update({
   id: '/$slug',
@@ -1248,6 +1260,8 @@ export interface FileRoutesByFullPath {
   '/small-group/$slug': typeof SmallGroupSlugRoute
   '/tailor-made/$slug': typeof TailorMadeSlugRoute
   '/tours/$slug': typeof ToursSlugRoute
+  '/trip/cabservices': typeof TripCabservicesRoute
+  '/trip/tripsafeservices': typeof TripTripsafeservicesRoute
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
   '/wellness/$slug': typeof WellnessSlugRoute
@@ -1404,6 +1418,8 @@ export interface FileRoutesByTo {
   '/small-group/$slug': typeof SmallGroupSlugRoute
   '/tailor-made/$slug': typeof TailorMadeSlugRoute
   '/tours/$slug': typeof ToursSlugRoute
+  '/trip/cabservices': typeof TripCabservicesRoute
+  '/trip/tripsafeservices': typeof TripTripsafeservicesRoute
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
   '/wellness/$slug': typeof WellnessSlugRoute
@@ -1589,6 +1605,8 @@ export interface FileRoutesById {
   '/small-group/$slug': typeof SmallGroupSlugRoute
   '/tailor-made/$slug': typeof TailorMadeSlugRoute
   '/tours/$slug': typeof ToursSlugRoute
+  '/trip/cabservices': typeof TripCabservicesRoute
+  '/trip/tripsafeservices': typeof TripTripsafeservicesRoute
   '/villas/$slug': typeof VillasSlugRoute
   '/visa/$slug': typeof VisaSlugRoute
   '/wellness/$slug': typeof WellnessSlugRoute
@@ -1776,6 +1794,8 @@ export interface FileRouteTypes {
     | '/small-group/$slug'
     | '/tailor-made/$slug'
     | '/tours/$slug'
+    | '/trip/cabservices'
+    | '/trip/tripsafeservices'
     | '/villas/$slug'
     | '/visa/$slug'
     | '/wellness/$slug'
@@ -1932,6 +1952,8 @@ export interface FileRouteTypes {
     | '/small-group/$slug'
     | '/tailor-made/$slug'
     | '/tours/$slug'
+    | '/trip/cabservices'
+    | '/trip/tripsafeservices'
     | '/villas/$slug'
     | '/visa/$slug'
     | '/wellness/$slug'
@@ -2116,6 +2138,8 @@ export interface FileRouteTypes {
     | '/small-group/$slug'
     | '/tailor-made/$slug'
     | '/tours/$slug'
+    | '/trip/cabservices'
+    | '/trip/tripsafeservices'
     | '/villas/$slug'
     | '/visa/$slug'
     | '/wellness/$slug'
@@ -2240,6 +2264,8 @@ export interface RootRouteChildren {
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
   BlogSlugRoute: typeof BlogSlugRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
+  TripCabservicesRoute: typeof TripCabservicesRoute
+  TripTripsafeservicesRoute: typeof TripTripsafeservicesRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
@@ -2912,6 +2938,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/villas/$slug'
       preLoaderRoute: typeof VillasSlugRouteImport
       parentRoute: typeof VillasRoute
+    }
+    '/trip/tripsafeservices': {
+      id: '/trip/tripsafeservices'
+      path: '/trip/tripsafeservices'
+      fullPath: '/trip/tripsafeservices'
+      preLoaderRoute: typeof TripTripsafeservicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trip/cabservices': {
+      id: '/trip/cabservices'
+      path: '/trip/cabservices'
+      fullPath: '/trip/cabservices'
+      preLoaderRoute: typeof TripCabservicesRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tours/$slug': {
       id: '/tours/$slug'
@@ -4102,6 +4142,8 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesCodeRoute: ActivitiesCodeRoute,
   BlogSlugRoute: BlogSlugRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
+  TripCabservicesRoute: TripCabservicesRoute,
+  TripTripsafeservicesRoute: TripTripsafeservicesRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
