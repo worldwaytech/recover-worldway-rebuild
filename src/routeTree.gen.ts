@@ -170,6 +170,7 @@ import { Route as ToursBrowseIndexRouteImport } from './routes/tours.browse.inde
 import { Route as DestinationsRegionIndexRouteImport } from './routes/destinations.$region.index'
 import { Route as CrystalCruisesShipsIndexRouteImport } from './routes/crystal-cruises.ships.index'
 import { Route as CrystalCruisesDestinationsIndexRouteImport } from './routes/crystal-cruises.destinations.index'
+import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
@@ -998,6 +999,11 @@ const CrystalCruisesDestinationsIndexRoute =
     path: '/destinations/',
     getParentRoute: () => CrystalCruisesRoute,
   } as any)
+const TtcBrandSlugRoute = TtcBrandSlugRouteImport.update({
+  id: '/ttc/$brand/$slug',
+  path: '/ttc/$brand/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToursJourneyIdRoute = ToursJourneyIdRouteImport.update({
   id: '/journey/$id',
   path: '/journey/$id',
@@ -1264,6 +1270,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
@@ -1415,6 +1422,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/crystal-cruises/destinations': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region': typeof DestinationsRegionIndexRoute
@@ -1596,6 +1604,7 @@ export interface FileRoutesById {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
@@ -1778,6 +1787,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/ttc/$brand/$slug'
     | '/crystal-cruises/destinations/'
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
@@ -1929,6 +1939,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/voyages/$code'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/ttc/$brand/$slug'
     | '/crystal-cruises/destinations'
     | '/crystal-cruises/ships'
     | '/destinations/$region'
@@ -2109,6 +2120,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/ttc/$brand/$slug'
     | '/crystal-cruises/destinations/'
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
@@ -2190,6 +2202,7 @@ export interface RootRouteChildren {
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
+  TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
 }
 
@@ -3322,6 +3335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrystalCruisesDestinationsIndexRouteImport
       parentRoute: typeof CrystalCruisesRoute
     }
+    '/ttc/$brand/$slug': {
+      id: '/ttc/$brand/$slug'
+      path: '/ttc/$brand/$slug'
+      fullPath: '/ttc/$brand/$slug'
+      preLoaderRoute: typeof TtcBrandSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tours/journey/$id': {
       id: '/tours/journey/$id'
       path: '/journey/$id'
@@ -3999,6 +4019,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
+  TtcBrandSlugRoute: TtcBrandSlugRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
 }
 export const routeTree = rootRouteImport
