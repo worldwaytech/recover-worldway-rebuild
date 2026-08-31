@@ -186,51 +186,67 @@ export async function importTtcBrand(options: TtcImportOptions): Promise<TtcSync
     const budget = options.limit ?? pending.length;
     pending = pending.slice(0, budget);
 
+    const batches: TtcSourceUrl[][] = [];
     for (let index = 0; index < pending.length; index += batchSize) {
-      const batch = pending.slice(index, index + batchSize);
-      try {
-        const rows = await extractBatch(batch);
-        for (const source of batch) {
-          if (!rows.has(source.url)) {
-            totals.failed += 1;
-            failures.push({ url: source.url, reason: "No publishable content extracted" });
-          }
-        }
-        const result = await persistRows(db, [...rows.values()]);
-        totals.imported += result.imported;
-        totals.updated += result.updated;
-        totals.unchanged += result.unchanged;
-        totals.failed += result.failures.length;
-        failures.push(...result.failures);
-      } catch (error) {
-        totals.failed += batch.length;
-        const reason = error instanceof Error ? error.message : "Extraction failed";
-        for (const source of batch) failures.push({ url: source.url, reason });
-        status = "partial";
-      }
-
-      const last = batch[batch.length - 1];
-      if (last) cursor = last.slug;
-      if (runId) {
-        await db
-          .from("ttc_sync_runs")
-          .update({
-            discovered: totals.discovered,
-            imported: totals.imported,
-            updated: totals.updated,
-            unchanged: totals.unchanged,
-            failed: totals.failed,
-            cursor,
-            status,
-          } as never)
-          .eq("id", runId);
-      }
-      options.onProgress?.({
-        processed: Math.min(index + batch.length, pending.length),
-        total: pending.length,
-        cursor: cursor ?? "",
-      });
+      batches.push(pending.slice(index, index + batchSize));
     }
+
+    const concurrency = Math.max(1, options.concurrency ?? TTC_CONTENT.concurrency);
+    let nextBatch = 0;
+    let processed = 0;
+
+    async function worker() {
+      while (nextBatch < batches.length) {
+        const batch = batches[nextBatch++];
+        if (!batch) return;
+        try {
+          const rows = await extractBatch(batch);
+          for (const source of batch) {
+            if (!rows.has(source.url)) {
+              totals.failed += 1;
+              failures.push({ url: source.url, reason: "No publishable content extracted" });
+            }
+          }
+          const result = await persistRows(db, [...rows.values()]);
+          totals.imported += result.imported;
+          totals.updated += result.updated;
+          totals.unchanged += result.unchanged;
+          totals.failed += result.failures.length;
+          failures.push(...result.failures);
+        } catch (error) {
+          totals.failed += batch.length;
+          const reason = error instanceof Error ? error.message : "Extraction failed";
+          for (const source of batch) failures.push({ url: source.url, reason });
+          status = "partial";
+        }
+
+        const last = batch[batch.length - 1];
+        if (last && (cursor === null || last.slug > cursor)) cursor = last.slug;
+        processed += batch.length;
+
+        if (runId) {
+          await db
+            .from("ttc_sync_runs")
+            .update({
+              discovered: totals.discovered,
+              imported: totals.imported,
+              updated: totals.updated,
+              unchanged: totals.unchanged,
+              failed: totals.failed,
+              cursor,
+              status,
+            } as never)
+            .eq("id", runId);
+        }
+        options.onProgress?.({
+          processed: Math.min(processed, pending.length),
+          total: pending.length,
+          cursor: cursor ?? "",
+        });
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, () => worker()));
   } catch (error) {
     status = "failed";
     errorText = error instanceof Error ? error.message : "TTC import failed";
