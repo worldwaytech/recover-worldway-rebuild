@@ -194,7 +194,7 @@ export function JourneyExperience({ journey }: { journey: JourneyRecord }) {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         <div className="container-lux relative z-10 pb-16">
           <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
-            <Link to="/train-tours" className="hover:text-foreground">
+            <Link to="/rail" className="hover:text-foreground">
               Train Tours
             </Link>
             <span className="mx-2">/</span>

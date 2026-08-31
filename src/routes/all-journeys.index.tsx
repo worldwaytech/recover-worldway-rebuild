@@ -385,7 +385,7 @@ function JourneyDetailPanel({ journey }: { journey: Journey }) {
             </div>
           </dl>
           <div className="mt-6 space-y-3">
-            <Link to="/book" search={{ journey: journey.slug }} className="block">
+            <Link to="/book/$kind/$slug" params={{ kind: "journey", slug: journey.slug }} className="block">
               <Button variant="gold" className="w-full">
                 Request Availability
               </Button>

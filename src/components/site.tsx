@@ -126,3 +126,28 @@ export function StarRow({ rating }: { rating: number }) {
     </div>
   );
 }
+
+export function Breadcrumbs({
+  items,
+}: {
+  items: { label: string; to?: string }[];
+}) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+        {items.map((item, i) => (
+          <li key={`${item.label}-${i}`} className="flex items-center gap-2">
+            {item.to && i < items.length - 1 ? (
+              <Link to={item.to} className="transition-colors hover:text-gold">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-foreground">{item.label}</span>
+            )}
+            {i < items.length - 1 && <span aria-hidden="true">/</span>}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}

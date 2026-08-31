@@ -304,7 +304,7 @@ function JourneyPage() {
                 <dd className="text-right">{j.style.join(", ")}</dd>
               </div>
             </dl>
-            <Link to="/book" search={{ journey: j.slug }} className="mt-6 block">
+            <Link to="/book/$kind/$slug" params={{ kind: "journey", slug: j.slug }} className="mt-6 block">
               <Button variant="gold" className="w-full">
                 Request Availability
               </Button>
