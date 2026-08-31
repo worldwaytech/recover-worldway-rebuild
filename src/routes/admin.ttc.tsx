@@ -206,14 +206,14 @@ function TtcConsole() {
                 </thead>
                 <tbody>
                   {data.runs.map((run) => (
-                    <tr key={String(run["id"])} className="border-t border-border">
-                      <td className="py-2">{new Date(String(run["started_at"])).toLocaleString()}</td>
-                      <td className="py-2">{String(run["brand"])}</td>
-                      <td className="py-2">{String(run["status"])}</td>
-                      <td className="py-2">{String(run["discovered"])}</td>
-                      <td className="py-2">{String(run["imported"])}</td>
-                      <td className="py-2">{String(run["updated"])}</td>
-                      <td className="py-2">{String(run["failed"])}</td>
+                    <tr key={run.id} className="border-t border-border">
+                      <td className="py-2">{new Date(run.started_at).toLocaleString()}</td>
+                      <td className="py-2">{run.brand}</td>
+                      <td className="py-2">{run.status}</td>
+                      <td className="py-2">{run.discovered}</td>
+                      <td className="py-2">{run.imported}</td>
+                      <td className="py-2">{run.updated}</td>
+                      <td className="py-2">{run.failed}</td>
                     </tr>
                   ))}
                 </tbody>

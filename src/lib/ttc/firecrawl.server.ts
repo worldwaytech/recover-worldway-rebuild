@@ -11,7 +11,7 @@ const GATEWAY_BASE = "https://connector-gateway.lovable.dev/firecrawl/v2";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function credentials() {
+function credentials(): { base: string; headers: Record<string, string> } {
   const key = process.env["FIRECRAWL_API_KEY"]?.trim();
   if (!key) {
     throw new Error(

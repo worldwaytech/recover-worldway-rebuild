@@ -138,3 +138,20 @@ export interface TtcSyncOutcome {
   startedAt: string;
   finishedAt: string;
 }
+
+export interface TtcSyncRunRow {
+  id: string;
+  brand: string;
+  source: string;
+  resource: string;
+  status: string;
+  started_at: string;
+  finished_at: string | null;
+  discovered: number;
+  imported: number;
+  updated: number;
+  unchanged: number;
+  failed: number;
+  cursor: string | null;
+  error: string | null;
+}

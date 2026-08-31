@@ -21,7 +21,7 @@ import {
   type TtcSourceUrl,
   type TtcTourRow,
 } from "./extract";
-import type { TtcSyncOutcome } from "./types";
+import type { TtcSyncOutcome, TtcSyncRunRow } from "./types";
 
 function adminDb(): SupabaseClient {
   const url = process.env["SUPABASE_URL"];
@@ -311,6 +311,24 @@ export async function ttcCatalogueStats() {
   return {
     total: total ?? 0,
     brands: [...byBrand.values()].sort((a, b) => b.count - a.count),
-    runs: (runs.data ?? []) as Record<string, unknown>[],
+    runs: (runs.data ?? []).map((run) => {
+      const row = run as Record<string, unknown>;
+      return {
+        id: String(row["id"]),
+        brand: String(row["brand"]),
+        source: String(row["source"]),
+        resource: String(row["resource"]),
+        status: String(row["status"]),
+        started_at: String(row["started_at"]),
+        finished_at: (row["finished_at"] as string | null) ?? null,
+        discovered: Number(row["discovered"] ?? 0),
+        imported: Number(row["imported"] ?? 0),
+        updated: Number(row["updated"] ?? 0),
+        unchanged: Number(row["unchanged"] ?? 0),
+        failed: Number(row["failed"] ?? 0),
+        cursor: (row["cursor"] as string | null) ?? null,
+        error: (row["error"] as string | null) ?? null,
+      } satisfies TtcSyncRunRow;
+    }),
   };
 }
