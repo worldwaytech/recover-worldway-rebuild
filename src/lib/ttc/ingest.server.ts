@@ -312,7 +312,7 @@ export async function importTtcBrand(options: TtcImportOptions): Promise<TtcSync
       if (failure && !unresolved.has(failure.url)) failures.splice(i, 1);
     }
     totals.failed = unresolved.size;
-    status = unresolved.size > 0 ? "partial" : status === "failed" ? status : "completed";
+    status = unresolved.size > 0 ? "partial" : "completed";
   } catch (error) {
     status = "failed";
     errorText = error instanceof Error ? error.message : "TTC import failed";
