@@ -4,7 +4,7 @@ import { useSyncExternalStore, useState, useRef, useEffect } from "react";
 import logoAsset from "@/assets/worldway-logo.jpeg.asset.json";
 import { portal } from "@/lib/portal-store";
 
-type NavChild = { to: string; label: string };
+type NavChild = { to: string; label: string } | { label: string; children: { to: string; label: string }[] };
 type NavItem = { to: string; label: string } | { label: string; children: NavChild[] };
 
 const NAV: NavItem[] = [
