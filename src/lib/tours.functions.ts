@@ -93,6 +93,9 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
               lastName: z.string().min(1).max(60),
               email: z.string().email().max(160),
               phone: z.string().max(40).optional(),
+              title: z.enum(["Mr", "Mrs", "Ms", "Miss"]).optional(),
+              dateOfBirth: z.string().max(10).optional(),
+              nationalityId: z.string().max(10).optional(),
             }),
           )
           .min(1)
@@ -101,7 +104,7 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { createTourBooking } = await import("./tours.server");
+    const { createTourBooking } = await import("./tours-booking.server");
     const { fallbackMessage } = await import("./tours-scope");
     const result = await createTourBooking(data);
     // If the supplier cannot issue the live hold (write scope pending or a
@@ -147,10 +150,70 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
   });
 
 export const confirmTourReservation = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({ bookingId: z.string().max(40), serviceId: z.string().max(40).optional() })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { confirmTourBooking } = await import("./tours-booking.server");
+    return confirmTourBooking(data);
+  });
+
+/** Requests cancellation of a live reservation (supplier status transition). */
+export const cancelTourReservation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({ bookingId: z.string().max(40), serviceId: z.string().max(40).optional() })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { cancelTourBooking } = await import("./tours-booking.server");
+    return cancelTourBooking(data);
+  });
+
+/** Full supplier-side reservation dossier: services, invoices, payments, refunds, documents. */
+export const getTourReservation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ bookingId: z.string().max(40) }).parse(d))
   .handler(async ({ data }) => {
-    const { confirmTourBooking } = await import("./tours.server");
-    return confirmTourBooking(data.bookingId);
+    const { getTourBooking } = await import("./tours-booking.server");
+    return getTourBooking(data.bookingId);
+  });
+
+/** Pre-booking requirement + penalty disclosure for a departure (read-only). */
+export const getTourDepartureRequirements = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ departureId: z.string().max(30) }).parse(d))
+  .handler(async ({ data }) => {
+    const { getDepartureRequirements, getTourCancellationTerms } = await import(
+      "./tours-booking.server"
+    );
+    const [requirements, cancellation] = await Promise.all([
+      getDepartureRequirements(data.departureId),
+      getTourCancellationTerms(data.departureId),
+    ]);
+    return { requirements, cancellation };
+  });
+
+/** Amendment: complete traveller data required before confirmation. */
+export const updateTourTraveller = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        customerId: z.string().max(40),
+        dateOfBirth: z.string().max(10).optional(),
+        nationalityId: z.string().max(10).optional(),
+        passportNumber: z.string().max(40).optional(),
+        passportExpiry: z.string().max(10).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { updateTourCustomer } = await import("./tours-booking.server");
+    const { customerId, ...patch } = data;
+    return updateTourCustomer(customerId, patch);
   });
 
 
