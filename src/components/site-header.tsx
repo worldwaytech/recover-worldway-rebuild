@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
   {
     label: "Journeys",
     children: [
+      { to: "/all-journeys", label: "All Journeys" },
       { to: "/small-group", label: "Small Group" },
       { to: "/tailor-made", label: "Tailor-Made" },
       { to: "/safari", label: "Safari" },

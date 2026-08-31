@@ -60,6 +60,7 @@ import { Route as BusesRouteImport } from './routes/buses'
 import { Route as B2cRouteImport } from './routes/b2c'
 import { Route as B2bRouteImport } from './routes/b2b'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AllJourneysRouteImport } from './routes/all-journeys'
 import { Route as AircraftRouteImport } from './routes/aircraft'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -92,6 +93,7 @@ import { Route as CrystalCruisesIndexRouteImport } from './routes/crystal-cruise
 import { Route as CruisesIndexRouteImport } from './routes/cruises.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as B2bIndexRouteImport } from './routes/b2b.index'
+import { Route as AllJourneysIndexRouteImport } from './routes/all-journeys.index'
 import { Route as AgentIndexRouteImport } from './routes/agent.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
@@ -133,6 +135,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as B2bTeamRouteImport } from './routes/b2b.team'
 import { Route as B2bReportsRouteImport } from './routes/b2b.reports'
 import { Route as B2bPoliciesRouteImport } from './routes/b2b.policies'
+import { Route as AllJourneysSlugRouteImport } from './routes/all-journeys.$slug'
 import { Route as AgentTrainingRouteImport } from './routes/agent.training'
 import { Route as AgentSignupRouteImport } from './routes/agent.signup'
 import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
@@ -445,6 +448,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AllJourneysRoute = AllJourneysRouteImport.update({
+  id: '/all-journeys',
+  path: '/all-journeys',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AircraftRoute = AircraftRouteImport.update({
   id: '/aircraft',
   path: '/aircraft',
@@ -604,6 +612,11 @@ const B2bIndexRoute = B2bIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => B2bRoute,
+} as any)
+const AllJourneysIndexRoute = AllJourneysIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AllJourneysRoute,
 } as any)
 const AgentIndexRoute = AgentIndexRouteImport.update({
   id: '/',
@@ -810,6 +823,11 @@ const B2bPoliciesRoute = B2bPoliciesRouteImport.update({
   id: '/policies',
   path: '/policies',
   getParentRoute: () => B2bRoute,
+} as any)
+const AllJourneysSlugRoute = AllJourneysSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AllJourneysRoute,
 } as any)
 const AgentTrainingRoute = AgentTrainingRouteImport.update({
   id: '/training',
@@ -1111,6 +1129,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
   '/aircraft': typeof AircraftRoute
+  '/all-journeys': typeof AllJourneysRouteWithChildren
   '/auth': typeof AuthRoute
   '/b2b': typeof B2bRouteWithChildren
   '/b2c': typeof B2cRoute
@@ -1196,6 +1215,7 @@ export interface FileRoutesByFullPath {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
@@ -1237,6 +1257,7 @@ export interface FileRoutesByFullPath {
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
+  '/all-journeys/': typeof AllJourneysIndexRoute
   '/b2b/': typeof B2bIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/cruises/': typeof CruisesIndexRoute
@@ -1351,6 +1372,7 @@ export interface FileRoutesByTo {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
@@ -1391,6 +1413,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
   '/agent': typeof AgentIndexRoute
+  '/all-journeys': typeof AllJourneysIndexRoute
   '/b2b': typeof B2bIndexRoute
   '/blog': typeof BlogIndexRoute
   '/cruises': typeof CruisesIndexRoute
@@ -1447,6 +1470,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
   '/aircraft': typeof AircraftRoute
+  '/all-journeys': typeof AllJourneysRouteWithChildren
   '/auth': typeof AuthRoute
   '/b2b': typeof B2bRouteWithChildren
   '/b2c': typeof B2cRoute
@@ -1532,6 +1556,7 @@ export interface FileRoutesById {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
@@ -1573,6 +1598,7 @@ export interface FileRoutesById {
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
+  '/all-journeys/': typeof AllJourneysIndexRoute
   '/b2b/': typeof B2bIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/cruises/': typeof CruisesIndexRoute
@@ -1631,6 +1657,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/aircraft'
+    | '/all-journeys'
     | '/auth'
     | '/b2b'
     | '/b2c'
@@ -1716,6 +1743,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
@@ -1757,6 +1785,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/admin/'
     | '/agent/'
+    | '/all-journeys/'
     | '/b2b/'
     | '/blog/'
     | '/cruises/'
@@ -1871,6 +1900,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
@@ -1911,6 +1941,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/admin'
     | '/agent'
+    | '/all-journeys'
     | '/b2b'
     | '/blog'
     | '/cruises'
@@ -1966,6 +1997,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/aircraft'
+    | '/all-journeys'
     | '/auth'
     | '/b2b'
     | '/b2c'
@@ -2051,6 +2083,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
@@ -2092,6 +2125,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/admin/'
     | '/agent/'
+    | '/all-journeys/'
     | '/b2b/'
     | '/blog/'
     | '/cruises/'
@@ -2149,6 +2183,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AgentRoute: typeof AgentRouteWithChildren
   AircraftRoute: typeof AircraftRoute
+  AllJourneysRoute: typeof AllJourneysRouteWithChildren
   AuthRoute: typeof AuthRoute
   B2bRoute: typeof B2bRouteWithChildren
   B2cRoute: typeof B2cRoute
@@ -2577,6 +2612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/all-journeys': {
+      id: '/all-journeys'
+      path: '/all-journeys'
+      fullPath: '/all-journeys'
+      preLoaderRoute: typeof AllJourneysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/aircraft': {
       id: '/aircraft'
       path: '/aircraft'
@@ -2800,6 +2842,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/b2b/'
       preLoaderRoute: typeof B2bIndexRouteImport
       parentRoute: typeof B2bRoute
+    }
+    '/all-journeys/': {
+      id: '/all-journeys/'
+      path: '/'
+      fullPath: '/all-journeys/'
+      preLoaderRoute: typeof AllJourneysIndexRouteImport
+      parentRoute: typeof AllJourneysRoute
     }
     '/agent/': {
       id: '/agent/'
@@ -3087,6 +3136,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/b2b/policies'
       preLoaderRoute: typeof B2bPoliciesRouteImport
       parentRoute: typeof B2bRoute
+    }
+    '/all-journeys/$slug': {
+      id: '/all-journeys/$slug'
+      path: '/$slug'
+      fullPath: '/all-journeys/$slug'
+      preLoaderRoute: typeof AllJourneysSlugRouteImport
+      parentRoute: typeof AllJourneysRoute
     }
     '/agent/training': {
       id: '/agent/training'
@@ -3578,6 +3634,20 @@ const AgentRouteChildren: AgentRouteChildren = {
 
 const AgentRouteWithChildren = AgentRoute._addFileChildren(AgentRouteChildren)
 
+interface AllJourneysRouteChildren {
+  AllJourneysSlugRoute: typeof AllJourneysSlugRoute
+  AllJourneysIndexRoute: typeof AllJourneysIndexRoute
+}
+
+const AllJourneysRouteChildren: AllJourneysRouteChildren = {
+  AllJourneysSlugRoute: AllJourneysSlugRoute,
+  AllJourneysIndexRoute: AllJourneysIndexRoute,
+}
+
+const AllJourneysRouteWithChildren = AllJourneysRoute._addFileChildren(
+  AllJourneysRouteChildren,
+)
+
 interface B2bRouteChildren {
   B2bPoliciesRoute: typeof B2bPoliciesRoute
   B2bReportsRoute: typeof B2bReportsRoute
@@ -3974,6 +4044,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AgentRoute: AgentRouteWithChildren,
   AircraftRoute: AircraftRoute,
+  AllJourneysRoute: AllJourneysRouteWithChildren,
   AuthRoute: AuthRoute,
   B2bRoute: B2bRouteWithChildren,
   B2cRoute: B2cRoute,
