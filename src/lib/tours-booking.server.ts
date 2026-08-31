@@ -418,8 +418,10 @@ export async function cancelTourBooking(args: { bookingId: string; serviceId?: s
     return { ok: false, status: 404, error: "No departure service found on this reservation." };
   }
   const before = await gFetch<RawService>(`/departure_services/${encodeURIComponent(serviceId)}`);
-  const allowed = before.data?.status_transitions ?? [];
-  if (before.ok && allowed.length && !allowed.includes(REQUEST_CANCELLATION)) {
+  // The supplier publishes the allowed transitions on the service. When that
+  // list is present we honour it exactly — an empty list means "no transition".
+  const allowed = before.data?.status_transitions;
+  if (before.ok && Array.isArray(allowed) && !allowed.includes(REQUEST_CANCELLATION)) {
     return {
       ok: false,
       status: 409,
