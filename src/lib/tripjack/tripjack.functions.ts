@@ -72,6 +72,6 @@ export const probeTripjackCapability = createServerFn({ method: "POST" })
     const { tripjackCall, redact } = await import("./client.server");
     const result = await tripjackCall(data.suite, data.capability, data.payload ?? {});
     return result.ok
-      ? { ok: true as const, correlationId: result.correlationId, sample: redact(result.data) }
+      ? { ok: true as const, correlationId: result.correlationId, sample: JSON.stringify(redact(result.data)).slice(0, 4000) }
       : { ok: false as const, message: result.error.message, kind: result.error.kind };
   });

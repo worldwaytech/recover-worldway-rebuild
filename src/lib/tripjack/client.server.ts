@@ -86,7 +86,7 @@ export type TripjackLogEntry = {
   status: number | null;
   durationMs: number;
   outcome: "ok" | "error";
-  detail?: unknown;
+  detail?: string;
 };
 
 const logs: TripjackLogEntry[] = [];
@@ -197,7 +197,7 @@ export async function tripjackCall<T = unknown>(
       status: response.status,
       durationMs: Date.now() - started,
       outcome: response.ok ? "ok" : "error",
-      detail: response.ok ? undefined : redact(parsed),
+      detail: response.ok ? undefined : JSON.stringify(redact(parsed)).slice(0, 2000),
     };
     log(entry);
 
