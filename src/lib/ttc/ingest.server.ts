@@ -12,6 +12,7 @@ import {
   firecrawlBatchWait,
   firecrawlConfigured,
   firecrawlMap,
+  firecrawlScrape,
 } from "./firecrawl.server";
 import {
   TTC_EXTRACTION_PROMPT,
@@ -87,6 +88,20 @@ async function extractBatch(sources: TtcSourceUrl[]): Promise<Map<string, TtcTou
     if (row) rows.set(source.url, row);
   }
   return rows;
+}
+
+/** Single-page fallback used to retry URLs a batch job could not deliver. */
+async function extractOne(source: TtcSourceUrl): Promise<TtcTourRow | null> {
+  const document = await firecrawlScrape(source.url, EXTRACTION_FORMATS, {
+    onlyMainContent: false,
+    waitFor: 2500,
+  });
+  return buildTtcTourRow({
+    source,
+    extracted: document.json,
+    metadata: document.metadata,
+    documentLinks: document.links,
+  });
 }
 
 // --------------------------------------------------------------------- upsert
@@ -249,6 +264,55 @@ export async function importTtcBrand(options: TtcImportOptions): Promise<TtcSync
     }
 
     await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, () => worker()));
+
+    // Retry pass: any URL a batch job could not deliver is re-extracted one by one.
+    const bySlug = new Map(pending.map((source) => [source.url, source]));
+    let retryTargets = [...new Set(failures.map((failure) => failure.url))]
+      .map((url) => bySlug.get(url))
+      .filter((source): source is TtcSourceUrl => Boolean(source));
+
+    for (let pass = 0; pass < 2 && retryTargets.length > 0; pass += 1) {
+      const stillFailing: TtcSourceUrl[] = [];
+      let index = 0;
+      async function retryWorker() {
+        while (index < retryTargets.length) {
+          const source = retryTargets[index++];
+          if (!source) return;
+          try {
+            const row = await extractOne(source);
+            if (!row) {
+              stillFailing.push(source);
+              continue;
+            }
+            const result = await persistRows(db, [row]);
+            totals.imported += result.imported;
+            totals.updated += result.updated;
+            totals.unchanged += result.unchanged;
+            if (result.failures.length > 0) stillFailing.push(source);
+            else totals.failed = Math.max(totals.failed - 1, 0);
+          } catch {
+            stillFailing.push(source);
+          }
+        }
+      }
+      await Promise.all(
+        Array.from({ length: Math.min(concurrency, retryTargets.length) }, () => retryWorker()),
+      );
+      retryTargets = stillFailing;
+      options.onProgress?.({
+        processed: pending.length,
+        total: pending.length,
+        cursor: `retry pass ${pass + 1}: ${retryTargets.length} still failing`,
+      });
+    }
+
+    const unresolved = new Set(retryTargets.map((source) => source.url));
+    for (let i = failures.length - 1; i >= 0; i -= 1) {
+      const failure = failures[i];
+      if (failure && !unresolved.has(failure.url)) failures.splice(i, 1);
+    }
+    totals.failed = unresolved.size;
+    status = unresolved.size > 0 ? "partial" : "completed";
   } catch (error) {
     status = "failed";
     errorText = error instanceof Error ? error.message : "TTC import failed";
