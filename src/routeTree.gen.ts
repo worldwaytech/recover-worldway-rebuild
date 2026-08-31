@@ -71,6 +71,7 @@ import { Route as WorldCruisesIndexRouteImport } from './routes/world-cruises.in
 import { Route as WellnessIndexRouteImport } from './routes/wellness.index'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VillasIndexRouteImport } from './routes/villas.index'
+import { Route as TtcIndexRouteImport } from './routes/ttc.index'
 import { Route as ToursIndexRouteImport } from './routes/tours.index'
 import { Route as TailorMadeIndexRouteImport } from './routes/tailor-made.index'
 import { Route as SmallGroupIndexRouteImport } from './routes/small-group.index'
@@ -496,6 +497,11 @@ const VillasIndexRoute = VillasIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => VillasRoute,
+} as any)
+const TtcIndexRoute = TtcIndexRouteImport.update({
+  id: '/ttc/',
+  path: '/ttc/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ToursIndexRoute = ToursIndexRouteImport.update({
   id: '/',
@@ -1238,6 +1244,7 @@ export interface FileRoutesByFullPath {
   '/small-group/': typeof SmallGroupIndexRoute
   '/tailor-made/': typeof TailorMadeIndexRoute
   '/tours/': typeof ToursIndexRoute
+  '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
   '/wellness/': typeof WellnessIndexRoute
@@ -1389,6 +1396,7 @@ export interface FileRoutesByTo {
   '/small-group': typeof SmallGroupIndexRoute
   '/tailor-made': typeof TailorMadeIndexRoute
   '/tours': typeof ToursIndexRoute
+  '/ttc': typeof TtcIndexRoute
   '/villas': typeof VillasIndexRoute
   '/visa': typeof VisaIndexRoute
   '/wellness': typeof WellnessIndexRoute
@@ -1568,6 +1576,7 @@ export interface FileRoutesById {
   '/small-group/': typeof SmallGroupIndexRoute
   '/tailor-made/': typeof TailorMadeIndexRoute
   '/tours/': typeof ToursIndexRoute
+  '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
   '/wellness/': typeof WellnessIndexRoute
@@ -1749,6 +1758,7 @@ export interface FileRouteTypes {
     | '/small-group/'
     | '/tailor-made/'
     | '/tours/'
+    | '/ttc/'
     | '/villas/'
     | '/visa/'
     | '/wellness/'
@@ -1900,6 +1910,7 @@ export interface FileRouteTypes {
     | '/small-group'
     | '/tailor-made'
     | '/tours'
+    | '/ttc'
     | '/villas'
     | '/visa'
     | '/wellness'
@@ -2078,6 +2089,7 @@ export interface FileRouteTypes {
     | '/small-group/'
     | '/tailor-made/'
     | '/tours/'
+    | '/ttc/'
     | '/villas/'
     | '/visa/'
     | '/wellness/'
@@ -2171,6 +2183,7 @@ export interface RootRouteChildren {
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  TtcIndexRoute: typeof TtcIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
@@ -2615,6 +2628,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/villas/'
       preLoaderRoute: typeof VillasIndexRouteImport
       parentRoute: typeof VillasRoute
+    }
+    '/ttc/': {
+      id: '/ttc/'
+      path: '/ttc'
+      fullPath: '/ttc/'
+      preLoaderRoute: typeof TtcIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tours/': {
       id: '/tours/'
@@ -3972,6 +3992,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
+  TtcIndexRoute: TtcIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
