@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { journeys } from "@/lib/all-journeys-content";
 import {
-  journeys,
   categories,
   regions,
   styleOptions,

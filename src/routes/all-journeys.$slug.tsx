@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { journeys, formatPrice, type Journey, formatJourneyTitle } from "@/lib/data";
+import { formatPrice, type Journey, formatJourneyTitle } from "@/lib/data";
+import { journeys } from "@/lib/all-journeys-content";
 import { Button } from "@/components/ui/button";
 import { AvailabilityBadge, JourneyCard, SectionHeading, Breadcrumbs } from "@/components/site";
 import { Clock, MapPin, Calendar } from "lucide-react";
