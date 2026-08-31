@@ -148,6 +148,8 @@ export interface TtcImportOptions {
   /** Re-extract tours already stored (default: skip stored slugs). */
   refresh?: boolean;
   batchSize?: number;
+  /** Concurrent extraction batches in flight. */
+  concurrency?: number;
   onProgress?: (progress: { processed: number; total: number; cursor: string }) => void;
 }
 
