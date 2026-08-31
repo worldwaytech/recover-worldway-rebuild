@@ -163,9 +163,9 @@ export const TTC_FEATURE_FLAGS = {
 /** Content-import tuning for the approved website source. */
 export const TTC_CONTENT = {
   /** URLs requested per batch-extraction job. */
-  batchSize: 10,
+  batchSize: 8,
   /** Extraction batches processed concurrently. */
-  concurrency: 5,
+  concurrency: 1,
   /** Firecrawl polling interval, milliseconds. */
   pollIntervalMs: 6000,
   /** Maximum wait per batch job, milliseconds. */
