@@ -113,17 +113,36 @@ function NavDropdown({ item }: { item: Extract<NavItem, { children: NavChild[] }
           role="menu"
           className="absolute left-1/2 top-full z-50 mt-1 min-w-[210px] -translate-x-1/2 rounded-md border border-border/60 bg-background/95 py-2 shadow-lg backdrop-blur-xl"
         >
-          {item.children.map((c) => (
-            <Link
-              key={c.to}
-              to={c.to}
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-              activeProps={{ className: "text-primary" }}
-            >
-              {c.label}
-            </Link>
-          ))}
+          {item.children.map((c) =>
+            "to" in c ? (
+              <Link
+                key={c.to}
+                to={c.to}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                activeProps={{ className: "text-primary" }}
+              >
+                {c.label}
+              </Link>
+            ) : (
+              <div key={c.label} className="mt-1 border-t border-border/50 pt-1">
+                <span className="block px-4 py-1 text-[9px] uppercase tracking-[0.24em] text-primary/70">
+                  {c.label}
+                </span>
+                {c.children.map((g) => (
+                  <Link
+                    key={g.to}
+                    to={g.to}
+                    onClick={() => setOpen(false)}
+                    className="block px-6 py-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    activeProps={{ className: "text-primary" }}
+                  >
+                    {g.label}
+                  </Link>
+                ))}
+              </div>
+            ),
+          )}
         </div>
       ) : null}
     </div>
