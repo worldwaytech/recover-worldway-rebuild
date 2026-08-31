@@ -1,0 +1,1 @@
+CREATE POLICY "Staff can view TTC sync runs" ON public.ttc_sync_runs FOR SELECT TO authenticated USING (public.is_staff(auth.uid()));
