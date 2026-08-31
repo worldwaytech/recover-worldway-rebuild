@@ -71,6 +71,7 @@ import { Route as WorldCruisesIndexRouteImport } from './routes/world-cruises.in
 import { Route as WellnessIndexRouteImport } from './routes/wellness.index'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VillasIndexRouteImport } from './routes/villas.index'
+import { Route as TtcIndexRouteImport } from './routes/ttc.index'
 import { Route as ToursIndexRouteImport } from './routes/tours.index'
 import { Route as TailorMadeIndexRouteImport } from './routes/tailor-made.index'
 import { Route as SmallGroupIndexRouteImport } from './routes/small-group.index'
@@ -139,6 +140,7 @@ import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
 import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminToursRouteImport } from './routes/admin.tours'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -169,6 +171,7 @@ import { Route as ToursBrowseIndexRouteImport } from './routes/tours.browse.inde
 import { Route as DestinationsRegionIndexRouteImport } from './routes/destinations.$region.index'
 import { Route as CrystalCruisesShipsIndexRouteImport } from './routes/crystal-cruises.ships.index'
 import { Route as CrystalCruisesDestinationsIndexRouteImport } from './routes/crystal-cruises.destinations.index'
+import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
@@ -496,6 +499,11 @@ const VillasIndexRoute = VillasIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => VillasRoute,
+} as any)
+const TtcIndexRoute = TtcIndexRouteImport.update({
+  id: '/ttc/',
+  path: '/ttc/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ToursIndexRoute = ToursIndexRouteImport.update({
   id: '/',
@@ -838,6 +846,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTtcRoute = AdminTtcRouteImport.update({
+  id: '/ttc',
+  path: '/ttc',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminToursRoute = AdminToursRouteImport.update({
   id: '/tours',
   path: '/tours',
@@ -992,6 +1005,11 @@ const CrystalCruisesDestinationsIndexRoute =
     path: '/destinations/',
     getParentRoute: () => CrystalCruisesRoute,
   } as any)
+const TtcBrandSlugRoute = TtcBrandSlugRouteImport.update({
+  id: '/ttc/$brand/$slug',
+  path: '/ttc/$brand/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToursJourneyIdRoute = ToursJourneyIdRouteImport.update({
   id: '/journey/$id',
   path: '/journey/$id',
@@ -1170,6 +1188,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1238,6 +1257,7 @@ export interface FileRoutesByFullPath {
   '/small-group/': typeof SmallGroupIndexRoute
   '/tailor-made/': typeof TailorMadeIndexRoute
   '/tours/': typeof ToursIndexRoute
+  '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
   '/wellness/': typeof WellnessIndexRoute
@@ -1257,6 +1277,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
@@ -1322,6 +1343,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1389,6 +1411,7 @@ export interface FileRoutesByTo {
   '/small-group': typeof SmallGroupIndexRoute
   '/tailor-made': typeof TailorMadeIndexRoute
   '/tours': typeof ToursIndexRoute
+  '/ttc': typeof TtcIndexRoute
   '/villas': typeof VillasIndexRoute
   '/visa': typeof VisaIndexRoute
   '/wellness': typeof WellnessIndexRoute
@@ -1407,6 +1430,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/crystal-cruises/destinations': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region': typeof DestinationsRegionIndexRoute
@@ -1500,6 +1524,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
@@ -1568,6 +1593,7 @@ export interface FileRoutesById {
   '/small-group/': typeof SmallGroupIndexRoute
   '/tailor-made/': typeof TailorMadeIndexRoute
   '/tours/': typeof ToursIndexRoute
+  '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
   '/wellness/': typeof WellnessIndexRoute
@@ -1587,6 +1613,7 @@ export interface FileRoutesById {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
@@ -1681,6 +1708,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/ttc'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -1749,6 +1777,7 @@ export interface FileRouteTypes {
     | '/small-group/'
     | '/tailor-made/'
     | '/tours/'
+    | '/ttc/'
     | '/villas/'
     | '/visa/'
     | '/wellness/'
@@ -1768,6 +1797,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/ttc/$brand/$slug'
     | '/crystal-cruises/destinations/'
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
@@ -1833,6 +1863,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/ttc'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -1900,6 +1931,7 @@ export interface FileRouteTypes {
     | '/small-group'
     | '/tailor-made'
     | '/tours'
+    | '/ttc'
     | '/villas'
     | '/visa'
     | '/wellness'
@@ -1918,6 +1950,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/voyages/$code'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/ttc/$brand/$slug'
     | '/crystal-cruises/destinations'
     | '/crystal-cruises/ships'
     | '/destinations/$region'
@@ -2010,6 +2043,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/ttc'
     | '/admin/users'
     | '/agent/bookings'
     | '/agent/clients'
@@ -2078,6 +2112,7 @@ export interface FileRouteTypes {
     | '/small-group/'
     | '/tailor-made/'
     | '/tours/'
+    | '/ttc/'
     | '/villas/'
     | '/visa/'
     | '/wellness/'
@@ -2097,6 +2132,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/ttc/$brand/$slug'
     | '/crystal-cruises/destinations/'
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
@@ -2171,12 +2207,14 @@ export interface RootRouteChildren {
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  TtcIndexRoute: typeof TtcIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
+  TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
 }
 
@@ -2615,6 +2653,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/villas/'
       preLoaderRoute: typeof VillasIndexRouteImport
       parentRoute: typeof VillasRoute
+    }
+    '/ttc/': {
+      id: '/ttc/'
+      path: '/ttc'
+      fullPath: '/ttc/'
+      preLoaderRoute: typeof TtcIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tours/': {
       id: '/tours/'
@@ -3092,6 +3137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ttc': {
+      id: '/admin/ttc'
+      path: '/ttc'
+      fullPath: '/admin/ttc'
+      preLoaderRoute: typeof AdminTtcRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/tours': {
       id: '/admin/tours'
       path: '/tours'
@@ -3302,6 +3354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrystalCruisesDestinationsIndexRouteImport
       parentRoute: typeof CrystalCruisesRoute
     }
+    '/ttc/$brand/$slug': {
+      id: '/ttc/$brand/$slug'
+      path: '/ttc/$brand/$slug'
+      fullPath: '/ttc/$brand/$slug'
+      preLoaderRoute: typeof TtcBrandSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tours/journey/$id': {
       id: '/tours/journey/$id'
       path: '/journey/$id'
@@ -3467,6 +3526,7 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
   AdminToursRoute: typeof AdminToursRoute
+  AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -3489,6 +3549,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
   AdminToursRoute: AdminToursRoute,
+  AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -3972,12 +4033,14 @@ const rootRouteChildren: RootRouteChildren = {
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
+  TtcIndexRoute: TtcIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
+  TtcBrandSlugRoute: TtcBrandSlugRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
 }
 export const routeTree = rootRouteImport

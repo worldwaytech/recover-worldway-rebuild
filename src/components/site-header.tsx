@@ -47,6 +47,7 @@ const NAV: NavItem[] = [
     label: "Experiences",
     children: [
       { to: "/tours", label: "Tours" },
+      { to: "/ttc", label: "TTC Guided Journeys" },
       { to: "/tours/browse", label: "Browse Collections" },
       { to: "/activities", label: "Activities" },
       { to: "/transfers", label: "Transfers" },

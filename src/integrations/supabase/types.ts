@@ -1230,6 +1230,216 @@ export type Database = {
         }
         Relationships: []
       }
+      ttc_sync_runs: {
+        Row: {
+          brand: string
+          created_at: string
+          cursor: string | null
+          detail: Json
+          discovered: number
+          error: string | null
+          failed: number
+          finished_at: string | null
+          id: string
+          imported: number
+          resource: string
+          source: string
+          started_at: string
+          status: string
+          unchanged: number
+          updated: number
+          updated_at: string
+        }
+        Insert: {
+          brand?: string
+          created_at?: string
+          cursor?: string | null
+          detail?: Json
+          discovered?: number
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          imported?: number
+          resource?: string
+          source?: string
+          started_at?: string
+          status?: string
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          cursor?: string | null
+          detail?: Json
+          discovered?: number
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          imported?: number
+          resource?: string
+          source?: string
+          started_at?: string
+          status?: string
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ttc_tours: {
+        Row: {
+          accommodation: Json
+          api_synced_at: string | null
+          brand: string
+          brand_label: string | null
+          content_hash: string | null
+          countries: Json
+          created_at: string
+          departures: Json
+          description: string | null
+          destinations: Json
+          duration_days: number | null
+          duration_nights: number | null
+          end_city: string | null
+          exclusions: Json
+          group_size: string | null
+          group_size_max: number | null
+          hero_image: string | null
+          highlights: Json
+          id: string
+          images: Json
+          inclusions: Json
+          itinerary: Json
+          locale: string
+          meals: Json
+          name: string
+          price_currency: string | null
+          price_from: number | null
+          price_note: string | null
+          review_count: number | null
+          review_rating: number | null
+          seasons: Json
+          source: string
+          source_payload: Json
+          source_scraped_at: string | null
+          source_url: string
+          start_city: string | null
+          subtitle: string | null
+          summary: string | null
+          supplier_option_id: string | null
+          supplier_tour_id: string | null
+          synced_at: string
+          tour_options: Json
+          tour_slug: string
+          tour_style: string | null
+          transport: Json
+          trip_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          accommodation?: Json
+          api_synced_at?: string | null
+          brand: string
+          brand_label?: string | null
+          content_hash?: string | null
+          countries?: Json
+          created_at?: string
+          departures?: Json
+          description?: string | null
+          destinations?: Json
+          duration_days?: number | null
+          duration_nights?: number | null
+          end_city?: string | null
+          exclusions?: Json
+          group_size?: string | null
+          group_size_max?: number | null
+          hero_image?: string | null
+          highlights?: Json
+          id?: string
+          images?: Json
+          inclusions?: Json
+          itinerary?: Json
+          locale?: string
+          meals?: Json
+          name: string
+          price_currency?: string | null
+          price_from?: number | null
+          price_note?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          seasons?: Json
+          source?: string
+          source_payload?: Json
+          source_scraped_at?: string | null
+          source_url: string
+          start_city?: string | null
+          subtitle?: string | null
+          summary?: string | null
+          supplier_option_id?: string | null
+          supplier_tour_id?: string | null
+          synced_at?: string
+          tour_options?: Json
+          tour_slug: string
+          tour_style?: string | null
+          transport?: Json
+          trip_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accommodation?: Json
+          api_synced_at?: string | null
+          brand?: string
+          brand_label?: string | null
+          content_hash?: string | null
+          countries?: Json
+          created_at?: string
+          departures?: Json
+          description?: string | null
+          destinations?: Json
+          duration_days?: number | null
+          duration_nights?: number | null
+          end_city?: string | null
+          exclusions?: Json
+          group_size?: string | null
+          group_size_max?: number | null
+          hero_image?: string | null
+          highlights?: Json
+          id?: string
+          images?: Json
+          inclusions?: Json
+          itinerary?: Json
+          locale?: string
+          meals?: Json
+          name?: string
+          price_currency?: string | null
+          price_from?: number | null
+          price_note?: string | null
+          review_count?: number | null
+          review_rating?: number | null
+          seasons?: Json
+          source?: string
+          source_payload?: Json
+          source_scraped_at?: string | null
+          source_url?: string
+          start_city?: string | null
+          subtitle?: string | null
+          summary?: string | null
+          supplier_option_id?: string | null
+          supplier_tour_id?: string | null
+          synced_at?: string
+          tour_options?: Json
+          tour_slug?: string
+          tour_style?: string | null
+          transport?: Json
+          trip_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       up17_bus_cities: {
         Row: {
           city_id: string
