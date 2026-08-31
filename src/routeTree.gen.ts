@@ -92,6 +92,7 @@ import { Route as CrystalCruisesIndexRouteImport } from './routes/crystal-cruise
 import { Route as CruisesIndexRouteImport } from './routes/cruises.index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as B2bIndexRouteImport } from './routes/b2b.index'
+import { Route as AllJourneysIndexRouteImport } from './routes/all-journeys.index'
 import { Route as AgentIndexRouteImport } from './routes/agent.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
@@ -133,6 +134,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as B2bTeamRouteImport } from './routes/b2b.team'
 import { Route as B2bReportsRouteImport } from './routes/b2b.reports'
 import { Route as B2bPoliciesRouteImport } from './routes/b2b.policies'
+import { Route as AllJourneysSlugRouteImport } from './routes/all-journeys.$slug'
 import { Route as AgentTrainingRouteImport } from './routes/agent.training'
 import { Route as AgentSignupRouteImport } from './routes/agent.signup'
 import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
@@ -605,6 +607,11 @@ const B2bIndexRoute = B2bIndexRouteImport.update({
   path: '/',
   getParentRoute: () => B2bRoute,
 } as any)
+const AllJourneysIndexRoute = AllJourneysIndexRouteImport.update({
+  id: '/all-journeys/',
+  path: '/all-journeys/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentIndexRoute = AgentIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -810,6 +817,11 @@ const B2bPoliciesRoute = B2bPoliciesRouteImport.update({
   id: '/policies',
   path: '/policies',
   getParentRoute: () => B2bRoute,
+} as any)
+const AllJourneysSlugRoute = AllJourneysSlugRouteImport.update({
+  id: '/all-journeys/$slug',
+  path: '/all-journeys/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AgentTrainingRoute = AgentTrainingRouteImport.update({
   id: '/training',
@@ -1196,6 +1208,7 @@ export interface FileRoutesByFullPath {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
@@ -1237,6 +1250,7 @@ export interface FileRoutesByFullPath {
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
+  '/all-journeys/': typeof AllJourneysIndexRoute
   '/b2b/': typeof B2bIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/cruises/': typeof CruisesIndexRoute
@@ -1351,6 +1365,7 @@ export interface FileRoutesByTo {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
@@ -1391,6 +1406,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
   '/agent': typeof AgentIndexRoute
+  '/all-journeys': typeof AllJourneysIndexRoute
   '/b2b': typeof B2bIndexRoute
   '/blog': typeof BlogIndexRoute
   '/cruises': typeof CruisesIndexRoute
@@ -1532,6 +1548,7 @@ export interface FileRoutesById {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
   '/b2b/team': typeof B2bTeamRoute
@@ -1573,6 +1590,7 @@ export interface FileRoutesById {
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
+  '/all-journeys/': typeof AllJourneysIndexRoute
   '/b2b/': typeof B2bIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/cruises/': typeof CruisesIndexRoute
@@ -1716,6 +1734,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
@@ -1757,6 +1776,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/admin/'
     | '/agent/'
+    | '/all-journeys/'
     | '/b2b/'
     | '/blog/'
     | '/cruises/'
@@ -1871,6 +1891,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
@@ -1911,6 +1932,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/admin'
     | '/agent'
+    | '/all-journeys'
     | '/b2b'
     | '/blog'
     | '/cruises'
@@ -2051,6 +2073,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
     | '/b2b/team'
@@ -2092,6 +2115,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/admin/'
     | '/agent/'
+    | '/all-journeys/'
     | '/b2b/'
     | '/blog/'
     | '/cruises/'
@@ -2203,9 +2227,11 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
+  AllJourneysSlugRoute: typeof AllJourneysSlugRoute
   BlogSlugRoute: typeof BlogSlugRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
+  AllJourneysIndexRoute: typeof AllJourneysIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -2801,6 +2827,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof B2bIndexRouteImport
       parentRoute: typeof B2bRoute
     }
+    '/all-journeys/': {
+      id: '/all-journeys/'
+      path: '/all-journeys'
+      fullPath: '/all-journeys/'
+      preLoaderRoute: typeof AllJourneysIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agent/': {
       id: '/agent/'
       path: '/'
@@ -3087,6 +3120,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/b2b/policies'
       preLoaderRoute: typeof B2bPoliciesRouteImport
       parentRoute: typeof B2bRoute
+    }
+    '/all-journeys/$slug': {
+      id: '/all-journeys/$slug'
+      path: '/all-journeys/$slug'
+      fullPath: '/all-journeys/$slug'
+      preLoaderRoute: typeof AllJourneysSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/agent/training': {
       id: '/agent/training'
@@ -4029,9 +4069,11 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ActivitiesCodeRoute: ActivitiesCodeRoute,
+  AllJourneysSlugRoute: AllJourneysSlugRoute,
   BlogSlugRoute: BlogSlugRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
+  AllJourneysIndexRoute: AllJourneysIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
