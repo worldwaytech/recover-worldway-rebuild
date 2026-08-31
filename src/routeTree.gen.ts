@@ -60,6 +60,7 @@ import { Route as BusesRouteImport } from './routes/buses'
 import { Route as B2cRouteImport } from './routes/b2c'
 import { Route as B2bRouteImport } from './routes/b2b'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AllJourneysRouteImport } from './routes/all-journeys'
 import { Route as AircraftRouteImport } from './routes/aircraft'
 import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -447,6 +448,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AllJourneysRoute = AllJourneysRouteImport.update({
+  id: '/all-journeys',
+  path: '/all-journeys',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AircraftRoute = AircraftRouteImport.update({
   id: '/aircraft',
   path: '/aircraft',
@@ -608,9 +614,9 @@ const B2bIndexRoute = B2bIndexRouteImport.update({
   getParentRoute: () => B2bRoute,
 } as any)
 const AllJourneysIndexRoute = AllJourneysIndexRouteImport.update({
-  id: '/all-journeys/',
-  path: '/all-journeys/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AllJourneysRoute,
 } as any)
 const AgentIndexRoute = AgentIndexRouteImport.update({
   id: '/',
@@ -819,9 +825,9 @@ const B2bPoliciesRoute = B2bPoliciesRouteImport.update({
   getParentRoute: () => B2bRoute,
 } as any)
 const AllJourneysSlugRoute = AllJourneysSlugRouteImport.update({
-  id: '/all-journeys/$slug',
-  path: '/all-journeys/$slug',
-  getParentRoute: () => rootRouteImport,
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AllJourneysRoute,
 } as any)
 const AgentTrainingRoute = AgentTrainingRouteImport.update({
   id: '/training',
@@ -1123,6 +1129,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
   '/aircraft': typeof AircraftRoute
+  '/all-journeys': typeof AllJourneysRouteWithChildren
   '/auth': typeof AuthRoute
   '/b2b': typeof B2bRouteWithChildren
   '/b2c': typeof B2cRoute
@@ -1463,6 +1470,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
   '/aircraft': typeof AircraftRoute
+  '/all-journeys': typeof AllJourneysRouteWithChildren
   '/auth': typeof AuthRoute
   '/b2b': typeof B2bRouteWithChildren
   '/b2c': typeof B2cRoute
@@ -1649,6 +1657,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/aircraft'
+    | '/all-journeys'
     | '/auth'
     | '/b2b'
     | '/b2c'
@@ -1988,6 +1997,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/aircraft'
+    | '/all-journeys'
     | '/auth'
     | '/b2b'
     | '/b2c'
@@ -2173,6 +2183,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AgentRoute: typeof AgentRouteWithChildren
   AircraftRoute: typeof AircraftRoute
+  AllJourneysRoute: typeof AllJourneysRouteWithChildren
   AuthRoute: typeof AuthRoute
   B2bRoute: typeof B2bRouteWithChildren
   B2cRoute: typeof B2cRoute
@@ -2227,11 +2238,9 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
-  AllJourneysSlugRoute: typeof AllJourneysSlugRoute
   BlogSlugRoute: typeof BlogSlugRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
-  AllJourneysIndexRoute: typeof AllJourneysIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -2603,6 +2612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/all-journeys': {
+      id: '/all-journeys'
+      path: '/all-journeys'
+      fullPath: '/all-journeys'
+      preLoaderRoute: typeof AllJourneysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/aircraft': {
       id: '/aircraft'
       path: '/aircraft'
@@ -2829,10 +2845,10 @@ declare module '@tanstack/react-router' {
     }
     '/all-journeys/': {
       id: '/all-journeys/'
-      path: '/all-journeys'
+      path: '/'
       fullPath: '/all-journeys/'
       preLoaderRoute: typeof AllJourneysIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AllJourneysRoute
     }
     '/agent/': {
       id: '/agent/'
@@ -3123,10 +3139,10 @@ declare module '@tanstack/react-router' {
     }
     '/all-journeys/$slug': {
       id: '/all-journeys/$slug'
-      path: '/all-journeys/$slug'
+      path: '/$slug'
       fullPath: '/all-journeys/$slug'
       preLoaderRoute: typeof AllJourneysSlugRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AllJourneysRoute
     }
     '/agent/training': {
       id: '/agent/training'
@@ -3618,6 +3634,20 @@ const AgentRouteChildren: AgentRouteChildren = {
 
 const AgentRouteWithChildren = AgentRoute._addFileChildren(AgentRouteChildren)
 
+interface AllJourneysRouteChildren {
+  AllJourneysSlugRoute: typeof AllJourneysSlugRoute
+  AllJourneysIndexRoute: typeof AllJourneysIndexRoute
+}
+
+const AllJourneysRouteChildren: AllJourneysRouteChildren = {
+  AllJourneysSlugRoute: AllJourneysSlugRoute,
+  AllJourneysIndexRoute: AllJourneysIndexRoute,
+}
+
+const AllJourneysRouteWithChildren = AllJourneysRoute._addFileChildren(
+  AllJourneysRouteChildren,
+)
+
 interface B2bRouteChildren {
   B2bPoliciesRoute: typeof B2bPoliciesRoute
   B2bReportsRoute: typeof B2bReportsRoute
@@ -4014,6 +4044,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AgentRoute: AgentRouteWithChildren,
   AircraftRoute: AircraftRoute,
+  AllJourneysRoute: AllJourneysRouteWithChildren,
   AuthRoute: AuthRoute,
   B2bRoute: B2bRouteWithChildren,
   B2cRoute: B2cRoute,
@@ -4069,11 +4100,9 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ActivitiesCodeRoute: ActivitiesCodeRoute,
-  AllJourneysSlugRoute: AllJourneysSlugRoute,
   BlogSlugRoute: BlogSlugRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
-  AllJourneysIndexRoute: AllJourneysIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
