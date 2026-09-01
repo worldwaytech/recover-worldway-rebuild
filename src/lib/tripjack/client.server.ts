@@ -115,7 +115,9 @@ export async function tripjackCall<T = unknown>(
   suite: TripjackSuite,
   capability: string,
   body?: unknown,
+  query?: Record<string, string>,
 ): Promise<TripjackResult<T>> {
+
   const correlationId = tripjackCorrelationId(suite, capability);
   const started = Date.now();
 
