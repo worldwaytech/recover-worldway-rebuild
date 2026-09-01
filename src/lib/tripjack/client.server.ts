@@ -145,7 +145,9 @@ export async function tripjackCall<T = unknown>(
     };
   }
 
-  const url = `${TRIPJACK_UAT_BASE_URL}${cap.path}`;
+  const search = query ? new URLSearchParams(query).toString() : "";
+  const url = `${TRIPJACK_UAT_BASE_URL}${cap.path}${search ? `?${search}` : ""}`;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TRIPJACK_TIMEOUT_MS);
 
