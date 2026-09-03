@@ -1,0 +1,343 @@
+// TripJack UAT certification — server-only helpers.
+//
+// * Connectivity check: read-only probes per suite, classified honestly. A Cabs
+//   HTTP 404 / HTML response is reported as SUPPLIER-SIDE BLOCKED (product not
+//   enabled on the key or egress IP not whitelisted) — never bypassed.
+// * Evidence export: one JSON file per request and per response, straight from
+//   the persisted evidence rows. Credentials are never stored, so the export
+//   only strips credential-shaped keys defensively; payload data (including
+//   real passenger names, which TripJack requires) is left intact.
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+import { tripjackCall, tripjackCredentialStatus } from "./client.server";
+import {
+  TRIPJACK_CERTIFICATION_CASES,
+  TRIPJACK_UAT_BASE_URL,
+  type TripjackCertificationStatus,
+  type TripjackSuite,
+} from "./config";
+
+type Client = SupabaseClient<Database>;
+type LogRow = Database["public"]["Tables"]["tripjack_api_logs"]["Row"];
+type CaseRow = Database["public"]["Tables"]["tripjack_certification_cases"]["Row"];
+
+export type SuiteConnectivity = {
+  suite: TripjackSuite;
+  state: "LIVE" | "SUPPLIER-SIDE BLOCKED" | "NOT CONFIGURED" | "ERROR";
+  httpStatus: number | null;
+  detail: string;
+  correlationId?: string;
+  checkedAt: string;
+};
+
+function futureDate(days: number): string {
+  return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Read-only probes only — never touches a mutating capability. */
+export async function checkTripjackConnectivity(): Promise<SuiteConnectivity[]> {
+  const checkedAt = new Date().toISOString();
+  if (!tripjackCredentialStatus().configured) {
+    return (["cabs", "tripsafe"] as TripjackSuite[]).map((suite) => ({
+      suite,
+      state: "NOT CONFIGURED",
+      httpStatus: null,
+      detail: "TRIPJACK_UAT_API_KEY is not configured on the server.",
+      checkedAt,
+    }));
+  }
+
+  const cabs = await tripjackCall<unknown>("cabs", "location-search", { input: "igi" });
+  const cabsResult: SuiteConnectivity = cabs.ok
+    ? { suite: "cabs", state: "LIVE", httpStatus: 200, detail: "Location Search responded with JSON.", correlationId: cabs.correlationId, checkedAt }
+    : cabs.error.kind === "invalid-response" || cabs.error.status === 404 || cabs.error.status === 403
+      ? {
+          suite: "cabs",
+          state: "SUPPLIER-SIDE BLOCKED",
+          httpStatus: cabs.error.status ?? null,
+          detail:
+            "Cabs UAT endpoint is not reachable with this key (HTTP 404 / non-JSON). TripJack must enable the Cabs product on the API key and whitelist the server egress IP. Not bypassed.",
+          correlationId: cabs.correlationId,
+          checkedAt,
+        }
+      : { suite: "cabs", state: "ERROR", httpStatus: cabs.error.status ?? null, detail: cabs.error.message, correlationId: cabs.correlationId, checkedAt };
+
+  const tripsafe = await tripjackCall<{ isr?: { iinfo?: { pli?: unknown[] } } }>("tripsafe", "search", {
+    isq: {
+      sd: futureDate(10),
+      ed: futureDate(17),
+      isc: { iri: [{ rkey: "SCH", rt: "POPULARREGION" }] },
+      iti: [{ age: 30 }],
+    },
+  });
+  const tripsafeResult: SuiteConnectivity = tripsafe.ok
+    ? {
+        suite: "tripsafe",
+        state: "LIVE",
+        httpStatus: 200,
+        detail: `Search responded with ${tripsafe.data?.isr?.iinfo?.pli?.length ?? 0} plan group(s).`,
+        correlationId: tripsafe.correlationId,
+        checkedAt,
+      }
+    : tripsafe.error.kind === "invalid-response" || tripsafe.error.status === 404 || tripsafe.error.status === 403
+      ? {
+          suite: "tripsafe",
+          state: "SUPPLIER-SIDE BLOCKED",
+          httpStatus: tripsafe.error.status ?? null,
+          detail: "TripSafe UAT endpoint rejected the key or egress IP. TripJack must enable the product / whitelist the IP.",
+          correlationId: tripsafe.correlationId,
+          checkedAt,
+        }
+      : { suite: "tripsafe", state: "ERROR", httpStatus: tripsafe.error.status ?? null, detail: tripsafe.error.message, correlationId: tripsafe.correlationId, checkedAt };
+
+  return [cabsResult, tripsafeResult];
+}
+
+export type CertificationCaseView = {
+  key: string;
+  suite: TripjackSuite;
+  section: string;
+  title: string;
+  optional: boolean;
+  capabilities: string[];
+  status: TripjackCertificationStatus;
+  worldwayBookingId?: string;
+  supplierBookingId?: string;
+  confirmationNumbers: string[];
+  correlationIds: string[];
+  notes?: string;
+  evidenceCount: number;
+  updatedAt?: string;
+};
+
+function asStringArray(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+}
+
+/** Checklist merged with persisted status + evidence counts (RLS: staff only). */
+export async function loadCertificationOverview(client: Client) {
+  const [{ data: rows }, { data: recent }, { count }] = await Promise.all([
+    client.from("tripjack_certification_cases").select("*"),
+    client.from("tripjack_api_logs").select("id, correlation_id, suite, capability, method, path, response_status, outcome, error_kind, duration_ms, supplier_booking_id, created_at").order("created_at", { ascending: false }).limit(60),
+    client.from("tripjack_api_logs").select("id", { count: "exact", head: true }),
+  ]);
+  const byKey = new Map<string, CaseRow>((rows ?? []).map((r) => [r.case_key, r]));
+
+  const cases: CertificationCaseView[] = [];
+  for (const c of TRIPJACK_CERTIFICATION_CASES) {
+    const row = byKey.get(c.key);
+    const supplierBookingId = row?.supplier_booking_id ?? undefined;
+    const correlationIds = asStringArray(row?.correlation_ids);
+    let evidenceCount = 0;
+    if (supplierBookingId || correlationIds.length) {
+      const q = client.from("tripjack_api_logs").select("id", { count: "exact", head: true });
+      const filters: string[] = [];
+      if (supplierBookingId) filters.push(`supplier_booking_id.eq.${supplierBookingId}`);
+      if (correlationIds.length) filters.push(`correlation_id.in.(${correlationIds.join(",")})`);
+      const { count: n } = await q.or(filters.join(","));
+      evidenceCount = n ?? 0;
+    }
+    cases.push({
+      key: c.key,
+      suite: c.suite,
+      section: c.section,
+      title: c.title,
+      optional: Boolean(c.optional),
+      capabilities: c.capabilities,
+      status: (row?.status as TripjackCertificationStatus | undefined) ?? "not_started",
+      worldwayBookingId: row?.worldway_booking_id ?? undefined,
+      supplierBookingId,
+      confirmationNumbers: asStringArray(row?.confirmation_numbers),
+      correlationIds,
+      notes: row?.notes ?? undefined,
+      evidenceCount,
+      updatedAt: row?.updated_at ?? undefined,
+    });
+  }
+
+  return {
+    environment: "uat" as const,
+    baseUrl: TRIPJACK_UAT_BASE_URL,
+    credentialConfigured: tripjackCredentialStatus().configured,
+    cases,
+    totals: {
+      cases: cases.length,
+      passed: cases.filter((c) => c.status === "passed").length,
+      blocked: cases.filter((c) => c.status === "blocked").length,
+      evidenceRows: count ?? 0,
+    },
+    recentLogs: (recent ?? []).map((l) => ({
+      id: l.id,
+      correlationId: l.correlation_id,
+      suite: l.suite,
+      capability: l.capability,
+      method: l.method,
+      path: l.path,
+      status: l.response_status,
+      outcome: l.outcome,
+      errorKind: l.error_kind,
+      durationMs: l.duration_ms,
+      supplierBookingId: l.supplier_booking_id,
+      at: l.created_at,
+    })),
+  };
+}
+
+export async function upsertCertificationCase(
+  client: Client,
+  userId: string,
+  input: {
+    caseKey: string;
+    status: TripjackCertificationStatus;
+    worldwayBookingId?: string | null;
+    supplierBookingId?: string | null;
+    confirmationNumbers?: string[];
+    correlationIds?: string[];
+    notes?: string | null;
+  },
+) {
+  const def = TRIPJACK_CERTIFICATION_CASES.find((c) => c.key === input.caseKey);
+  if (!def) throw new Error("Unknown certification case.");
+  const { error } = await client.from("tripjack_certification_cases").upsert(
+    {
+      case_key: def.key,
+      suite: def.suite,
+      status: input.status,
+      worldway_booking_id: input.worldwayBookingId ?? null,
+      supplier_booking_id: input.supplierBookingId?.trim() || null,
+      confirmation_numbers: input.confirmationNumbers ?? [],
+      correlation_ids: input.correlationIds ?? [],
+      notes: input.notes ?? null,
+      updated_by: userId,
+    },
+    { onConflict: "case_key" },
+  );
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+const CREDENTIAL_KEYS = new Set(["apikey", "api_key", "authorization", "x-api-key", "secret", "password"]);
+
+/** Defensive credential strip only — payload data is otherwise unmodified. */
+export function stripCredentials(value: unknown, depth = 0): unknown {
+  if (depth > 10) return value;
+  if (Array.isArray(value)) return value.map((v) => stripCredentials(v, depth + 1));
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = CREDENTIAL_KEYS.has(k.toLowerCase()) ? "[removed]" : stripCredentials(v, depth + 1);
+    }
+    return out;
+  }
+  return value;
+}
+
+export type EvidenceFile = { name: string; content: string };
+
+function safe(s: string): string {
+  return s.replace(/[^a-zA-Z0-9._-]+/g, "_");
+}
+
+function toFiles(rows: LogRow[], folder: string): EvidenceFile[] {
+  const files: EvidenceFile[] = [];
+  rows.forEach((row, i) => {
+    const n = String(i + 1).padStart(2, "0");
+    const base = `${folder}/${n}_${safe(row.suite)}_${safe(row.capability)}`;
+    const url = `${TRIPJACK_UAT_BASE_URL}${row.path}${
+      row.request_query && typeof row.request_query === "object" && Object.keys(row.request_query as object).length
+        ? `?${new URLSearchParams(row.request_query as Record<string, string>).toString()}`
+        : ""
+    }`;
+    files.push({
+      name: `${base}_request.json`,
+      content: JSON.stringify(
+        {
+          correlationId: row.correlation_id,
+          timestamp: row.created_at,
+          method: row.method,
+          url,
+          headers: { "Content-Type": "application/json", apikey: "[attached separately per TripJack certification instructions]" },
+          body: stripCredentials(row.request_body) ?? null,
+        },
+        null,
+        2,
+      ),
+    });
+    files.push({
+      name: `${base}_response.json`,
+      content: JSON.stringify(
+        {
+          correlationId: row.correlation_id,
+          timestamp: row.created_at,
+          httpStatus: row.response_status,
+          durationMs: row.duration_ms,
+          outcome: row.outcome,
+          body: stripCredentials(row.response_body) ?? null,
+        },
+        null,
+        2,
+      ),
+    });
+  });
+  return files;
+}
+
+/**
+ * Evidence bundle for a certification case: every persisted call matching the
+ * case's supplier booking id and/or recorded correlation ids, plus a manifest.
+ */
+export async function exportCaseEvidence(client: Client, caseKey: string): Promise<{ files: EvidenceFile[]; count: number }> {
+  const def = TRIPJACK_CERTIFICATION_CASES.find((c) => c.key === caseKey);
+  if (!def) throw new Error("Unknown certification case.");
+  const { data: row } = await client.from("tripjack_certification_cases").select("*").eq("case_key", caseKey).maybeSingle();
+  const supplierBookingId = row?.supplier_booking_id ?? null;
+  const correlationIds = asStringArray(row?.correlation_ids);
+  if (!supplierBookingId && !correlationIds.length) return { files: [], count: 0 };
+
+  const filters: string[] = [];
+  if (supplierBookingId) filters.push(`supplier_booking_id.eq.${supplierBookingId}`);
+  if (correlationIds.length) filters.push(`correlation_id.in.(${correlationIds.join(",")})`);
+  const { data: logs, error } = await client
+    .from("tripjack_api_logs")
+    .select("*")
+    .or(filters.join(","))
+    .order("created_at", { ascending: true })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  const rows = logs ?? [];
+  const folder = safe(caseKey);
+  const files = toFiles(rows, folder);
+  files.unshift({
+    name: `${folder}/manifest.json`,
+    content: JSON.stringify(
+      {
+        case: def,
+        status: row?.status ?? "not_started",
+        supplierBookingId,
+        confirmationNumbers: asStringArray(row?.confirmation_numbers),
+        correlationIds,
+        environment: "uat",
+        baseUrl: TRIPJACK_UAT_BASE_URL,
+        calls: rows.map((r) => ({ correlationId: r.correlation_id, capability: r.capability, status: r.response_status, at: r.created_at })),
+        note: "Logs are unmodified supplier request/response JSON; credentials are never stored. Attach the API key separately when submitting.",
+      },
+      null,
+      2,
+    ),
+  });
+  return { files, count: rows.length };
+}
+
+/** Evidence for an arbitrary set of correlation ids (e.g. from a booking's timeline). */
+export async function exportCorrelationEvidence(client: Client, correlationIds: string[]): Promise<{ files: EvidenceFile[]; count: number }> {
+  if (!correlationIds.length) return { files: [], count: 0 };
+  const { data: logs, error } = await client
+    .from("tripjack_api_logs")
+    .select("*")
+    .in("correlation_id", correlationIds)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  const rows = logs ?? [];
+  return { files: toFiles(rows, "evidence"), count: rows.length };
+}

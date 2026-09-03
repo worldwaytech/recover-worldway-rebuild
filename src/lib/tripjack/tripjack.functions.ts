@@ -4,7 +4,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { CAB_JOURNEY_TYPES, CAB_TRIP_TYPES, TRIPSAFE_CHANNEL_TYPES } from "./config";
+import {
+  CAB_JOURNEY_TYPES,
+  CAB_TRIP_TYPES,
+  TRIPJACK_CERTIFICATION_STATUSES,
+  TRIPSAFE_CHANNEL_TYPES,
+  TRIPSAFE_NOMINEE_RELATIONS,
+} from "./config";
 
 const cabLocation = z.object({
   type: z.literal("location"),
@@ -57,14 +63,16 @@ const traveller = z.object({
   eid: z.string().email().max(120).optional(),
   cnum: z.string().max(20).optional(),
   pnum: z.string().max(20).optional(),
-  pnan: z.string().max(60).optional(),
+  pincode: z.string().max(10).optional(),
+  gen: z.enum(["M", "F"]).optional(),
   isio: z.boolean().optional(),
   nomineeName: z.string().max(80).optional(),
-  nomineeRelation: z.string().max(20).optional(),
+  nomineeRelation: z.enum(TRIPSAFE_NOMINEE_RELATIONS).optional(),
 });
 
-const tripsafeReviewSchema = z.object({
-  iid: z.string().min(1).max(60),
+/** Plan selection carried from Search → Review → Book (TripSafe v5.1 §3). */
+const tripsafeSelectionSchema = z.object({
+  plid: z.string().min(1).max(80),
   pid: z.string().min(1).max(120),
   sd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   ed: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -213,20 +221,14 @@ export const searchTripsafePlans = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => tripsafeSearchSchema.parse(d))
   .handler(async ({ data }) => {
     const { searchTripsafe } = await import("./tripsafe.server");
-    const r = await searchTripsafe(data);
-    if (!r.ok) return r;
-    // Do not ship the full raw supplier payload to the browser.
-    const plans = r.data.plans.map(({ raw: _raw, ...p }) => p);
-    return { ok: true as const, correlationId: r.correlationId, data: { searchId: r.data.searchId, plans } };
+    return searchTripsafe(data);
   });
 
 export const reviewTripsafePlan = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => tripsafeReviewSchema.parse(d))
+  .inputValidator((d: unknown) => tripsafeSelectionSchema.pick({ plid: true, pid: true }).parse(d))
   .handler(async ({ data }) => {
     const { reviewTripsafe } = await import("./tripsafe.server");
-    const r = await reviewTripsafe(data);
-    if (!r.ok) return r;
-    return { ok: true as const, correlationId: r.correlationId, data: { bookingId: r.data.bookingId, totalFare: r.data.totalFare } };
+    return reviewTripsafe(data);
   });
 
 // ─── TripSafe: authenticated writes ──────────────────────────────────────────
@@ -238,7 +240,7 @@ export const createTripsafeBooking = createServerFn({ method: "POST" })
       .object({
         idempotencyKey: z.string().min(8).max(80),
         planName: z.string().min(1).max(160),
-        review: tripsafeReviewSchema,
+        selection: tripsafeSelectionSchema,
       })
       .parse(d),
   )
@@ -259,11 +261,17 @@ export const syncTripsafeBookingFn = createServerFn({ method: "POST" })
 export const cancelTripsafeBookingFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ bookingId: z.string().uuid(), reason: z.string().min(3).max(300) }).parse(d),
+    z
+      .object({
+        bookingId: z.string().uuid(),
+        reason: z.string().min(3).max(300),
+        travellerIds: z.array(z.number().int().min(1).max(10)).max(10).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { cancelTripsafeBooking } = await import("./tripsafe.server");
-    return cancelTripsafeBooking(context.supabase as never, data.bookingId, data.reason);
+    return cancelTripsafeBooking(context.supabase as never, data.bookingId, data.reason, data.travellerIds);
   });
 
 export const listMyInsuranceBookings = createServerFn({ method: "POST" })
@@ -308,4 +316,59 @@ export const probeTripjackCapability = createServerFn({ method: "POST" })
     return result.ok
       ? { ok: true as const, correlationId: result.correlationId, sample: JSON.stringify(redact(result.data)).slice(0, 4000) }
       : { ok: false as const, message: result.error.message, kind: result.error.kind };
+  });
+
+// ─── Staff: UAT certification console ────────────────────────────────────────
+
+export const getTripjackCertification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ connectivity: z.boolean().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { loadCertificationOverview, checkTripjackConnectivity } = await import("./certification.server");
+    const overview = await loadCertificationOverview(context.supabase as never);
+    const connectivity = data.connectivity ? await checkTripjackConnectivity() : null;
+    return { ...overview, connectivity };
+  });
+
+export const updateTripjackCertificationCase = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        caseKey: z.string().min(1).max(60),
+        status: z.enum(TRIPJACK_CERTIFICATION_STATUSES),
+        worldwayBookingId: z.string().uuid().nullable().optional(),
+        supplierBookingId: z.string().max(40).nullable().optional(),
+        confirmationNumbers: z.array(z.string().max(60)).max(20).optional(),
+        correlationIds: z.array(z.string().max(120)).max(50).optional(),
+        notes: z.string().max(2000).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { upsertCertificationCase } = await import("./certification.server");
+    return upsertCertificationCase(context.supabase as never, context.userId, data);
+  });
+
+export const exportTripjackEvidence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .union([
+        z.object({ caseKey: z.string().min(1).max(60) }),
+        z.object({ correlationIds: z.array(z.string().max(120)).min(1).max(50) }),
+      ])
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { exportCaseEvidence, exportCorrelationEvidence } = await import("./certification.server");
+    return "caseKey" in data
+      ? exportCaseEvidence(context.supabase as never, data.caseKey)
+      : exportCorrelationEvidence(context.supabase as never, data.correlationIds);
   });

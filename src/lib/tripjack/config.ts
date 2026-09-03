@@ -250,6 +250,8 @@ export const TRIPSAFE_MAX_TRAVELLERS = 10;
 export const TRIPSAFE_MAX_AGE = 70;
 /** Regular (non-student, non-AMT) coverage cannot exceed 90 days. */
 export const TRIPSAFE_MAX_COVERAGE_DAYS = 90;
+/** TripSafe v5.1 FAQ: amendments must be raised ≥ 24h before coverage start. */
+export const TRIPSAFE_CANCELLATION_CUTOFF_HOURS = 24;
 
 /** Nominee relations (TripSafe v5.1 §3 Booking API). */
 export const TRIPSAFE_NOMINEE_RELATIONS = [
@@ -261,3 +263,45 @@ export const TRIPSAFE_NOMINEE_RELATIONS = [
   "GUARDIAN",
   "OTHER",
 ] as const;
+
+/**
+ * UAT certification checklist, transcribed from the supplier documentation:
+ *   * Cabs v2 §4.1–4.3 (mandatory) and §4.5 (optional embedded)
+ *   * TripSafe v5.1 §4 test matrix (searches + bookings incl. Student / AMT)
+ * Status lives in the `tripjack_certification_cases` table; this list is the
+ * authoritative set of cases TripJack expects evidence for.
+ */
+export type TripjackCertificationCase = {
+  key: string;
+  suite: TripjackSuite;
+  section: string;
+  title: string;
+  optional?: boolean;
+  /** Capabilities whose request/response logs must be included in the evidence bundle. */
+  capabilities: string[];
+};
+
+export const TRIPJACK_CERTIFICATION_CASES: TripjackCertificationCase[] = [
+  { key: "cabs-4.1-01", suite: "cabs", section: "4.1 Airport Transfer", title: "One-way airport transfer, 3 travellers, pickup = today + 2 days", capabilities: ["location-search", "location-latlong", "quote", "book", "payment", "booking-details"] },
+  { key: "cabs-4.1-02", suite: "cabs", section: "4.1 Airport Transfer", title: "Round-trip airport transfer, 2 travellers, return 1–2 days after pickup", capabilities: ["location-search", "location-latlong", "quote", "book", "payment", "booking-details"] },
+  { key: "cabs-4.2-01", suite: "cabs", section: "4.2 Outstation", title: "One-way outstation, 3 travellers, pickup = today + 2 days", capabilities: ["location-search", "location-latlong", "quote", "book", "payment", "booking-details"] },
+  { key: "cabs-4.2-02", suite: "cabs", section: "4.2 Outstation", title: "Round-trip outstation, 2 travellers, return 1–2 days after pickup", capabilities: ["location-search", "location-latlong", "quote", "book", "payment", "booking-details"] },
+  { key: "cabs-4.3-01", suite: "cabs", section: "4.3 Local", title: "One-way local hire, 3 travellers, pickup = today + 2 days", capabilities: ["location-search", "location-latlong", "quote", "book", "payment", "booking-details"] },
+  { key: "cabs-4.3-02", suite: "cabs", section: "4.3 Local", title: "Round-trip local hire, 2 travellers, return 1–2 days after pickup", capabilities: ["location-search", "location-latlong", "quote", "book", "payment", "booking-details"] },
+  { key: "cabs-4.4-cancel", suite: "cabs", section: "Amendments", title: "Cancellation charges lookup + cancellation of one booking above", capabilities: ["amend-charges", "cancel", "booking-details"] },
+  { key: "cabs-4.5-embedded", suite: "cabs", section: "4.5 Embedded (optional)", title: "One-way airport transfer linked to a flight arrival", optional: true, capabilities: ["embed"] },
+  { key: "tripsafe-search-regular", suite: "tripsafe", section: "Search", title: "Single-trip search (popular region, 1 traveller)", capabilities: ["search"] },
+  { key: "tripsafe-search-multi", suite: "tripsafe", section: "Search", title: "Single-trip search (country codes, 2+ travellers)", capabilities: ["search"] },
+  { key: "tripsafe-search-student", suite: "tripsafe", section: "Search", title: "Student search (ict=STUDENT, cd=180/365)", capabilities: ["student"] },
+  { key: "tripsafe-search-amt", suite: "tripsafe", section: "Search", title: "AMT search (ict=AMT, adr=30/60)", capabilities: ["amt"] },
+  { key: "tripsafe-book-regular", suite: "tripsafe", section: "Booking", title: "Single-trip Review → Book → Booking Details (policyId captured)", capabilities: ["review", "book", "booking-details"] },
+  { key: "tripsafe-book-multi", suite: "tripsafe", section: "Booking", title: "Multi-traveller Review → Book → Booking Details", capabilities: ["review", "book", "booking-details"] },
+  { key: "tripsafe-book-student-180", suite: "tripsafe", section: "Booking", title: "Student 180-day Review → Book", capabilities: ["review", "book", "booking-details"] },
+  { key: "tripsafe-book-student-365", suite: "tripsafe", section: "Booking", title: "Student 365-day Review → Book", capabilities: ["review", "book", "booking-details"] },
+  { key: "tripsafe-book-amt-30", suite: "tripsafe", section: "Booking", title: "AMT 30-day Review → Book", capabilities: ["review", "book", "booking-details"] },
+  { key: "tripsafe-book-amt-60", suite: "tripsafe", section: "Booking", title: "AMT 60-day Review → Book", capabilities: ["review", "book", "booking-details"] },
+  { key: "tripsafe-cancel", suite: "tripsafe", section: "Amendments", title: "Raise CANCELLATION → confirm INSURANCE_CANCELLATION (≥24h before cover)", capabilities: ["amend", "cancel", "booking-details"] },
+];
+
+export const TRIPJACK_CERTIFICATION_STATUSES = ["not_started", "in_progress", "passed", "failed", "blocked"] as const;
+export type TripjackCertificationStatus = (typeof TRIPJACK_CERTIFICATION_STATUSES)[number];
