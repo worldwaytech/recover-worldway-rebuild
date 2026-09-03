@@ -66,6 +66,27 @@ export interface Journey {
   exclusions: string[];
   accommodations: string[];
   faqs: { q: string; a: string }[];
+  // Optional enrichment populated for records reconciled from the A&K source catalogue.
+  images?: string[];
+  mapImage?: string;
+  countries?: string[];
+  destinations?: string[];
+  groupSize?: number;
+  journeyType?: string;
+  sourceCategories?: string[];
+  departureDates?: {
+    start: string;
+    end: string;
+    code?: string | null;
+    status?: string | null;
+    priceUsd?: number | null;
+  }[];
+  sourceId?: string;
+  sourceCode?: string;
+  sourceSlug?: string;
+  sourceUrl?: string;
+  sourceYears?: number[];
+  sourceUpdatedAt?: string;
 }
 
 export interface Category {
