@@ -11,4 +11,4 @@
 - [ ] (superseded) Import the WorldwayLuxe "All Journeys" catalogue (https://worldwayluxe.com/all-journeys) into a new JOURNEYS → ALL JOURNEYS tab: full journey records (images, descriptions, destinations, regions, styles, interests, duration, group size, pricing, status, day-by-day itineraries, inclusions/exclusions, tags, source IDs, metadata), premium listing + detail pages with search/filter/sort, responsive and SEO-ready. Verify source vs destination counts afterwards.
 
 ## TripJack
-- [ ] Read-only audit of Cabs + TripSafe integration vs uploaded docs (no code changes)
+- [x] Read-only audit of Cabs + TripSafe integration vs uploaded docs (no code changes)
