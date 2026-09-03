@@ -226,6 +226,7 @@ export async function viatorCartHold(input: {
       itemRef: pick<string>(i, ["partnerItemRef", "itemRef"]) ?? input.partnerItemRef,
       bookingRef: pick<string>(i, ["bookingRef", "bookingReference"]) ?? null,
     })),
+    hostingUrl,
   };
 }
 
