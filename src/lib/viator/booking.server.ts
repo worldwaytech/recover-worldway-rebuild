@@ -14,19 +14,33 @@ function bookingError(status: number, error?: string): string | undefined {
   return error;
 }
 import {
-  normaliseHostingUrl,
+  resolveHostingOrigin,
   type HoldRequestInput,
   type BookerInput,
   type PaxMix,
 } from "@/lib/viator/checkout-contract";
 
-/** Origin registered with Viator for hosted-payment validation. */
-export function viatorHostingOrigin(): string {
-  const raw =
-    process.env["VIATOR_HOSTING_URL"] ??
-    process.env["PUBLIC_SITE_URL"] ??
-    "https://www.worldwaytravelsgroup.com";
-  return normaliseHostingUrl(raw);
+/**
+ * Origin the payment iFrame will be hosted on. Derived from the requesting
+ * page's own origin (allowlisted: www + apex production domains, published and
+ * preview hosts), falling back to VIATOR_HOSTING_URL, then the canonical www
+ * origin. Reads request headers when called inside a server function.
+ */
+export async function viatorHostingOrigin(): Promise<string> {
+  let originHeader: string | undefined;
+  let refererHeader: string | undefined;
+  try {
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    originHeader = getRequestHeader("origin");
+    refererHeader = getRequestHeader("referer");
+  } catch {
+    /* no request context (tests / scripts) */
+  }
+  return resolveHostingOrigin({
+    originHeader,
+    refererHeader,
+    configuredUrl: process.env["VIATOR_HOSTING_URL"] ?? process.env["PUBLIC_SITE_URL"],
+  });
 }
 
 function pick<T>(obj: unknown, keys: string[]): T | undefined {
@@ -115,6 +129,8 @@ export type CartHold = {
   currency: string;
   total: number | null;
   items: { itemRef: string; bookingRef: string | null }[];
+  /** Origin sent to Viator as `hostingUrl` (for audit/diagnostics). */
+  hostingUrl: string;
 };
 
 export async function viatorCartHold(input: {
@@ -124,10 +140,11 @@ export async function viatorCartHold(input: {
   booker: BookerInput;
 }): Promise<CartHold> {
   const { hold } = input;
+  const hostingUrl = await viatorHostingOrigin();
   const body = {
     currency: hold.currency,
     partnerCartRef: input.partnerCartRef,
-    hostingUrl: viatorHostingOrigin(),
+    hostingUrl,
     paymentDataSubmissionMode: "VIATOR_FORM",
     bookerInfo: {
       firstName: input.booker.firstName,
@@ -161,6 +178,7 @@ export async function viatorCartHold(input: {
     currency: hold.currency,
     total: null,
     items: [],
+    hostingUrl,
   };
   if (!res.ok || !res.data) {
     const error = bookingError(res.status, res.error);
@@ -208,6 +226,7 @@ export async function viatorCartHold(input: {
       itemRef: pick<string>(i, ["partnerItemRef", "itemRef"]) ?? input.partnerItemRef,
       bookingRef: pick<string>(i, ["bookingRef", "bookingReference"]) ?? null,
     })),
+    hostingUrl,
   };
 }
 
