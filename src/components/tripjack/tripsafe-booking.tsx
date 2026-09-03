@@ -74,9 +74,9 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Plan | null>(null);
   const [travellers, setTravellers] = useState<TripsafeTraveller[]>([]);
-  const [reviewed, setReviewed] = useState<{ bookingId: string; totalFare?: number } | null>(null);
+  const [reviewed, setReviewed] = useState<{ bid: string; totalFare: number } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ reference: string; status: string; message: string } | null>(null);
+  const [done, setDone] = useState<{ reference: string; status: string; message: string; policyIds: string[] } | null>(null);
   const idem = useMemo(() => crypto.randomUUID(), [selected]);
 
   const iri = () =>
@@ -118,8 +118,8 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
     setTravellers(ages.map((age, i) => emptyTraveller(i + 1, age)));
   };
 
-  const reviewPayload = () => ({
-    iid: selected!.iid,
+  const selectionPayload = () => ({
+    plid: selected!.plid,
     pid: selected!.pid,
     sd,
     ed: channel === "STUDENT" ? undefined : channel === "AMT" ? iso(new Date(Date.parse(sd) + 365 * 86_400_000)) : ed,
@@ -129,21 +129,20 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
       eid: t.eid || undefined,
       cnum: t.cnum || undefined,
       pnum: t.pnum || undefined,
-      pnan: t.pnan || undefined,
+      pincode: t.pincode || undefined,
       nomineeName: t.nomineeName || undefined,
-      nomineeRelation: t.nomineeRelation || undefined,
+      nomineeRelation: t.nomineeRelation as (typeof TRIPSAFE_NOMINEE_RELATIONS)[number] | undefined,
     })),
   });
 
   const validTravellers = () =>
-    travellers.every((t) => t.fn && t.ln && /^\d{4}-\d{2}-\d{2}$/.test(t.dob)) &&
+    travellers.every((t) => t.fn && t.ln && /^\d{4}-\d{2}-\d{2}$/.test(t.dob) && t.gen && t.nomineeName && t.nomineeRelation) &&
     Boolean(travellers[0]?.eid && travellers[0]?.cnum);
 
   const runReview = async () => {
     if (!selected) return;
-    if (!validTravellers()) return toast.error("Every traveller needs a name and date of birth; the lead traveller needs email and mobile.");
     setBusy(true);
-    const r = await review({ data: reviewPayload() });
+    const r = await review({ data: { plid: selected.plid, pid: selected.pid } });
     setBusy(false);
     if (!r.ok) return toast.error(r.message);
     setReviewed(r.data);
@@ -153,10 +152,13 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
   const runBook = async () => {
     if (!me) return nav({ to: "/auth" });
     if (!selected || !reviewed) return;
+    if (!validTravellers()) {
+      return toast.error("Every traveller needs a real name, date of birth, gender and nominee; the lead traveller needs email and mobile.");
+    }
     setBusy(true);
     try {
-      const r = await book({ data: { idempotencyKey: idem, planName: selected.name, review: reviewPayload() } });
-      setDone({ reference: r.booking.reference, status: r.booking.status, message: r.message });
+      const r = await book({ data: { idempotencyKey: idem, planName: selected.name, selection: selectionPayload() } });
+      setDone({ reference: r.booking.reference, status: r.booking.status, message: r.message, policyIds: r.booking.policyIds });
       r.booking.status === "failed" ? toast.error(r.message) : toast.success(r.message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Booking failed.");
