@@ -80,7 +80,7 @@ export type CrystalBookingOperation =
   | "cancel"
   | "availability"
   | "suites"
-  | "netfares"
+  | "availablesuites"
   | "pricetypes"
   | "promotions"
   | "pastguest"
@@ -133,7 +133,8 @@ export const CRYSTAL_BOOKING_SPEC: CrystalOperationSpec[] = [
   { operation: "list", path: "/v1/Bookings", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_LIST" },
   // Availability / suites / pricing
   { operation: "availability", path: "/d/v1/cruises/availability", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_AVAILABILITY" },
-  { operation: "netfares", path: "/d/v1/netfare/availablesuites", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_NETFARES" },
+  // get-v1-cruise-available-suites: suite numbers open for voyage + category + price type + currency
+  { operation: "availablesuites", path: "/d/v1/cruises/availablesuites", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_AVAILABLESUITES" },
   { operation: "pricetypes", path: "/v1/Bookings/pricetypescurrencies", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PRICETYPES" },
   { operation: "promotions", path: "/d/v1/wsPromo/CruiseCategoryPromo", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PROMOTIONS" },
   // Guest and pricing helpers
@@ -164,7 +165,7 @@ export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
   "history",
   "list",
   "availability",
-  "netfares",
+  "availablesuites",
   "pricetypes",
   "promotions",
   "pastguest",
@@ -178,9 +179,79 @@ export const CRYSTAL_READ_ONLY_OPERATIONS: CrystalBookingOperation[] = [
  */
 export const CRYSTAL_CRITERIA_REQUIRED_OPERATIONS: CrystalBookingOperation[] = [
   "availability",
-  "netfares",
+  "availablesuites",
   "pastguest",
 ];
+
+/** Documented query for get-v1-cruise-available-suites (all four are required). */
+export const availableSuitesInputSchema = z.object({
+  voyageNumber: z.string().trim().min(3).max(40),
+  suiteCategoryCod: z.string().trim().min(1).max(10),
+  priceTypeCod: z.string().trim().min(1).max(20),
+  currency: z.string().trim().length(3),
+  onlyAda: z.boolean().optional(),
+});
+export type CrystalAvailableSuitesInput = z.infer<typeof availableSuitesInputSchema>;
+
+/** One open suite as returned by the supplier (credential-free, customer-safe). */
+export interface CrystalAvailableSuite {
+  voyageNumber: string;
+  suiteNumber: number;
+  suiteCategoryCod: string;
+  suiteCategory: string;
+  ship?: string;
+  sailDate?: string;
+  deckName?: string;
+  deckNumber?: number;
+  statusDesc: string;
+  available: boolean;
+  suiteCapacity?: string;
+  ada: boolean;
+  connectedSuiteNumber?: number;
+}
+
+/**
+ * Normalise a BookingApiAvailableSuitesResponse. The spec documents the schema
+ * field as `body.availability` while its example (and PROD) use
+ * `body.suiteAvailability`; both are accepted. The top level may be a single
+ * response object or an array of them.
+ */
+export function normaliseAvailableSuites(raw: unknown): CrystalAvailableSuite[] {
+  const responses = Array.isArray(raw) ? raw : [raw];
+  const out: CrystalAvailableSuite[] = [];
+  for (const res of responses) {
+    if (!res || typeof res !== "object") continue;
+    const body = (res as { body?: unknown }).body;
+    const rows =
+      body && typeof body === "object"
+        ? ((body as Record<string, unknown>).suiteAvailability ??
+          (body as Record<string, unknown>).availability)
+        : undefined;
+    if (!Array.isArray(rows)) continue;
+    for (const r of rows as Record<string, unknown>[]) {
+      const suiteNumber = Number(r.suiteNumber);
+      if (!Number.isFinite(suiteNumber) || suiteNumber <= 0) continue;
+      const statusDesc = String(r.statusDesc ?? "").trim();
+      const connected = Number(r.suiteNumberConnected);
+      out.push({
+        voyageNumber: String(r.voyageNumber ?? ""),
+        suiteNumber,
+        suiteCategoryCod: String(r.suiteCategoryCod ?? ""),
+        suiteCategory: String(r.suiteCategory ?? ""),
+        ship: r.ship ? String(r.ship) : undefined,
+        sailDate: r.sailDate ? String(r.sailDate) : undefined,
+        deckName: r.deckName ? String(r.deckName) : undefined,
+        deckNumber: Number.isFinite(Number(r.deckNumber)) && r.deckNumber !== null && r.deckNumber !== undefined ? Number(r.deckNumber) : undefined,
+        statusDesc,
+        available: statusDesc === "" || /^avail/i.test(statusDesc),
+        suiteCapacity: r.suiteCapacity ? String(r.suiteCapacity) : undefined,
+        ada: r.ada === true,
+        connectedSuiteNumber: Number.isFinite(connected) && connected > 0 ? connected : undefined,
+      });
+    }
+  }
+  return out;
+}
 
 export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] =
   CRYSTAL_BOOKING_SPEC.map((s) => s.operation);
