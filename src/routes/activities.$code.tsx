@@ -756,8 +756,9 @@ function ActivityDetailPage() {
                 </Link>
               </form>
             </div>
-            {payNow ? (
+            {checkoutMode ? (
               <ViatorActivityCheckout
+                mode={checkoutMode}
                 productCode={product.productCode}
                 productTitle={product.title}
                 travelDate={date}
@@ -774,7 +775,7 @@ function ActivityDetailPage() {
                   email: form.email.trim(),
                   ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
                 }}
-                onClose={() => setPayNow(false)}
+                onClose={() => setCheckoutMode(null)}
               />
             ) : null}
           </aside>
