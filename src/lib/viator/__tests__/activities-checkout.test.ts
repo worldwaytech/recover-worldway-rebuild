@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { resolvePaymentRoute, isViatorHostedRoute } from "@/lib/payments/routing";
 import {
+  CANONICAL_HOSTING_ORIGIN,
   canSubmitBooking,
   isHoldUsable,
   isTerminalState,
   mapViatorBookingStatus,
   normaliseHostingUrl,
+  resolveHostingOrigin,
   sameAmount,
   validateBillingDetails,
   validateBooker,
