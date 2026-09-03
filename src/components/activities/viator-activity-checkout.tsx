@@ -144,6 +144,8 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
           paymentSessionToken?: string;
           total?: number;
           currency?: string;
+          holdExpiresAt?: string | null;
+          sessionExpiresAt?: string | null;
         };
         if (cancelled) return;
         if (!res.ok || !res.cartRef || !res.paymentSessionToken) {
@@ -155,8 +157,10 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
           token: res.paymentSessionToken,
           total: res.total ?? 0,
           currency: res.currency ?? props.currency,
+          holdExpiresAt: res.holdExpiresAt ?? null,
+          sessionExpiresAt: res.sessionExpiresAt ?? null,
         });
-        setPhase("paying");
+        setPhase(mode === "pay_later" ? "held" : "paying");
       } catch {
         if (!cancelled) setError("Could not start the secure checkout.");
       }
