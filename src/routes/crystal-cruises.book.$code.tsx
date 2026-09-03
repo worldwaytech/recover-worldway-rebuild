@@ -12,12 +12,17 @@ import { getCrystalVoyages, revalidateCrystalVoyage } from "@/lib/crystal/crysta
 import {
   cancelCrystalReservation,
   confirmCrystalReservation,
+  getCrystalAvailableSuites,
   getCrystalBookingCapability,
   holdCrystalSuite,
 } from "@/lib/crystal/crystal-booking.functions";
 import { hydrateLicensedVoyages, voyageByCode } from "@/lib/crystal/inventory";
 import { supabase } from "@/integrations/supabase/client";
-import { STATUS_LABELS, type CrystalBookingRecord } from "@/lib/crystal/booking-contract";
+import {
+  STATUS_LABELS,
+  type CrystalAvailableSuite,
+  type CrystalBookingRecord,
+} from "@/lib/crystal/booking-contract";
 
 function money(amount: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
@@ -93,6 +98,7 @@ function BookPage() {
   const voyage = voyageByCode(code);
 
   const revalidate = useServerFn(revalidateCrystalVoyage);
+  const fetchSuites = useServerFn(getCrystalAvailableSuites);
   const hold = useServerFn(holdCrystalSuite);
   const confirmFn = useServerFn(confirmCrystalReservation);
   const cancelFn = useServerFn(cancelCrystalReservation);
@@ -101,6 +107,11 @@ function BookPage() {
   const [fares, setFares] = useState<LiveFare[] | null>(null);
   const [checking, setChecking] = useState(false);
   const [selected, setSelected] = useState<LiveFare | null>(null);
+  const [suites, setSuites] = useState<CrystalAvailableSuite[]>([]);
+  const [suitesLoading, setSuitesLoading] = useState(false);
+  const [suitesError, setSuitesError] = useState("");
+  const [suitesLive, setSuitesLive] = useState(false);
+  const [selectedSuite, setSelectedSuite] = useState<CrystalAvailableSuite | null>(null);
   const [guests, setGuests] = useState<Guest[]>([{ firstName: "", lastName: "" }]);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -130,6 +141,41 @@ function BookPage() {
       .finally(() => setChecking(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
+
+  // Step 2: open suite numbers for the chosen grade (documented available-suites op).
+  useEffect(() => {
+    setSelectedSuite(null);
+    setSuites([]);
+    setSuitesError("");
+    setSuitesLive(false);
+    if (!selected || !voyage || !selected.gradeId || !selected.fareCode) return;
+    let cancelled = false;
+    setSuitesLoading(true);
+    fetchSuites({
+      data: {
+        voyageNumber: voyage.code,
+        suiteCategoryCod: selected.gradeId,
+        priceTypeCod: selected.fareCode,
+        currency,
+      },
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setSuites(res.suites);
+        setSuitesLive(res.live && res.suites.length > 0);
+        if (!res.live && res.error) setSuitesError(res.error);
+      })
+      .catch(() => {
+        if (!cancelled) setSuitesError("Crystal could not return available suites right now.");
+      })
+      .finally(() => {
+        if (!cancelled) setSuitesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, code]);
 
   const total = useMemo(
     () => (selected ? selected.price * guests.length : 0),
@@ -171,6 +217,7 @@ function BookPage() {
           fareCode: selected.fareCode,
           gradeId: selected.gradeId,
           suiteCategory: selected.suiteCategory,
+          suiteNumber: selectedSuite?.suiteNumber,
           quotedPricePerGuest: selected.price,
           guests: guests.map((g) => ({
             firstName: g.firstName.trim(),
@@ -353,7 +400,65 @@ function BookPage() {
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>2 · Guests &amp; contact</CardTitle>
+              <CardTitle>2 · Choose your suite</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {!selected ? (
+                <p className="text-muted-foreground">Select a suite grade to see open suites.</p>
+              ) : suitesLoading ? (
+                <p className="text-muted-foreground">Loading available suites from Crystal…</p>
+              ) : suitesError ? (
+                <p className="text-muted-foreground">{suitesError}</p>
+              ) : suites.length === 0 ? (
+                <p className="text-muted-foreground">
+                  Crystal is not showing individual suites for this grade right now. Our desk can
+                  allocate one for you after you hold.
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    {suites.length} suite{suites.length === 1 ? "" : "s"} open in this grade — live
+                    from Crystal.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {suites.map((s) => {
+                      const active = selectedSuite?.suiteNumber === s.suiteNumber;
+                      return (
+                        <button
+                          key={s.suiteNumber}
+                          type="button"
+                          onClick={() => setSelectedSuite(s)}
+                          disabled={!s.available}
+                          className={`rounded-lg border p-3 text-left transition disabled:opacity-50 ${
+                            active
+                              ? "border-primary bg-primary/5"
+                              : "border-border/60 hover:bg-muted/40"
+                          }`}
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="font-medium">Suite {s.suiteNumber}</span>
+                            <Badge variant={s.available ? "secondary" : "outline"}>
+                              {s.statusDesc || (s.available ? "Available" : "Unavailable")}
+                            </Badge>
+                          </span>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {s.deckName ?? (s.deckNumber ? `Deck ${s.deckNumber}` : "")}
+                            {s.suiteCapacity ? ` · ${s.suiteCapacity}` : ""}
+                            {s.ada ? " · Accessible" : ""}
+                            {s.connectedSuiteNumber ? ` · connects to ${s.connectedSuiteNumber}` : ""}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>3 · Guests &amp; contact</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div className="flex items-center gap-2">
@@ -431,12 +536,14 @@ function BookPage() {
 
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>3 · Hold your suite</CardTitle>
+              <CardTitle>4 · Hold your suite</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <p className="text-muted-foreground">
                 {selected
-                  ? `${money(total, currency)} for ${guests.length} guest${guests.length > 1 ? "s" : ""} (fare revalidated with Crystal at the moment you continue).`
+                  ? `${money(total, currency)} for ${guests.length} guest${guests.length > 1 ? "s" : ""}${
+                      selectedSuite ? ` · Suite ${selectedSuite.suiteNumber}` : ""
+                    } (fare revalidated with Crystal at the moment you continue).`
                   : "Select a suite grade to see your total."}
               </p>
               {signedIn === false ? (
@@ -444,7 +551,10 @@ function BookPage() {
                   <Link to="/auth">Sign in to hold this suite</Link>
                 </Button>
               ) : (
-                <Button onClick={onHold} disabled={busy || !selected}>
+                <Button
+                  onClick={onHold}
+                  disabled={busy || !selected || (suitesLive && !selectedSuite)}
+                >
                   {busy ? "Holding…" : "Hold suite"}
                 </Button>
               )}
