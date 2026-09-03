@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  availableSuitesInputSchema,
   cancelInputSchema,
   confirmInputSchema,
   holdInputSchema,
@@ -12,6 +13,38 @@ export const getCrystalBookingCapability = createServerFn({ method: "GET" }).han
   const { bookingCapability } = await import("./aktg-booking.server");
   return bookingCapability();
 });
+
+/**
+ * Open suite numbers for a voyage + suite category + price type + currency
+ * (documented GET /d/v1/cruises/availablesuites). Read-only; used for suite
+ * selection between revalidation and the hold. Never fabricates suites.
+ */
+export const getCrystalAvailableSuites = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => availableSuitesInputSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { listAvailableSuites, CrystalBookingUnavailableError } = await import(
+      "./aktg-booking.server"
+    );
+    try {
+      const suites = await listAvailableSuites(data);
+      return { live: true as const, suites, checkedAt: new Date().toISOString() };
+    } catch (err) {
+      if (err instanceof CrystalBookingUnavailableError) {
+        return {
+          live: false as const,
+          suites: [],
+          checkedAt: new Date().toISOString(),
+          error: "Suite selection is not available right now; our Crystal desk will allocate a suite for you.",
+        };
+      }
+      return {
+        live: false as const,
+        suites: [],
+        checkedAt: new Date().toISOString(),
+        error: "Crystal could not return available suites for this grade right now.",
+      };
+    }
+  });
 
 /** Availability/pricing revalidation → supplier hold (or tracked request). */
 export const holdCrystalSuite = createServerFn({ method: "POST" })

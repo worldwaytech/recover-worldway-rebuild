@@ -205,7 +205,7 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
       history: ["/v1/bookings/history/{bookingId}", "GET"],
       list: ["/v1/Bookings", "GET"],
       availability: ["/d/v1/cruises/availability", "GET"],
-      netfares: ["/d/v1/netfare/availablesuites", "GET"],
+      availablesuites: ["/d/v1/cruises/availablesuites", "GET"],
       pricetypes: ["/v1/Bookings/pricetypescurrencies", "GET"],
       promotions: ["/d/v1/wsPromo/CruiseCategoryPromo", "GET"],
       pastguest: ["/v1/PastGuests/search", "GET"],

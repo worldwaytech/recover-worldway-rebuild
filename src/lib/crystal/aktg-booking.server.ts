@@ -17,6 +17,8 @@
 //   CRYSTAL_BOOKING_METHOD_<OP>     optional per-operation method override
 // Authentication reuses the authorised CRYSTAL_AKTG_API_KEY ApiKey header.
 import type {
+  CrystalAvailableSuite,
+  CrystalAvailableSuitesInput,
   CrystalBookingBlockReason,
   CrystalBookingCapability,
   CrystalBookingOperation,
@@ -29,6 +31,8 @@ import {
   CRYSTAL_CRITERIA_REQUIRED_OPERATIONS,
   CRYSTAL_READ_ONLY_OPERATIONS,
   CRYSTAL_REQUIRED_OPERATIONS,
+  availableSuitesInputSchema,
+  normaliseAvailableSuites,
 } from "./booking-contract";
 import { crystalBookingApiStatus, CRYSTAL_SHOPPING_API_STATUS } from "./connector.server";
 
@@ -419,6 +423,29 @@ export function normaliseSupplierBooking(raw: unknown): SupplierBookingResult {
     currency: pick(raw, ["currency", "currencyCode"]),
     raw,
   };
+}
+
+/**
+ * get-v1-cruise-available-suites — GET /d/v1/cruises/availablesuites.
+ * Lists the concrete suite numbers open for a voyage + suite category + price
+ * type + currency. Read-only; the result feeds suite selection before a hold.
+ */
+export async function listAvailableSuites(
+  input: CrystalAvailableSuitesInput,
+): Promise<CrystalAvailableSuite[]> {
+  const parsed = availableSuitesInputSchema.parse(input);
+  const raw = await bookingCall<unknown>({
+    operation: "availablesuites",
+    query: {
+      voyageNumber: parsed.voyageNumber,
+      suiteCategoryCod: parsed.suiteCategoryCod,
+      priceTypeCod: parsed.priceTypeCod,
+      currency: parsed.currency.toUpperCase(),
+      onlyAda: parsed.onlyAda ? "true" : undefined,
+    },
+    reference: parsed.voyageNumber,
+  });
+  return normaliseAvailableSuites(raw);
 }
 
 export interface CrystalReadOnlyProbe {
