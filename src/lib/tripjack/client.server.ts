@@ -30,10 +30,9 @@ export type TripjackError = {
   correlationId: string;
 };
 
-export type TripjackResult<T> = { ok: true; data: T; correlationId: string } | {
-  ok: false;
-  error: TripjackError;
-};
+export type TripjackResult<T> =
+  | { ok: true; data: T; correlationId: string }
+  | { ok: false; error: TripjackError; correlationId: string };
 
 /** Presence-only credential view. Never returns the value. */
 export function tripjackCredentialStatus(): { configured: boolean; missing: string[] } {
@@ -125,6 +124,7 @@ export async function tripjackCall<T = unknown>(
   if (!apiKey) {
     return {
       ok: false,
+      correlationId,
       error: {
         kind: "not-configured",
         message: "TripJack UAT credential is not configured on the server.",
@@ -137,6 +137,7 @@ export async function tripjackCall<T = unknown>(
   if (!cap || !cap.path) {
     return {
       ok: false,
+      correlationId,
       error: {
         kind: "capability-unmapped",
         message: `TripJack ${suite} capability "${capability}" has no documented endpoint mapped yet.`,
@@ -181,8 +182,9 @@ export async function tripjackCall<T = unknown>(
           outcome: "error",
         });
         return {
-          ok: false,
-          error: {
+      ok: false,
+      correlationId,
+      error: {
             kind: "invalid-response",
             status: response.status,
             message: "TripJack returned a non-JSON response.",
@@ -207,8 +209,9 @@ export async function tripjackCall<T = unknown>(
 
     if (!response.ok) {
       return {
-        ok: false,
-        error: {
+      ok: false,
+      correlationId,
+      error: {
           kind: "http",
           status: response.status,
           message: `TripJack ${suite}/${capability} responded HTTP ${response.status}.`,
@@ -231,6 +234,7 @@ export async function tripjackCall<T = unknown>(
     });
     return {
       ok: false,
+      correlationId,
       error: {
         kind: aborted ? "timeout" : "network",
         message: aborted

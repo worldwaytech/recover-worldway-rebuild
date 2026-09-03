@@ -186,7 +186,8 @@ export const syncCabBookingFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ bookingId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { syncCabBooking } = await import("./cabs.server");
-    return syncCabBooking(context.supabase as never, data.bookingId);
+    const r = await syncCabBooking(context.supabase as never, data.bookingId);
+    return { booking: r.booking, message: r.message };
   });
 
 export const cancelCabBookingFn = createServerFn({ method: "POST" })
@@ -215,7 +216,8 @@ export const searchTripsafePlans = createServerFn({ method: "POST" })
     const r = await searchTripsafe(data);
     if (!r.ok) return r;
     // Do not ship the full raw supplier payload to the browser.
-    return { ok: true as const, correlationId: r.correlationId, data: { searchId: r.data.searchId, plans: r.data.plans } };
+    const plans = r.data.plans.map(({ raw: _raw, ...p }) => p);
+    return { ok: true as const, correlationId: r.correlationId, data: { searchId: r.data.searchId, plans } };
   });
 
 export const reviewTripsafePlan = createServerFn({ method: "POST" })
