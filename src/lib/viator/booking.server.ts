@@ -129,6 +129,8 @@ export type CartHold = {
   currency: string;
   total: number | null;
   items: { itemRef: string; bookingRef: string | null }[];
+  /** Origin sent to Viator as `hostingUrl` (for audit/diagnostics). */
+  hostingUrl: string;
 };
 
 export async function viatorCartHold(input: {
