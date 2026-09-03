@@ -74,9 +74,9 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Plan | null>(null);
   const [travellers, setTravellers] = useState<TripsafeTraveller[]>([]);
-  const [reviewed, setReviewed] = useState<{ bookingId: string; totalFare?: number } | null>(null);
+  const [reviewed, setReviewed] = useState<{ bid: string; totalFare: number } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ reference: string; status: string; message: string } | null>(null);
+  const [done, setDone] = useState<{ reference: string; status: string; message: string; policyIds: string[] } | null>(null);
   const idem = useMemo(() => crypto.randomUUID(), [selected]);
 
   const iri = () =>
@@ -118,8 +118,8 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
     setTravellers(ages.map((age, i) => emptyTraveller(i + 1, age)));
   };
 
-  const reviewPayload = () => ({
-    iid: selected!.iid,
+  const selectionPayload = () => ({
+    plid: selected!.plid,
     pid: selected!.pid,
     sd,
     ed: channel === "STUDENT" ? undefined : channel === "AMT" ? iso(new Date(Date.parse(sd) + 365 * 86_400_000)) : ed,
@@ -129,21 +129,20 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
       eid: t.eid || undefined,
       cnum: t.cnum || undefined,
       pnum: t.pnum || undefined,
-      pnan: t.pnan || undefined,
+      pincode: t.pincode || undefined,
       nomineeName: t.nomineeName || undefined,
-      nomineeRelation: t.nomineeRelation || undefined,
+      nomineeRelation: t.nomineeRelation as (typeof TRIPSAFE_NOMINEE_RELATIONS)[number] | undefined,
     })),
   });
 
   const validTravellers = () =>
-    travellers.every((t) => t.fn && t.ln && /^\d{4}-\d{2}-\d{2}$/.test(t.dob)) &&
+    travellers.every((t) => t.fn && t.ln && /^\d{4}-\d{2}-\d{2}$/.test(t.dob) && t.gen && t.nomineeName && t.nomineeRelation) &&
     Boolean(travellers[0]?.eid && travellers[0]?.cnum);
 
   const runReview = async () => {
     if (!selected) return;
-    if (!validTravellers()) return toast.error("Every traveller needs a name and date of birth; the lead traveller needs email and mobile.");
     setBusy(true);
-    const r = await review({ data: reviewPayload() });
+    const r = await review({ data: { plid: selected.plid, pid: selected.pid } });
     setBusy(false);
     if (!r.ok) return toast.error(r.message);
     setReviewed(r.data);
@@ -153,10 +152,13 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
   const runBook = async () => {
     if (!me) return nav({ to: "/auth" });
     if (!selected || !reviewed) return;
+    if (!validTravellers()) {
+      return toast.error("Every traveller needs a real name, date of birth, gender and nominee; the lead traveller needs email and mobile.");
+    }
     setBusy(true);
     try {
-      const r = await book({ data: { idempotencyKey: idem, planName: selected.name, review: reviewPayload() } });
-      setDone({ reference: r.booking.reference, status: r.booking.status, message: r.message });
+      const r = await book({ data: { idempotencyKey: idem, planName: selected.name, selection: selectionPayload() } });
+      setDone({ reference: r.booking.reference, status: r.booking.status, message: r.message, policyIds: r.booking.policyIds });
       r.booking.status === "failed" ? toast.error(r.message) : toast.success(r.message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Booking failed.");
@@ -264,19 +266,26 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
         <div className="mt-8 space-y-4">
           <h2 className="font-display text-2xl">Available plans</h2>
           {plans.map((p) => (
-            <article key={`${p.iid}-${p.pid}`} className={`rounded-xl border p-5 ${selected?.pid === p.pid ? "border-primary" : "border-border"}`}>
+            <article key={`${p.plid}-${p.pid}`} className={`rounded-xl border p-5 ${selected?.pid === p.pid ? "border-primary" : "border-border"}`}>
               <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <div className="flex-1">
                   <h3 className="text-lg font-medium">{p.name}</h3>
-                  <p className="text-sm text-muted-foreground">{p.insurer}{p.sumInsured ? ` · Sum insured ${p.sumInsured}` : ""}</p>
+                  <p className="text-sm text-muted-foreground">{[p.insurer, p.region].filter(Boolean).join(" · ")}</p>
                   {p.benefits.length > 0 && (
                     <ul className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-                      {p.benefits.slice(0, 6).map((b, i) => <li key={i}>{b.name}: {b.value}</li>)}
+                      {p.benefits.slice(0, 6).map((b, i) => <li key={i}>{b.name}{b.value ? `: ${b.value}` : ""}</li>)}
                     </ul>
                   )}
                 </div>
                 <div className="text-right">
-                  {p.totalFare != null && <p className="text-2xl font-semibold">₹{p.totalFare.toLocaleString("en-IN")}</p>}
+                  {p.totalFare != null ? (
+                    <>
+                      <p className="text-2xl font-semibold">₹{p.totalFare.toLocaleString("en-IN")}</p>
+                      <p className="text-[11px] text-muted-foreground">indicative · confirmed at review</p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Price on review</p>
+                  )}
                   <Button size="sm" className="mt-2" variant={selected?.pid === p.pid ? "default" : "outline"} onClick={() => choose(p)}>
                     {selected?.pid === p.pid ? "Selected" : "Select"}
                   </Button>
@@ -290,6 +299,7 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
       {selected && !done && (
         <div className="mt-8 rounded-2xl border border-border bg-card p-6">
           <h2 className="font-display text-2xl">Traveller details</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Names must match travel documents — the insurer rejects placeholder names.</p>
           <div className="mt-4 space-y-6">
             {travellers.map((t, i) => (
               <fieldset key={i} className="grid gap-3 rounded-lg border border-border p-4 md:grid-cols-3">
@@ -300,12 +310,20 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
                 <Input placeholder="First name" value={t.fn} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, fn: e.target.value } : x)))} />
                 <Input placeholder="Last name" value={t.ln} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, ln: e.target.value } : x)))} />
                 <Input type="date" aria-label="Date of birth" value={t.dob} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, dob: e.target.value } : x)))} />
+                <select aria-label="Gender" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={t.gen ?? "M"} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, gen: e.target.value as "M" | "F" } : x)))}>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                </select>
                 <Input placeholder="Passport number" value={t.pnum} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, pnum: e.target.value } : x)))} />
                 <Input placeholder="Nominee name" value={t.nomineeName} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, nomineeName: e.target.value } : x)))} />
+                <select aria-label="Nominee relation" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={t.nomineeRelation ?? "SPOUSE"} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, nomineeRelation: e.target.value } : x)))}>
+                  {TRIPSAFE_NOMINEE_RELATIONS.map((r) => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
+                </select>
+                <Input placeholder="Pincode" value={t.pincode} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, pincode: e.target.value } : x)))} />
                 {i === 0 && (
                   <>
-                    <Input type="email" placeholder="Email" value={t.eid} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, eid: e.target.value } : x)))} />
-                    <Input placeholder="Mobile number" value={t.cnum} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, cnum: e.target.value } : x)))} />
+                    <Input type="email" placeholder="Email (policy delivery)" value={t.eid} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, eid: e.target.value } : x)))} />
+                    <Input placeholder="Mobile number (policy delivery)" value={t.cnum} onChange={(e) => setTravellers(travellers.map((x, j) => (j === i ? { ...x, cnum: e.target.value } : x)))} />
                   </>
                 )}
               </fieldset>
@@ -318,7 +336,7 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
               <>
                 <Button onClick={runBook} disabled={busy}>{busy ? "Issuing…" : me ? "Confirm & issue policy" : "Sign in to book"}</Button>
                 <p className="text-sm text-muted-foreground">
-                  {reviewed.totalFare != null ? `Total ₹${reviewed.totalFare.toLocaleString("en-IN")} · ` : ""}insurer ref {reviewed.bookingId}
+                  Total ₹{reviewed.totalFare.toLocaleString("en-IN")} · insurer ref {reviewed.bid}
                 </p>
               </>
             )}
@@ -330,6 +348,10 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
         <div className="mt-8 rounded-2xl border border-primary/40 bg-card p-6">
           <h2 className="font-display text-2xl">Policy request {done.reference}</h2>
           <p className="mt-2 text-sm text-muted-foreground">Status: <span className="font-medium text-foreground">{done.status}</span> · {done.message}</p>
+          {done.policyIds.length > 0 && (
+            <p className="mt-2 text-sm">Policy {done.policyIds.length > 1 ? "numbers" : "number"}: <span className="font-medium">{done.policyIds.join(", ")}</span></p>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">Cancellations must be raised at least 24 hours before the coverage start date.</p>
           <Button variant="ghost" className="mt-4" onClick={() => nav({ to: "/account/trips" })}>View in my trips</Button>
         </div>
       )}
