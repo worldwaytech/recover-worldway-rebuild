@@ -290,3 +290,45 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
     expect(probes.every((p) => p.attempted === false)).toBe(true);
   });
 });
+
+describe("available suites (GET /d/v1/cruises/availablesuites)", () => {
+  it("normalises the documented PROD response (body.suiteAvailability) into suite numbers", async () => {
+    const { normaliseAvailableSuites } = await import("../booking-contract");
+    const raw = {
+      body: {
+        suiteAvailability: [
+          { voyageNumber: "CSY-009-260905", ship: "Crystal Symphony", suiteCategoryCod: "CHV4", suiteCategory: "CHV4 - Crystal Penthouse Suite", suiteNumber: "1023", suiteStatus: "", deckName: "Penthouse Deck 10", deckNumber: 10, statusDesc: "Available", suiteCapacity: "Quad", ada: false, suiteIDConnected: null, suiteNumberConnected: null },
+          { voyageNumber: "CSY-009-260905", suiteCategoryCod: "CHV4", suiteCategory: "x", suiteNumber: "8041", suiteStatus: "", statusDesc: "Available", suiteCapacity: "Quad", ada: true },
+        ],
+      },
+      statusMessage: "OK",
+      statusCod: 200,
+    };
+    const suites = normaliseAvailableSuites(raw);
+    expect(suites.map((s) => s.suiteNumber)).toEqual([1023, 8041]);
+    expect(suites[0]).toMatchObject({ available: true, deckNumber: 10, deckName: "Penthouse Deck 10", ada: false });
+    expect(suites[1].ada).toBe(true);
+  });
+
+  it("accepts the schema field name (body.availability) and array-wrapped responses", async () => {
+    const { normaliseAvailableSuites } = await import("../booking-contract");
+    const suites = normaliseAvailableSuites([
+      { body: { availability: [{ suiteNumber: "10047", suiteCategoryCod: "SSVM", statusDesc: "Available", ada: false }] } },
+    ]);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteNumber).toBe(10047);
+  });
+
+  it("never fabricates suites from empty or malformed payloads", async () => {
+    const { normaliseAvailableSuites } = await import("../booking-contract");
+    expect(normaliseAvailableSuites({})).toEqual([]);
+    expect(normaliseAvailableSuites(null)).toEqual([]);
+    expect(normaliseAvailableSuites({ body: { suiteAvailability: [{ suiteNumber: "n/a" }] } })).toEqual([]);
+  });
+
+  it("requires all four documented query parameters", async () => {
+    const { availableSuitesInputSchema } = await import("../booking-contract");
+    expect(() => availableSuitesInputSchema.parse({ voyageNumber: "CSY-009-260905", suiteCategoryCod: "CHV4", currency: "USD" })).toThrow();
+    expect(availableSuitesInputSchema.parse({ voyageNumber: "CSY-009-260905", suiteCategoryCod: "CHV4", priceTypeCod: "FIT", currency: "USD" }).priceTypeCod).toBe("FIT");
+  });
+});
