@@ -2,7 +2,17 @@
 // The API key never leaves the server; the browser only ever receives the
 // short-lived paymentSessionToken required by Viator's hosted payment iFrame.
 
-import { viatorFetch } from "@/lib/viator.server";
+import {
+  VIATOR_BOOKING_ACCESS_MESSAGE,
+  isViatorEndpointDenied,
+  viatorFetch,
+} from "@/lib/viator.server";
+
+/** Maps the supplier's entitlement 403 to a customer-safe explanation. */
+function bookingError(status: number, error?: string): string | undefined {
+  if (isViatorEndpointDenied(status, error)) return VIATOR_BOOKING_ACCESS_MESSAGE;
+  return error;
+}
 import {
   normaliseHostingUrl,
   type HoldRequestInput,
