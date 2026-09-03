@@ -705,9 +705,13 @@ export function ActivityExplorer({ initialDestination = "" }: { initialDestinati
                     : "The worldwide experience catalogue"}
               </h2>
               <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                {result?.mode === "catalogue" || !result?.totalCount
-                  ? `${items.length.toLocaleString()} loaded · all destinations`
-                  : `${result.totalCount.toLocaleString()} experiences`}
+                {loading
+                  ? "Loading live catalogue…"
+                  : error
+                    ? "Supplier catalogue unavailable"
+                    : result?.mode === "catalogue" || !result?.totalCount
+                      ? `${items.length.toLocaleString()} loaded · all destinations`
+                      : `${result.totalCount.toLocaleString()} experiences`}
                 {elapsed != null ? ` · ${elapsed} ms` : ""}
               </p>
             </div>
