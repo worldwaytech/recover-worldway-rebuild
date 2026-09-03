@@ -5,6 +5,7 @@ import { Clock, Languages, MapPin, Star } from "lucide-react";
 import { PageShell } from "@/components/search-shell";
 import { money } from "@/components/activities/activity-explorer";
 import {
+  getViatorConnectorStatus,
   getViatorProduct,
   getViatorReviews,
   getViatorSchedule,
@@ -98,6 +99,9 @@ function ActivityDetailPage() {
   const loadReviews = useServerFn(getViatorReviews);
   const loadSchedule = useServerFn(getViatorSchedule);
   const loadRelated = useServerFn(searchViatorProducts);
+  const loadConnector = useServerFn(getViatorConnectorStatus);
+  // null = unknown, false = supplier has not enabled booking access on our key
+  const [bookingAccess, setBookingAccess] = useState<boolean | null>(null);
 
   const [product, setProduct] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,6 +161,19 @@ function ActivityDetailPage() {
   useEffect(() => {
     void boot();
   }, [boot]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const st = (await loadConnector({})) as {
+          bookingAccess: { granted: boolean | null } | null;
+        };
+        setBookingAccess(st.bookingAccess?.granted ?? null);
+      } catch {
+        setBookingAccess(null);
+      }
+    })();
+  }, [loadConnector]);
 
   useEffect(() => {
     void (async () => {
@@ -680,6 +697,13 @@ function ActivityDetailPage() {
                   </p>
                 ) : null}
 
+                {bookingAccess === false ? (
+                  <p className="rounded-lg border border-border/70 bg-background/60 p-3 text-[11px] leading-relaxed text-muted-foreground">
+                    Instant online payment for experiences is awaiting supplier booking
+                    activation. Request a held reservation below and we will confirm it
+                    with the operator.
+                  </p>
+                ) : (
                 <button
                   type="button"
                   onClick={() => {
@@ -697,6 +721,7 @@ function ActivityDetailPage() {
                 >
                   Pay &amp; confirm instantly
                 </button>
+                )}
                 <button
                   type="submit"
                   disabled={submitting}

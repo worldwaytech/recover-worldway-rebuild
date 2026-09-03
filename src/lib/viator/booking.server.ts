@@ -2,7 +2,17 @@
 // The API key never leaves the server; the browser only ever receives the
 // short-lived paymentSessionToken required by Viator's hosted payment iFrame.
 
-import { viatorFetch } from "@/lib/viator.server";
+import {
+  VIATOR_BOOKING_ACCESS_MESSAGE,
+  isViatorEndpointDenied,
+  viatorFetch,
+} from "@/lib/viator.server";
+
+/** Maps the supplier's entitlement 403 to a customer-safe explanation. */
+function bookingError(status: number, error?: string): string | undefined {
+  if (isViatorEndpointDenied(status, error)) return VIATOR_BOOKING_ACCESS_MESSAGE;
+  return error;
+}
 import {
   normaliseHostingUrl,
   type HoldRequestInput,
@@ -152,7 +162,10 @@ export async function viatorCartHold(input: {
     total: null,
     items: [],
   };
-  if (!res.ok || !res.data) return { ...empty, ...(res.error ? { error: res.error } : {}) };
+  if (!res.ok || !res.data) {
+    const error = bookingError(res.status, res.error);
+    return { ...empty, ...(error ? { error } : {}) };
+  }
 
   const data = res.data as Record<string, unknown>;
   const paymentSession =
@@ -240,9 +253,10 @@ export async function viatorCartBook(input: {
 
   const res = await viatorFetch<unknown>("/bookings/cart/book", { method: "POST", body });
   if (!res.ok || !res.data) {
+    const error = bookingError(res.status, res.error);
     return {
       ok: false,
-      ...(res.error ? { error: res.error } : {}),
+      ...(error ? { error } : {}),
       statuses: [],
       bookingRef: null,
       itineraryRef: null,
@@ -278,7 +292,8 @@ export async function viatorBookingStatus(bookingRef: string): Promise<{
     body: { bookingRefs: [bookingRef] },
   });
   if (!res.ok || !res.data) {
-    return { ok: false, ...(res.error ? { error: res.error } : {}), statuses: [] };
+    const error = bookingError(res.status, res.error);
+    return { ok: false, ...(error ? { error } : {}), statuses: [] };
   }
   const data = res.data as Record<string, unknown>;
   const items = pick<Record<string, unknown>[]>(data, ["bookings", "items"]) ?? [];

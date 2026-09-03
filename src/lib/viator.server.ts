@@ -717,6 +717,68 @@ export async function viatorSchedule(code: string, currency = "USD") {
   };
 }
 
+// ---------- booking entitlement ----------
+// Viator gates the /bookings/* endpoints behind a separate "booking access"
+// entitlement on the API key. Keys without it receive
+// `403 FORBIDDEN "Endpoint access denied"` even though content, schedules and
+// /availability/check succeed. We detect this with the documented, read-only
+// /bookings/status endpoint (never creates holds or bookings) and cache it.
+
+export type ViatorBookingAccess = {
+  /** true = /bookings/* reachable, false = key not entitled, null = undetermined */
+  granted: boolean | null;
+  status: number;
+  detail: string;
+  checkedAt: string;
+};
+
+let bookingAccessCache: ViatorBookingAccess | null = null;
+const BOOKING_ACCESS_TTL_MS = 10 * 60 * 1000;
+
+export function isViatorEndpointDenied(status: number, error?: string): boolean {
+  return status === 403 && /endpoint access denied|forbidden/i.test(error ?? "");
+}
+
+export const VIATOR_BOOKING_ACCESS_MESSAGE =
+  "Instant payment for this experience is not switched on yet: the supplier has not enabled booking access on our production API key. Request a held reservation and our travel director will confirm it.";
+
+export async function viatorBookingAccess(force = false): Promise<ViatorBookingAccess> {
+  if (
+    !force &&
+    bookingAccessCache &&
+    Date.now() - new Date(bookingAccessCache.checkedAt).getTime() < BOOKING_ACCESS_TTL_MS
+  ) {
+    return bookingAccessCache;
+  }
+  if (!viatorConfigured()) {
+    return { granted: null, status: 503, detail: "VIATOR_API_KEY not configured.", checkedAt: new Date().toISOString() };
+  }
+  // Read-only probe with a reference that cannot exist; an entitled key answers
+  // with 200/400/404 for the unknown ref, an unentitled key answers 403.
+  const res = await viatorFetch<unknown>("/bookings/status", {
+    method: "POST",
+    body: { bookingRefs: ["BR-000000000"] },
+  });
+  let result: ViatorBookingAccess;
+  if (res.ok) {
+    result = { granted: true, status: res.status, detail: "Booking endpoints reachable.", checkedAt: new Date().toISOString() };
+  } else if (isViatorEndpointDenied(res.status, res.error)) {
+    result = {
+      granted: false,
+      status: res.status,
+      detail:
+        "Supplier returned 403 “Endpoint access denied” for /bookings/*. The production API key has content + availability access only; ask Viator to enable booking access (Merchant / Full + Booking) on this key.",
+      checkedAt: new Date().toISOString(),
+    };
+  } else if (res.status === 400 || res.status === 404) {
+    result = { granted: true, status: res.status, detail: "Booking endpoints reachable.", checkedAt: new Date().toISOString() };
+  } else {
+    result = { granted: null, status: res.status, detail: res.error ?? "Booking entitlement could not be determined.", checkedAt: new Date().toISOString() };
+  }
+  if (result.granted !== null) bookingAccessCache = result;
+  return result;
+}
+
 export async function viatorStatus() {
   const configured = viatorConfigured();
   const environment = viatorEnvironment();
@@ -725,14 +787,23 @@ export async function viatorStatus() {
       configured: false,
       environment,
       reachable: false,
+      bookingAccess: null as ViatorBookingAccess | null,
       message: "Awaiting Viator API key (VIATOR_API_KEY).",
     };
   }
-  const res = await viatorFetch<unknown>("/products/tags", { method: "GET" });
+  const [res, bookingAccess] = await Promise.all([
+    viatorFetch<unknown>("/products/tags", { method: "GET" }),
+    viatorBookingAccess(),
+  ]);
   return {
     configured: true,
     environment,
     reachable: res.ok,
-    message: res.ok ? "Viator connector live." : (res.error ?? "Viator unreachable."),
+    bookingAccess,
+    message: res.ok
+      ? bookingAccess.granted === false
+        ? "Viator content + availability live; booking access not yet granted by supplier."
+        : "Viator connector live."
+      : (res.error ?? "Viator unreachable."),
   };
 }
