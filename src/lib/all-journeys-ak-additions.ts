@@ -1358,7 +1358,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 13,
     "priceFrom": 23895,
-    "availability": "Available",
+    "availability": "Limited Availability",
     "departures": [
       "Sep 2027"
     ],
@@ -1619,7 +1619,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 14,
     "priceFrom": 27495,
-    "availability": "Available",
+    "availability": "Limited Availability",
     "departures": [
       "Jun 2027"
     ],
@@ -1903,7 +1903,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 10,
     "priceFrom": 14995,
-    "availability": "On Request",
+    "availability": "Available",
     "departures": [
       "Jan 2027",
       "Feb 2027",
@@ -2515,7 +2515,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 28,
     "priceFrom": 225000,
-    "availability": "Available",
+    "availability": "Limited Availability",
     "departures": [
       "Jan 2028"
     ],
@@ -2913,7 +2913,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 26,
     "priceFrom": 199500,
-    "availability": "Available",
+    "availability": "Limited Availability",
     "departures": [
       "Feb 2028"
     ],
@@ -6371,7 +6371,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 8,
     "priceFrom": 9995,
-    "availability": "On Request",
+    "availability": "Available",
     "departures": [
       "Jan 2027",
       "Feb 2027",
@@ -7044,7 +7044,7 @@ export const akAdditionalJourneys: Journey[] = [
     ],
     "duration": 12,
     "priceFrom": 18495,
-    "availability": "On Request",
+    "availability": "Available",
     "departures": [
       "May 2027",
       "Jun 2027",
