@@ -724,9 +724,16 @@ export function ActivityExplorer({ initialDestination = "" }: { initialDestinati
             {error ? (
               <div
                 role="alert"
-                className="mb-6 rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive-foreground"
+                className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive-foreground"
               >
-                {error}
+                <span>{error}</span>
+                <button
+                  type="button"
+                  onClick={() => void load(filters, 1, false)}
+                  className="rounded-full border border-current px-4 py-1.5 text-xs uppercase tracking-[0.25em]"
+                >
+                  Retry
+                </button>
               </div>
             ) : null}
 
