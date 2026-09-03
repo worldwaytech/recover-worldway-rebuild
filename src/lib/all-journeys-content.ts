@@ -2,6 +2,7 @@
 // loaded only on routes that use it, not in the always-loaded entry chunk.
 import { images } from "./data-images";
 import type { Destination, Journey, Availability } from "./data";
+import { akAdditionalJourneys } from "./all-journeys-ak-additions";
 
 export const destinations: Destination[] = [
   {
@@ -26771,3 +26772,15 @@ journeys.push(
     ],
   },
 );
+
+// A&K catalogue reconciliation (2026-09-03): append only journeys whose slug is
+// not already present, so existing records are preserved and duplicates prevented.
+{
+  const existing = new Set(journeys.map((j) => j.slug));
+  for (const j of akAdditionalJourneys) {
+    if (!existing.has(j.slug)) {
+      journeys.push(j);
+      existing.add(j.slug);
+    }
+  }
+}
