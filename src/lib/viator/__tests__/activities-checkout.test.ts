@@ -66,6 +66,65 @@ describe("hostingUrl", () => {
   });
 });
 
+describe("resolveHostingOrigin (allowlist)", () => {
+  it("uses the www production origin when the page is on www", () => {
+    expect(resolveHostingOrigin({ originHeader: "https://www.worldwaytravelsgroup.com" })).toBe(
+      "https://www.worldwaytravelsgroup.com",
+    );
+  });
+  it("uses the apex origin when the page is on the apex domain (no www rewrite)", () => {
+    expect(
+      resolveHostingOrigin({
+        originHeader: "https://worldwaytravelsgroup.com",
+        configuredUrl: "https://www.worldwaytravelsgroup.com",
+      }),
+    ).toBe("https://worldwaytravelsgroup.com");
+  });
+  it("falls back to Referer when Origin is absent", () => {
+    expect(
+      resolveHostingOrigin({
+        refererHeader: "https://www.worldwaytravelsgroup.com/activities/5010SYDNEY#book",
+      }),
+    ).toBe("https://www.worldwaytravelsgroup.com");
+  });
+  it("allows published and preview Lovable hosts", () => {
+    expect(resolveHostingOrigin({ originHeader: "https://recover-worldway-rebuild.lovable.app" })).toBe(
+      "https://recover-worldway-rebuild.lovable.app",
+    );
+    expect(
+      resolveHostingOrigin({
+        originHeader: "https://id-preview--1efb52bc-177b-40a1-a064-649c8874fa6d.lovable.app",
+      }),
+    ).toBe("https://id-preview--1efb52bc-177b-40a1-a064-649c8874fa6d.lovable.app");
+  });
+  it("never echoes an arbitrary or spoofed origin to the supplier", () => {
+    expect(resolveHostingOrigin({ originHeader: "https://evil.example.com" })).toBe(
+      CANONICAL_HOSTING_ORIGIN,
+    );
+    expect(resolveHostingOrigin({ originHeader: "https://worldwaytravelsgroup.com.evil.io" })).toBe(
+      CANONICAL_HOSTING_ORIGIN,
+    );
+    expect(resolveHostingOrigin({ originHeader: "http://www.worldwaytravelsgroup.com" })).toBe(
+      CANONICAL_HOSTING_ORIGIN,
+    );
+    expect(resolveHostingOrigin({ originHeader: "null" })).toBe(CANONICAL_HOSTING_ORIGIN);
+  });
+  it("honours a configured VIATOR_HOSTING_URL as the fallback and as an allowed origin", () => {
+    expect(resolveHostingOrigin({ configuredUrl: "https://book.worldwaytravelsgroup.com/x" })).toBe(
+      "https://book.worldwaytravelsgroup.com",
+    );
+    expect(
+      resolveHostingOrigin({
+        originHeader: "https://book.worldwaytravelsgroup.com",
+        configuredUrl: "https://book.worldwaytravelsgroup.com",
+      }),
+    ).toBe("https://book.worldwaytravelsgroup.com");
+  });
+  it("ignores an invalid configured URL and falls back to canonical", () => {
+    expect(resolveHostingOrigin({ configuredUrl: "not a url" })).toBe(CANONICAL_HOSTING_ORIGIN);
+  });
+});
+
 describe("hold input validation", () => {
   const base = {
     productCode: "5657LON_A",
