@@ -12,7 +12,10 @@ import {
   searchViatorProducts,
 } from "@/lib/viator.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { ViatorActivityCheckout } from "@/components/activities/viator-activity-checkout";
+import {
+  ViatorActivityCheckout,
+  type ActivityCheckoutMode,
+} from "@/components/activities/viator-activity-checkout";
 import { trackCatalogueEvent } from "@/lib/catalogue-client";
 
 export const Route = createFileRoute("/activities/$code")({
@@ -133,7 +136,21 @@ function ActivityDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
-  const [payNow, setPayNow] = useState(false);
+  const [checkoutMode, setCheckoutMode] = useState<ActivityCheckoutMode | null>(null);
+
+  const startInstantCheckout = (mode: ActivityCheckoutMode) => {
+    setBookingError(null);
+    const [firstName, ...rest] = form.full_name.trim().split(/\s+/);
+    if (!date || !firstName || !rest.length || !form.email.trim()) {
+      setBookingError(
+        mode === "pay_now"
+          ? "Add your travel date, full name and email to book and pay now."
+          : "Add your travel date, full name and email to hold your places and pay later.",
+      );
+      return;
+    }
+    setCheckoutMode(mode);
+  };
 
   const boot = useCallback(async () => {
     setLoading(true);
@@ -698,34 +715,38 @@ function ActivityDetailPage() {
                 ) : null}
 
                 {bookingAccess === false ? (
-                  <p className="rounded-lg border border-border/70 bg-background/60 p-3 text-[11px] leading-relaxed text-muted-foreground">
-                    Instant online payment for experiences is awaiting supplier booking
-                    activation. Request a held reservation below and we will confirm it
-                    with the operator.
+                  <p
+                    data-testid="viator-booking-access-note"
+                    className="rounded-lg border border-border/70 bg-background/60 p-3 text-[11px] leading-relaxed text-muted-foreground"
+                  >
+                    Book &amp; Pay Now / Pay Later activate automatically once the supplier
+                    enables booking access on our production account (currently returning
+                    “Endpoint access denied”). Until then, request a held reservation and our
+                    travel desk will confirm it with the operator.
                   </p>
-                ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBookingError(null);
-                    const [firstName, ...rest] = form.full_name.trim().split(/\s+/);
-                    if (!date || !firstName || !rest.length || !form.email.trim()) {
-                      setBookingError(
-                        "Add your travel date, full name and email to pay and confirm instantly.",
-                      );
-                      return;
-                    }
-                    setPayNow(true);
-                  }}
-                  className="w-full rounded-full bg-primary px-6 py-3 text-xs uppercase tracking-[0.3em] text-primary-foreground"
-                >
-                  Pay &amp; confirm instantly
-                </button>
-                )}
+                ) : null}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={bookingAccess === false}
+                    onClick={() => startInstantCheckout("pay_now")}
+                    className="rounded-full bg-primary px-4 py-3 text-[11px] uppercase tracking-[0.25em] text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Book &amp; Pay Now
+                  </button>
+                  <button
+                    type="button"
+                    disabled={bookingAccess === false}
+                    onClick={() => startInstantCheckout("pay_later")}
+                    className="rounded-full border border-primary px-4 py-3 text-[11px] uppercase tracking-[0.25em] text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Book &amp; Pay Later
+                  </button>
+                </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full rounded-full bg-primary px-6 py-3 text-xs uppercase tracking-[0.3em] text-primary-foreground disabled:opacity-60"
+                  className="w-full rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.3em] text-foreground hover:border-primary disabled:opacity-60"
                 >
                   {submitting ? "Submitting…" : "Request a held reservation"}
                 </button>
@@ -738,8 +759,9 @@ function ActivityDetailPage() {
                 </Link>
               </form>
             </div>
-            {payNow ? (
+            {checkoutMode ? (
               <ViatorActivityCheckout
+                mode={checkoutMode}
                 productCode={product.productCode}
                 productTitle={product.title}
                 travelDate={date}
@@ -756,7 +778,7 @@ function ActivityDetailPage() {
                   email: form.email.trim(),
                   ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
                 }}
-                onClose={() => setPayNow(false)}
+                onClose={() => setCheckoutMode(null)}
               />
             ) : null}
           </aside>
