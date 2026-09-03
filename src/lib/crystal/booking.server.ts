@@ -15,6 +15,7 @@ import {
   CrystalBookingUnavailableError,
   bookingCall,
   bookingCapability,
+  listAvailableSuites,
   normaliseSupplierBooking,
 } from "./aktg-booking.server";
 import { revalidateAktgVoyage } from "./aktg.server";
@@ -156,6 +157,25 @@ export async function holdCrystalVoyage(
     blockedReason = "booking_api_not_configured";
   } else if (capability.live) {
     try {
+      // Re-confirm the chosen suite is still open via the documented
+      // available-suites operation (voyage + category + price type + currency)
+      // so we never hold a suite the customer was not offered.
+      const categoryCod = match.gradeId ?? input.gradeId;
+      const priceTypeCod = match.fareCode ?? input.fareCode;
+      if (categoryCod && priceTypeCod) {
+        const open = await listAvailableSuites({
+          voyageNumber: input.voyageNumber,
+          suiteCategoryCod: categoryCod,
+          priceTypeCod,
+          currency: input.currency,
+        });
+        const stillOpen = open.find((s) => s.suiteNumber === suiteNumber && s.available);
+        if (!stillOpen) {
+          throw new Error(
+            `Suite ${suiteNumber} is no longer available in this grade. Please choose another suite.`,
+          );
+        }
+      }
       const raw = await bookingCall<unknown>({
         operation: "prebook",
         body: [{ voyageNumber: input.voyageNumber, suiteNumber }],
