@@ -29,6 +29,7 @@ URLs, logs, audit entries or source control.
 | get-voyages | `/d/v1/products/cruises` | Yes | Primary catalogue: 185 voyages, itineraries, media, maps |
 | prices and promotions | `/d/v1/cruises/pricespromotions` | Yes | **Primary structured pricing source**: fares, promos, deposits, penalties |
 | get-price-suite-availability | `/d/v1/cruises/availability` | Yes | Live suite counts + fare revalidation before quoting |
+| get-v1-cruise-available-suites (Booking API) | `/d/v1/cruises/availablesuites` | Yes | Open suite numbers per voyage + category + price type + currency; drives suite selection and is re-checked before every hold. Replaces the former `/d/v1/netfare/availablesuites` mapping |
 | get-cruise-suite-category-prices-json | `/v1/cruiseprices` | Yes | Per-grade fare fallback / cross-check |
 | get-ship-suite-categories | `/d/v1/cruises/suitecategories` | Yes | Suite grade taxonomy |
 | get-available-destinations | `/d/v1/products/destinations` | Yes | Destination hubs and facets |
