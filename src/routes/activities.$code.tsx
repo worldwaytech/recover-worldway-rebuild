@@ -133,7 +133,21 @@ function ActivityDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
-  const [payNow, setPayNow] = useState(false);
+  const [checkoutMode, setCheckoutMode] = useState<ActivityCheckoutMode | null>(null);
+
+  const startInstantCheckout = (mode: ActivityCheckoutMode) => {
+    setBookingError(null);
+    const [firstName, ...rest] = form.full_name.trim().split(/\s+/);
+    if (!date || !firstName || !rest.length || !form.email.trim()) {
+      setBookingError(
+        mode === "pay_now"
+          ? "Add your travel date, full name and email to book and pay now."
+          : "Add your travel date, full name and email to hold your places and pay later.",
+      );
+      return;
+    }
+    setCheckoutMode(mode);
+  };
 
   const boot = useCallback(async () => {
     setLoading(true);
