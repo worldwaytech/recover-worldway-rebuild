@@ -134,6 +134,7 @@ export const holdViatorActivityCart = createServerFn({ method: "POST" })
           paxMix: hold.paxMix,
           startTime: resolvedHold.startTime ?? null,
           productOptionCode: resolvedHold.productOptionCode ?? null,
+          hostingUrl: held.hostingUrl,
         },
       });
 
