@@ -138,10 +138,11 @@ export async function viatorCartHold(input: {
   booker: BookerInput;
 }): Promise<CartHold> {
   const { hold } = input;
+  const hostingUrl = await viatorHostingOrigin();
   const body = {
     currency: hold.currency,
     partnerCartRef: input.partnerCartRef,
-    hostingUrl: viatorHostingOrigin(),
+    hostingUrl,
     paymentDataSubmissionMode: "VIATOR_FORM",
     bookerInfo: {
       firstName: input.booker.firstName,
