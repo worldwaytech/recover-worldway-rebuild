@@ -162,7 +162,10 @@ export async function viatorCartHold(input: {
     total: null,
     items: [],
   };
-  if (!res.ok || !res.data) return { ...empty, ...(res.error ? { error: res.error } : {}) };
+  if (!res.ok || !res.data) {
+    const error = bookingError(res.status, res.error);
+    return { ...empty, ...(error ? { error } : {}) };
+  }
 
   const data = res.data as Record<string, unknown>;
   const paymentSession =
@@ -250,9 +253,10 @@ export async function viatorCartBook(input: {
 
   const res = await viatorFetch<unknown>("/bookings/cart/book", { method: "POST", body });
   if (!res.ok || !res.data) {
+    const error = bookingError(res.status, res.error);
     return {
       ok: false,
-      ...(res.error ? { error: res.error } : {}),
+      ...(error ? { error } : {}),
       statuses: [],
       bookingRef: null,
       itineraryRef: null,
@@ -288,7 +292,8 @@ export async function viatorBookingStatus(bookingRef: string): Promise<{
     body: { bookingRefs: [bookingRef] },
   });
   if (!res.ok || !res.data) {
-    return { ok: false, ...(res.error ? { error: res.error } : {}), statuses: [] };
+    const error = bookingError(res.status, res.error);
+    return { ok: false, ...(error ? { error } : {}), statuses: [] };
   }
   const data = res.data as Record<string, unknown>;
   const items = pick<Record<string, unknown>[]>(data, ["bookings", "items"]) ?? [];
