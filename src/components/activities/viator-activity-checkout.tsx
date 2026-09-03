@@ -65,6 +65,8 @@ function loadPaymentScript(): Promise<void> {
   return scriptPromise;
 }
 
+export type ActivityCheckoutMode = "pay_now" | "pay_later";
+
 export type ActivityCheckoutProps = {
   productCode: string;
   productTitle: string;
@@ -74,10 +76,24 @@ export type ActivityCheckoutProps = {
   productOptionCode?: string;
   startTime?: string;
   booker: { firstName: string; lastName: string; email: string; phone?: string };
+  /**
+   * pay_now   — hold, then immediately present the card form.
+   * pay_later — hold first; the guest reviews the supplier hold window and
+   *             opens the card form when ready (must pay before the hold lapses).
+   */
+  mode?: ActivityCheckoutMode;
   onClose: () => void;
 };
 
+function formatHoldExpiry(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
+  const mode: ActivityCheckoutMode = props.mode ?? "pay_now";
   const hold = useServerFn(holdViatorActivityCart);
   const book = useServerFn(bookViatorActivityCart);
   const poll = useServerFn(viatorActivityBookingStatus);
@@ -85,7 +101,9 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const handlerRef = useRef<PaymentHandler | null>(null);
 
-  const [phase, setPhase] = useState<"holding" | "paying" | "booking" | "done">("holding");
+  const [phase, setPhase] = useState<"holding" | "held" | "paying" | "booking" | "done">(
+    "holding",
+  );
   const [error, setError] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(false);
   const [session, setSession] = useState<{
@@ -93,6 +111,8 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     token: string;
     total: number;
     currency: string;
+    holdExpiresAt: string | null;
+    sessionExpiresAt: string | null;
   } | null>(null);
   const [billing, setBilling] = useState({ country: "US", postalCode: "" });
   const [result, setResult] = useState<{
