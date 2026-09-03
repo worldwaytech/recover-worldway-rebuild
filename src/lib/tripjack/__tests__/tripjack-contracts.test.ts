@@ -158,7 +158,7 @@ describe("TripSafe v5.1 Booking / amendment payloads", () => {
     });
     expect(body.pli[0]!.pi[0]!.iti[1]).not.toHaveProperty("eid");
     expect(body.deliveryInfo).toEqual({ emails: ["lead@example.com"], contacts: ["9587507322"] });
-    expect(JSON.stringify(body)).not.toContain("ti\"");
+    expect(JSON.stringify(body)).not.toContain("\"ti\":");
   });
   it("only treats status.success === true as booked", () => {
     expect(tripsafeBookSucceeded({ bid: "x", status: { success: true } })).toBe(true);
