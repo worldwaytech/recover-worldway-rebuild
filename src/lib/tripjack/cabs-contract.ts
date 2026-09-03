@@ -171,6 +171,8 @@ export type CabBookingRequest = {
 /** Cabs v2 §3 Booking API response payload (`data`). */
 export type CabBookingResponseData = {
   id: string;
+  /** Booking user id — this is the documented `payUserId` for the Payment API. */
+  agentId?: string;
   status?: string;
   paymentStatus?: string;
   totalPrice?: number;
@@ -187,6 +189,100 @@ export type CabBookingResponseData = {
   bookingVehicle?: Record<string, unknown>;
   priceBreakup?: Record<string, unknown>;
 };
+
+/** Cabs v2 §3 Payment API request — every field is documented and mandatory. */
+export type CabPaymentRequest = {
+  amount: number;
+  payUserId: string;
+  paymentMedium: "WALLET";
+  bookingId: string;
+  opType: "DEBIT";
+  product: "CAB";
+  transactionType: "PAID_FOR_ORDER";
+};
+
+export function buildCabPaymentBody(input: {
+  amount: number;
+  payUserId: string;
+  bookingId: string;
+}): CabPaymentRequest {
+  return {
+    amount: input.amount,
+    payUserId: input.payUserId,
+    paymentMedium: "WALLET",
+    bookingId: input.bookingId,
+    opType: "DEBIT",
+    product: "CAB",
+    transactionType: "PAID_FOR_ORDER",
+  };
+}
+
+/** Cabs v2 §3 Amendment Cancellation API request body. */
+export type CabCancellationRequest = { bookingId: string; amendmentType: "CANCELLATION" };
+
+export function buildCabCancellationBody(bookingId: string): CabCancellationRequest {
+  return { bookingId, amendmentType: "CANCELLATION" };
+}
+
+/** Cabs v2 §3 Get Booking Details — `data[]` items carry `order` + `itemInfos`. */
+export type CabBookingDetailsItem = {
+  order?: {
+    bookingId?: string;
+    status?: string;
+    paymentStatus?: string;
+    amount?: number;
+    taxes?: number;
+    tripType?: string;
+    rideStatus?: string;
+    trackingLink?: string;
+    paymentDate?: string;
+    createdOn?: string;
+    processedOn?: string;
+    policies?: CabPolicies;
+    helpline?: string;
+    [key: string]: unknown;
+  };
+  itemInfos?: { CAB?: Record<string, unknown> };
+  [key: string]: unknown;
+};
+
+export type CabBookingDetailsSummary = {
+  bookingId: string;
+  status?: string;
+  paymentStatus?: string;
+  amount?: number;
+  rideStatus?: string;
+  trackingLink?: string;
+  tripType?: string;
+  paymentDate?: string;
+  policies?: CabPolicies;
+};
+
+/**
+ * Normalises the documented Booking Details payload (`data: [{ order, … }]`).
+ * Returns null when the supplier did not return the requested booking so the
+ * caller can fail closed instead of assuming a status.
+ */
+export function parseCabBookingDetails(
+  data: unknown,
+  bookingId: string,
+): CabBookingDetailsSummary | null {
+  const list = Array.isArray(data) ? (data as CabBookingDetailsItem[]) : data ? [data as CabBookingDetailsItem] : [];
+  const item = list.find((i) => i?.order?.bookingId === bookingId) ?? (list.length === 1 ? list[0] : undefined);
+  const order = item?.order;
+  if (!order || !order.bookingId) return null;
+  return {
+    bookingId: order.bookingId,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    amount: typeof order.amount === "number" ? order.amount : undefined,
+    rideStatus: order.rideStatus,
+    trackingLink: order.trackingLink,
+    tripType: order.tripType,
+    paymentDate: order.paymentDate,
+    policies: order.policies,
+  };
+}
 
 /** Cabs v2 §3 Get Amendment Charges API response (`data.amendment`). */
 export type CabAmendmentQuote = {
@@ -225,6 +321,7 @@ export function mapCabStatus(supplierStatus: string | undefined): string {
     case "CONFIRMED":
     case "SUCCESS":
     case "BOOKED":
+    case "PAYMENT_SUCCESS":
       return "confirmed";
     case "PAYMENT_PENDING":
     case "PENDING":
@@ -234,6 +331,7 @@ export function mapCabStatus(supplierStatus: string | undefined): string {
     case "CANCELED":
       return "cancelled";
     case "FAILED":
+    case "PAYMENT_FAILED":
       return "failed";
     default:
       return "pending";

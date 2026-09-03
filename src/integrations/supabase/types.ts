@@ -1191,6 +1191,119 @@ export type Database = {
         }
         Relationships: []
       }
+      tripjack_api_logs: {
+        Row: {
+          capability: string
+          correlation_id: string
+          created_at: string
+          duration_ms: number
+          environment: string
+          error_kind: string | null
+          id: string
+          method: string
+          outcome: string
+          path: string
+          request_body: Json | null
+          request_query: Json | null
+          response_body: Json | null
+          response_status: number | null
+          suite: string
+          supplier_booking_id: string | null
+          test_case: string | null
+        }
+        Insert: {
+          capability: string
+          correlation_id: string
+          created_at?: string
+          duration_ms?: number
+          environment?: string
+          error_kind?: string | null
+          id?: string
+          method: string
+          outcome: string
+          path: string
+          request_body?: Json | null
+          request_query?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+          suite: string
+          supplier_booking_id?: string | null
+          test_case?: string | null
+        }
+        Update: {
+          capability?: string
+          correlation_id?: string
+          created_at?: string
+          duration_ms?: number
+          environment?: string
+          error_kind?: string | null
+          id?: string
+          method?: string
+          outcome?: string
+          path?: string
+          request_body?: Json | null
+          request_query?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+          suite?: string
+          supplier_booking_id?: string | null
+          test_case?: string | null
+        }
+        Relationships: []
+      }
+      tripjack_certification_cases: {
+        Row: {
+          case_key: string
+          confirmation_numbers: Json
+          correlation_ids: Json
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          suite: string
+          supplier_booking_id: string | null
+          updated_at: string
+          updated_by: string | null
+          worldway_booking_id: string | null
+        }
+        Insert: {
+          case_key: string
+          confirmation_numbers?: Json
+          correlation_ids?: Json
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          suite: string
+          supplier_booking_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          worldway_booking_id?: string | null
+        }
+        Update: {
+          case_key?: string
+          confirmation_numbers?: Json
+          correlation_ids?: Json
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          suite?: string
+          supplier_booking_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          worldway_booking_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tripjack_certification_cases_worldway_booking_id_fkey"
+            columns: ["worldway_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           created_at: string

@@ -9,9 +9,13 @@ import { tripjackCall } from "./client.server";
 import {
   TRIPJACK_CAB_PRODUCT_TYPE,
   TRIPJACK_CAB_SUPPLIER,
+  buildCabCancellationBody,
+  buildCabPaymentBody,
   mapCabStatus,
+  parseCabBookingDetails,
   type CabAmendmentQuote,
   type CabAmendmentResult,
+  type CabBookingDetailsSummary,
   type CabBookingRequest,
   type CabBookingResponseData,
   type CabLatLong,
@@ -43,16 +47,17 @@ function fail<T>(message: string, correlationId?: string): ServiceResult<T> {
 
 // ─── Read operations (Cabs v2 §3) ────────────────────────────────────────────
 
-/** POST /cabs/v1/google-places — body { query }. */
-export async function searchCabPlaces(query: string): Promise<ServiceResult<CabPlace[]>> {
-  const r = await tripjackCall<TripjackEnvelope<CabPlace[]> | CabPlace[]>(
+/** POST /cabs/v1/google-places — body { input }; response data.places[]. */
+export async function searchCabPlaces(input: string): Promise<ServiceResult<CabPlace[]>> {
+  const r = await tripjackCall<TripjackEnvelope<{ places?: CabPlace[] }>>(
     "cabs",
     "location-search",
-    { query },
+    { input },
   );
   if (!r.ok) return fail(r.error.message, r.correlationId);
-  const data = unwrap<CabPlace[]>(r.data) ?? [];
-  return { ok: true, data: Array.isArray(data) ? data : [], correlationId: r.correlationId };
+  const data = unwrap<{ places?: CabPlace[] }>(r.data);
+  const places = Array.isArray(data?.places) ? data.places : [];
+  return { ok: true, data: places, correlationId: r.correlationId };
 }
 
 /** POST /cabs/v1/get-lat-long — body { placeId }. */
@@ -80,23 +85,23 @@ export async function quoteCabs(
   return { ok: true, data, correlationId: r.correlationId };
 }
 
-/** GET /cabs/v1/booking/details?bookingId= */
+/** GET /cabs/v1/booking/details?bookingIds= — response data[] of { order, … }. */
 export async function fetchCabBookingDetails(
   supplierBookingId: string,
-): Promise<ServiceResult<CabBookingResponseData>> {
-  const r = await tripjackCall<TripjackEnvelope<CabBookingResponseData>>(
+): Promise<ServiceResult<CabBookingDetailsSummary>> {
+  const r = await tripjackCall<TripjackEnvelope<unknown>>(
     "cabs",
     "booking-details",
     undefined,
-    { bookingId: supplierBookingId },
+    { bookingIds: supplierBookingId },
   );
   if (!r.ok) return fail(r.error.message, r.correlationId);
-  const data = unwrap<CabBookingResponseData>(r.data);
-  if (!data) return fail("Booking details unavailable.", r.correlationId);
-  return { ok: true, data, correlationId: r.correlationId };
+  const summary = parseCabBookingDetails(unwrap<unknown>(r.data), supplierBookingId);
+  if (!summary) return fail("Booking details unavailable for this booking id.", r.correlationId);
+  return { ok: true, data: summary, correlationId: r.correlationId };
 }
 
-/** GET /cabs/v1/amendment?bookingId=&amendType=CANCELLATION */
+/** GET /cabs/v1/amendment?bookingId=&type=CANCELLATION — response data.amendment. */
 export async function fetchCabCancellationCharges(
   supplierBookingId: string,
 ): Promise<ServiceResult<CabAmendmentQuote>> {
@@ -104,11 +109,11 @@ export async function fetchCabCancellationCharges(
     "cabs",
     "amend-charges",
     undefined,
-    { bookingId: supplierBookingId, amendType: "CANCELLATION" },
+    { bookingId: supplierBookingId, type: "CANCELLATION" },
   );
   if (!r.ok) return fail(r.error.message, r.correlationId);
-  const data = unwrap<{ amendment?: CabAmendmentQuote } & CabAmendmentQuote>(r.data);
-  const amendment = data?.amendment ?? data;
+  const data = unwrap<{ amendment?: CabAmendmentQuote }>(r.data);
+  const amendment = data?.amendment;
   if (!amendment) return fail("Cancellation charges unavailable.", r.correlationId);
   return { ok: true, data: amendment, correlationId: r.correlationId };
 }
@@ -282,10 +287,14 @@ export async function bookCab(
       details: json({
         ...(row.details as object),
         supplierBookingId: supplier.id,
+        // Documented payUserId for the Payment API (booking response `agentId`).
+        payUserId: supplier.agentId,
+        supplierTotalPrice: supplier.totalPrice,
         paymentStatus: supplier.paymentStatus,
         trackingLink: supplier.trackingLink,
         rideStatus: supplier.rideStatus,
         amendmentAllowed: supplier.amendmentAllowed,
+        correlationIds: { book: r.correlationId },
       }),
     })
     .eq("id", row.id);
@@ -296,77 +305,122 @@ export async function bookCab(
   });
 
   const saved = await loadOwned(client, row.id);
+  const paid = status === "confirmed" || (supplier.paymentStatus ?? "").toUpperCase() === "SUCCESS";
   return {
     booking: toCabRecord(saved),
     replay: false,
-    message:
-      supplier.paymentStatus && supplier.paymentStatus.toUpperCase() !== "PAID"
-        ? "Booking created with TripJack — payment is required to confirm the ride."
-        : "Cab booking confirmed with TripJack.",
+    message: paid
+      ? "Cab booking confirmed with TripJack."
+      : "Booking created with TripJack — payment is required to confirm the ride.",
   };
 }
 
-/** Cabs v2 §3 Payment API — POST /cabs/v1/payment/create { bookingId }. */
+/**
+ * Cabs v2 §3 Payment API — POST /cabs/v1/payment/create with the documented
+ * body { amount, payUserId, paymentMedium:"WALLET", bookingId, opType:"DEBIT",
+ * product:"CAB", transactionType:"PAID_FOR_ORDER" }. `amount` and `payUserId`
+ * are taken from the supplier's own booking response (never re-derived); the
+ * resulting status is then read back from Booking Details rather than assumed.
+ */
 export async function payCabBooking(
   client: Client,
   bookingId: string,
 ): Promise<{ booking: CabBookingRecord; message: string }> {
   const row = await loadOwned(client, bookingId);
   if (!row.supplier_reference) throw new Error("This booking has no supplier reference.");
+  if (row.status === "cancelled") throw new Error("This booking is cancelled.");
+  const details = (row.details ?? {}) as Record<string, unknown>;
+  if ((String(details.paymentStatus ?? "")).toUpperCase() === "SUCCESS" || row.status === "confirmed") {
+    return { booking: toCabRecord(row), message: "This booking is already paid." };
+  }
+  const payUserId = typeof details.payUserId === "string" ? details.payUserId : undefined;
+  const amount =
+    typeof details.supplierTotalPrice === "number" ? details.supplierTotalPrice : row.amount ?? undefined;
+  if (!payUserId) throw new Error("Supplier booking did not return a payUserId; payment cannot be raised.");
+  if (amount == null || !Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Supplier booking did not return a payable amount.");
+  }
 
-  const r = await tripjackCall<TripjackEnvelope<CabBookingResponseData>>("cabs", "payment", {
-    bookingId: row.supplier_reference,
-  });
+  const body = buildCabPaymentBody({ amount, payUserId, bookingId: row.supplier_reference });
+  const r = await tripjackCall<TripjackEnvelope<Record<string, unknown>>>("cabs", "payment", body);
   if (!r.ok) {
     await event(client, row.id, "supplier-error", `TripJack payment failed: ${r.error.message}`, {
       correlationId: r.correlationId,
     });
     return { booking: toCabRecord(row), message: r.error.message };
   }
-  const supplier = unwrap<CabBookingResponseData>(r.data);
-  const status = mapCabStatus(supplier?.status);
-  const amount = supplier?.totalPrice ?? row.amount ?? 0;
-  const paid = (supplier?.paymentStatus ?? "").toUpperCase() === "PAID" || status === "confirmed";
+  const envelope = r.data;
+  if (envelope && typeof envelope === "object" && envelope.success === false) {
+    const msg = envelope.message ?? "TripJack rejected the payment request.";
+    await event(client, row.id, "supplier-error", `TripJack payment rejected: ${msg}`, { correlationId: r.correlationId });
+    return { booking: toCabRecord(row), message: msg };
+  }
+  await event(client, row.id, "payment", "Payment request accepted by TripJack; confirming via booking details.", {
+    correlationId: r.correlationId,
+    amount,
+  });
+
+  // The Payment API response shape is not documented beyond the envelope, so
+  // the authoritative status/paymentStatus is read back from Booking Details.
+  const synced = await fetchCabBookingDetails(row.supplier_reference);
+  if (!synced.ok) {
+    await client
+      .from("bookings")
+      .update({ details: json({ ...details, correlationIds: { ...(details.correlationIds as object), payment: r.correlationId } }) })
+      .eq("id", row.id);
+    return {
+      booking: toCabRecord(await loadOwned(client, row.id)),
+      message: "Payment submitted; supplier status could not be confirmed yet. Use refresh to re-check.",
+    };
+  }
+  const paid = (synced.data.paymentStatus ?? "").toUpperCase() === "SUCCESS" || mapCabStatus(synced.data.status) === "confirmed";
   await client
     .from("bookings")
     .update({
-      status,
-      supplier_status: supplier?.status ?? row.supplier_status,
+      status: mapCabStatus(synced.data.status),
+      supplier_status: synced.data.status ?? row.supplier_status,
       amount_paid: paid ? amount : row.amount_paid,
       balance_due: paid ? 0 : row.balance_due,
       details: json({
-        ...(row.details as object),
-        paymentStatus: supplier?.paymentStatus,
-        trackingLink: supplier?.trackingLink ?? (row.details as Record<string, unknown>).trackingLink,
+        ...details,
+        paymentStatus: synced.data.paymentStatus,
+        paymentDate: synced.data.paymentDate,
+        trackingLink: synced.data.trackingLink ?? details.trackingLink,
+        rideStatus: synced.data.rideStatus,
+        correlationIds: { ...(details.correlationIds as object), payment: r.correlationId, paymentSync: synced.correlationId },
       }),
     })
     .eq("id", row.id);
-  await event(client, row.id, "payment", `Payment processed with TripJack (${supplier?.paymentStatus ?? "unknown"}).`, {
-    correlationId: r.correlationId,
-  });
-  return { booking: toCabRecord(await loadOwned(client, row.id)), message: "Payment processed." };
+  return {
+    booking: toCabRecord(await loadOwned(client, row.id)),
+    message: paid ? "Payment confirmed by TripJack." : `Payment status: ${synced.data.paymentStatus ?? "pending"}.`,
+  };
 }
 
-/** Refreshes a Worldway cab booking from GET /cabs/v1/booking/details. */
+/** Refreshes a Worldway cab booking from GET /cabs/v1/booking/details?bookingIds=. */
 export async function syncCabBooking(
   client: Client,
   bookingId: string,
-): Promise<{ booking: CabBookingRecord; supplier?: CabBookingResponseData; message: string }> {
+): Promise<{ booking: CabBookingRecord; supplier?: CabBookingDetailsSummary; message: string }> {
   const row = await loadOwned(client, bookingId);
   if (!row.supplier_reference) return { booking: toCabRecord(row), message: "No supplier reference yet." };
   const r = await fetchCabBookingDetails(row.supplier_reference);
   if (!r.ok) return { booking: toCabRecord(row), message: r.message };
+  const paid = (r.data.paymentStatus ?? "").toUpperCase() === "SUCCESS";
   await client
     .from("bookings")
     .update({
       status: mapCabStatus(r.data.status),
       supplier_status: r.data.status ?? row.supplier_status,
+      amount_paid: paid ? (r.data.amount ?? row.amount ?? row.amount_paid) : row.amount_paid,
+      balance_due: paid ? 0 : row.balance_due,
       details: json({
         ...(row.details as object),
         paymentStatus: r.data.paymentStatus,
+        paymentDate: r.data.paymentDate,
         trackingLink: r.data.trackingLink,
         rideStatus: r.data.rideStatus,
-        amendmentAllowed: r.data.amendmentAllowed,
+        cancellationPolicy: r.data.policies?.cancellationPolicy,
       }),
     })
     .eq("id", row.id);
@@ -375,8 +429,9 @@ export async function syncCabBooking(
 
 /**
  * Cabs v2 §3 Amendment Cancellation API — POST /cabs/v1/amendment
- * { bookingId, amendType: "CANCELLATION", remarks }. Charges are quoted via
- * the GET endpoint first so the customer is never surprised.
+ * { bookingId, amendmentType: "CANCELLATION" }. Charges are quoted via the GET
+ * endpoint first so the customer is never surprised; the reason is kept on the
+ * Worldway record (the supplier body has no remarks field).
  */
 export async function cancelCabBooking(
   client: Client,
@@ -395,11 +450,11 @@ export async function cancelCabBooking(
   }
 
   const charges = await fetchCabCancellationCharges(row.supplier_reference);
-  const r = await tripjackCall<TripjackEnvelope<CabAmendmentResult>>("cabs", "cancel", {
-    bookingId: row.supplier_reference,
-    amendType: "CANCELLATION",
-    remarks: reason,
-  });
+  const r = await tripjackCall<TripjackEnvelope<CabAmendmentResult>>(
+    "cabs",
+    "cancel",
+    buildCabCancellationBody(row.supplier_reference),
+  );
   if (!r.ok) {
     await event(client, row.id, "supplier-error", `TripJack cancellation failed: ${r.error.message}`, {
       correlationId: r.correlationId,
@@ -407,26 +462,36 @@ export async function cancelCabBooking(
     return { booking: toCabRecord(row), message: r.error.message };
   }
   const amendment = unwrap<CabAmendmentResult>(r.data);
+  const amendStatus = (amendment?.amendStatus ?? "").toUpperCase();
+  if (!amendment?.id || (amendStatus && amendStatus !== "SUCCESS")) {
+    const msg = `TripJack did not confirm the cancellation (${amendment?.amendStatus ?? "no amendment id"}).`;
+    await event(client, row.id, "supplier-error", msg, { correlationId: r.correlationId });
+    return { booking: toCabRecord(row), amendment, message: msg };
+  }
   await client
     .from("bookings")
     .update({
       status: "cancelled",
-      supplier_status: amendment?.amendStatus ?? "cancelled",
+      supplier_status: amendment.amendStatus ?? "cancelled",
       cancellation_reason: reason,
       details: json({
         ...(row.details as object),
         cancellation: {
-          amendmentId: amendment?.id,
-          refundAmount: amendment?.refundAmount,
-          charge: amendment?.tjAmendmentCharge,
+          amendmentId: amendment.id,
+          refundAmount: amendment.refundAmount,
+          refundRefId: amendment.refundRefId,
+          charge: amendment.tjAmendmentCharge,
+          managementFee: amendment.tjManagementFee,
+          processedOn: amendment.processedOn,
           quoted: charges.ok ? charges.data : undefined,
+          correlationIds: { charges: charges.ok ? charges.correlationId : undefined, cancel: r.correlationId },
         },
       }),
     })
     .eq("id", row.id);
-  await event(client, row.id, "cancelled", "Cab booking cancelled with TripJack.", {
+  await event(client, row.id, "cancelled", `Cab booking cancelled with TripJack (${amendment.id}).`, {
     correlationId: r.correlationId,
-    refundAmount: amendment?.refundAmount,
+    refundAmount: amendment.refundAmount,
   });
   return {
     booking: toCabRecord(await loadOwned(client, row.id)),

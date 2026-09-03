@@ -4,7 +4,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { CAB_JOURNEY_TYPES, CAB_TRIP_TYPES, TRIPSAFE_CHANNEL_TYPES } from "./config";
+import {
+  CAB_JOURNEY_TYPES,
+  CAB_TRIP_TYPES,
+  TRIPJACK_CERTIFICATION_STATUSES,
+  TRIPSAFE_CHANNEL_TYPES,
+  TRIPSAFE_NOMINEE_RELATIONS,
+} from "./config";
 
 const cabLocation = z.object({
   type: z.literal("location"),
@@ -57,14 +63,16 @@ const traveller = z.object({
   eid: z.string().email().max(120).optional(),
   cnum: z.string().max(20).optional(),
   pnum: z.string().max(20).optional(),
-  pnan: z.string().max(60).optional(),
+  pincode: z.string().max(10).optional(),
+  gen: z.enum(["M", "F"]).optional(),
   isio: z.boolean().optional(),
   nomineeName: z.string().max(80).optional(),
-  nomineeRelation: z.string().max(20).optional(),
+  nomineeRelation: z.enum(TRIPSAFE_NOMINEE_RELATIONS).optional(),
 });
 
-const tripsafeReviewSchema = z.object({
-  iid: z.string().min(1).max(60),
+/** Plan selection carried from Search → Review → Book (TripSafe v5.1 §3). */
+const tripsafeSelectionSchema = z.object({
+  plid: z.string().min(1).max(80),
   pid: z.string().min(1).max(120),
   sd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   ed: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
