@@ -17,6 +17,69 @@ export function normaliseHostingUrl(input: string): string {
   return url.origin;
 }
 
+/** Canonical production origin used when the request origin cannot be trusted. */
+export const CANONICAL_HOSTING_ORIGIN = "https://www.worldwaytravelsgroup.com";
+
+/**
+ * Origins that may host the Viator payment iFrame. Both www and apex are
+ * allowed because Viator compares `hostingUrl` with the page's exact
+ * `window.location.origin` — a guest on the apex domain must not be sent a
+ * session bound to the www origin (or vice versa).
+ */
+export const HOSTING_ORIGIN_ALLOWLIST: readonly string[] = [
+  CANONICAL_HOSTING_ORIGIN,
+  "https://worldwaytravelsgroup.com",
+  "https://recover-worldway-rebuild.lovable.app",
+];
+
+/** Lovable preview / stable project hosts (https only). */
+const PREVIEW_HOST_RE =
+  /^(id-preview--|project--)[a-z0-9-]+(-dev)?\.lovable\.app$/i;
+
+function isAllowedOrigin(origin: string, extra: readonly string[]): boolean {
+  if (extra.includes(origin) || HOSTING_ORIGIN_ALLOWLIST.includes(origin)) return true;
+  try {
+    const u = new URL(origin);
+    if (u.protocol !== "https:") return u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    return PREVIEW_HOST_RE.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolves the `hostingUrl` for a cart hold.
+ * Priority: the requesting page's own origin (Origin, else Referer) when it is
+ * on the allowlist → the configured VIATOR_HOSTING_URL → canonical www origin.
+ * Never echoes an arbitrary caller-supplied origin back to the supplier.
+ */
+export function resolveHostingOrigin(input: {
+  originHeader?: string | null | undefined;
+  refererHeader?: string | null | undefined;
+  configuredUrl?: string | null | undefined;
+}): string {
+  const extra: string[] = [];
+  let configured: string | null = null;
+  if (input.configuredUrl) {
+    try {
+      configured = normaliseHostingUrl(input.configuredUrl);
+      extra.push(configured);
+    } catch {
+      configured = null;
+    }
+  }
+  for (const raw of [input.originHeader, input.refererHeader]) {
+    if (!raw || raw === "null") continue;
+    try {
+      const origin = normaliseHostingUrl(raw);
+      if (isAllowedOrigin(origin, extra)) return origin;
+    } catch {
+      /* ignore malformed header */
+    }
+  }
+  return configured ?? CANONICAL_HOSTING_ORIGIN;
+}
+
 export type PaxMix = { ageBand: "ADULT" | "CHILD" | "INFANT" | "SENIOR" | "YOUTH"; count: number }[];
 
 export type HoldRequestInput = {
