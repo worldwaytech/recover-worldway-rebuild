@@ -260,7 +260,9 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
       <div className="w-full max-w-lg overflow-y-auto rounded-2xl border border-border/60 bg-card p-6 shadow-2xl max-h-[92vh]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">Secure payment</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-primary">
+              {mode === "pay_later" ? "Book & pay later" : "Book & pay now"}
+            </p>
             <h2 className="mt-1 font-serif text-xl text-foreground">{props.productTitle}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               {props.travelDate} ·{" "}
@@ -278,22 +280,56 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
 
         {phase === "holding" ? (
           <p className="mt-6 text-sm text-muted-foreground">
-            Confirming live availability with the supplier…
+            Confirming live availability and holding your places with the supplier…
           </p>
         ) : null}
 
         {session && phase !== "done" ? (
-          <div className="mt-5 rounded-lg border border-border/60 bg-background/40 p-3 text-sm">
+          <div className="mt-5 space-y-2 rounded-lg border border-border/60 bg-background/40 p-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Total due now</span>
+              <span className="text-muted-foreground">
+                {phase === "held" ? "Total to pay" : "Total due now"}
+              </span>
               <span className="text-foreground">
                 {session.currency} {session.total.toFixed(2)}
               </span>
             </div>
+            {formatHoldExpiry(session.holdExpiresAt) ? (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Supplier hold until</span>
+                <span data-testid="viator-hold-expiry" className="text-foreground">
+                  {formatHoldExpiry(session.holdExpiresAt)}
+                </span>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
-        {phase !== "done" ? (
+        {phase === "held" && session ? (
+          <div className="mt-5 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Your places are held with the supplier (reference{" "}
+              <span className="text-foreground">{session.cartRef}</span>). Complete payment before
+              the hold lapses to confirm the booking — no charge is taken until you pay.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase("paying")}
+              className="w-full rounded-full bg-primary px-6 py-3 text-xs uppercase tracking-[0.3em] text-primary-foreground"
+            >
+              Pay now &amp; confirm
+            </button>
+            <button
+              type="button"
+              onClick={props.onClose}
+              className="w-full rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.25em] text-muted-foreground"
+            >
+              Keep hold, pay later
+            </button>
+          </div>
+        ) : null}
+
+        {phase !== "done" && phase !== "held" ? (
           <div className={session ? "mt-5 space-y-4" : "hidden"}>
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm">
