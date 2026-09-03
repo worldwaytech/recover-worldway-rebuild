@@ -178,6 +178,7 @@ export async function viatorCartHold(input: {
     currency: hold.currency,
     total: null,
     items: [],
+    hostingUrl,
   };
   if (!res.ok || !res.data) {
     const error = bookingError(res.status, res.error);
