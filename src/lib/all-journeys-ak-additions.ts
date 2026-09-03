@@ -22,6 +22,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Solo Friendly"
     ],
     "duration": 7,
+    "priceFrom": null,
     "availability": "On Request",
     "departures": [
       "Mar 2027",
@@ -429,6 +430,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Solo Friendly"
     ],
     "duration": 7,
+    "priceFrom": null,
     "availability": "On Request",
     "departures": [
       "Mar 2027",
@@ -676,6 +678,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Solo Friendly"
     ],
     "duration": 7,
+    "priceFrom": null,
     "availability": "On Request",
     "departures": [
       "Apr 2027",
@@ -3652,6 +3655,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -3728,6 +3732,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -3825,6 +3830,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -3920,6 +3926,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -3996,6 +4003,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4072,6 +4080,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4167,6 +4176,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4261,6 +4271,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4333,6 +4344,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4409,6 +4421,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4504,6 +4517,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4602,6 +4616,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4696,6 +4711,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4789,6 +4805,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4885,6 +4902,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -4979,6 +4997,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5074,6 +5093,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5170,6 +5190,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5266,6 +5287,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5361,6 +5383,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5432,6 +5455,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5528,6 +5552,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5604,6 +5629,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5700,6 +5726,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5795,6 +5822,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5872,6 +5900,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -5948,6 +5977,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -6043,6 +6073,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -6119,6 +6150,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -6194,6 +6226,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Beach & Island"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -6272,6 +6305,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Honeymoon"
     ],
     "duration": 1,
+    "priceFrom": null,
     "availability": "Available",
     "departures": [],
     "featured": false,
@@ -7525,6 +7559,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Rail Journeys"
     ],
     "duration": 12,
+    "priceFrom": null,
     "availability": "On Request",
     "departures": [
       "May 2027",
@@ -7728,6 +7763,7 @@ export const akAdditionalJourneys: Journey[] = [
       "Rail Journeys"
     ],
     "duration": 11,
+    "priceFrom": null,
     "availability": "On Request",
     "departures": [
       "Apr 2027",
