@@ -8,27 +8,19 @@ import { Label } from "@/components/ui/label";
 import { portal, type PortalUser } from "@/lib/portal-store";
 import {
   TRIPSAFE_AMT_DURATIONS,
+  TRIPSAFE_NOMINEE_RELATIONS,
   TRIPSAFE_POPULAR_REGIONS,
   TRIPSAFE_STUDENT_DURATIONS,
   type TripsafeChannelType,
 } from "@/lib/tripjack/config";
-import type { TripsafeTraveller } from "@/lib/tripjack/tripsafe-contract";
+import type { TripsafePlanSummary, TripsafeTraveller } from "@/lib/tripjack/tripsafe-contract";
 import {
   createTripsafeBooking,
   reviewTripsafePlan,
   searchTripsafePlans,
 } from "@/lib/tripjack/tripjack.functions";
 
-type Plan = {
-  pid: string;
-  iid: string;
-  name: string;
-  insurer?: string;
-  totalFare?: number;
-  currency: string;
-  sumInsured?: string;
-  benefits: Array<{ name: string; value: string }>;
-};
+type Plan = TripsafePlanSummary;
 
 const CHANNELS: Array<{ key: TripsafeChannelType; label: string; blurb: string }> = [
   { key: "REGULAR", label: "Single trip", blurb: "Cover for one journey of up to 90 days." },
@@ -50,7 +42,8 @@ const emptyTraveller = (id: number, age: number): TripsafeTraveller => ({
   eid: "",
   cnum: "",
   pnum: "",
-  pnan: "",
+  pincode: "",
+  gen: "M",
   isio: id === 1,
   nomineeName: "",
   nomineeRelation: "SPOUSE",
