@@ -721,7 +721,7 @@ function ActivityDetailPage() {
                 >
                   Pay &amp; confirm instantly
                 </button>
-                )
+                )}
                 <button
                   type="submit"
                   disabled={submitting}
