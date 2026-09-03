@@ -12,7 +12,10 @@ import {
   searchViatorProducts,
 } from "@/lib/viator.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { ViatorActivityCheckout } from "@/components/activities/viator-activity-checkout";
+import {
+  ViatorActivityCheckout,
+  type ActivityCheckoutMode,
+} from "@/components/activities/viator-activity-checkout";
 import { trackCatalogueEvent } from "@/lib/catalogue-client";
 
 export const Route = createFileRoute("/activities/$code")({
