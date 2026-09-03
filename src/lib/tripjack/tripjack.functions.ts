@@ -186,7 +186,8 @@ export const syncCabBookingFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ bookingId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { syncCabBooking } = await import("./cabs.server");
-    return syncCabBooking(context.supabase as never, data.bookingId);
+    const r = await syncCabBooking(context.supabase as never, data.bookingId);
+    return { booking: r.booking, message: r.message };
   });
 
 export const cancelCabBookingFn = createServerFn({ method: "POST" })
