@@ -63,3 +63,23 @@ cancel) run in a single pass with idempotency keys and immediate release.
 Credentials stayed server-side; auth/RLS unchanged; idempotency keys generated per
 attempt; fail-closed capability gate enforced on every call; LIVE configuration was not
 modified during this test; no mutating supplier operation was executed.
+
+---
+
+## Addendum — Controlled PROD Hold → Release test (2026-09-05 04:31 UTC)
+
+Executed through `src/lib/crystal/aktg-booking.server.ts` (same PROD adapter as customers).
+Voyage `CSY-009-260905` (Crystal Symphony) · category `CHV4` Crystal Penthouse Suite · price type `FIT` · `USD`.
+Suite source: documented `GET /d/v1/cruises/availablesuites` (Net Fare endpoint no longer used).
+
+| # | Step | Operation | HTTP | Result | Evidence (UTC) |
+|---|---|---|---|---|---|
+| 1 | Rail check | capability | – | PASS | Booking + Shopping LIVE, channel headers present, 19 ops armed |
+| 2 | Available suites (before) | `GET /d/v1/cruises/availablesuites` | 200 | PASS | 1023 (Penthouse Deck 10, Available), 8041 (Horizon Deck 8, Available) — 04:31:23 |
+| 3 | Hold | `POST /v1/Bookings/suites` `[{voyageNumber, suiteNumber:1023}]` | 200 | PASS | `{"result":true}` · Idempotency-Key `hold-test-1788582683924` · 3,561 ms — 04:31:27 |
+| 4 | Verify hold | `GET /d/v1/cruises/availablesuites` | 200 | PASS | Suite 1023 removed from open inventory (only 8041 listed) — 04:31:28 |
+| 5 | Release | `DELETE /v1/Bookings/suites` `[{voyageNumber, suiteNumber:1023}]` | 200 | PASS | `{"result":true}` · 1,783 ms — 04:31:29 |
+| 6 | Verify release | `GET /d/v1/cruises/availablesuites` | 200 | PASS | Suite 1023 back as `Available` (1023 + 8041 listed) — 04:31:30 |
+| 7 | Post-test sweep | `GET /v1/Bookings` | 200 | PASS | agency booking list empty (`recordsCount: 0`) — 04:31:31 |
+
+Notes: the documented `HoldReleaseSuiteResponse` carries only `result: true` — no hold reference, confirmation number or expiry timestamp is returned by the supplier; the hold is evidenced by the suite disappearing from `availablesuites` and reappearing after release. No option/booking was created, nothing was charged, no Worldway database rows were written, LIVE configuration was untouched. Hold-to-release elapsed: ~2.4 s.
