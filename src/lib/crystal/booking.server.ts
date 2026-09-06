@@ -26,6 +26,47 @@ type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 const SUPPLIER = "Crystal Cruises (AKTG)";
 /** Tolerance on the price the customer saw versus the live supplier fare. */
 const PRICE_TOLERANCE = 0.02;
+/**
+ * AKTG's hold response carries no expiry, so we impose our own window. A held
+ * suite that has not been optioned by then is released automatically.
+ */
+export function holdTtlMinutes(): number {
+  const n = Number(process.env["CRYSTAL_HOLD_TTL_MINUTES"] ?? "");
+  return Number.isFinite(n) && n >= 5 && n <= 1440 ? n : 30;
+}
+
+/** True when the row is a supplier-held suite that has not yet become a booking. */
+export function isSuiteHeld(row: BookingRow): boolean {
+  const d = details(row);
+  return d.suiteHeld === true && row.status === "held";
+}
+
+function holdExpired(row: BookingRow): boolean {
+  const at = details(row).holdExpiresAt;
+  return typeof at === "string" && Date.parse(at) < Date.now();
+}
+
+/**
+ * Release a held suite with the supplier (documented DELETE /v1/Bookings/suites).
+ * A 404 means the suite is no longer held for us, which is the desired end state.
+ */
+async function releaseHeldSuite(row: BookingRow): Promise<"released" | "failed"> {
+  const d = details(row);
+  const suiteNumber = Number(d.suiteNumber ?? NaN);
+  const voyageNumber = String(d.voyageNumber ?? "");
+  if (!Number.isFinite(suiteNumber) || !voyageNumber) return "failed";
+  try {
+    await bookingCall<unknown>({
+      operation: "suites",
+      body: [{ voyageNumber, suiteNumber }],
+      reference: row.reference,
+    });
+    return "released";
+  } catch (err) {
+    if (err instanceof Error && /responded 404/.test(err.message)) return "released";
+    return "failed";
+  }
+}
 
 type Json = Database["public"]["Tables"]["bookings"]["Insert"]["details"];
 
