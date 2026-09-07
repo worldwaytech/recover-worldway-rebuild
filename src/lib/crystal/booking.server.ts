@@ -188,6 +188,7 @@ export async function holdCrystalVoyage(
   let supplierStatusRaw: string | undefined;
   let holdExpiresAt: string | undefined;
   let blockedReason: string | undefined;
+  let held = false;
 
   // Spec: POST /v1/Bookings/suites holds one or more suites before booking
   // creation, and requires an integer suiteNumber per voyage. Without an
