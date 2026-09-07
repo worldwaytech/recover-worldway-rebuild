@@ -308,36 +308,53 @@ export async function holdCrystalVoyage(
     if (replay)
       return {
         booking: toRecord(replay),
-        supplierHold: Boolean(replay.supplier_reference),
+        supplierHold: isSuiteHeld(replay) || Boolean(replay.supplier_reference),
         message: "Existing request returned (idempotent replay).",
       };
+    // The suite was held with Crystal but we could not persist it — release it
+    // immediately rather than leaving supplier inventory blocked.
+    if (held && suiteNumber !== undefined) {
+      try {
+        await bookingCall<unknown>({
+          operation: "suites",
+          body: [{ voyageNumber: input.voyageNumber, suiteNumber }],
+        });
+      } catch {
+        /* best effort; the TTL sweeper cannot see an unpersisted hold */
+      }
+    }
     throw new Error(error.message);
   }
 
   await event(
     client,
     data.id,
-    supplierReference ? "supplier-hold" : "booking-request",
-    supplierReference
+    held || supplierReference ? "supplier-hold" : "booking-request",
+    held || supplierReference
       ? `Suite held with Crystal (${match.suiteCategory}).`
       : `Cruise request registered for ${input.voyageTitle}.`,
     {
       voyageNumber: input.voyageNumber,
+      suiteNumber: suiteNumber ?? null,
       pricePerGuest: livePrice,
       guests,
-      supplierPending: !supplierReference,
+      holdExpiresAt: holdExpiresAt ?? null,
+      supplierPending: !held && !supplierReference,
     },
   );
 
   return {
     booking: toRecord(data),
-    supplierHold: Boolean(supplierReference),
+    supplierHold: held || Boolean(supplierReference),
     holdExpiresAt,
     livePricePerGuest: livePrice,
     blockedReason,
-    message: supplierReference
-      ? "Your suite is held with Crystal."
-      : "Your request is registered and a Crystal specialist will confirm the reservation.",
+    message:
+      held || supplierReference
+        ? holdExpiresAt
+          ? `Your suite is held with Crystal until ${new Date(holdExpiresAt).toUTCString()}. Confirm before then or it is released automatically.`
+          : "Your suite is held with Crystal."
+        : "Your request is registered and a Crystal specialist will confirm the reservation.",
   };
 }
 
