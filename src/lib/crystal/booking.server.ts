@@ -493,7 +493,13 @@ export async function confirmCrystalBooking(
     reference: row.reference,
   });
   const norm = normaliseSupplierBooking(raw);
-  const status = mapSupplierStatus(norm.supplierStatus);
+  // QuoteOptionCreationResponse returns only the new bookingId; without a
+  // supplier status string we record the Option as pending confirmation.
+  const status: CrystalBookingStatus = norm.supplierStatus
+    ? mapSupplierStatus(norm.supplierStatus)
+    : norm.supplierReference
+      ? "pending_confirmation"
+      : "awaiting_supplier";
   const { data } = await client
     .from("bookings")
     .update({
@@ -503,6 +509,9 @@ export async function confirmCrystalBooking(
       details: json({
         ...(row.details as Record<string, unknown>),
         supplierPending: false,
+        // The suite is now attached to a booking, so the standalone hold is gone.
+        suiteHeld: false,
+        holdExpiresAt: null,
         confirmedAt: new Date().toISOString(),
       }),
     })
@@ -511,6 +520,7 @@ export async function confirmCrystalBooking(
     .single();
   await event(client, row.id, "supplier-confirmation", `Crystal reservation ${status}.`, {
     supplierStatus: norm.supplierStatus ?? null,
+    supplierReference: norm.supplierReference ?? null,
   });
   return {
     booking: toRecord(data ?? row),
