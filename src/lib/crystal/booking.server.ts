@@ -390,7 +390,10 @@ export async function confirmCrystalBooking(
   if (row.status === "cancelled") throw new Error("This booking has been cancelled.");
 
   const capability = bookingCapability();
-  if (!capability.live || !row.supplier_reference) {
+  // A suite hold has no supplier booking reference yet — it is nonetheless a
+  // valid starting point for Option creation.
+  const heldSuite = isSuiteHeld(row);
+  if (!capability.live || !(row.supplier_reference || heldSuite)) {
     const { data } = await client
       .from("bookings")
       .update({
@@ -414,6 +417,11 @@ export async function confirmCrystalBooking(
       message:
         "Your reservation request is with our Crystal desk — supplier auto-confirmation is not yet enabled for this account.",
     };
+  }
+  if (heldSuite && holdExpired(row)) {
+    throw new Error(
+      "Your suite hold has expired and the suite was released. Please choose a suite again.",
+    );
   }
 
   // Spec: POST /v1/Bookings/option — creates the firm booking (Option) from the
@@ -440,16 +448,35 @@ export async function confirmCrystalBooking(
         "Your reservation is with our Crystal desk — the supplier option payload is not fully configured for this account.",
     };
   }
+  // Spec (QuoteOptionGuest.email): "For Option creation at least one guest
+  // should have a valid email address" — the lead contact email is attached to
+  // the first guest when that guest has no email of their own.
+  const leadEmail = String(d.leadEmail ?? "").trim();
+  const leadPhone = String(d.leadPhone ?? "").trim();
+  const guestRows = Array.isArray(d.guests) ? (d.guests as Record<string, unknown>[]) : [];
+  const optionGuests = guestRows.map((g, i) => {
+    const email = String(g.email ?? "").trim() || (i === 0 ? leadEmail : "");
+    const phone = String(g.phone ?? "").trim() || (i === 0 ? leadPhone : "");
+    return {
+      firstName: g.firstName,
+      lastName: g.lastName,
+      ...(email ? { email: email.slice(0, 80) } : {}),
+      ...(phone ? { phone: phone.slice(0, 25) } : {}),
+      ...(g.nationality ? { countryISO3Code: g.nationality } : {}),
+    };
+  });
+  if (!optionGuests.some((g) => "email" in g && g.email)) {
+    return {
+      booking: toRecord(row),
+      confirmed: false,
+      blockedReason: "booking_api_not_configured",
+      message: "Crystal requires an email address for the lead guest before we can confirm.",
+    };
+  }
   const raw = await bookingCall<unknown>({
     operation: "option",
     body: {
-      guests: (Array.isArray(d.guests) ? (d.guests as Record<string, unknown>[]) : []).map((g) => ({
-        firstName: g.firstName,
-        lastName: g.lastName,
-        ...(g.email ? { email: g.email } : {}),
-        ...(g.phone ? { phone: g.phone } : {}),
-        ...(g.nationality ? { countryISO3Code: g.nationality } : {}),
-      })),
+      guests: optionGuests,
       agentEmail,
       priceTypeCode,
       currency: row.currency,
