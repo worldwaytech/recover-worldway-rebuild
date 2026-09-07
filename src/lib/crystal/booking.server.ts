@@ -590,6 +590,50 @@ export async function cancelCrystalBooking(
   }
   const capability = bookingCapability();
 
+  // A held suite is not a booking: it is released with DELETE /v1/Bookings/suites,
+  // never with the booking-cancel endpoint.
+  if (capability.live && !row.supplier_reference && isSuiteHeld(row)) {
+    const outcome = await releaseHeldSuite(row);
+    const d = row.details as Record<string, unknown>;
+    const { data } = await client
+      .from("bookings")
+      .update({
+        status: outcome === "released" ? "cancelled" : "cancellation_requested",
+        supplier_status: outcome === "released" ? "released" : row.supplier_status,
+        cancellation_reason: reason,
+        details: json({ ...d, suiteHeld: outcome !== "released", holdExpiresAt: null }),
+      })
+      .eq("id", row.id)
+      .select("*")
+      .single();
+    if (outcome !== "released") {
+      await client.from("booking_requests").insert({
+        booking_id: row.id,
+        user_id: userId,
+        request_type: "cancellation",
+        details: reason,
+        status: "open",
+      });
+    }
+    await event(
+      client,
+      row.id,
+      "cancellation",
+      outcome === "released"
+        ? "Suite hold released with Crystal."
+        : "Suite hold release failed; routed to the Crystal desk.",
+      { suiteNumber: d.suiteNumber ?? null, outcome },
+    );
+    return {
+      booking: toRecord(data ?? row),
+      cancelled: outcome === "released",
+      message:
+        outcome === "released"
+          ? "Your suite hold has been released with Crystal — nothing was booked or charged."
+          : "We could not release the suite automatically; our Crystal desk will complete it.",
+    };
+  }
+
   if (capability.live && row.supplier_reference) {
     const raw = await bookingCall<unknown>({
       operation: "cancel",
