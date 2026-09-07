@@ -223,12 +223,18 @@ export async function holdCrystalVoyage(
         idempotencyKey: input.idempotencyKey,
       });
       const norm = normaliseSupplierBooking(raw);
-      const held =
+      held =
         norm.supplierReference !== undefined ||
         (raw as { result?: boolean } | null)?.result === true;
-      supplierReference = norm.supplierReference ?? (held ? String(suiteNumber) : undefined);
+      // A hold is NOT a booking: the documented HoldReleaseSuiteResponse carries
+      // only `result: true`. We never invent a booking reference from the suite
+      // number, otherwise retrieve/cancel would address the wrong resource.
+      supplierReference = norm.supplierReference;
       supplierStatusRaw = norm.supplierStatus ?? (held ? "held" : undefined);
-      holdExpiresAt = norm.holdExpiresAt;
+      // Supplier gives no expiry, so we impose our own release window.
+      holdExpiresAt =
+        norm.holdExpiresAt ??
+        (held ? new Date(Date.now() + holdTtlMinutes() * 60_000).toISOString() : undefined);
     } catch (err) {
       if (err instanceof CrystalBookingUnavailableError) blockedReason = err.reason;
       else throw err;
@@ -237,9 +243,11 @@ export async function holdCrystalVoyage(
     blockedReason = capability.reason;
   }
 
-  const status: CrystalBookingStatus = supplierReference
-    ? mapSupplierStatus(supplierStatusRaw)
-    : "awaiting_supplier";
+  const status: CrystalBookingStatus = held
+    ? "held"
+    : supplierReference
+      ? mapSupplierStatus(supplierStatusRaw)
+      : "awaiting_supplier";
 
   const insert: Database["public"]["Tables"]["bookings"]["Insert"] = {
     user_id: userId,
@@ -278,16 +286,19 @@ export async function holdCrystalVoyage(
       leadEmail: input.leadEmail,
       leadPhone: input.leadPhone,
       notes: input.notes ?? null,
+      /** True while a real supplier suite hold is outstanding (no booking yet). */
+      suiteHeld: held,
       holdExpiresAt: holdExpiresAt ?? null,
       depositPercent: live.depositPercent ?? null,
       depositDueDate: live.depositDueDate ?? null,
       finalPaymentDate: live.finalPaymentDate ?? null,
       cancellationPolicy: live.cancellationPolicy ?? null,
-      supplierPending: !supplierReference,
+      supplierPending: !held && !supplierReference,
       supplierBlockedReason: blockedReason ?? null,
       revalidatedAt: live.checkedAt,
     }),
   };
+
 
   const { data, error } = await client.from("bookings").insert(insert).select("*").single();
   if (error) {
