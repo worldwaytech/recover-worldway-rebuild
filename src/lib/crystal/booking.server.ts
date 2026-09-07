@@ -188,6 +188,7 @@ export async function holdCrystalVoyage(
   let supplierStatusRaw: string | undefined;
   let holdExpiresAt: string | undefined;
   let blockedReason: string | undefined;
+  let held = false;
 
   // Spec: POST /v1/Bookings/suites holds one or more suites before booking
   // creation, and requires an integer suiteNumber per voyage. Without an
@@ -223,12 +224,18 @@ export async function holdCrystalVoyage(
         idempotencyKey: input.idempotencyKey,
       });
       const norm = normaliseSupplierBooking(raw);
-      const held =
+      held =
         norm.supplierReference !== undefined ||
         (raw as { result?: boolean } | null)?.result === true;
-      supplierReference = norm.supplierReference ?? (held ? String(suiteNumber) : undefined);
+      // A hold is NOT a booking: the documented HoldReleaseSuiteResponse carries
+      // only `result: true`. We never invent a booking reference from the suite
+      // number, otherwise retrieve/cancel would address the wrong resource.
+      supplierReference = norm.supplierReference;
       supplierStatusRaw = norm.supplierStatus ?? (held ? "held" : undefined);
-      holdExpiresAt = norm.holdExpiresAt;
+      // Supplier gives no expiry, so we impose our own release window.
+      holdExpiresAt =
+        norm.holdExpiresAt ??
+        (held ? new Date(Date.now() + holdTtlMinutes() * 60_000).toISOString() : undefined);
     } catch (err) {
       if (err instanceof CrystalBookingUnavailableError) blockedReason = err.reason;
       else throw err;
@@ -237,9 +244,11 @@ export async function holdCrystalVoyage(
     blockedReason = capability.reason;
   }
 
-  const status: CrystalBookingStatus = supplierReference
-    ? mapSupplierStatus(supplierStatusRaw)
-    : "awaiting_supplier";
+  const status: CrystalBookingStatus = held
+    ? "held"
+    : supplierReference
+      ? mapSupplierStatus(supplierStatusRaw)
+      : "awaiting_supplier";
 
   const insert: Database["public"]["Tables"]["bookings"]["Insert"] = {
     user_id: userId,
@@ -278,16 +287,19 @@ export async function holdCrystalVoyage(
       leadEmail: input.leadEmail,
       leadPhone: input.leadPhone,
       notes: input.notes ?? null,
+      /** True while a real supplier suite hold is outstanding (no booking yet). */
+      suiteHeld: held,
       holdExpiresAt: holdExpiresAt ?? null,
       depositPercent: live.depositPercent ?? null,
       depositDueDate: live.depositDueDate ?? null,
       finalPaymentDate: live.finalPaymentDate ?? null,
       cancellationPolicy: live.cancellationPolicy ?? null,
-      supplierPending: !supplierReference,
+      supplierPending: !held && !supplierReference,
       supplierBlockedReason: blockedReason ?? null,
       revalidatedAt: live.checkedAt,
     }),
   };
+
 
   const { data, error } = await client.from("bookings").insert(insert).select("*").single();
   if (error) {
@@ -296,36 +308,53 @@ export async function holdCrystalVoyage(
     if (replay)
       return {
         booking: toRecord(replay),
-        supplierHold: Boolean(replay.supplier_reference),
+        supplierHold: isSuiteHeld(replay) || Boolean(replay.supplier_reference),
         message: "Existing request returned (idempotent replay).",
       };
+    // The suite was held with Crystal but we could not persist it — release it
+    // immediately rather than leaving supplier inventory blocked.
+    if (held && suiteNumber !== undefined) {
+      try {
+        await bookingCall<unknown>({
+          operation: "suites",
+          body: [{ voyageNumber: input.voyageNumber, suiteNumber }],
+        });
+      } catch {
+        /* best effort; the TTL sweeper cannot see an unpersisted hold */
+      }
+    }
     throw new Error(error.message);
   }
 
   await event(
     client,
     data.id,
-    supplierReference ? "supplier-hold" : "booking-request",
-    supplierReference
+    held || supplierReference ? "supplier-hold" : "booking-request",
+    held || supplierReference
       ? `Suite held with Crystal (${match.suiteCategory}).`
       : `Cruise request registered for ${input.voyageTitle}.`,
     {
       voyageNumber: input.voyageNumber,
+      suiteNumber: suiteNumber ?? null,
       pricePerGuest: livePrice,
       guests,
-      supplierPending: !supplierReference,
+      holdExpiresAt: holdExpiresAt ?? null,
+      supplierPending: !held && !supplierReference,
     },
   );
 
   return {
     booking: toRecord(data),
-    supplierHold: Boolean(supplierReference),
+    supplierHold: held || Boolean(supplierReference),
     holdExpiresAt,
     livePricePerGuest: livePrice,
     blockedReason,
-    message: supplierReference
-      ? "Your suite is held with Crystal."
-      : "Your request is registered and a Crystal specialist will confirm the reservation.",
+    message:
+      held || supplierReference
+        ? holdExpiresAt
+          ? `Your suite is held with Crystal until ${new Date(holdExpiresAt).toUTCString()}. Confirm before then or it is released automatically.`
+          : "Your suite is held with Crystal."
+        : "Your request is registered and a Crystal specialist will confirm the reservation.",
   };
 }
 
@@ -361,7 +390,10 @@ export async function confirmCrystalBooking(
   if (row.status === "cancelled") throw new Error("This booking has been cancelled.");
 
   const capability = bookingCapability();
-  if (!capability.live || !row.supplier_reference) {
+  // A suite hold has no supplier booking reference yet — it is nonetheless a
+  // valid starting point for Option creation.
+  const heldSuite = isSuiteHeld(row);
+  if (!capability.live || !(row.supplier_reference || heldSuite)) {
     const { data } = await client
       .from("bookings")
       .update({
@@ -385,6 +417,11 @@ export async function confirmCrystalBooking(
       message:
         "Your reservation request is with our Crystal desk — supplier auto-confirmation is not yet enabled for this account.",
     };
+  }
+  if (heldSuite && holdExpired(row)) {
+    throw new Error(
+      "Your suite hold has expired and the suite was released. Please choose a suite again.",
+    );
   }
 
   // Spec: POST /v1/Bookings/option — creates the firm booking (Option) from the
@@ -411,16 +448,35 @@ export async function confirmCrystalBooking(
         "Your reservation is with our Crystal desk — the supplier option payload is not fully configured for this account.",
     };
   }
+  // Spec (QuoteOptionGuest.email): "For Option creation at least one guest
+  // should have a valid email address" — the lead contact email is attached to
+  // the first guest when that guest has no email of their own.
+  const leadEmail = String(d.leadEmail ?? "").trim();
+  const leadPhone = String(d.leadPhone ?? "").trim();
+  const guestRows = Array.isArray(d.guests) ? (d.guests as Record<string, unknown>[]) : [];
+  const optionGuests = guestRows.map((g, i) => {
+    const email = String(g.email ?? "").trim() || (i === 0 ? leadEmail : "");
+    const phone = String(g.phone ?? "").trim() || (i === 0 ? leadPhone : "");
+    return {
+      firstName: g.firstName,
+      lastName: g.lastName,
+      ...(email ? { email: email.slice(0, 80) } : {}),
+      ...(phone ? { phone: phone.slice(0, 25) } : {}),
+      ...(g.nationality ? { countryISO3Code: g.nationality } : {}),
+    };
+  });
+  if (!optionGuests.some((g) => "email" in g && g.email)) {
+    return {
+      booking: toRecord(row),
+      confirmed: false,
+      blockedReason: "booking_api_not_configured",
+      message: "Crystal requires an email address for the lead guest before we can confirm.",
+    };
+  }
   const raw = await bookingCall<unknown>({
     operation: "option",
     body: {
-      guests: (Array.isArray(d.guests) ? (d.guests as Record<string, unknown>[]) : []).map((g) => ({
-        firstName: g.firstName,
-        lastName: g.lastName,
-        ...(g.email ? { email: g.email } : {}),
-        ...(g.phone ? { phone: g.phone } : {}),
-        ...(g.nationality ? { countryISO3Code: g.nationality } : {}),
-      })),
+      guests: optionGuests,
       agentEmail,
       priceTypeCode,
       currency: row.currency,
@@ -437,7 +493,13 @@ export async function confirmCrystalBooking(
     reference: row.reference,
   });
   const norm = normaliseSupplierBooking(raw);
-  const status = mapSupplierStatus(norm.supplierStatus);
+  // QuoteOptionCreationResponse returns only the new bookingId; without a
+  // supplier status string we record the Option as pending confirmation.
+  const status: CrystalBookingStatus = norm.supplierStatus
+    ? mapSupplierStatus(norm.supplierStatus)
+    : norm.supplierReference
+      ? "pending_confirmation"
+      : "awaiting_supplier";
   const { data } = await client
     .from("bookings")
     .update({
@@ -447,6 +509,9 @@ export async function confirmCrystalBooking(
       details: json({
         ...(row.details as Record<string, unknown>),
         supplierPending: false,
+        // The suite is now attached to a booking, so the standalone hold is gone.
+        suiteHeld: false,
+        holdExpiresAt: null,
         confirmedAt: new Date().toISOString(),
       }),
     })
@@ -455,6 +520,7 @@ export async function confirmCrystalBooking(
     .single();
   await event(client, row.id, "supplier-confirmation", `Crystal reservation ${status}.`, {
     supplierStatus: norm.supplierStatus ?? null,
+    supplierReference: norm.supplierReference ?? null,
   });
   return {
     booking: toRecord(data ?? row),
@@ -523,6 +589,50 @@ export async function cancelCrystalBooking(
     return { booking: toRecord(row), cancelled: true, message: "Already cancelled." };
   }
   const capability = bookingCapability();
+
+  // A held suite is not a booking: it is released with DELETE /v1/Bookings/suites,
+  // never with the booking-cancel endpoint.
+  if (capability.live && !row.supplier_reference && isSuiteHeld(row)) {
+    const outcome = await releaseHeldSuite(row);
+    const d = row.details as Record<string, unknown>;
+    const { data } = await client
+      .from("bookings")
+      .update({
+        status: outcome === "released" ? "cancelled" : "cancellation_requested",
+        supplier_status: outcome === "released" ? "released" : row.supplier_status,
+        cancellation_reason: reason,
+        details: json({ ...d, suiteHeld: outcome !== "released", holdExpiresAt: null }),
+      })
+      .eq("id", row.id)
+      .select("*")
+      .single();
+    if (outcome !== "released") {
+      await client.from("booking_requests").insert({
+        booking_id: row.id,
+        user_id: userId,
+        request_type: "cancellation",
+        details: reason,
+        status: "open",
+      });
+    }
+    await event(
+      client,
+      row.id,
+      "cancellation",
+      outcome === "released"
+        ? "Suite hold released with Crystal."
+        : "Suite hold release failed; routed to the Crystal desk.",
+      { suiteNumber: d.suiteNumber ?? null, outcome },
+    );
+    return {
+      booking: toRecord(data ?? row),
+      cancelled: outcome === "released",
+      message:
+        outcome === "released"
+          ? "Your suite hold has been released with Crystal — nothing was booked or charged."
+          : "We could not release the suite automatically; our Crystal desk will complete it.",
+    };
+  }
 
   if (capability.live && row.supplier_reference) {
     const raw = await bookingCall<unknown>({
