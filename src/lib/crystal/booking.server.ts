@@ -559,6 +559,33 @@ export async function retrieveCrystalBooking(
   }
 }
 
+/**
+ * Release suite holds that were never confirmed within the TTL window, so
+ * abandoned checkouts never keep Crystal inventory blocked. Runs on the
+ * caller's RLS-scoped client, so it only ever touches their own rows.
+ */
+export async function releaseExpiredCrystalHolds(client: Client, rows: BookingRow[]): Promise<void> {
+  const expired = rows.filter((r) => isSuiteHeld(r) && !r.supplier_reference && holdExpired(r));
+  if (expired.length === 0 || !bookingCapability().live) return;
+  for (const row of expired.slice(0, 10)) {
+    const outcome = await releaseHeldSuite(row);
+    if (outcome !== "released") continue;
+    const d = row.details as Record<string, unknown>;
+    await client
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        supplier_status: "released",
+        cancellation_reason: "Suite hold expired without confirmation.",
+        details: json({ ...d, suiteHeld: false, holdExpiresAt: null, holdExpiredRelease: true }),
+      })
+      .eq("id", row.id);
+    await event(client, row.id, "cancellation", "Expired suite hold released with Crystal.", {
+      suiteNumber: d.suiteNumber ?? null,
+    });
+  }
+}
+
 export async function listCrystalBookings(client: Client): Promise<CrystalBookingRecord[]> {
   const { data, error } = await client
     .from("bookings")
@@ -567,7 +594,13 @@ export async function listCrystalBookings(client: Client): Promise<CrystalBookin
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw new Error(error.message);
-  return (data ?? []).map(toRecord);
+  const rows = data ?? [];
+  try {
+    await releaseExpiredCrystalHolds(client, rows);
+  } catch {
+    /* never block the customer's booking list on a supplier release */
+  }
+  return rows.map(toRecord);
 }
 
 export interface CancelOutcome {
