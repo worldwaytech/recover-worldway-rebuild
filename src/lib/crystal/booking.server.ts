@@ -528,6 +528,8 @@ export async function confirmCrystalBooking(
         suiteHeld: false,
         holdExpiresAt: null,
         confirmedAt: new Date().toISOString(),
+        // Secondary WorldWay Cruises desk contact (internal record only).
+        ...(altAgentEmail ? { altAgentEmail } : {}),
       }),
     })
     .eq("id", row.id)
