@@ -427,7 +427,10 @@ export async function confirmCrystalBooking(
   // Spec: POST /v1/Bookings/option — creates the firm booking (Option) from the
   // held suite. agentEmail, priceTypeCode, currency and voyages are required.
   const d = row.details as Record<string, unknown>;
-  const agentEmail = (process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] ?? "").trim();
+  // Primary is the Crystal-registered agent email used on the Option payload.
+  // The secondary is a WorldWay Cruises desk contact kept on the booking
+  // record only — it is never sent to AKTG or used in place of the primary.
+  const { agentEmail, altAgentEmail } = crystalAgentContacts();
   const priceTypeCode = String(d.fareCode ?? "").trim();
   const suiteCategoryCode = String(d.suiteCategory ?? "").trim();
   const suiteNumber = Number(d.suiteNumber ?? NaN);
