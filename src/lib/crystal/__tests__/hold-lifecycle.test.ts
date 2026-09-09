@@ -46,4 +46,22 @@ describe("Crystal suite-hold lifecycle helpers", () => {
     expect(isSuiteHeld(row({ suiteHeld: false }))).toBe(false);
     expect(isSuiteHeld(row({}))).toBe(false);
   });
+
+  it("resolves the primary and secondary agent contacts", () => {
+    process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] = " primary@example.com ";
+    process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] = " secondary@example.com ";
+    expect(crystalAgentContacts()).toEqual({
+      agentEmail: "primary@example.com",
+      altAgentEmail: "secondary@example.com",
+    });
+  });
+
+  it("returns empty contacts when unset and never swaps primary/secondary", () => {
+    delete process.env["CRYSTAL_BOOKING_AGENT_EMAIL"];
+    process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] = "secondary@example.com";
+    expect(crystalAgentContacts()).toEqual({
+      agentEmail: "",
+      altAgentEmail: "secondary@example.com",
+    });
+  });
 });
