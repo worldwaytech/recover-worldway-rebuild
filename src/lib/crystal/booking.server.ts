@@ -35,6 +35,18 @@ export function holdTtlMinutes(): number {
   return Number.isFinite(n) && n >= 5 && n <= 1440 ? n : 30;
 }
 
+/**
+ * Crystal agent contacts. agentEmail is the Crystal-registered primary used
+ * on the AKTG Option payload; altAgentEmail is the secondary WorldWay Cruises
+ * desk contact, recorded on our booking record only — never sent to AKTG.
+ */
+export function crystalAgentContacts(): { agentEmail: string; altAgentEmail: string } {
+  return {
+    agentEmail: (process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] ?? "").trim(),
+    altAgentEmail: (process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] ?? "").trim(),
+  };
+}
+
 /** True when the row is a supplier-held suite that has not yet become a booking. */
 export function isSuiteHeld(row: BookingRow): boolean {
   const d = details(row);
