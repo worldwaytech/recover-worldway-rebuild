@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { holdTtlMinutes, isSuiteHeld } from "../booking.server";
+import { crystalAgentContacts, holdTtlMinutes, isSuiteHeld } from "../booking.server";
 
 const original = process.env["CRYSTAL_HOLD_TTL_MINUTES"];
+const originalAgent = process.env["CRYSTAL_BOOKING_AGENT_EMAIL"];
+const originalAlt = process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"];
 afterEach(() => {
   if (original === undefined) delete process.env["CRYSTAL_HOLD_TTL_MINUTES"];
   else process.env["CRYSTAL_HOLD_TTL_MINUTES"] = original;
+  if (originalAgent === undefined) delete process.env["CRYSTAL_BOOKING_AGENT_EMAIL"];
+  else process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] = originalAgent;
+  if (originalAlt === undefined) delete process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"];
+  else process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] = originalAlt;
 });
 
 // Minimal row shape: only status + details are read by isSuiteHeld.
@@ -39,5 +45,23 @@ describe("Crystal suite-hold lifecycle helpers", () => {
     expect(isSuiteHeld(row({ suiteHeld: true }, "confirmed"))).toBe(false);
     expect(isSuiteHeld(row({ suiteHeld: false }))).toBe(false);
     expect(isSuiteHeld(row({}))).toBe(false);
+  });
+
+  it("resolves the primary and secondary agent contacts", () => {
+    process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] = " primary@example.com ";
+    process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] = " secondary@example.com ";
+    expect(crystalAgentContacts()).toEqual({
+      agentEmail: "primary@example.com",
+      altAgentEmail: "secondary@example.com",
+    });
+  });
+
+  it("returns empty contacts when unset and never swaps primary/secondary", () => {
+    delete process.env["CRYSTAL_BOOKING_AGENT_EMAIL"];
+    process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] = "secondary@example.com";
+    expect(crystalAgentContacts()).toEqual({
+      agentEmail: "",
+      altAgentEmail: "secondary@example.com",
+    });
   });
 });

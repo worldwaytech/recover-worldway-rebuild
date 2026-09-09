@@ -35,6 +35,18 @@ export function holdTtlMinutes(): number {
   return Number.isFinite(n) && n >= 5 && n <= 1440 ? n : 30;
 }
 
+/**
+ * Crystal agent contacts. agentEmail is the Crystal-registered primary used
+ * on the AKTG Option payload; altAgentEmail is the secondary WorldWay Cruises
+ * desk contact, recorded on our booking record only — never sent to AKTG.
+ */
+export function crystalAgentContacts(): { agentEmail: string; altAgentEmail: string } {
+  return {
+    agentEmail: (process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] ?? "").trim(),
+    altAgentEmail: (process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] ?? "").trim(),
+  };
+}
+
 /** True when the row is a supplier-held suite that has not yet become a booking. */
 export function isSuiteHeld(row: BookingRow): boolean {
   const d = details(row);
@@ -427,7 +439,10 @@ export async function confirmCrystalBooking(
   // Spec: POST /v1/Bookings/option — creates the firm booking (Option) from the
   // held suite. agentEmail, priceTypeCode, currency and voyages are required.
   const d = row.details as Record<string, unknown>;
-  const agentEmail = (process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] ?? "").trim();
+  // Primary is the Crystal-registered agent email used on the Option payload.
+  // The secondary is a WorldWay Cruises desk contact kept on the booking
+  // record only — it is never sent to AKTG or used in place of the primary.
+  const { agentEmail, altAgentEmail } = crystalAgentContacts();
   const priceTypeCode = String(d.fareCode ?? "").trim();
   const suiteCategoryCode = String(d.suiteCategory ?? "").trim();
   const suiteNumber = Number(d.suiteNumber ?? NaN);
@@ -513,6 +528,8 @@ export async function confirmCrystalBooking(
         suiteHeld: false,
         holdExpiresAt: null,
         confirmedAt: new Date().toISOString(),
+        // Secondary WorldWay Cruises desk contact (internal record only).
+        ...(altAgentEmail ? { altAgentEmail } : {}),
       }),
     })
     .eq("id", row.id)
