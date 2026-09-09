@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { holdTtlMinutes, isSuiteHeld } from "../booking.server";
+import { crystalAgentContacts, holdTtlMinutes, isSuiteHeld } from "../booking.server";
 
 const original = process.env["CRYSTAL_HOLD_TTL_MINUTES"];
+const originalAgent = process.env["CRYSTAL_BOOKING_AGENT_EMAIL"];
+const originalAlt = process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"];
 afterEach(() => {
   if (original === undefined) delete process.env["CRYSTAL_HOLD_TTL_MINUTES"];
   else process.env["CRYSTAL_HOLD_TTL_MINUTES"] = original;
+  if (originalAgent === undefined) delete process.env["CRYSTAL_BOOKING_AGENT_EMAIL"];
+  else process.env["CRYSTAL_BOOKING_AGENT_EMAIL"] = originalAgent;
+  if (originalAlt === undefined) delete process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"];
+  else process.env["CRYSTAL_BOOKING_ALT_AGENT_EMAIL"] = originalAlt;
 });
 
 // Minimal row shape: only status + details are read by isSuiteHeld.
