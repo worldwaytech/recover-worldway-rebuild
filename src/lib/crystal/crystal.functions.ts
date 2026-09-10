@@ -29,9 +29,7 @@ export const runCrystalSync = createServerFn({ method: "POST" })
  */
 export const getCrystalVoyages = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) =>
-    z
-      .object({ currency: z.string().length(3).optional() })
-      .parse(d ?? {}),
+    z.object({ currency: z.string().length(3).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data }) => {
     const { fetchAktgVoyages } = await import("./aktg.server");

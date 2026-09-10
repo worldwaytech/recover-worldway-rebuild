@@ -119,32 +119,146 @@ export interface CrystalOperationSpec {
  */
 export const CRYSTAL_BOOKING_SPEC: CrystalOperationSpec[] = [
   // Hold / release suites (Hold and Release are separate ops, same path)
-  { operation: "prebook", path: "/v1/Bookings/suites", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PREBOOK" },
-  { operation: "suites", path: "/v1/Bookings/suites", method: "DELETE", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_SUITES" },
+  {
+    operation: "prebook",
+    path: "/v1/Bookings/suites",
+    method: "POST",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PREBOOK",
+  },
+  {
+    operation: "suites",
+    path: "/v1/Bookings/suites",
+    method: "DELETE",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_SUITES",
+  },
   // Quote / Option / Promote lifecycle
-  { operation: "quote", path: "/v1/Bookings/quote", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_QUOTE" },
-  { operation: "option", path: "/v1/Bookings/option", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_OPTION" },
-  { operation: "modify", path: "/v1/Bookings/{bookingId}/promote", method: "PUT", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_MODIFY" },
+  {
+    operation: "quote",
+    path: "/v1/Bookings/quote",
+    method: "POST",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_QUOTE",
+  },
+  {
+    operation: "option",
+    path: "/v1/Bookings/option",
+    method: "POST",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_OPTION",
+  },
+  {
+    operation: "modify",
+    path: "/v1/Bookings/{bookingId}/promote",
+    method: "PUT",
+    requiredPathParams: ["bookingId"],
+    envVar: "CRYSTAL_BOOKING_PATH_MODIFY",
+  },
   // Retrieve / cancel a specific booking
-  { operation: "retrieve", path: "/v1/Bookings/{bookingId}", method: "GET", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_RETRIEVE" },
-  { operation: "cancel", path: "/v1/Bookings/{bookingId}", method: "DELETE", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_CANCEL" },
-  { operation: "history", path: "/v1/bookings/history/{bookingId}", method: "GET", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_HISTORY" },
+  {
+    operation: "retrieve",
+    path: "/v1/Bookings/{bookingId}",
+    method: "GET",
+    requiredPathParams: ["bookingId"],
+    envVar: "CRYSTAL_BOOKING_PATH_RETRIEVE",
+  },
+  {
+    operation: "cancel",
+    path: "/v1/Bookings/{bookingId}",
+    method: "DELETE",
+    requiredPathParams: ["bookingId"],
+    envVar: "CRYSTAL_BOOKING_PATH_CANCEL",
+  },
+  {
+    operation: "history",
+    path: "/v1/bookings/history/{bookingId}",
+    method: "GET",
+    requiredPathParams: ["bookingId"],
+    envVar: "CRYSTAL_BOOKING_PATH_HISTORY",
+  },
   // List bookings created by the agency
-  { operation: "list", path: "/v1/Bookings", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_LIST" },
+  {
+    operation: "list",
+    path: "/v1/Bookings",
+    method: "GET",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_LIST",
+  },
   // Availability / suites / pricing
-  { operation: "availability", path: "/d/v1/cruises/availability", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_AVAILABILITY" },
+  {
+    operation: "availability",
+    path: "/d/v1/cruises/availability",
+    method: "GET",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_AVAILABILITY",
+  },
   // get-v1-cruise-available-suites: suite numbers open for voyage + category + price type + currency
-  { operation: "availablesuites", path: "/d/v1/cruises/availablesuites", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_AVAILABLESUITES" },
-  { operation: "pricetypes", path: "/v1/Bookings/pricetypescurrencies", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PRICETYPES" },
-  { operation: "promotions", path: "/d/v1/wsPromo/CruiseCategoryPromo", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PROMOTIONS" },
+  {
+    operation: "availablesuites",
+    path: "/d/v1/cruises/availablesuites",
+    method: "GET",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_AVAILABLESUITES",
+  },
+  {
+    operation: "pricetypes",
+    path: "/v1/Bookings/pricetypescurrencies",
+    method: "GET",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PRICETYPES",
+  },
+  {
+    operation: "promotions",
+    path: "/d/v1/wsPromo/CruiseCategoryPromo",
+    method: "GET",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PROMOTIONS",
+  },
   // Guest and pricing helpers
-  { operation: "pastguest", path: "/v1/PastGuests/search", method: "GET", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PASTGUEST" },
-  { operation: "pricebreakdown", path: "/v2/bookings/pricebreakdown", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PRICEBREAKDOWN" },
+  {
+    operation: "pastguest",
+    path: "/v1/PastGuests/search",
+    method: "GET",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PASTGUEST",
+  },
+  {
+    operation: "pricebreakdown",
+    path: "/v2/bookings/pricebreakdown",
+    method: "POST",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PRICEBREAKDOWN",
+  },
   // Document / payment delivery + retrieval
-  { operation: "invoice", path: "/v1/Bookings/{bookingId}/invoice", method: "POST", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_INVOICE" },
-  { operation: "paymentlink", path: "/v1/Bookings/{bookingId}/paymentlink", method: "POST", requiredPathParams: ["bookingId"], envVar: "CRYSTAL_BOOKING_PATH_PAYMENTLINK" },
-  { operation: "paymentlinkretrieve", path: "/v1/RetrievePaymentLink/paymentlink", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PAYMENTLINKRETRIEVE" },
-  { operation: "paymentstatus", path: "/v1/payments/requestInfo", method: "POST", requiredPathParams: [], envVar: "CRYSTAL_BOOKING_PATH_PAYMENTSTATUS" },
+  {
+    operation: "invoice",
+    path: "/v1/Bookings/{bookingId}/invoice",
+    method: "POST",
+    requiredPathParams: ["bookingId"],
+    envVar: "CRYSTAL_BOOKING_PATH_INVOICE",
+  },
+  {
+    operation: "paymentlink",
+    path: "/v1/Bookings/{bookingId}/paymentlink",
+    method: "POST",
+    requiredPathParams: ["bookingId"],
+    envVar: "CRYSTAL_BOOKING_PATH_PAYMENTLINK",
+  },
+  {
+    operation: "paymentlinkretrieve",
+    path: "/v1/RetrievePaymentLink/paymentlink",
+    method: "POST",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PAYMENTLINKRETRIEVE",
+  },
+  {
+    operation: "paymentstatus",
+    path: "/v1/payments/requestInfo",
+    method: "POST",
+    requiredPathParams: [],
+    envVar: "CRYSTAL_BOOKING_PATH_PAYMENTSTATUS",
+  },
 ];
 
 /** Operations that must be reachable before the rail can arm. */
@@ -241,7 +355,12 @@ export function normaliseAvailableSuites(raw: unknown): CrystalAvailableSuite[] 
         ship: r.ship ? String(r.ship) : undefined,
         sailDate: r.sailDate ? String(r.sailDate) : undefined,
         deckName: r.deckName ? String(r.deckName) : undefined,
-        deckNumber: Number.isFinite(Number(r.deckNumber)) && r.deckNumber !== null && r.deckNumber !== undefined ? Number(r.deckNumber) : undefined,
+        deckNumber:
+          Number.isFinite(Number(r.deckNumber)) &&
+          r.deckNumber !== null &&
+          r.deckNumber !== undefined
+            ? Number(r.deckNumber)
+            : undefined,
         statusDesc,
         available: statusDesc === "" || /^avail/i.test(statusDesc),
         suiteCapacity: r.suiteCapacity ? String(r.suiteCapacity) : undefined,
@@ -253,8 +372,9 @@ export function normaliseAvailableSuites(raw: unknown): CrystalAvailableSuite[] 
   return out;
 }
 
-export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] =
-  CRYSTAL_BOOKING_SPEC.map((s) => s.operation);
+export const CRYSTAL_ALL_OPERATIONS: CrystalBookingOperation[] = CRYSTAL_BOOKING_SPEC.map(
+  (s) => s.operation,
+);
 
 export interface CrystalOperationStatus {
   operation: CrystalBookingOperation;

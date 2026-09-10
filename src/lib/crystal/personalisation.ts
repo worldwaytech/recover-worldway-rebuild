@@ -25,7 +25,8 @@ const EMPTY: readonly never[] = [];
 const snapshots = new Map<Key, { raw: string | null; value: unknown }>();
 
 function read<T>(key: Key, fallback: T): T {
-  if (typeof window === "undefined") return (Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback);
+  if (typeof window === "undefined")
+    return Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback;
   let raw: string | null = null;
   try {
     raw = window.localStorage.getItem(KEYS[key]);
@@ -36,7 +37,11 @@ function read<T>(key: Key, fallback: T): T {
   if (cached && cached.raw === raw) return cached.value as T;
   let value: T;
   try {
-    value = raw ? (JSON.parse(raw) as T) : Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback;
+    value = raw
+      ? (JSON.parse(raw) as T)
+      : Array.isArray(fallback)
+        ? (EMPTY as unknown as T)
+        : fallback;
   } catch {
     value = Array.isArray(fallback) ? (EMPTY as unknown as T) : fallback;
   }

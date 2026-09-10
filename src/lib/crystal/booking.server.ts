@@ -312,7 +312,6 @@ export async function holdCrystalVoyage(
     }),
   };
 
-
   const { data, error } = await client.from("bookings").insert(insert).select("*").single();
   if (error) {
     // Unique idempotency violation → return the winning row.
@@ -447,14 +446,20 @@ export async function confirmCrystalBooking(
   const suiteCategoryCode = String(d.suiteCategory ?? "").trim();
   const suiteNumber = Number(d.suiteNumber ?? NaN);
   if (!agentEmail || !priceTypeCode || !suiteCategoryCode || !Number.isFinite(suiteNumber)) {
-    await event(client, row.id, "booking-request", "Option creation deferred to the Crystal desk.", {
-      missing: {
-        agentEmail: !agentEmail,
-        priceTypeCode: !priceTypeCode,
-        suiteCategoryCode: !suiteCategoryCode,
-        suiteNumber: !Number.isFinite(suiteNumber),
+    await event(
+      client,
+      row.id,
+      "booking-request",
+      "Option creation deferred to the Crystal desk.",
+      {
+        missing: {
+          agentEmail: !agentEmail,
+          priceTypeCode: !priceTypeCode,
+          suiteCategoryCode: !suiteCategoryCode,
+          suiteNumber: !Number.isFinite(suiteNumber),
+        },
       },
-    });
+    );
     return {
       booking: toRecord(row),
       confirmed: false,
@@ -542,7 +547,8 @@ export async function confirmCrystalBooking(
   return {
     booking: toRecord(data ?? row),
     confirmed: status === "confirmed",
-    message: status === "confirmed" ? "Crystal has confirmed your reservation." : "Reservation submitted.",
+    message:
+      status === "confirmed" ? "Crystal has confirmed your reservation." : "Reservation submitted.",
   };
 }
 
@@ -581,7 +587,10 @@ export async function retrieveCrystalBooking(
  * abandoned checkouts never keep Crystal inventory blocked. Runs on the
  * caller's RLS-scoped client, so it only ever touches their own rows.
  */
-export async function releaseExpiredCrystalHolds(client: Client, rows: BookingRow[]): Promise<void> {
+export async function releaseExpiredCrystalHolds(
+  client: Client,
+  rows: BookingRow[],
+): Promise<void> {
   const expired = rows.filter((r) => isSuiteHeld(r) && !r.supplier_reference && holdExpired(r));
   if (expired.length === 0 || !bookingCapability().live) return;
   for (const row of expired.slice(0, 10)) {

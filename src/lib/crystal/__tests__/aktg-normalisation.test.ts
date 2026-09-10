@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  fareFromAvailability,
-  mapSuiteCategory,
-  normaliseAktgVoyage,
-} from "../aktg.server";
+import { fareFromAvailability, mapSuiteCategory, normaliseAktgVoyage } from "../aktg.server";
 
 const product = {
   voyageID: 224585,
