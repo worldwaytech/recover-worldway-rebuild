@@ -717,9 +717,15 @@ export async function cancelCrystalBooking(
         .eq("id", row.id)
         .select("*")
         .single();
-      await event(client, row.id, "cancellation", "Crystal cancellation could not be completed automatically.", {
-        detail: err instanceof Error ? err.message : "supplier cancellation failed",
-      });
+      await event(
+        client,
+        row.id,
+        "cancellation",
+        "Crystal cancellation could not be completed automatically.",
+        {
+          detail: err instanceof Error ? err.message : "supplier cancellation failed",
+        },
+      );
       return {
         booking: toRecord(data ?? row),
         cancelled: false,
