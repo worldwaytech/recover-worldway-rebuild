@@ -312,7 +312,6 @@ export async function holdCrystalVoyage(
     }),
   };
 
-
   const { data, error } = await client.from("bookings").insert(insert).select("*").single();
   if (error) {
     // Unique idempotency violation → return the winning row.
@@ -447,14 +446,20 @@ export async function confirmCrystalBooking(
   const suiteCategoryCode = String(d.suiteCategory ?? "").trim();
   const suiteNumber = Number(d.suiteNumber ?? NaN);
   if (!agentEmail || !priceTypeCode || !suiteCategoryCode || !Number.isFinite(suiteNumber)) {
-    await event(client, row.id, "booking-request", "Option creation deferred to the Crystal desk.", {
-      missing: {
-        agentEmail: !agentEmail,
-        priceTypeCode: !priceTypeCode,
-        suiteCategoryCode: !suiteCategoryCode,
-        suiteNumber: !Number.isFinite(suiteNumber),
+    await event(
+      client,
+      row.id,
+      "booking-request",
+      "Option creation deferred to the Crystal desk.",
+      {
+        missing: {
+          agentEmail: !agentEmail,
+          priceTypeCode: !priceTypeCode,
+          suiteCategoryCode: !suiteCategoryCode,
+          suiteNumber: !Number.isFinite(suiteNumber),
+        },
       },
-    });
+    );
     return {
       booking: toRecord(row),
       confirmed: false,
@@ -542,7 +547,8 @@ export async function confirmCrystalBooking(
   return {
     booking: toRecord(data ?? row),
     confirmed: status === "confirmed",
-    message: status === "confirmed" ? "Crystal has confirmed your reservation." : "Reservation submitted.",
+    message:
+      status === "confirmed" ? "Crystal has confirmed your reservation." : "Reservation submitted.",
   };
 }
 
@@ -581,7 +587,10 @@ export async function retrieveCrystalBooking(
  * abandoned checkouts never keep Crystal inventory blocked. Runs on the
  * caller's RLS-scoped client, so it only ever touches their own rows.
  */
-export async function releaseExpiredCrystalHolds(client: Client, rows: BookingRow[]): Promise<void> {
+export async function releaseExpiredCrystalHolds(
+  client: Client,
+  rows: BookingRow[],
+): Promise<void> {
   const expired = rows.filter((r) => isSuiteHeld(r) && !r.supplier_reference && holdExpired(r));
   if (expired.length === 0 || !bookingCapability().live) return;
   for (const row of expired.slice(0, 10)) {
@@ -685,11 +694,46 @@ export async function cancelCrystalBooking(
   }
 
   if (capability.live && row.supplier_reference) {
-    const raw = await bookingCall<unknown>({
-      operation: "cancel",
-      pathParams: { bookingId: row.supplier_reference },
-      reference: row.reference,
-    });
+    let raw: unknown;
+    try {
+      raw = await bookingCall<unknown>({
+        operation: "cancel",
+        pathParams: { bookingId: row.supplier_reference },
+        reference: row.reference,
+      });
+    } catch (err) {
+      // A supplier cancellation failure must never be silently lost: record the
+      // request so the Crystal desk completes it, and report it honestly.
+      await client.from("booking_requests").insert({
+        booking_id: row.id,
+        user_id: userId,
+        request_type: "cancellation",
+        details: reason,
+        status: "open",
+      });
+      const { data } = await client
+        .from("bookings")
+        .update({ status: "cancellation_requested", cancellation_reason: reason })
+        .eq("id", row.id)
+        .select("*")
+        .single();
+      await event(
+        client,
+        row.id,
+        "cancellation",
+        "Crystal cancellation could not be completed automatically.",
+        {
+          detail: err instanceof Error ? err.message : "supplier cancellation failed",
+        },
+      );
+      return {
+        booking: toRecord(data ?? row),
+        cancelled: false,
+        blockedReason: "supplier_cancellation_failed",
+        message:
+          "Cancellation requested — Crystal did not complete it automatically, so our desk will finalise it and confirm any penalties.",
+      };
+    }
     const norm = normaliseSupplierBooking(raw);
     const status = mapSupplierStatus(norm.supplierStatus ?? "cancelled");
     const { data } = await client

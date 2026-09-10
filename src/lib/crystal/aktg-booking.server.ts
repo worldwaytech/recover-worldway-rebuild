@@ -162,7 +162,8 @@ export function bookingCapability(): CrystalBookingCapability {
       live: false,
       operations: [],
       reason: "booking_api_not_configured",
-      detail: "No AKTG Booking API base URL has been supplied, so no booking endpoint can be called.",
+      detail:
+        "No AKTG Booking API base URL has been supplied, so no booking endpoint can be called.",
     };
   }
   if (!channel.salesChannelConfigured || !channel.officeIdConfigured) {
@@ -266,7 +267,12 @@ export function isReadOnlyOperation(op: CrystalBookingOperation): boolean {
  */
 export function operationMethod(op: CrystalBookingOperation): "GET" | "POST" | "PUT" | "DELETE" {
   const configured = env(`CRYSTAL_BOOKING_METHOD_${op.toUpperCase()}`).toUpperCase();
-  if (configured === "GET" || configured === "POST" || configured === "PUT" || configured === "DELETE") {
+  if (
+    configured === "GET" ||
+    configured === "POST" ||
+    configured === "PUT" ||
+    configured === "DELETE"
+  ) {
     return configured;
   }
   return specFor(op)?.method ?? "GET";
@@ -508,7 +514,12 @@ export async function verifyBookingReadOnly(
     }
     try {
       await bookingCall({ operation });
-      results.push({ operation, attempted: true, ok: true, detail: "Authenticated read succeeded." });
+      results.push({
+        operation,
+        attempted: true,
+        ok: true,
+        detail: "Authenticated read succeeded.",
+      });
     } catch (err) {
       results.push({
         operation,
@@ -534,7 +545,12 @@ export async function probeBookingConnectivity(
 ): Promise<CrystalReadOnlyProbe & { authenticated: boolean; reachable: boolean }> {
   const spec = specFor(operation);
   const method = operationMethod(operation);
-  if (!spec || method !== "GET" || spec.requiredPathParams.length > 0 || !isReadOnlyOperation(operation)) {
+  if (
+    !spec ||
+    method !== "GET" ||
+    spec.requiredPathParams.length > 0 ||
+    !isReadOnlyOperation(operation)
+  ) {
     return {
       operation,
       attempted: false,

@@ -70,7 +70,9 @@ describe("hold input validation", () => {
     expect(() => holdInputSchema.parse({ ...base, guests: [] })).toThrow();
     expect(() => holdInputSchema.parse({ ...base, leadEmail: "nope" })).toThrow();
     expect(() => holdInputSchema.parse({ ...base, quotedPricePerGuest: 0 })).toThrow();
-    expect(() => holdInputSchema.parse({ ...base, guests: Array(5).fill(base.guests[0]) })).toThrow();
+    expect(() =>
+      holdInputSchema.parse({ ...base, guests: Array(5).fill(base.guests[0]) }),
+    ).toThrow();
   });
 });
 
@@ -94,9 +96,8 @@ describe("booking rail is fail-closed", () => {
   });
 
   it("refuses any supplier call while disabled", async () => {
-    const { assertBookingLive, CrystalBookingUnavailableError } = await import(
-      "../aktg-booking.server"
-    );
+    const { assertBookingLive, CrystalBookingUnavailableError } =
+      await import("../aktg-booking.server");
     process.env["CRYSTAL_BOOKING_ENABLED"] = "false";
     process.env["CRYSTAL_AKTG_API_KEY"] = "test-key";
     expect(() => assertBookingLive("option")).toThrow(CrystalBookingUnavailableError);
@@ -241,7 +242,15 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
 
   it("classifies mutating operations as not read-only", async () => {
     const { isReadOnlyOperation } = await import("../aktg-booking.server");
-    for (const op of ["prebook", "option", "quote", "modify", "cancel", "invoice", "paymentlink"] as const) {
+    for (const op of [
+      "prebook",
+      "option",
+      "quote",
+      "modify",
+      "cancel",
+      "invoice",
+      "paymentlink",
+    ] as const) {
       expect(isReadOnlyOperation(op)).toBe(false);
     }
     for (const op of ["retrieve", "list", "availability", "pastguest", "pricetypes"] as const) {
@@ -254,12 +263,12 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
     const { CRYSTAL_BOOKING_SPEC } = await import("../booking-contract");
     const catalog = bookingOperationCatalog();
     expect(catalog).toHaveLength(CRYSTAL_BOOKING_SPEC.length);
-    expect(catalog.filter((c) => c.required).map((c) => c.operation).sort()).toEqual([
-      "cancel",
-      "option",
-      "prebook",
-      "retrieve",
-    ]);
+    expect(
+      catalog
+        .filter((c) => c.required)
+        .map((c) => c.operation)
+        .sort(),
+    ).toEqual(["cancel", "option", "prebook", "retrieve"]);
   });
 
   it("refuses a booking-scoped call without its documented path parameter", async () => {
@@ -297,8 +306,31 @@ describe("available suites (GET /d/v1/cruises/availablesuites)", () => {
     const raw = {
       body: {
         suiteAvailability: [
-          { voyageNumber: "CSY-009-260905", ship: "Crystal Symphony", suiteCategoryCod: "CHV4", suiteCategory: "CHV4 - Crystal Penthouse Suite", suiteNumber: "1023", suiteStatus: "", deckName: "Penthouse Deck 10", deckNumber: 10, statusDesc: "Available", suiteCapacity: "Quad", ada: false, suiteIDConnected: null, suiteNumberConnected: null },
-          { voyageNumber: "CSY-009-260905", suiteCategoryCod: "CHV4", suiteCategory: "x", suiteNumber: "8041", suiteStatus: "", statusDesc: "Available", suiteCapacity: "Quad", ada: true },
+          {
+            voyageNumber: "CSY-009-260905",
+            ship: "Crystal Symphony",
+            suiteCategoryCod: "CHV4",
+            suiteCategory: "CHV4 - Crystal Penthouse Suite",
+            suiteNumber: "1023",
+            suiteStatus: "",
+            deckName: "Penthouse Deck 10",
+            deckNumber: 10,
+            statusDesc: "Available",
+            suiteCapacity: "Quad",
+            ada: false,
+            suiteIDConnected: null,
+            suiteNumberConnected: null,
+          },
+          {
+            voyageNumber: "CSY-009-260905",
+            suiteCategoryCod: "CHV4",
+            suiteCategory: "x",
+            suiteNumber: "8041",
+            suiteStatus: "",
+            statusDesc: "Available",
+            suiteCapacity: "Quad",
+            ada: true,
+          },
         ],
       },
       statusMessage: "OK",
@@ -306,14 +338,25 @@ describe("available suites (GET /d/v1/cruises/availablesuites)", () => {
     };
     const suites = normaliseAvailableSuites(raw);
     expect(suites.map((s) => s.suiteNumber)).toEqual([1023, 8041]);
-    expect(suites[0]).toMatchObject({ available: true, deckNumber: 10, deckName: "Penthouse Deck 10", ada: false });
+    expect(suites[0]).toMatchObject({
+      available: true,
+      deckNumber: 10,
+      deckName: "Penthouse Deck 10",
+      ada: false,
+    });
     expect(suites[1].ada).toBe(true);
   });
 
   it("accepts the schema field name (body.availability) and array-wrapped responses", async () => {
     const { normaliseAvailableSuites } = await import("../booking-contract");
     const suites = normaliseAvailableSuites([
-      { body: { availability: [{ suiteNumber: "10047", suiteCategoryCod: "SSVM", statusDesc: "Available", ada: false }] } },
+      {
+        body: {
+          availability: [
+            { suiteNumber: "10047", suiteCategoryCod: "SSVM", statusDesc: "Available", ada: false },
+          ],
+        },
+      },
     ]);
     expect(suites).toHaveLength(1);
     expect(suites[0].suiteNumber).toBe(10047);
@@ -323,12 +366,27 @@ describe("available suites (GET /d/v1/cruises/availablesuites)", () => {
     const { normaliseAvailableSuites } = await import("../booking-contract");
     expect(normaliseAvailableSuites({})).toEqual([]);
     expect(normaliseAvailableSuites(null)).toEqual([]);
-    expect(normaliseAvailableSuites({ body: { suiteAvailability: [{ suiteNumber: "n/a" }] } })).toEqual([]);
+    expect(
+      normaliseAvailableSuites({ body: { suiteAvailability: [{ suiteNumber: "n/a" }] } }),
+    ).toEqual([]);
   });
 
   it("requires all four documented query parameters", async () => {
     const { availableSuitesInputSchema } = await import("../booking-contract");
-    expect(() => availableSuitesInputSchema.parse({ voyageNumber: "CSY-009-260905", suiteCategoryCod: "CHV4", currency: "USD" })).toThrow();
-    expect(availableSuitesInputSchema.parse({ voyageNumber: "CSY-009-260905", suiteCategoryCod: "CHV4", priceTypeCod: "FIT", currency: "USD" }).priceTypeCod).toBe("FIT");
+    expect(() =>
+      availableSuitesInputSchema.parse({
+        voyageNumber: "CSY-009-260905",
+        suiteCategoryCod: "CHV4",
+        currency: "USD",
+      }),
+    ).toThrow();
+    expect(
+      availableSuitesInputSchema.parse({
+        voyageNumber: "CSY-009-260905",
+        suiteCategoryCod: "CHV4",
+        priceTypeCod: "FIT",
+        currency: "USD",
+      }).priceTypeCod,
+    ).toBe("FIT");
   });
 });

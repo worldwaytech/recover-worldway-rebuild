@@ -36,7 +36,10 @@ export function setLicensedVoyages(voyages: CrystalVoyage[]): number {
  */
 export function hydrateLicensedVoyages(voyages: CrystalVoyage[] | undefined): void {
   if (!voyages) return;
-  if (voyages.length === LICENSED.length && (voyages[0]?.code ?? "") === (LICENSED[0]?.code ?? "")) {
+  if (
+    voyages.length === LICENSED.length &&
+    (voyages[0]?.code ?? "") === (LICENSED[0]?.code ?? "")
+  ) {
     return;
   }
   setLicensedVoyages(voyages);

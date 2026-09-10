@@ -22,9 +22,8 @@ export const getCrystalBookingCapability = createServerFn({ method: "GET" }).han
 export const getCrystalAvailableSuites = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => availableSuitesInputSchema.parse(d))
   .handler(async ({ data }) => {
-    const { listAvailableSuites, CrystalBookingUnavailableError } = await import(
-      "./aktg-booking.server"
-    );
+    const { listAvailableSuites, CrystalBookingUnavailableError } =
+      await import("./aktg-booking.server");
     try {
       const suites = await listAvailableSuites(data);
       return { live: true as const, suites, checkedAt: new Date().toISOString() };
@@ -34,7 +33,8 @@ export const getCrystalAvailableSuites = createServerFn({ method: "POST" })
           live: false as const,
           suites: [],
           checkedAt: new Date().toISOString(),
-          error: "Suite selection is not available right now; our Crystal desk will allocate a suite for you.",
+          error:
+            "Suite selection is not available right now; our Crystal desk will allocate a suite for you.",
         };
       }
       return {
@@ -92,9 +92,8 @@ export const getCrystalBookingDiagnostics = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { isAdmin } = await import("@/lib/wwl.server");
     if (!(await isAdmin(context as never))) throw new Error("Forbidden");
-    const { bookingCapability, bookingOperationCatalog, crystalBookingAudit } = await import(
-      "./aktg-booking.server"
-    );
+    const { bookingCapability, bookingOperationCatalog, crystalBookingAudit } =
+      await import("./aktg-booking.server");
     return {
       capability: bookingCapability(),
       catalog: bookingOperationCatalog(),

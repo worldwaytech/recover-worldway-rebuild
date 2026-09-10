@@ -57,7 +57,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
           "Connectivity has not been verified in this report.",
         )
       : result.reachable
-        ? gate("connectivity", "Booking API connectivity", "green", "AKTG Booking API host reachable from our server.")
+        ? gate(
+            "connectivity",
+            "Booking API connectivity",
+            "green",
+            "AKTG Booking API host reachable from our server.",
+          )
         : gate(
             "connectivity",
             "Booking API connectivity",
@@ -86,7 +91,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
             "Booking API entitlement has not been verified against PROD.",
           )
         : result.ok
-          ? gate("entitlement", "API entitlement & authentication", "green", "Authenticated read against PROD succeeded.")
+          ? gate(
+              "entitlement",
+              "API entitlement & authentication",
+              "green",
+              "Authenticated read against PROD succeeded.",
+            )
           : gate(
               "entitlement",
               "API entitlement & authentication",
@@ -101,7 +111,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
   // 3 & 4. Channel context
   gates.push(
     channel.salesChannelConfigured
-      ? gate("sales_channel", "X-SalesChannel configured", "green", "Server-side sales channel present.")
+      ? gate(
+          "sales_channel",
+          "X-SalesChannel configured",
+          "green",
+          "Server-side sales channel present.",
+        )
       : gate(
           "sales_channel",
           "X-SalesChannel configured",
@@ -125,7 +140,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
   // 5. Egress / IP allowlisting
   gates.push(
     egressConfirmed()
-      ? gate("egress", "Server egress / IP allowlisting", "green", "AKTG has confirmed our outbound IP is allowlisted.")
+      ? gate(
+          "egress",
+          "Server egress / IP allowlisting",
+          "green",
+          "AKTG has confirmed our outbound IP is allowlisted.",
+        )
       : gate(
           "egress",
           "Server egress / IP allowlisting",
@@ -164,7 +184,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
           "Run the read-only PROD check once AKTG credentials land.",
         )
       : result.ok
-        ? gate("read_only_verification", "Read-only PROD verification", "green", "Documented read-only PROD call succeeded.")
+        ? gate(
+            "read_only_verification",
+            "Read-only PROD verification",
+            "green",
+            "Documented read-only PROD call succeeded.",
+          )
         : gate(
             "read_only_verification",
             "Read-only PROD verification",
@@ -177,7 +202,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
   // 8. Certification
   gates.push(
     certified()
-      ? gate("certification", "AKTG certification sign-off", "green", "Certification recorded for this account.")
+      ? gate(
+          "certification",
+          "AKTG certification sign-off",
+          "green",
+          "Certification recorded for this account.",
+        )
       : gate(
           "certification",
           "AKTG certification sign-off",
@@ -196,7 +226,12 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
   gates.push(
     readyForLive
       ? bookingEnabledFlag()
-        ? gate("activation", "LIVE activation", "green", "All gates green and CRYSTAL_BOOKING_ENABLED=true — rail is LIVE.")
+        ? gate(
+            "activation",
+            "LIVE activation",
+            "green",
+            "All gates green and CRYSTAL_BOOKING_ENABLED=true — rail is LIVE.",
+          )
         : gate(
             "activation",
             "LIVE activation",

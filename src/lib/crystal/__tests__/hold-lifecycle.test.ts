@@ -14,8 +14,7 @@ afterEach(() => {
 });
 
 // Minimal row shape: only status + details are read by isSuiteHeld.
-const row = (details: Record<string, unknown>, status = "held") =>
-  ({ status, details }) as never;
+const row = (details: Record<string, unknown>, status = "held") => ({ status, details }) as never;
 
 describe("Crystal suite-hold lifecycle helpers", () => {
   it("defaults the hold window to 30 minutes", () => {

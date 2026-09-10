@@ -11,7 +11,13 @@
 //
 // The subscription key never leaves the server; only normalised,
 // customer-facing voyage records cross the RPC boundary.
-import type { CrystalFare, CrystalVoyage, CrystalVoyageDay, CruiseStyle, SuiteCategory } from "./types";
+import type {
+  CrystalFare,
+  CrystalVoyage,
+  CrystalVoyageDay,
+  CruiseStyle,
+  SuiteCategory,
+} from "./types";
 import { CRYSTAL_SUPPLIER_ID, CRYSTAL_SHIPS } from "./content";
 import {
   AktgError,
@@ -209,7 +215,10 @@ function mediaUrl(raw: string | null | undefined): string | undefined {
   if (!/^https?:\/\//i.test(v)) return undefined;
   try {
     const u = new URL(v);
-    u.pathname = u.pathname.split("/").map((seg) => encodeURIComponent(decodeURIComponent(seg))).join("/");
+    u.pathname = u.pathname
+      .split("/")
+      .map((seg) => encodeURIComponent(decodeURIComponent(seg)))
+      .join("/");
     return u.toString();
   } catch {
     return v.replace(/ /g, "%20");
@@ -234,20 +243,20 @@ function itineraryDays(rows: AktgItineraryRow[] | null | undefined): CrystalVoya
       const port = String(r.cityName ?? "At sea").trim() || "At sea";
       const atSea = /at sea|day at sea|cruising/i.test(port);
       return {
-      day: Number(r.day ?? i + 1),
-      date: isoDate(r.itineraryDate) || undefined,
-      port,
-      country: r.country ? String(r.country) : undefined,
-      arrive: trimTime(r.arrivalTime),
-      depart: trimTime(r.departTime),
-      summary:
-        [
-          r.isOvernight && !atSea ? "Overnight in port" : undefined,
-          r.dockAnchor && !atSea ? `${r.dockAnchor} berth` : undefined,
-          r.dressCode ? `Dress: ${r.dressCode}` : undefined,
-        ]
-          .filter(Boolean)
-          .join(" · ") || undefined,
+        day: Number(r.day ?? i + 1),
+        date: isoDate(r.itineraryDate) || undefined,
+        port,
+        country: r.country ? String(r.country) : undefined,
+        arrive: trimTime(r.arrivalTime),
+        depart: trimTime(r.departTime),
+        summary:
+          [
+            r.isOvernight && !atSea ? "Overnight in port" : undefined,
+            r.dockAnchor && !atSea ? `${r.dockAnchor} berth` : undefined,
+            r.dressCode ? `Dress: ${r.dressCode}` : undefined,
+          ]
+            .filter(Boolean)
+            .join(" · ") || undefined,
       };
     });
 }
@@ -709,11 +718,7 @@ export async function revalidateAktgVoyage(
       live: true,
       fares,
       priceTypes,
-      availability: fares.some((f) => f.available)
-        ? "open"
-        : fares.length
-          ? "waitlist"
-          : "unknown",
+      availability: fares.some((f) => f.available) ? "open" : fares.length ? "waitlist" : "unknown",
       priceFrom: prices.length ? Math.min(...prices) : undefined,
       depositPercent: typeof schedule?.optionPerc === "number" ? schedule.optionPerc : undefined,
       depositDueDate: isoDate(schedule?.optionDueDate) || undefined,
@@ -732,8 +737,19 @@ export async function revalidateAktgVoyage(
 
 export interface AktgReferenceData {
   destinations: { id: number; name: string; description?: string; image?: string }[];
-  ports: { code: string; cityCode: string; name: string; country: string; lat?: number; lng?: number }[];
-  ships: { code: string; name: string; suiteCategories: { code: string; name: string; group?: string }[] }[];
+  ports: {
+    code: string;
+    cityCode: string;
+    name: string;
+    country: string;
+    lat?: number;
+    lng?: number;
+  }[];
+  ships: {
+    code: string;
+    name: string;
+    suiteCategories: { code: string; name: string; group?: string }[];
+  }[];
   priceTypes: { code: string; name: string }[];
   voyagePriceTypes: { voyageNumber: string; code: string; name: string; currency?: string }[];
   promotions: { id: number; name: string; type?: string; description?: string }[];
