@@ -33,16 +33,25 @@ export const getCrystalVoyages = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { fetchAktgVoyages } = await import("./aktg.server");
+    const { crystalWorldCruises } = await import("./world-cruises");
     const feed = await fetchAktgVoyages(data.currency ?? "USD");
+    // The AKTG entitlement carries segment voyages only; Crystal's published
+    // World Cruises are merged in from the official catalogue (enquiry only).
+    const codes = new Set(feed.voyages.map((v) => v.code));
+    const worldCruises = crystalWorldCruises().filter((v) => !codes.has(v.code));
     return {
-      voyages: feed.voyages,
+      voyages: [...feed.voyages, ...worldCruises].sort((a, b) =>
+        a.departureDate.localeCompare(b.departureDate),
+      ),
       licensed: feed.voyages.length > 0,
       currency: feed.currency,
       syncedAt: feed.fetchedAt,
       supplierRecords: feed.received,
+      worldCruiseRecords: worldCruises.length,
       configured: feed.configured,
     };
   });
+
 
 /** Public, non-sensitive licence state used by the storefront. */
 export const getCrystalInventoryState = createServerFn({ method: "GET" }).handler(async () => {

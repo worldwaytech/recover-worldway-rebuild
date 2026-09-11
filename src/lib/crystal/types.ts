@@ -166,8 +166,17 @@ export interface CrystalVoyage {
     itineraryPdf?: string;
   };
   availability: "open" | "waitlist" | "closed" | "unknown";
-  /** Always "licensed" — the UI refuses to display anything else. */
-  dataSource: "licensed";
+  /**
+   * "licensed" — live AKTG supplier inventory, bookable end to end.
+   * "brochure" — Crystal's own published catalogue (World Cruises, which the
+   * AKTG entitlement does not distribute); real data, enquiry only.
+   */
+  dataSource: "licensed" | "brochure";
+  /** "supplier" (hold + confirm) or "enquiry" (specialist quote). */
+  bookingMode?: "supplier" | "enquiry";
+  /** Official Crystal page a brochure record was imported from. */
+  sourceUrl?: string;
+
   supplierId: string;
   updatedAt: string;
   fareType?: string;
