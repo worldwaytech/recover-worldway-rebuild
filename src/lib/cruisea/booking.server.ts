@@ -81,20 +81,56 @@ function mapBooking(row: BookingRow): CruiseaBooking {
   };
 }
 
-async function adjustInventory(cabinId: string, delta: number) {
+/**
+ * Claim one cabin from live inventory with optimistic concurrency: the update only
+ * lands when the row still shows the count we read, so two simultaneous holds can
+ * never oversell the same cabin. Returns false when no cabin could be claimed.
+ */
+async function claimInventory(cabinId: string): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("cruisea_cabins")
-    .select("available_inventory")
-    .eq("id", cabinId)
-    .maybeSingle();
-  if (!data) return;
-  const next = Math.max(0, data.available_inventory + delta);
-  await supabaseAdmin
-    .from("cruisea_cabins")
-    .update({ available_inventory: next })
-    .eq("id", cabinId);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data } = await supabaseAdmin
+      .from("cruisea_cabins")
+      .select("available_inventory")
+      .eq("id", cabinId)
+      .maybeSingle();
+    if (!data) return false;
+    const current = data.available_inventory ?? 0;
+    if (current < 1) return false;
+    const { data: claimed } = await supabaseAdmin
+      .from("cruisea_cabins")
+      .update({ available_inventory: current - 1 })
+      .eq("id", cabinId)
+      .eq("available_inventory", current)
+      .select("id")
+      .maybeSingle();
+    if (claimed) return true;
+  }
+  return false;
 }
+
+/** Return one cabin to live inventory after a cancellation or a failed hold. */
+async function releaseInventory(cabinId: string): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data } = await supabaseAdmin
+      .from("cruisea_cabins")
+      .select("available_inventory")
+      .eq("id", cabinId)
+      .maybeSingle();
+    if (!data) return;
+    const current = data.available_inventory ?? 0;
+    const { data: released } = await supabaseAdmin
+      .from("cruisea_cabins")
+      .update({ available_inventory: current + 1 })
+      .eq("id", cabinId)
+      .eq("available_inventory", current)
+      .select("id")
+      .maybeSingle();
+    if (released) return;
+  }
+}
+
 
 export type CruiseaBookingInput = {
   sailingId: string;
@@ -116,6 +152,12 @@ export async function createCruiseaBooking(ctx: Ctx, input: CruiseaBookingInput)
   });
   if (!availability.available) {
     throw new Error(availability.reason ?? "That cabin grade is no longer available.");
+  }
+
+  // Claim inventory first so two simultaneous holds cannot take the same last cabin.
+  const claimed = await claimInventory(input.cabinId);
+  if (!claimed) {
+    throw new Error("That cabin grade has just sold out. Please choose another grade.");
   }
 
   const holdExpiresAt = new Date(Date.now() + HOLD_MINUTES * 60_000).toISOString();
@@ -141,9 +183,12 @@ export async function createCruiseaBooking(ctx: Ctx, input: CruiseaBookingInput)
     })
     .select(BOOKING_SELECT)
     .single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Never keep a claimed cabin when the booking row could not be written.
+    await releaseInventory(input.cabinId);
+    throw new Error(error.message);
+  }
 
-  await adjustInventory(input.cabinId, -1);
 
   const passengers = (input.passengers ?? []).filter((p) => p.firstName && p.lastName);
   if (passengers.length) {
@@ -197,17 +242,22 @@ export async function cancelCruiseaBooking(ctx: Ctx, bookingId: string) {
   if (!existing) throw new Error("Booking not found.");
   if (existing.status === "Cancelled") throw new Error("This booking is already cancelled.");
 
+  // Only the caller that actually transitions the row out of Held/Confirmed releases
+  // the cabin, so a double-click can never hand back inventory twice.
   const { data, error } = await ctx.supabase
     .from("cruisea_bookings")
     .update({ status: "Cancelled", payment_status: "Cancelled", hold_expires_at: null })
     .eq("id", bookingId)
     .eq("user_id", ctx.userId)
+    .neq("status", "Cancelled")
     .select(BOOKING_SELECT)
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("This booking is already cancelled.");
 
-  await adjustInventory(existing.cabin_id, 1);
+  await releaseInventory(existing.cabin_id);
   return mapBooking(data as BookingRow);
+
 }
 
 export async function listCruiseaBookings(ctx: Ctx) {
