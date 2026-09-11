@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -47,7 +47,16 @@ export function CruiseaSailingDetailView({
     { firstName: "", lastName: "", dateOfBirth: "" },
   ]);
 
+  // Prefill the lead guest from the signed-in account so holding never fails on
+  // details we already hold; the guest can still edit either field.
+  useEffect(() => {
+    if (!session.signedIn) return;
+    if (session.name) setContactName((prev) => (prev.trim() ? prev : session.name ?? ""));
+    if (session.email) setContactEmail((prev) => (prev.trim() ? prev : session.email ?? ""));
+  }, [session.signedIn, session.name, session.email]);
+
   const cabin = sailing.cabins.find((c) => c.id === cabinId) ?? null;
+
 
   function selectCabin(next: CruiseaCabin) {
     setCabinId(next.id);
