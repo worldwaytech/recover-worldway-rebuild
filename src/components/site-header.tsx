@@ -20,7 +20,9 @@ const NAV: NavItem[] = [
   {
     label: "Voyages",
     children: [
+      { to: "/voyages/cruisea", label: "Cruisea" },
       { to: "/cruises", label: "Luxury Cruises" },
+
       { to: "/expedition-cruises", label: "Expedition Cruises" },
       { to: "/river-cruises", label: "River Cruises" },
       { to: "/world-cruises", label: "World Cruises" },

@@ -70,6 +70,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as YachtsIndexRouteImport } from './routes/yachts.index'
 import { Route as WorldCruisesIndexRouteImport } from './routes/world-cruises.index'
 import { Route as WellnessIndexRouteImport } from './routes/wellness.index'
+import { Route as VoyagesIndexRouteImport } from './routes/voyages.index'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VillasIndexRouteImport } from './routes/villas.index'
 import { Route as TtcIndexRouteImport } from './routes/ttc.index'
@@ -505,6 +506,11 @@ const WellnessIndexRoute = WellnessIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WellnessRoute,
+} as any)
+const VoyagesIndexRoute = VoyagesIndexRouteImport.update({
+  id: '/voyages/',
+  path: '/voyages/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VisaIndexRoute = VisaIndexRouteImport.update({
   id: '/',
@@ -1333,6 +1339,7 @@ export interface FileRoutesByFullPath {
   '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/voyages/': typeof VoyagesIndexRoute
   '/wellness/': typeof WellnessIndexRoute
   '/world-cruises/': typeof WorldCruisesIndexRoute
   '/yachts/': typeof YachtsIndexRoute
@@ -1497,6 +1504,7 @@ export interface FileRoutesByTo {
   '/ttc': typeof TtcIndexRoute
   '/villas': typeof VillasIndexRoute
   '/visa': typeof VisaIndexRoute
+  '/voyages': typeof VoyagesIndexRoute
   '/wellness': typeof WellnessIndexRoute
   '/world-cruises': typeof WorldCruisesIndexRoute
   '/yachts': typeof YachtsIndexRoute
@@ -1690,6 +1698,7 @@ export interface FileRoutesById {
   '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/voyages/': typeof VoyagesIndexRoute
   '/wellness/': typeof WellnessIndexRoute
   '/world-cruises/': typeof WorldCruisesIndexRoute
   '/yachts/': typeof YachtsIndexRoute
@@ -1885,6 +1894,7 @@ export interface FileRouteTypes {
     | '/ttc/'
     | '/villas/'
     | '/visa/'
+    | '/voyages/'
     | '/wellness/'
     | '/world-cruises/'
     | '/yachts/'
@@ -2049,6 +2059,7 @@ export interface FileRouteTypes {
     | '/ttc'
     | '/villas'
     | '/visa'
+    | '/voyages'
     | '/wellness'
     | '/world-cruises'
     | '/yachts'
@@ -2241,6 +2252,7 @@ export interface FileRouteTypes {
     | '/ttc/'
     | '/villas/'
     | '/visa/'
+    | '/voyages/'
     | '/wellness/'
     | '/world-cruises/'
     | '/yachts/'
@@ -2342,6 +2354,7 @@ export interface RootRouteChildren {
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
+  VoyagesIndexRoute: typeof VoyagesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
@@ -2785,6 +2798,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/wellness/'
       preLoaderRoute: typeof WellnessIndexRouteImport
       parentRoute: typeof WellnessRoute
+    }
+    '/voyages/': {
+      id: '/voyages/'
+      path: '/voyages'
+      fullPath: '/voyages/'
+      preLoaderRoute: typeof VoyagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/visa/': {
       id: '/visa/'
@@ -4269,6 +4289,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
+  VoyagesIndexRoute: VoyagesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
