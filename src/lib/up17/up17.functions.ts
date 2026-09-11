@@ -237,12 +237,43 @@ export const up17BookFlightTicket = createServerFn({ method: "POST" })
     const { claimVerifiedPaymentForFulfilment, recordFulfilment, releaseFulfilmentClaim, optionalUserId } =
       await import("@/lib/payments/payments.server");
 
+    // Re-price on the server immediately before ticketing. The amount used to
+    // open checkout came from the browser, so it is never authoritative for a
+    // supplier booking. Fail closed if UP17 cannot return a usable live fare.
+    const { up17ConfirmFare } = await import("./up17.server");
+    const confirmedFare = await up17ConfirmFare({
+      resultIndex: data.resultIndex,
+      searchTokenId: data.searchTokenId,
+    });
+    const total = confirmedFare.data?.total;
+    const currency = confirmedFare.data?.currency.trim().toUpperCase();
+    if (!confirmedFare.ok || total === null || total === undefined || !currency) {
+      return {
+        ok: false as const,
+        error: confirmedFare.error ?? "The live fare could not be verified. No ticket was issued.",
+        booking: null,
+      };
+    }
+    const zeroDecimal = new Set(["JPY", "KRW", "VND", "CLP", "ISK"]);
+    const expectedAmountMinor = zeroDecimal.has(currency) ? Math.round(total) : Math.round(total * 100);
+    if (!Number.isSafeInteger(expectedAmountMinor) || expectedAmountMinor < 1) {
+      return {
+        ok: false as const,
+        error: "The live fare could not be verified. No ticket was issued.",
+        booking: null,
+      };
+    }
+
     // Payment-before-booking: the supplier is only called once this server has
-    // verified capture with Razorpay, and only once per payment.
+    // verified capture with Razorpay, matched it exactly to the server-confirmed
+    // fare and currency, and claimed it only once.
     const claim = await claimVerifiedPaymentForFulfilment({
       orderId: data.orderId,
       paymentId: data.paymentId,
       expectedUserId: await optionalUserId(),
+      expectedPurpose: "flight",
+      expectedAmountMinor,
+      expectedCurrency: currency,
     });
     if (!claim.ok) {
       return { ok: false as const, error: claim.error, booking: null };
