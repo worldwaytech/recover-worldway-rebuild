@@ -195,6 +195,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as DestinationsRegionCountryIndexRouteImport } from './routes/destinations.$region.$country.index'
 import { Route as DestinationsRegionCountryDestinationRouteImport } from './routes/destinations.$region.$country.$destination'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
+import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 
 const YachtsRoute = YachtsRouteImport.update({
   id: '/yachts',
@@ -1139,6 +1140,12 @@ const ApiPublicPartnerFeedPartnerIdRoute =
     path: '/api/public/partner-feed/$partnerId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCrystalHoldSweepRoute =
+  ApiPublicHooksCrystalHoldSweepRouteImport.update({
+    id: '/api/public/hooks/crystal-hold-sweep',
+    path: '/api/public/hooks/crystal-hold-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -1324,6 +1331,7 @@ export interface FileRoutesByFullPath {
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
   '/tours/browse/': typeof ToursBrowseIndexRoute
+  '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
@@ -1482,6 +1490,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/ships': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region': typeof DestinationsRegionIndexRoute
   '/tours/browse': typeof ToursBrowseIndexRoute
+  '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryIndexRoute
@@ -1671,6 +1680,7 @@ export interface FileRoutesById {
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
   '/tours/browse/': typeof ToursBrowseIndexRoute
+  '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
@@ -1861,6 +1871,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
     | '/tours/browse/'
+    | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
     | '/destinations/$region/$country/'
@@ -2019,6 +2030,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships'
     | '/destinations/$region'
     | '/tours/browse'
+    | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
     | '/destinations/$region/$country'
@@ -2207,6 +2219,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
     | '/tours/browse/'
+    | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
     | '/destinations/$region/$country/'
@@ -2288,6 +2301,7 @@ export interface RootRouteChildren {
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
+  ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
 }
 
@@ -3595,6 +3609,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerFeedPartnerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/crystal-hold-sweep': {
+      id: '/api/public/hooks/crystal-hold-sweep'
+      path: '/api/public/hooks/crystal-hold-sweep'
+      fullPath: '/api/public/hooks/crystal-hold-sweep'
+      preLoaderRoute: typeof ApiPublicHooksCrystalHoldSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -4175,6 +4196,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
   TtcBrandSlugRoute: TtcBrandSlugRoute,
+  ApiPublicHooksCrystalHoldSweepRoute: ApiPublicHooksCrystalHoldSweepRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
 }
 export const routeTree = rootRouteImport
