@@ -119,11 +119,20 @@ function VoyagePage() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <span className="font-serif text-2xl">{formatFare(voyage)}</span>
             <Badge variant="secondary">{voyage.availability}</Badge>
-            <Button asChild>
-              <Link to="/crystal-cruises/book/$code" params={{ code: voyage.code }}>
-                Select suite &amp; reserve
-              </Link>
-            </Button>
+            {voyage.bookingMode === "enquiry" ? (
+              <Button asChild>
+                <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
+                  Request this world cruise
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link to="/crystal-cruises/book/$code" params={{ code: voyage.code }}>
+                  Select suite &amp; reserve
+                </Link>
+              </Button>
+            )}
+
             <Button asChild variant="outline">
               <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
                 Request a quote
