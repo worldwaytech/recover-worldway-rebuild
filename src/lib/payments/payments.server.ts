@@ -161,7 +161,11 @@ async function paymentsQuery(): Promise<LooseQuery> {
 
 export type FulfilmentClaim =
   | { ok: true; payment: PaymentRow }
-  | { ok: false; reason: "not_found" | "not_paid" | "already_fulfilled"; error: string };
+  | {
+      ok: false;
+      reason: "not_found" | "not_paid" | "payment_mismatch" | "already_fulfilled";
+      error: string;
+    };
 
 /**
  * Atomically claims a verified payment for supplier fulfilment.
@@ -171,6 +175,9 @@ export async function claimVerifiedPaymentForFulfilment(input: {
   orderId: string;
   paymentId: string;
   expectedUserId?: string | null;
+  expectedPurpose?: string;
+  expectedAmountMinor?: number;
+  expectedCurrency?: string;
 }): Promise<FulfilmentClaim> {
   const existing = await getPaymentByOrderId(input.orderId);
   if (!existing) {
@@ -184,6 +191,22 @@ export async function claimVerifiedPaymentForFulfilment(input: {
       ok: false,
       reason: "not_paid",
       error: "This payment has not been verified. No ticket can be issued.",
+    };
+  }
+  // Supplier fulfilment must be funded by the exact server-confirmed amount.
+  // Never accept the purpose, amount, or currency supplied when the checkout
+  // order was opened as proof of what the supplier booking actually costs.
+  if (
+    (input.expectedPurpose !== undefined && existing.purpose !== input.expectedPurpose) ||
+    (input.expectedAmountMinor !== undefined &&
+      Number(existing.amount_minor) !== input.expectedAmountMinor) ||
+    (input.expectedCurrency !== undefined &&
+      existing.currency.toUpperCase() !== input.expectedCurrency.toUpperCase())
+  ) {
+    return {
+      ok: false,
+      reason: "payment_mismatch",
+      error: "The verified payment does not match the currently confirmed fare. No ticket was issued.",
     };
   }
   // Tenant isolation: a signed-in caller may only fulfil their own payment.
