@@ -212,8 +212,16 @@ function VoyagePage() {
 
       <Section eyebrow="Fares" title="Suite categories and pricing">
         <div className="mb-6">
-          <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
+          {voyage.bookingMode === "enquiry" ? (
+            <p className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+              Fares below are Crystal&rsquo;s published world cruise pricing. Live suite availability
+              for this voyage is confirmed by our cruise desk when you request it.
+            </p>
+          ) : (
+            <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
+          )}
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {voyage.fares.map((f, i) => (
             <div key={`${f.suiteCategory}-${i}`} className="rounded-xl border border-border/60 p-5">
