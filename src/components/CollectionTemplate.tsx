@@ -125,7 +125,15 @@ export function CollectionItemCard({
 
 const PAGE_SIZE = 9;
 
-export function CollectionLanding({ kind }: { kind: CollectionKind }) {
+export function CollectionLanding({
+  kind,
+  featureSection,
+}: {
+  kind: CollectionKind;
+  /** Optional supplier-specific section rendered above the featured grid. */
+  featureSection?: React.ReactNode;
+}) {
+
   const meta = collectionsMeta[kind];
   const [filters, setFilters] = useState<CatalogueFilters>({});
   const [sort, setSort] = useState<SortKey>("recommended");
