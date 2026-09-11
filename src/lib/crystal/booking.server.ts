@@ -705,7 +705,13 @@ export async function sweepExpiredCrystalHolds(
     // Release failed: clear the claim so a later run retries, and escalate.
     await client
       .from("bookings")
-      .update({ details: json({ ...d, holdSweepClaimedAt: null, holdSweepFailedAt: new Date().toISOString() }) })
+      .update({
+        details: json({
+          ...d,
+          holdSweepClaimedAt: null,
+          holdSweepFailedAt: new Date().toISOString(),
+        }),
+      })
       .eq("id", row.id);
     await client.from("booking_requests").insert({
       booking_id: row.id,
