@@ -612,6 +612,125 @@ export async function releaseExpiredCrystalHolds(
   }
 }
 
+export interface CrystalHoldSweepResult {
+  scanned: number;
+  claimed: number;
+  released: number;
+  failed: number;
+  skipped: number;
+  live: boolean;
+}
+
+/**
+ * Automatic server-side sweeper for expired suite holds.
+ *
+ * Uses the same documented release mechanism as the customer flow. It only ever
+ * touches rows that are still an outstanding, expired, supplier-reference-free
+ * suite hold, so an active or confirmed booking can never be released. Each row
+ * is claimed with a conditional update, which makes the sweep idempotent and
+ * replay-safe: two overlapping runs cannot release the same hold twice. When the
+ * supplier release fails, the claim is cleared, a desk-assistance request is
+ * recorded, and the row is left held for the next run.
+ */
+export async function sweepExpiredCrystalHolds(
+  client: Client,
+  limit = 25,
+): Promise<CrystalHoldSweepResult> {
+  const result: CrystalHoldSweepResult = {
+    scanned: 0,
+    claimed: 0,
+    released: 0,
+    failed: 0,
+    skipped: 0,
+    live: bookingCapability().live,
+  };
+  const { data, error } = await client
+    .from("bookings")
+    .select("*")
+    .eq("product_type", CRYSTAL_PRODUCT_TYPE)
+    .eq("status", "held")
+    .is("supplier_reference", null)
+    .order("created_at", { ascending: true })
+    .limit(Math.max(1, Math.min(limit, 100)));
+  if (error) throw new Error(error.message);
+  const candidates = (data ?? []).filter((r) => isSuiteHeld(r) && holdExpired(r));
+  result.scanned = candidates.length;
+  if (!result.live || candidates.length === 0) return result;
+
+  for (const row of candidates) {
+    const d = details(row);
+    // Claim: only one runner can flip a row from unclaimed to claimed.
+    const { data: claimed } = await client
+      .from("bookings")
+      .update({ details: json({ ...d, holdSweepClaimedAt: new Date().toISOString() }) })
+      .eq("id", row.id)
+      .eq("status", "held")
+      .is("supplier_reference", null)
+      .filter("details->>holdSweepClaimedAt", "is", null)
+      .select("id")
+      .maybeSingle();
+    if (!claimed) {
+      result.skipped += 1;
+      continue;
+    }
+    result.claimed += 1;
+
+    const outcome = await releaseHeldSuite(row);
+    if (outcome === "released") {
+      result.released += 1;
+      await client
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          supplier_status: "released",
+          cancellation_reason: "Suite hold expired without confirmation.",
+          details: json({
+            ...d,
+            suiteHeld: false,
+            holdExpiresAt: null,
+            holdExpiredRelease: true,
+            holdSweepClaimedAt: null,
+            holdSweptAt: new Date().toISOString(),
+          }),
+        })
+        .eq("id", row.id);
+      await event(client, row.id, "cancellation", "Expired suite hold released with Crystal.", {
+        suiteNumber: d.suiteNumber ?? null,
+        source: "automatic_sweep",
+      });
+      continue;
+    }
+
+    result.failed += 1;
+    // Release failed: clear the claim so a later run retries, and escalate.
+    await client
+      .from("bookings")
+      .update({
+        details: json({
+          ...d,
+          holdSweepClaimedAt: null,
+          holdSweepFailedAt: new Date().toISOString(),
+        }),
+      })
+      .eq("id", row.id);
+    await client.from("booking_requests").insert({
+      booking_id: row.id,
+      user_id: row.user_id,
+      request_type: "cancellation",
+      details: "Expired Crystal suite hold could not be released with the supplier automatically.",
+      status: "open",
+    });
+    await event(
+      client,
+      row.id,
+      "cancellation",
+      "Expired suite hold release failed — desk assistance requested.",
+      { suiteNumber: d.suiteNumber ?? null, source: "automatic_sweep" },
+    );
+  }
+  return result;
+}
+
 export async function listCrystalBookings(client: Client): Promise<CrystalBookingRecord[]> {
   const { data, error } = await client
     .from("bookings")
