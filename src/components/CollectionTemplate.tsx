@@ -213,9 +213,10 @@ export function CollectionLanding({
               </div>
             ))}
           </div>
-        </section>
+        {featureSection}
 
         <section className="container-lux pb-16">
+
           <SectionHeading
             eyebrow={`Featured ${meta.itemNounPlural}`}
             title={`Selected ${meta.itemNounPlural}`}
