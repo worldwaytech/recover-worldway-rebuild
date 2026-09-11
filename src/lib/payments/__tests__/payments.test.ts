@@ -108,8 +108,8 @@ describe("payment-before-UP17 enforcement contract", () => {
     expect(book.indexOf("claimVerifiedPaymentForFulfilment")).toBeLessThan(
       book.indexOf("up17BookFlight("),
     );
-    expect(book.indexOf("up17ConfirmFare")).toBeLessThan(
-      book.indexOf("claimVerifiedPaymentForFulfilment"),
+    expect(book.indexOf("const confirmedFare = await up17ConfirmFare")).toBeLessThan(
+      book.indexOf("const claim = await claimVerifiedPaymentForFulfilment"),
     );
     expect(book).toContain('expectedPurpose: "flight"');
     expect(book).toContain("expectedAmountMinor");
