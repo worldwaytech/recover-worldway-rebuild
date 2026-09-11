@@ -119,11 +119,20 @@ function VoyagePage() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <span className="font-serif text-2xl">{formatFare(voyage)}</span>
             <Badge variant="secondary">{voyage.availability}</Badge>
-            <Button asChild>
-              <Link to="/crystal-cruises/book/$code" params={{ code: voyage.code }}>
-                Select suite &amp; reserve
-              </Link>
-            </Button>
+            {voyage.bookingMode === "enquiry" ? (
+              <Button asChild>
+                <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
+                  Request this world cruise
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link to="/crystal-cruises/book/$code" params={{ code: voyage.code }}>
+                  Select suite &amp; reserve
+                </Link>
+              </Button>
+            )}
+
             <Button asChild variant="outline">
               <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
                 Request a quote
@@ -203,8 +212,16 @@ function VoyagePage() {
 
       <Section eyebrow="Fares" title="Suite categories and pricing">
         <div className="mb-6">
-          <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
+          {voyage.bookingMode === "enquiry" ? (
+            <p className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+              Fares below are Crystal&rsquo;s published world cruise pricing. Live suite
+              availability for this voyage is confirmed by our cruise desk when you request it.
+            </p>
+          ) : (
+            <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
+          )}
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {voyage.fares.map((f, i) => (
             <div key={`${f.suiteCategory}-${i}`} className="rounded-xl border border-border/60 p-5">
@@ -249,9 +266,7 @@ function VoyagePage() {
             {voyage.depositPercent ? (
               <p className="mt-2">Deposit: {voyage.depositPercent}% of the suite fare.</p>
             ) : null}
-            {voyage.finalPaymentDate ? (
-              <p>Final payment due {voyage.finalPaymentDate}.</p>
-            ) : null}
+            {voyage.finalPaymentDate ? <p>Final payment due {voyage.finalPaymentDate}.</p> : null}
             {voyage.cancellationPolicy?.length ? (
               <ul className="mt-2 space-y-1">
                 {voyage.cancellationPolicy.map((b) => (

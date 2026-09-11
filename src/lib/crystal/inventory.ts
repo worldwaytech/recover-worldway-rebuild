@@ -24,9 +24,12 @@ export function isLicensedInventoryAvailable(): boolean {
   return LICENSED.length > 0;
 }
 
-/** Connector entry point — rejects anything not marked as licensed. */
+/**
+ * Connector entry point — accepts live licensed supplier inventory plus
+ * Crystal's own published World Cruise catalogue, and nothing else.
+ */
 export function setLicensedVoyages(voyages: CrystalVoyage[]): number {
-  LICENSED = voyages.filter((v) => v.dataSource === "licensed");
+  LICENSED = voyages.filter((v) => v.dataSource === "licensed" || v.dataSource === "brochure");
   return LICENSED.length;
 }
 

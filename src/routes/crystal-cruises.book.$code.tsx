@@ -129,8 +129,9 @@ function BookPage() {
   const currency = voyage?.currency ?? "USD";
 
   useEffect(() => {
-    if (!voyage) return;
+    if (!voyage || voyage.bookingMode === "enquiry") return;
     setChecking(true);
+
     revalidate({ data: { voyageNumber: voyage.code, currency } })
       .then((res) => {
         const list = ((res as { fares?: LiveFare[] }).fares ?? []).filter((f) => f.price > 0);
@@ -189,6 +190,48 @@ function BookPage() {
         <Link to="/crystal-cruises/search" className="mt-4 inline-block text-sm underline">
           Browse the cruise finder
         </Link>
+      </div>
+    );
+  }
+
+  // World Cruises are published by Crystal but not distributed through our
+  // supplier booking entitlement — these are reserved by our cruise desk.
+  if (voyage.bookingMode === "enquiry") {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16">
+        <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+        <h1 className="mt-3 font-serif text-3xl">{voyage.title}</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} to {voyage.disembarkPort}{" "}
+          · departs {voyage.departureDate}
+          {voyage.priceFrom
+            ? ` · fares from ${voyage.currency} ${voyage.priceFrom.toLocaleString()}`
+            : ""}
+        </p>
+        <div className="mt-8 rounded-xl border border-border/60 bg-muted/30 p-6">
+          <h2 className="font-serif text-xl">Reserved through our cruise desk</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Full world voyages are held and confirmed personally with Crystal, including suite
+            selection, full and segment options, deposits and payment plans. Send your request and a
+            Crystal specialist will come back with live suite availability and the current fare.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              to="/crystal-cruises/quote"
+              search={{ voyage: voyage.code }}
+              className="rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground"
+            >
+              Request this world cruise
+            </Link>
+            <Link
+              to="/crystal-cruises/voyages/$code"
+              params={{ code: voyage.code }}
+              className="rounded-full border border-border px-6 py-2.5 text-sm"
+            >
+              View full itinerary
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -279,8 +322,8 @@ function BookPage() {
       <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
       <h1 className="mt-3 font-serif text-3xl">{voyage.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} →{" "}
-        {voyage.disembarkPort} · departs {voyage.departureDate || "TBC"}
+        {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} → {voyage.disembarkPort} ·
+        departs {voyage.departureDate || "TBC"}
       </p>
 
       {!capability.live ? (
@@ -342,12 +385,7 @@ function BookPage() {
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation"
                 />
-                <Button
-                  variant="destructive"
-                  className="mt-3"
-                  onClick={onCancel}
-                  disabled={busy}
-                >
+                <Button variant="destructive" className="mt-3" onClick={onCancel} disabled={busy}>
                   Request cancellation
                 </Button>
               </div>
@@ -445,7 +483,9 @@ function BookPage() {
                             {s.deckName ?? (s.deckNumber ? `Deck ${s.deckNumber}` : "")}
                             {s.suiteCapacity ? ` · ${s.suiteCapacity}` : ""}
                             {s.ada ? " · Accessible" : ""}
-                            {s.connectedSuiteNumber ? ` · connects to ${s.connectedSuiteNumber}` : ""}
+                            {s.connectedSuiteNumber
+                              ? ` · connects to ${s.connectedSuiteNumber}`
+                              : ""}
                           </span>
                         </button>
                       );
@@ -515,11 +555,7 @@ function BookPage() {
                 </div>
                 <div>
                   <Label htmlFor="lead-phone">Phone</Label>
-                  <Input
-                    id="lead-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
+                  <Input id="lead-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
               </div>
               <div>
