@@ -142,7 +142,10 @@ function toVoyage(r: CrystalWorldCruiseRecord): CrystalVoyage {
       arrive: d.arrive,
       depart: d.depart,
       summary:
-        [d.overnight ? "Overnight in port" : undefined, d.dressCode ? `Dress: ${d.dressCode}` : undefined]
+        [
+          d.overnight ? "Overnight in port" : undefined,
+          d.dressCode ? `Dress: ${d.dressCode}` : undefined,
+        ]
           .filter(Boolean)
           .join(" · ") || undefined,
     })),

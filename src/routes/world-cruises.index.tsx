@@ -103,4 +103,3 @@ function CrystalWorldCruises() {
 function Page() {
   return <CollectionLanding kind={KIND} featureSection={<CrystalWorldCruises />} />;
 }
-

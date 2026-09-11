@@ -33,7 +33,6 @@ export function setLicensedVoyages(voyages: CrystalVoyage[]): number {
   return LICENSED.length;
 }
 
-
 /**
  * Hydrate the client/server module store from loader data. Idempotent: repeat
  * calls with the same live feed are no-ops, so it is safe during render.

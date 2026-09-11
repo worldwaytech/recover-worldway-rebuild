@@ -202,8 +202,8 @@ function BookPage() {
         <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
         <h1 className="mt-3 font-serif text-3xl">{voyage.title}</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} to{" "}
-          {voyage.disembarkPort} · departs {voyage.departureDate}
+          {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} to {voyage.disembarkPort}{" "}
+          · departs {voyage.departureDate}
           {voyage.priceFrom
             ? ` · fares from ${voyage.currency} ${voyage.priceFrom.toLocaleString()}`
             : ""}
@@ -235,7 +235,6 @@ function BookPage() {
       </div>
     );
   }
-
 
   function setGuestCount(n: number) {
     setGuests((prev) => {
@@ -323,8 +322,8 @@ function BookPage() {
       <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
       <h1 className="mt-3 font-serif text-3xl">{voyage.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} →{" "}
-        {voyage.disembarkPort} · departs {voyage.departureDate || "TBC"}
+        {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} → {voyage.disembarkPort} ·
+        departs {voyage.departureDate || "TBC"}
       </p>
 
       {!capability.live ? (
@@ -386,12 +385,7 @@ function BookPage() {
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation"
                 />
-                <Button
-                  variant="destructive"
-                  className="mt-3"
-                  onClick={onCancel}
-                  disabled={busy}
-                >
+                <Button variant="destructive" className="mt-3" onClick={onCancel} disabled={busy}>
                   Request cancellation
                 </Button>
               </div>
@@ -489,7 +483,9 @@ function BookPage() {
                             {s.deckName ?? (s.deckNumber ? `Deck ${s.deckNumber}` : "")}
                             {s.suiteCapacity ? ` · ${s.suiteCapacity}` : ""}
                             {s.ada ? " · Accessible" : ""}
-                            {s.connectedSuiteNumber ? ` · connects to ${s.connectedSuiteNumber}` : ""}
+                            {s.connectedSuiteNumber
+                              ? ` · connects to ${s.connectedSuiteNumber}`
+                              : ""}
                           </span>
                         </button>
                       );
@@ -559,11 +555,7 @@ function BookPage() {
                 </div>
                 <div>
                   <Label htmlFor="lead-phone">Phone</Label>
-                  <Input
-                    id="lead-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
+                  <Input id="lead-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
               </div>
               <div>

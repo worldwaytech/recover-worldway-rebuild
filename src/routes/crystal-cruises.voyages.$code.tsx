@@ -214,8 +214,8 @@ function VoyagePage() {
         <div className="mb-6">
           {voyage.bookingMode === "enquiry" ? (
             <p className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
-              Fares below are Crystal&rsquo;s published world cruise pricing. Live suite availability
-              for this voyage is confirmed by our cruise desk when you request it.
+              Fares below are Crystal&rsquo;s published world cruise pricing. Live suite
+              availability for this voyage is confirmed by our cruise desk when you request it.
             </p>
           ) : (
             <LiveAvailabilityPanel voyageNumber={voyage.code} currency={voyage.currency} />
@@ -266,9 +266,7 @@ function VoyagePage() {
             {voyage.depositPercent ? (
               <p className="mt-2">Deposit: {voyage.depositPercent}% of the suite fare.</p>
             ) : null}
-            {voyage.finalPaymentDate ? (
-              <p>Final payment due {voyage.finalPaymentDate}.</p>
-            ) : null}
+            {voyage.finalPaymentDate ? <p>Final payment due {voyage.finalPaymentDate}.</p> : null}
             {voyage.cancellationPolicy?.length ? (
               <ul className="mt-2 space-y-1">
                 {voyage.cancellationPolicy.map((b) => (

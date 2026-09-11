@@ -52,7 +52,6 @@ export const getCrystalVoyages = createServerFn({ method: "GET" })
     };
   });
 
-
 /** Public, non-sensitive licence state used by the storefront. */
 export const getCrystalInventoryState = createServerFn({ method: "GET" }).handler(async () => {
   const { licensedVoyages } = await import("./inventory");

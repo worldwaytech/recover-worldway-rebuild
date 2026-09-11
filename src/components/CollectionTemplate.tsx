@@ -133,7 +133,6 @@ export function CollectionLanding({
   /** Optional supplier-specific section rendered above the featured grid. */
   featureSection?: React.ReactNode;
 }) {
-
   const meta = collectionsMeta[kind];
   const [filters, setFilters] = useState<CatalogueFilters>({});
   const [sort, setSort] = useState<SortKey>("recommended");
@@ -218,8 +217,6 @@ export function CollectionLanding({
         {featureSection}
 
         <section className="container-lux pb-16">
-
-
           <SectionHeading
             eyebrow={`Featured ${meta.itemNounPlural}`}
             title={`Selected ${meta.itemNounPlural}`}
@@ -629,55 +626,55 @@ function CollectionDetailInner({ kind, item }: { kind: CollectionKind; item: Cat
             <aside className="h-fit space-y-6 lg:sticky lg:top-28">
               <BookingPanel product={item} />
               <div className="rounded-sm border border-border bg-card p-6 shadow-soft">
-              <p className="eyebrow mb-3">From</p>
-              <p className="font-serif text-3xl">{formatMoney(item.priceFrom, item.priceUnit)}</p>
-              <ul className="mt-6 space-y-3 border-t border-border pt-6 text-sm">
-                {item.duration && (
+                <p className="eyebrow mb-3">From</p>
+                <p className="font-serif text-3xl">{formatMoney(item.priceFrom, item.priceUnit)}</p>
+                <ul className="mt-6 space-y-3 border-t border-border pt-6 text-sm">
+                  {item.duration && (
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span>{item.duration}</span>
+                    </li>
+                  )}
+                  {item.capacity && (
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Capacity</span>
+                      <span>{item.capacity}</span>
+                    </li>
+                  )}
+                  {item.operator && (
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Operator</span>
+                      <span>{item.operator}</span>
+                    </li>
+                  )}
                   <li className="flex justify-between">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span>{item.duration}</span>
+                    <span className="text-muted-foreground">Location</span>
+                    <span>{item.location}</span>
                   </li>
-                )}
-                {item.capacity && (
-                  <li className="flex justify-between">
-                    <span className="text-muted-foreground">Capacity</span>
-                    <span>{item.capacity}</span>
-                  </li>
-                )}
-                {item.operator && (
-                  <li className="flex justify-between">
-                    <span className="text-muted-foreground">Operator</span>
-                    <span>{item.operator}</span>
-                  </li>
-                )}
-                <li className="flex justify-between">
-                  <span className="text-muted-foreground">Location</span>
-                  <span>{item.location}</span>
-                </li>
-              </ul>
-              <div className="mt-6 flex flex-col gap-2">
-                <QuoteRequestDialog
-                  product={item}
-                  trigger={<Button className="w-full">Request a quote</Button>}
-                />
-                <Link to="/trip-builder">
-                  <Button variant="outline" className="w-full">
-                    Customise
-                  </Button>
-                </Link>
-                <div className="flex gap-2">
-                  <Button variant="ghost" className="flex-1" onClick={onSave}>
-                    <Heart className="mr-2 h-4 w-4" /> Save
-                  </Button>
-                  <Button variant="ghost" className="flex-1" onClick={onShare}>
-                    <Share2 className="mr-2 h-4 w-4" /> Share
-                  </Button>
+                </ul>
+                <div className="mt-6 flex flex-col gap-2">
+                  <QuoteRequestDialog
+                    product={item}
+                    trigger={<Button className="w-full">Request a quote</Button>}
+                  />
+                  <Link to="/trip-builder">
+                    <Button variant="outline" className="w-full">
+                      Customise
+                    </Button>
+                  </Link>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" className="flex-1" onClick={onSave}>
+                      <Heart className="mr-2 h-4 w-4" /> Save
+                    </Button>
+                    <Button variant="ghost" className="flex-1" onClick={onShare}>
+                      <Share2 className="mr-2 h-4 w-4" /> Share
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <p className="mt-5 border-t border-border pt-4 text-xs text-muted-foreground">
-                Members receive priority allocation, complimentary upgrades where available and a
-                dedicated specialist for this {meta.itemNoun}.
-              </p>
+                <p className="mt-5 border-t border-border pt-4 text-xs text-muted-foreground">
+                  Members receive priority allocation, complimentary upgrades where available and a
+                  dedicated specialist for this {meta.itemNoun}.
+                </p>
               </div>
             </aside>
           </div>
