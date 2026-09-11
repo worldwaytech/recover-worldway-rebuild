@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -502,6 +502,431 @@ export type Database = {
           subject?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      cruisea_booking_documents: {
+        Row: {
+          booking_id: string
+          created_at: string
+          document_type: string
+          document_url: string | null
+          id: string
+          issued_at: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          document_type: string
+          document_url?: string | null
+          id?: string
+          issued_at?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          document_type?: string
+          document_url?: string | null
+          id?: string
+          issued_at?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cruisea_booking_documents_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "cruisea_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cruisea_booking_passengers: {
+        Row: {
+          booking_id: string
+          created_at: string
+          date_of_birth: string | null
+          first_name: string
+          id: string
+          last_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          date_of_birth?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          date_of_birth?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cruisea_booking_passengers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "cruisea_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cruisea_bookings: {
+        Row: {
+          booking_reference: string | null
+          cabin_id: string
+          commission_amount: number
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          currency: string
+          guest_count: number
+          hold_expires_at: string | null
+          id: string
+          net_price: number
+          notes: string | null
+          payment_status: string
+          sailing_id: string
+          status: string
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_reference?: string | null
+          cabin_id: string
+          commission_amount?: number
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          guest_count: number
+          hold_expires_at?: string | null
+          id?: string
+          net_price?: number
+          notes?: string | null
+          payment_status?: string
+          sailing_id: string
+          status?: string
+          total_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_reference?: string | null
+          cabin_id?: string
+          commission_amount?: number
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          guest_count?: number
+          hold_expires_at?: string | null
+          id?: string
+          net_price?: number
+          notes?: string | null
+          payment_status?: string
+          sailing_id?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cruisea_bookings_cabin_id_fkey"
+            columns: ["cabin_id"]
+            isOneToOne: false
+            referencedRelation: "cruisea_cabins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cruisea_bookings_sailing_id_fkey"
+            columns: ["sailing_id"]
+            isOneToOne: false
+            referencedRelation: "cruisea_sailings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cruisea_cabins: {
+        Row: {
+          available_inventory: number
+          category: string
+          created_at: string
+          id: string
+          label: string
+          price_per_guest: number
+          sailing_id: string
+          updated_at: string
+        }
+        Insert: {
+          available_inventory: number
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          price_per_guest: number
+          sailing_id: string
+          updated_at?: string
+        }
+        Update: {
+          available_inventory?: number
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          price_per_guest?: number
+          sailing_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cruisea_cabins_sailing_id_fkey"
+            columns: ["sailing_id"]
+            isOneToOne: false
+            referencedRelation: "cruisea_sailings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cruisea_customer_profiles: {
+        Row: {
+          agency_code: string | null
+          company_name: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          preferred_currency: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_code?: string | null
+          company_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          preferred_currency?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_code?: string | null
+          company_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          preferred_currency?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cruisea_quotations: {
+        Row: {
+          booking_id: string | null
+          commission_amount: number
+          created_at: string
+          currency: string
+          customer_name: string
+          gross_price: number
+          id: string
+          net_price: number
+          notes: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          commission_amount?: number
+          created_at?: string
+          currency?: string
+          customer_name: string
+          gross_price?: number
+          id?: string
+          net_price?: number
+          notes?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          commission_amount?: number
+          created_at?: string
+          currency?: string
+          customer_name?: string
+          gross_price?: number
+          id?: string
+          net_price?: number
+          notes?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cruisea_quotations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "cruisea_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cruisea_sailings: {
+        Row: {
+          area_tags: string[]
+          country: string
+          created_at: string
+          cruise_line: string
+          cruise_type: string
+          departure_date: string
+          description: string
+          disembarkation_port: string
+          duration_nights: number
+          embarkation_port: string
+          highlights: string[]
+          id: string
+          image_url: string | null
+          is_demo: boolean
+          package_options: string[]
+          region: string
+          ship_name: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area_tags?: string[]
+          country: string
+          created_at?: string
+          cruise_line: string
+          cruise_type: string
+          departure_date: string
+          description: string
+          disembarkation_port: string
+          duration_nights: number
+          embarkation_port: string
+          highlights?: string[]
+          id?: string
+          image_url?: string | null
+          is_demo?: boolean
+          package_options?: string[]
+          region: string
+          ship_name: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area_tags?: string[]
+          country?: string
+          created_at?: string
+          cruise_line?: string
+          cruise_type?: string
+          departure_date?: string
+          description?: string
+          disembarkation_port?: string
+          duration_nights?: number
+          embarkation_port?: string
+          highlights?: string[]
+          id?: string
+          image_url?: string | null
+          is_demo?: boolean
+          package_options?: string[]
+          region?: string
+          ship_name?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cruisea_saved_searches: {
+        Row: {
+          company: string | null
+          created_at: string
+          cruise_type: string | null
+          departure_date: string | null
+          departure_window: string | null
+          duration: string | null
+          id: string
+          is_active: boolean
+          name: string
+          package_filters: string[]
+          query: string | null
+          region: string | null
+          ship: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          cruise_type?: string | null
+          departure_date?: string | null
+          departure_window?: string | null
+          duration?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          package_filters?: string[]
+          query?: string | null
+          region?: string | null
+          ship?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          cruise_type?: string | null
+          departure_date?: string | null
+          departure_window?: string | null
+          duration?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          package_filters?: string[]
+          query?: string | null
+          region?: string | null
+          ship?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

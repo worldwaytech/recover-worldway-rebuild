@@ -70,6 +70,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as YachtsIndexRouteImport } from './routes/yachts.index'
 import { Route as WorldCruisesIndexRouteImport } from './routes/world-cruises.index'
 import { Route as WellnessIndexRouteImport } from './routes/wellness.index'
+import { Route as VoyagesIndexRouteImport } from './routes/voyages.index'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VillasIndexRouteImport } from './routes/villas.index'
 import { Route as TtcIndexRouteImport } from './routes/ttc.index'
@@ -173,10 +174,12 @@ import { Route as AccountDocumentsRouteImport } from './routes/account.documents
 import { Route as AccountBookingsRouteImport } from './routes/account.bookings'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as VoyagesCruiseaIndexRouteImport } from './routes/voyages.cruisea.index'
 import { Route as ToursBrowseIndexRouteImport } from './routes/tours.browse.index'
 import { Route as DestinationsRegionIndexRouteImport } from './routes/destinations.$region.index'
 import { Route as CrystalCruisesShipsIndexRouteImport } from './routes/crystal-cruises.ships.index'
 import { Route as CrystalCruisesDestinationsIndexRouteImport } from './routes/crystal-cruises.destinations.index'
+import { Route as VoyagesCruiseaBookingsRouteImport } from './routes/voyages.cruisea.bookings'
 import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
@@ -193,6 +196,8 @@ import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as DestinationsRegionCountryIndexRouteImport } from './routes/destinations.$region.$country.index'
+import { Route as VoyagesCruiseaSailingIdRouteImport } from './routes/voyages.cruisea.sailing.$id'
+import { Route as VoyagesCruiseaBookingIdRouteImport } from './routes/voyages.cruisea.booking.$id'
 import { Route as DestinationsRegionCountryDestinationRouteImport } from './routes/destinations.$region.$country.$destination'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
@@ -501,6 +506,11 @@ const WellnessIndexRoute = WellnessIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WellnessRoute,
+} as any)
+const VoyagesIndexRoute = VoyagesIndexRouteImport.update({
+  id: '/voyages/',
+  path: '/voyages/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VisaIndexRoute = VisaIndexRouteImport.update({
   id: '/',
@@ -1020,6 +1030,11 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const VoyagesCruiseaIndexRoute = VoyagesCruiseaIndexRouteImport.update({
+  id: '/voyages/cruisea/',
+  path: '/voyages/cruisea/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToursBrowseIndexRoute = ToursBrowseIndexRouteImport.update({
   id: '/browse/',
   path: '/browse/',
@@ -1042,6 +1057,11 @@ const CrystalCruisesDestinationsIndexRoute =
     path: '/destinations/',
     getParentRoute: () => CrystalCruisesRoute,
   } as any)
+const VoyagesCruiseaBookingsRoute = VoyagesCruiseaBookingsRouteImport.update({
+  id: '/voyages/cruisea/bookings',
+  path: '/voyages/cruisea/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TtcBrandSlugRoute = TtcBrandSlugRouteImport.update({
   id: '/ttc/$brand/$slug',
   path: '/ttc/$brand/$slug',
@@ -1128,6 +1148,16 @@ const DestinationsRegionCountryIndexRoute =
     path: '/',
     getParentRoute: () => DestinationsRegionCountryRoute,
   } as any)
+const VoyagesCruiseaSailingIdRoute = VoyagesCruiseaSailingIdRouteImport.update({
+  id: '/voyages/cruisea/sailing/$id',
+  path: '/voyages/cruisea/sailing/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoyagesCruiseaBookingIdRoute = VoyagesCruiseaBookingIdRouteImport.update({
+  id: '/voyages/cruisea/booking/$id',
+  path: '/voyages/cruisea/booking/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DestinationsRegionCountryDestinationRoute =
   DestinationsRegionCountryDestinationRouteImport.update({
     id: '/$destination',
@@ -1309,6 +1339,7 @@ export interface FileRoutesByFullPath {
   '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/voyages/': typeof VoyagesIndexRoute
   '/wellness/': typeof WellnessIndexRoute
   '/world-cruises/': typeof WorldCruisesIndexRoute
   '/yachts/': typeof YachtsIndexRoute
@@ -1327,13 +1358,17 @@ export interface FileRoutesByFullPath {
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
+  '/voyages/cruisea/bookings': typeof VoyagesCruiseaBookingsRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
   '/tours/browse/': typeof ToursBrowseIndexRoute
+  '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
+  '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
+  '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
 }
 export interface FileRoutesByTo {
@@ -1469,6 +1504,7 @@ export interface FileRoutesByTo {
   '/ttc': typeof TtcIndexRoute
   '/villas': typeof VillasIndexRoute
   '/visa': typeof VisaIndexRoute
+  '/voyages': typeof VoyagesIndexRoute
   '/wellness': typeof WellnessIndexRoute
   '/world-cruises': typeof WorldCruisesIndexRoute
   '/yachts': typeof YachtsIndexRoute
@@ -1486,13 +1522,17 @@ export interface FileRoutesByTo {
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
+  '/voyages/cruisea/bookings': typeof VoyagesCruiseaBookingsRoute
   '/crystal-cruises/destinations': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region': typeof DestinationsRegionIndexRoute
   '/tours/browse': typeof ToursBrowseIndexRoute
+  '/voyages/cruisea': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
+  '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
+  '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryIndexRoute
 }
 export interface FileRoutesById {
@@ -1658,6 +1698,7 @@ export interface FileRoutesById {
   '/ttc/': typeof TtcIndexRoute
   '/villas/': typeof VillasIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/voyages/': typeof VoyagesIndexRoute
   '/wellness/': typeof WellnessIndexRoute
   '/world-cruises/': typeof WorldCruisesIndexRoute
   '/yachts/': typeof YachtsIndexRoute
@@ -1676,13 +1717,17 @@ export interface FileRoutesById {
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
+  '/voyages/cruisea/bookings': typeof VoyagesCruiseaBookingsRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
   '/crystal-cruises/ships/': typeof CrystalCruisesShipsIndexRoute
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
   '/tours/browse/': typeof ToursBrowseIndexRoute
+  '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
+  '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
+  '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
 }
 export interface FileRouteTypes {
@@ -1849,6 +1894,7 @@ export interface FileRouteTypes {
     | '/ttc/'
     | '/villas/'
     | '/visa/'
+    | '/voyages/'
     | '/wellness/'
     | '/world-cruises/'
     | '/yachts/'
@@ -1867,13 +1913,17 @@ export interface FileRouteTypes {
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/ttc/$brand/$slug'
+    | '/voyages/cruisea/bookings'
     | '/crystal-cruises/destinations/'
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
     | '/tours/browse/'
+    | '/voyages/cruisea/'
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
+    | '/voyages/cruisea/booking/$id'
+    | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -2009,6 +2059,7 @@ export interface FileRouteTypes {
     | '/ttc'
     | '/villas'
     | '/visa'
+    | '/voyages'
     | '/wellness'
     | '/world-cruises'
     | '/yachts'
@@ -2026,13 +2077,17 @@ export interface FileRouteTypes {
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/ttc/$brand/$slug'
+    | '/voyages/cruisea/bookings'
     | '/crystal-cruises/destinations'
     | '/crystal-cruises/ships'
     | '/destinations/$region'
     | '/tours/browse'
+    | '/voyages/cruisea'
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
+    | '/voyages/cruisea/booking/$id'
+    | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country'
   id:
     | '__root__'
@@ -2197,6 +2252,7 @@ export interface FileRouteTypes {
     | '/ttc/'
     | '/villas/'
     | '/visa/'
+    | '/voyages/'
     | '/wellness/'
     | '/world-cruises/'
     | '/yachts/'
@@ -2215,13 +2271,17 @@ export interface FileRouteTypes {
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/ttc/$brand/$slug'
+    | '/voyages/cruisea/bookings'
     | '/crystal-cruises/destinations/'
     | '/crystal-cruises/ships/'
     | '/destinations/$region/'
     | '/tours/browse/'
+    | '/voyages/cruisea/'
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
+    | '/voyages/cruisea/booking/$id'
+    | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
   fileRoutesById: FileRoutesById
 }
@@ -2294,6 +2354,7 @@ export interface RootRouteChildren {
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
+  VoyagesIndexRoute: typeof VoyagesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
@@ -2301,8 +2362,12 @@ export interface RootRouteChildren {
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
+  VoyagesCruiseaBookingsRoute: typeof VoyagesCruiseaBookingsRoute
+  VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
   ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
+  VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
+  VoyagesCruiseaSailingIdRoute: typeof VoyagesCruiseaSailingIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2733,6 +2798,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/wellness/'
       preLoaderRoute: typeof WellnessIndexRouteImport
       parentRoute: typeof WellnessRoute
+    }
+    '/voyages/': {
+      id: '/voyages/'
+      path: '/voyages'
+      fullPath: '/voyages/'
+      preLoaderRoute: typeof VoyagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/visa/': {
       id: '/visa/'
@@ -3455,6 +3527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/voyages/cruisea/': {
+      id: '/voyages/cruisea/'
+      path: '/voyages/cruisea'
+      fullPath: '/voyages/cruisea/'
+      preLoaderRoute: typeof VoyagesCruiseaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tours/browse/': {
       id: '/tours/browse/'
       path: '/browse'
@@ -3482,6 +3561,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/crystal-cruises/destinations/'
       preLoaderRoute: typeof CrystalCruisesDestinationsIndexRouteImport
       parentRoute: typeof CrystalCruisesRoute
+    }
+    '/voyages/cruisea/bookings': {
+      id: '/voyages/cruisea/bookings'
+      path: '/voyages/cruisea/bookings'
+      fullPath: '/voyages/cruisea/bookings'
+      preLoaderRoute: typeof VoyagesCruiseaBookingsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/ttc/$brand/$slug': {
       id: '/ttc/$brand/$slug'
@@ -3594,6 +3680,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/destinations/$region/$country/'
       preLoaderRoute: typeof DestinationsRegionCountryIndexRouteImport
       parentRoute: typeof DestinationsRegionCountryRoute
+    }
+    '/voyages/cruisea/sailing/$id': {
+      id: '/voyages/cruisea/sailing/$id'
+      path: '/voyages/cruisea/sailing/$id'
+      fullPath: '/voyages/cruisea/sailing/$id'
+      preLoaderRoute: typeof VoyagesCruiseaSailingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voyages/cruisea/booking/$id': {
+      id: '/voyages/cruisea/booking/$id'
+      path: '/voyages/cruisea/booking/$id'
+      fullPath: '/voyages/cruisea/booking/$id'
+      preLoaderRoute: typeof VoyagesCruiseaBookingIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/destinations/$region/$country/$destination': {
       id: '/destinations/$region/$country/$destination'
@@ -4189,6 +4289,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
+  VoyagesIndexRoute: VoyagesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
@@ -4196,8 +4297,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
   TtcBrandSlugRoute: TtcBrandSlugRoute,
+  VoyagesCruiseaBookingsRoute: VoyagesCruiseaBookingsRoute,
+  VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,
   ApiPublicHooksCrystalHoldSweepRoute: ApiPublicHooksCrystalHoldSweepRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
+  VoyagesCruiseaBookingIdRoute: VoyagesCruiseaBookingIdRoute,
+  VoyagesCruiseaSailingIdRoute: VoyagesCruiseaSailingIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
