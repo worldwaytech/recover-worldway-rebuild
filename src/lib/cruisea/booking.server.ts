@@ -345,3 +345,44 @@ export async function deleteCruiseaSavedSearch(ctx: Ctx, id: string) {
   if (error) throw new Error(error.message);
   return { ok: true };
 }
+
+/**
+ * Release cabins whose 48-hour hold lapsed without confirmation. Runs with the
+ * service-role client from the scheduled hook. Rows are claimed conditionally
+ * (status still "Held" and hold_expires_at unchanged) so concurrent or replayed
+ * runs can never release the same cabin twice, and confirmed or cancelled
+ * bookings are never touched.
+ */
+export async function sweepExpiredCruiseaHolds(limit = 25) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const now = new Date().toISOString();
+  const { data, error } = await supabaseAdmin
+    .from("cruisea_bookings")
+    .select("id, cabin_id, hold_expires_at")
+    .eq("status", "Held")
+    .not("hold_expires_at", "is", null)
+    .lt("hold_expires_at", now)
+    .order("hold_expires_at", { ascending: true })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+
+  let released = 0;
+  let skipped = 0;
+  for (const row of data ?? []) {
+    const { data: claimed } = await supabaseAdmin
+      .from("cruisea_bookings")
+      .update({ status: "Expired", payment_status: "Cancelled", hold_expires_at: null })
+      .eq("id", row.id)
+      .eq("status", "Held")
+      .eq("hold_expires_at", row.hold_expires_at)
+      .select("id")
+      .maybeSingle();
+    if (!claimed) {
+      skipped += 1;
+      continue;
+    }
+    await releaseInventory(row.cabin_id);
+    released += 1;
+  }
+  return { scanned: (data ?? []).length, released, skipped };
+}

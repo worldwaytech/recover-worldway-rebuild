@@ -17,6 +17,10 @@ import {
 } from "@/lib/cruisea/cruisea.functions";
 import { useCruiseaSession } from "./use-cruisea-session";
 
+function holdLapsed(holdExpiresAt: string): boolean {
+  return new Date(holdExpiresAt).getTime() < Date.now();
+}
+
 function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   if (status === "Confirmed") return "default";
   if (status === "Cancelled") return "destructive";
@@ -213,9 +217,16 @@ export function CruiseaBookingDetailView({ bookingId }: { bookingId: string }) {
         </dl>
 
         {booking.holdExpiresAt && booking.status === "Held" ? (
-          <p className="mt-4 text-xs text-primary">
-            Hold expires {new Date(booking.holdExpiresAt).toLocaleString("en-GB")}.
-          </p>
+          holdLapsed(booking.holdExpiresAt) ? (
+            <p className="mt-4 text-xs text-destructive">
+              This hold lapsed on {new Date(booking.holdExpiresAt).toLocaleString("en-GB")}. The
+              cabin has been returned to sale — please search again to re-hold.
+            </p>
+          ) : (
+            <p className="mt-4 text-xs text-primary">
+              Hold expires {new Date(booking.holdExpiresAt).toLocaleString("en-GB")}.
+            </p>
+          )
         ) : null}
 
         {booking.passengers.length ? (
@@ -239,7 +250,8 @@ export function CruiseaBookingDetailView({ bookingId }: { bookingId: string }) {
         ) : null}
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {booking.status === "Held" || booking.status === "Inquiry" ? (
+          {(booking.status === "Held" && !(booking.holdExpiresAt && holdLapsed(booking.holdExpiresAt))) ||
+          booking.status === "Inquiry" ? (
             <Button onClick={onConfirm}>Confirm this voyage</Button>
           ) : null}
           {booking.status !== "Cancelled" ? (
