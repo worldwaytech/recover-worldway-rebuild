@@ -7,7 +7,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "crypto";
 
 function authorised(request: Request): boolean {
-  const secret = (process.env["CRUISEA_HOLD_SWEEP_SECRET"] ?? "").trim();
+  // The dedicated key is preferred; the shared hold-sweep key already held by the
+  // database scheduler is accepted as a fallback so one scheduler credential works.
+  const secret = (
+    process.env["CRUISEA_HOLD_SWEEP_SECRET"] ||
+    process.env["CRYSTAL_HOLD_SWEEP_SECRET"] ||
+    ""
+  ).trim();
   if (!secret) return false;
   const header = request.headers.get("x-cruisea-sweep-secret") ?? "";
   const a = Buffer.from(header);
