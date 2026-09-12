@@ -17,6 +17,10 @@ import {
 } from "@/lib/cruisea/cruisea.functions";
 import { useCruiseaSession } from "./use-cruisea-session";
 
+function holdLapsed(holdExpiresAt: string): boolean {
+  return new Date(holdExpiresAt).getTime() < Date.now();
+}
+
 function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   if (status === "Confirmed") return "default";
   if (status === "Cancelled") return "destructive";
@@ -246,7 +250,8 @@ export function CruiseaBookingDetailView({ bookingId }: { bookingId: string }) {
         ) : null}
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {booking.status === "Held" || booking.status === "Inquiry" ? (
+          {(booking.status === "Held" && !(booking.holdExpiresAt && holdLapsed(booking.holdExpiresAt))) ||
+          booking.status === "Inquiry" ? (
             <Button onClick={onConfirm}>Confirm this voyage</Button>
           ) : null}
           {booking.status !== "Cancelled" ? (
