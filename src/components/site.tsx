@@ -104,8 +104,8 @@ export function JourneyCard({
             </Button>
           ) : (
             <Link
-              to="/journeys/$code"
-              params={{ code: journey.slug }}
+              to="/all-journeys/$slug"
+              params={{ slug: journey.slug }}
               className="text-xs uppercase tracking-widest text-gold"
             >
               View Journey →
