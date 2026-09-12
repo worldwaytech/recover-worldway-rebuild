@@ -55,7 +55,7 @@ export function JourneyCard({
   return (
     <article className="group flex flex-col overflow-hidden rounded-sm border border-border bg-card shadow-soft transition-shadow hover:shadow-elegant">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <Link to="/journeys/$code" params={{ code: journey.slug }} className="block h-full">
+        <Link to="/all-journeys/$slug" params={{ slug: journey.slug }} className="block h-full">
           <img
             src={journey.image}
             alt={journeyTitle}
@@ -86,7 +86,7 @@ export function JourneyCard({
             <Clock className="h-3.5 w-3.5" /> {journey.duration} days
           </span>
         </div>
-        <Link to="/journeys/$code" params={{ code: journey.slug }} className="mt-2 block">
+        <Link to="/all-journeys/$slug" params={{ slug: journey.slug }} className="mt-2 block">
           <h3 className="font-serif text-xl leading-snug group-hover:text-gold">{journeyTitle}</h3>
         </Link>
         <p className="mt-2 line-clamp-2 flex-1 text-sm text-muted-foreground">{journey.overview}</p>
