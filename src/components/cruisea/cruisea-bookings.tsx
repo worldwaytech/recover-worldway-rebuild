@@ -213,9 +213,16 @@ export function CruiseaBookingDetailView({ bookingId }: { bookingId: string }) {
         </dl>
 
         {booking.holdExpiresAt && booking.status === "Held" ? (
-          <p className="mt-4 text-xs text-primary">
-            Hold expires {new Date(booking.holdExpiresAt).toLocaleString("en-GB")}.
-          </p>
+          holdLapsed(booking.holdExpiresAt) ? (
+            <p className="mt-4 text-xs text-destructive">
+              This hold lapsed on {new Date(booking.holdExpiresAt).toLocaleString("en-GB")}. The
+              cabin has been returned to sale — please search again to re-hold.
+            </p>
+          ) : (
+            <p className="mt-4 text-xs text-primary">
+              Hold expires {new Date(booking.holdExpiresAt).toLocaleString("en-GB")}.
+            </p>
+          )
         ) : null}
 
         {booking.passengers.length ? (
