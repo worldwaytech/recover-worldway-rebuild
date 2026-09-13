@@ -1305,6 +1305,405 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          actor_email: string | null
+          created_at: string
+          detail: Json
+          id: string
+          provider_key: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          actor_email?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          provider_key?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          actor_email?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          provider_key?: string | null
+        }
+        Relationships: []
+      }
+      integration_logs: {
+        Row: {
+          attempts: number | null
+          created_at: string
+          detail: Json
+          http_status: number | null
+          id: string
+          latency_ms: number | null
+          level: string
+          message: string | null
+          operation: string
+          provider_key: string
+          run_id: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string
+          detail?: Json
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          level?: string
+          message?: string | null
+          operation: string
+          provider_key: string
+          run_id?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string
+          detail?: Json
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          level?: string
+          message?: string | null
+          operation?: string
+          provider_key?: string
+          run_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      integration_products: {
+        Row: {
+          availability_state: string | null
+          conflict_state: string
+          created_at: string
+          currency: string | null
+          detail_path: string | null
+          external_id: string
+          fingerprint: string | null
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          price_from: number | null
+          product_type: string
+          provider_key: string
+          slug: string | null
+          source_table: string | null
+          supplier_record: Json
+          sync_status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          availability_state?: string | null
+          conflict_state?: string
+          created_at?: string
+          currency?: string | null
+          detail_path?: string | null
+          external_id: string
+          fingerprint?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          price_from?: number | null
+          product_type?: string
+          provider_key: string
+          slug?: string | null
+          source_table?: string | null
+          supplier_record?: Json
+          sync_status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          availability_state?: string | null
+          conflict_state?: string
+          created_at?: string
+          currency?: string | null
+          detail_path?: string | null
+          external_id?: string
+          fingerprint?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          price_from?: number | null
+          product_type?: string
+          provider_key?: string
+          slug?: string | null
+          source_table?: string | null
+          supplier_record?: Json
+          sync_status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_providers: {
+        Row: {
+          adapter: string | null
+          auth_header: string | null
+          auth_kind: string
+          auto_sync_enabled: boolean
+          auto_sync_interval_minutes: number
+          base_url: string
+          cache_ttl_seconds: number
+          capabilities: string[]
+          category: string
+          collections: string[]
+          conflict_policy: string
+          connection_checked_at: string | null
+          connection_detail: string | null
+          connection_state: string
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          dedupe_keys: string[]
+          docs_url: string | null
+          enabled: boolean
+          endpoints: Json
+          field_map: Json
+          id: string
+          last_sync_at: string | null
+          last_sync_status: string | null
+          max_retries: number
+          name: string
+          notes: string | null
+          origin: string
+          pagination: Json
+          provider_key: string
+          rate_limit_per_second: number
+          record_path: string | null
+          scope: string | null
+          secret_names: string[]
+          summary: string
+          sync_strategy: string
+          timeout_ms: number
+          token_path: string | null
+          updated_at: string
+          webhook_secret_name: string | null
+        }
+        Insert: {
+          adapter?: string | null
+          auth_header?: string | null
+          auth_kind?: string
+          auto_sync_enabled?: boolean
+          auto_sync_interval_minutes?: number
+          base_url?: string
+          cache_ttl_seconds?: number
+          capabilities?: string[]
+          category?: string
+          collections?: string[]
+          conflict_policy?: string
+          connection_checked_at?: string | null
+          connection_detail?: string | null
+          connection_state?: string
+          contract_status?: string
+          created_at?: string
+          created_by?: string | null
+          dedupe_keys?: string[]
+          docs_url?: string | null
+          enabled?: boolean
+          endpoints?: Json
+          field_map?: Json
+          id?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          max_retries?: number
+          name: string
+          notes?: string | null
+          origin?: string
+          pagination?: Json
+          provider_key: string
+          rate_limit_per_second?: number
+          record_path?: string | null
+          scope?: string | null
+          secret_names?: string[]
+          summary?: string
+          sync_strategy?: string
+          timeout_ms?: number
+          token_path?: string | null
+          updated_at?: string
+          webhook_secret_name?: string | null
+        }
+        Update: {
+          adapter?: string | null
+          auth_header?: string | null
+          auth_kind?: string
+          auto_sync_enabled?: boolean
+          auto_sync_interval_minutes?: number
+          base_url?: string
+          cache_ttl_seconds?: number
+          capabilities?: string[]
+          category?: string
+          collections?: string[]
+          conflict_policy?: string
+          connection_checked_at?: string | null
+          connection_detail?: string | null
+          connection_state?: string
+          contract_status?: string
+          created_at?: string
+          created_by?: string | null
+          dedupe_keys?: string[]
+          docs_url?: string | null
+          enabled?: boolean
+          endpoints?: Json
+          field_map?: Json
+          id?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          max_retries?: number
+          name?: string
+          notes?: string | null
+          origin?: string
+          pagination?: Json
+          provider_key?: string
+          rate_limit_per_second?: number
+          record_path?: string | null
+          scope?: string | null
+          secret_names?: string[]
+          summary?: string
+          sync_strategy?: string
+          timeout_ms?: number
+          token_path?: string | null
+          updated_at?: string
+          webhook_secret_name?: string | null
+        }
+        Relationships: []
+      }
+      integration_settings: {
+        Row: {
+          global_auto_sync: boolean
+          global_enabled: boolean
+          id: boolean
+          maintenance_paused: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          global_auto_sync?: boolean
+          global_enabled?: boolean
+          id?: boolean
+          maintenance_paused?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          global_auto_sync?: boolean
+          global_enabled?: boolean
+          id?: boolean
+          maintenance_paused?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      integration_sync_runs: {
+        Row: {
+          attempts: number
+          created_count: number
+          cursor: string | null
+          discovered: number
+          duration_ms: number | null
+          error: string | null
+          external_id: string | null
+          failed_count: number
+          finished_at: string | null
+          id: string
+          idempotency_key: string | null
+          initiated_by: string | null
+          provider_key: string
+          scope: string
+          started_at: string
+          status: string
+          trigger: string
+          unchanged_count: number
+          updated_count: number
+        }
+        Insert: {
+          attempts?: number
+          created_count?: number
+          cursor?: string | null
+          discovered?: number
+          duration_ms?: number | null
+          error?: string | null
+          external_id?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          initiated_by?: string | null
+          provider_key: string
+          scope?: string
+          started_at?: string
+          status?: string
+          trigger?: string
+          unchanged_count?: number
+          updated_count?: number
+        }
+        Update: {
+          attempts?: number
+          created_count?: number
+          cursor?: string | null
+          discovered?: number
+          duration_ms?: number | null
+          error?: string | null
+          external_id?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          initiated_by?: string | null
+          provider_key?: string
+          scope?: string
+          started_at?: string
+          status?: string
+          trigger?: string
+          unchanged_count?: number
+          updated_count?: number
+        }
+        Relationships: []
+      }
+      integration_webhook_events: {
+        Row: {
+          error: string | null
+          event_type: string | null
+          id: string
+          payload: Json
+          processed: boolean
+          provider_key: string
+          received_at: string
+          signature_valid: boolean
+        }
+        Insert: {
+          error?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          processed?: boolean
+          provider_key: string
+          received_at?: string
+          signature_valid?: boolean
+        }
+        Update: {
+          error?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          processed?: boolean
+          provider_key?: string
+          received_at?: string
+          signature_valid?: boolean
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
