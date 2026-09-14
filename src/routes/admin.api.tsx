@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { refreshPartnerManifest, getPartnerManifest } from "@/lib/wwl.functions";
@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Copy, RefreshCw, Ban, Plus, Trash2 } from "lucide-react";
+import { Copy, RefreshCw, Ban, Plus, Trash2, Network } from "lucide-react";
 import { StatTile } from "@/components/portal-shell";
 
 export const Route = createFileRoute("/admin/api")({
@@ -47,6 +47,20 @@ function ApiPage() {
       </div>
 
       <PartnerManifestPanel />
+
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-primary/30 bg-primary/5 p-5">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <Network className="h-4 w-4" /> Universal API & Product Sync Center
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Manage every supplier, health check, product index, webhook and synchronisation run.
+          </p>
+        </div>
+        <Button asChild>
+          <Link to="/admin/integrations">Open Sync Center</Link>
+        </Button>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
