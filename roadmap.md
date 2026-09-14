@@ -1,6 +1,7 @@
 # Roadmap
 
 ## In progress
+- [ ] Audit only: document current Admin/Super Admin, database, products, suppliers, bookings and API architecture; identify completed Universal Sync Center work, gaps, risks and next steps without further implementation.
 - [ ] TTC catalogue import: finish all 856 verified tours (background resumable importer running; brands remaining: Contiki, AAT Kings, Brendan; Costsaver discovery returns 0 URLs).
 - [ ] Validate TTC pages, catalogue data, API fail-closed behaviour, tests, typecheck, build; report final per-brand counts.
 
