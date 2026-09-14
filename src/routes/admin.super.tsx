@@ -4,7 +4,8 @@ import { portal, type PortalUser, type Role } from "@/lib/portal-store";
 import { admin } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
 import { useVerifiedRole } from "@/hooks/use-verified-role";
-import { Activity, ShieldAlert, Database, KeyRound, ScrollText } from "lucide-react";
+import { Activity, ShieldAlert, Database, KeyRound, ScrollText, Network } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { StatTile } from "@/components/portal-shell";
 
 export const Route = createFileRoute("/admin/super")({
@@ -60,6 +61,20 @@ function SuperAdmin() {
           value={String(keys.filter((k) => k.status === "active").length)}
         />
         <StatTile label="Audit events" value={String(audit.length)} />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-primary/30 bg-primary/5 p-5">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <Network className="h-4 w-4" /> Universal API & Product Sync Center
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Provider controls, secure configuration, product provenance and audit trails.
+          </p>
+        </div>
+        <Button asChild>
+          <Link to="/admin/integrations">Manage supplier APIs</Link>
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

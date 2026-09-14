@@ -198,8 +198,10 @@ import { Route as VoyagesCruiseaSailingIdRouteImport } from './routes/voyages.cr
 import { Route as VoyagesCruiseaBookingIdRouteImport } from './routes/voyages.cruisea.booking.$id'
 import { Route as DestinationsRegionCountryDestinationRouteImport } from './routes/destinations.$region.$country.$destination'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
+import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/public/hooks/integration-sync'
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 import { Route as ApiPublicHooksCruiseaHoldSweepRouteImport } from './routes/api/public/hooks/cruisea-hold-sweep'
+import { Route as ApiPublicHooksIntegrationWebhookProviderKeyRouteImport } from './routes/api/public/hooks/integration-webhook.$providerKey'
 
 const YachtsRoute = YachtsRouteImport.update({
   id: '/yachts',
@@ -1159,6 +1161,12 @@ const ApiPublicPartnerFeedPartnerIdRoute =
     path: '/api/public/partner-feed/$partnerId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksIntegrationSyncRoute =
+  ApiPublicHooksIntegrationSyncRouteImport.update({
+    id: '/api/public/hooks/integration-sync',
+    path: '/api/public/hooks/integration-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCrystalHoldSweepRoute =
   ApiPublicHooksCrystalHoldSweepRouteImport.update({
     id: '/api/public/hooks/crystal-hold-sweep',
@@ -1169,6 +1177,12 @@ const ApiPublicHooksCruiseaHoldSweepRoute =
   ApiPublicHooksCruiseaHoldSweepRouteImport.update({
     id: '/api/public/hooks/cruisea-hold-sweep',
     path: '/api/public/hooks/cruisea-hold-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksIntegrationWebhookProviderKeyRoute =
+  ApiPublicHooksIntegrationWebhookProviderKeyRouteImport.update({
+    id: '/api/public/hooks/integration-webhook/$providerKey',
+    path: '/api/public/hooks/integration-webhook/$providerKey',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -1359,11 +1373,13 @@ export interface FileRoutesByFullPath {
   '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
+  '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
+  '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1522,11 +1538,13 @@ export interface FileRoutesByTo {
   '/voyages/cruisea': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
+  '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryIndexRoute
+  '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1716,11 +1734,13 @@ export interface FileRoutesById {
   '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
+  '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
+  '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1911,11 +1931,13 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
+    | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
+    | '/api/public/hooks/integration-webhook/$providerKey'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2074,11 +2096,13 @@ export interface FileRouteTypes {
     | '/voyages/cruisea'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
+    | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country'
+    | '/api/public/hooks/integration-webhook/$providerKey'
   id:
     | '__root__'
     | '/'
@@ -2267,11 +2291,13 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
+    | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
+    | '/api/public/hooks/integration-webhook/$providerKey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2353,9 +2379,11 @@ export interface RootRouteChildren {
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
   ApiPublicHooksCruiseaHoldSweepRoute: typeof ApiPublicHooksCruiseaHoldSweepRoute
   ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
+  ApiPublicHooksIntegrationSyncRoute: typeof ApiPublicHooksIntegrationSyncRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
   VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
   VoyagesCruiseaSailingIdRoute: typeof VoyagesCruiseaSailingIdRoute
+  ApiPublicHooksIntegrationWebhookProviderKeyRoute: typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -3683,6 +3711,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerFeedPartnerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/integration-sync': {
+      id: '/api/public/hooks/integration-sync'
+      path: '/api/public/hooks/integration-sync'
+      fullPath: '/api/public/hooks/integration-sync'
+      preLoaderRoute: typeof ApiPublicHooksIntegrationSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/crystal-hold-sweep': {
       id: '/api/public/hooks/crystal-hold-sweep'
       path: '/api/public/hooks/crystal-hold-sweep'
@@ -3695,6 +3730,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/cruisea-hold-sweep'
       fullPath: '/api/public/hooks/cruisea-hold-sweep'
       preLoaderRoute: typeof ApiPublicHooksCruiseaHoldSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/integration-webhook/$providerKey': {
+      id: '/api/public/hooks/integration-webhook/$providerKey'
+      path: '/api/public/hooks/integration-webhook/$providerKey'
+      fullPath: '/api/public/hooks/integration-webhook/$providerKey'
+      preLoaderRoute: typeof ApiPublicHooksIntegrationWebhookProviderKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -4280,9 +4322,12 @@ const rootRouteChildren: RootRouteChildren = {
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,
   ApiPublicHooksCruiseaHoldSweepRoute: ApiPublicHooksCruiseaHoldSweepRoute,
   ApiPublicHooksCrystalHoldSweepRoute: ApiPublicHooksCrystalHoldSweepRoute,
+  ApiPublicHooksIntegrationSyncRoute: ApiPublicHooksIntegrationSyncRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
   VoyagesCruiseaBookingIdRoute: VoyagesCruiseaBookingIdRoute,
   VoyagesCruiseaSailingIdRoute: VoyagesCruiseaSailingIdRoute,
+  ApiPublicHooksIntegrationWebhookProviderKeyRoute:
+    ApiPublicHooksIntegrationWebhookProviderKeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

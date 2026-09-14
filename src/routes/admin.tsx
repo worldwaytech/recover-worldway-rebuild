@@ -17,6 +17,7 @@ import {
   Settings,
   BadgeCheck,
   PlugZap,
+  Network,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -36,6 +37,7 @@ const NAV = [
   { to: "/admin/operations", label: "Booking operations", icon: <ClipboardList className="h-4 w-4" /> },
   { to: "/admin/payments", label: "Payments", icon: <CreditCard className="h-4 w-4" /> },
   { to: "/admin/api", label: "API Management", icon: <KeyRound className="h-4 w-4" /> },
+  { to: "/admin/integrations", label: "API & Sync Center", icon: <Network className="h-4 w-4" /> },
   { to: "/admin/partners", label: "Partner connectors", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/crystal", label: "Crystal Cruises", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/tours", label: "Tours connector", icon: <PlugZap className="h-4 w-4" /> },
