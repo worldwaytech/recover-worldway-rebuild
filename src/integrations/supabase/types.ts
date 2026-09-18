@@ -1333,7 +1333,15 @@ export type Database = {
           id?: string
           provider_key?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_audit_provider_fk"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["provider_key"]
+          },
+        ]
       }
       integration_logs: {
         Row: {
@@ -1378,7 +1386,15 @@ export type Database = {
           run_id?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_logs_provider_fk"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["provider_key"]
+          },
+        ]
       }
       integration_products: {
         Row: {
@@ -1444,7 +1460,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_products_provider_fk"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["provider_key"]
+          },
+        ]
       }
       integration_providers: {
         Row: {
@@ -1669,40 +1693,71 @@ export type Database = {
           unchanged_count?: number
           updated_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_sync_runs_provider_fk"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["provider_key"]
+          },
+        ]
       }
       integration_webhook_events: {
         Row: {
+          attempts: number
           error: string | null
+          event_id: string | null
           event_type: string | null
           id: string
           payload: Json
+          payload_hash: string | null
           processed: boolean
+          processed_at: string | null
           provider_key: string
           received_at: string
+          signature_algorithm: string | null
           signature_valid: boolean
         }
         Insert: {
+          attempts?: number
           error?: string | null
+          event_id?: string | null
           event_type?: string | null
           id?: string
           payload?: Json
+          payload_hash?: string | null
           processed?: boolean
+          processed_at?: string | null
           provider_key: string
           received_at?: string
+          signature_algorithm?: string | null
           signature_valid?: boolean
         }
         Update: {
+          attempts?: number
           error?: string | null
+          event_id?: string | null
           event_type?: string | null
           id?: string
           payload?: Json
+          payload_hash?: string | null
           processed?: boolean
+          processed_at?: string | null
           provider_key?: string
           received_at?: string
+          signature_algorithm?: string | null
           signature_valid?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "integration_webhook_events_provider_fk"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["provider_key"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
