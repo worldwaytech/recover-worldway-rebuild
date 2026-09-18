@@ -1,11 +1,15 @@
 # Roadmap
 
 ## In progress
-- [ ] Audit only: document current Admin/Super Admin, database, products, suppliers, bookings and API architecture; identify completed Universal Sync Center work, gaps, risks and next steps without further implementation.
+- [ ] Complete the Universal API Management & Product Sync Center: resolve audited security and data-integrity findings, replace production-facing demo controls, harden roles/webhooks/audit, connect the product ledger, and verify all supported providers.
+- [ ] Harden booking/payment creation, cancellation, deletion, payment recording and user administration with server-authoritative operations and durable audit trails.
+- [ ] Add provider/product provenance and staff controls across all applicable product surfaces without changing public customer flows.
+- [ ] Validate schema/RLS/foreign keys, supplier fail-closed behavior, automated sync, tests, authenticated workflows and production build.
 - [ ] TTC catalogue import: finish all 856 verified tours (background resumable importer running; brands remaining: Contiki, AAT Kings, Brendan; Costsaver discovery returns 0 URLs).
 - [ ] Validate TTC pages, catalogue data, API fail-closed behaviour, tests, typecheck, build; report final per-brand counts.
 
 ## Done
+- [x] Audit current Admin/Super Admin, database, products, suppliers, bookings and API architecture; identify Universal Sync Center implementation, gaps and risks.
 - [x] Imported the WorldwayLuxe "All Journeys" catalogue (263 journeys, 38 destinations) into /all-journeys with listing + detail pages and JOURNEYS → ALL JOURNEYS nav entry.
 
 ## Queued
