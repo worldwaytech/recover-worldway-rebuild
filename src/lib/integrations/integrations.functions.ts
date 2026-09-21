@@ -248,3 +248,26 @@ export const getSupplierProductLedger = createServerFn({ method: "POST" })
       limit: data.limit ?? 100,
     });
   });
+
+/** Resolve a product parked in manual review: accept the supplier record or re-pull it. */
+export const resolveIntegrationConflict = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        providerKey: keySchema,
+        externalId: z.string().min(1).max(200),
+        resolution: z.enum(["accept-supplier", "resync"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertStaff(context as never);
+    const { resolveProductConflict } = await import("./engine.server");
+    return resolveProductConflict(
+      data.providerKey,
+      data.externalId,
+      data.resolution,
+      actor(context),
+    );
+  });
