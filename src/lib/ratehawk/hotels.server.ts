@@ -292,7 +292,21 @@ export async function runRatehawkSandboxValidation(args: {
   );
   // SERP rates carry only a match_hash; the bookable book_hash is issued by the
   // hotelpage call, so a candidate only needs a hotel id at this stage.
-  const firstWithRate = offers.find((o) => o.hid != null);
+  //
+  // In the sandbox only ETG's designated demo hotels accept a booking (any other
+  // hotel answers "rate_not_found" at booking/finish). ETG returns those demo
+  // hotels from multicomplete, so the booking candidate is resolved from there.
+  let candidate = offers.find((o) => o.hid != null);
+  const demo = await suggestDestinations("test");
+  const demoIds = asArray(asRecord(demo.ok ? demo.data : {})["hotels"])
+    .map((row) => str(asRecord(row)["id"]))
+    .filter((id): id is string => Boolean(id));
+  if (demoIds.length) {
+    const demoSearch = await searchHotels({ checkin, checkout, residency, guests, hotelIds: demoIds });
+    const demoOffer = (demoSearch.ok ? normaliseHotelOffers(demoSearch.data) : []).find((o) => o.hid != null);
+    if (demoOffer) candidate = demoOffer;
+  }
+  const firstWithRate = candidate;
   if (!search.ok || !firstWithRate) return finish("Search returned no bookable hotel — the flow stopped here.");
 
   // 3. Hotel details
