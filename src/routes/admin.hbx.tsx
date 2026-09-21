@@ -10,6 +10,7 @@ import {
   getHbxAdminOverview,
   invalidateHbxCache,
   probeHbxBookingReadiness,
+  runHbxHotelCertification,
   runHbxSync,
 } from "@/lib/hbx/hbx.functions";
 import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTable";
