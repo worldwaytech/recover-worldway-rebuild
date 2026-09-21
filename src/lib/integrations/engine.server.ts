@@ -15,6 +15,8 @@ import { createHash, timingSafeEqual } from "crypto";
 import type { Admin, SupplierRecord } from "./adapters.server";
 import { getAdapter, listAdapters } from "./adapters.server";
 import type {
+  JsonRecord,
+  JsonValue,
   IntegrationAuditRow,
   IntegrationConnectionState,
   IntegrationLogRow,
@@ -344,18 +346,28 @@ export async function logIntegration(entry: {
 
 const SECRET_HINT = /(key|secret|token|password|authorization|apikey|credential)/i;
 
+/** Reduces any supplier value to plain JSON so it is safe to store and return. */
+function toJson(value: unknown, depth = 0): JsonValue {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (value instanceof Date) return value.toISOString();
+  if (depth > 4) return null;
+  if (Array.isArray(value)) return value.slice(0, 50).map((v) => toJson(v, depth + 1));
+  if (typeof value === "object") return sanitize(value, depth);
+  return null;
+}
+
 /** Strips anything that looks like a credential before it is persisted. */
-export function sanitize(value: unknown, depth = 0): Record<string, unknown> {
-  if (depth > 4 || !value || typeof value !== "object") return {};
-  const out: Record<string, unknown> = {};
+export function sanitize(value: unknown, depth = 0): JsonRecord {
+  if (depth > 4 || !value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: JsonRecord = {};
   for (const [k, v] of Object.entries(value as Row)) {
     if (SECRET_HINT.test(k)) {
       out[k] = "[redacted]";
       continue;
     }
-    if (v && typeof v === "object" && !Array.isArray(v)) out[k] = sanitize(v, depth + 1);
-    else if (Array.isArray(v)) out[k] = v.slice(0, 20);
-    else out[k] = v;
+    out[k] = toJson(v, depth + 1);
   }
   return out;
 }
@@ -1184,7 +1196,7 @@ export async function productApiData(
   externalId: string,
 ): Promise<{
   product: IntegrationProductRow | null;
-  supplierRecord: Record<string, unknown>;
+  supplierRecord: JsonRecord;
   logs: IntegrationLogRow[];
 }> {
   const db = await admin();
@@ -1281,7 +1293,7 @@ export async function listAudit(limit = 40): Promise<IntegrationAuditRow[]> {
       actorEmail: (row["actor_email"] as string | null) ?? null,
       action: str(row["action"]),
       providerKey: (row["provider_key"] as string | null) ?? null,
-      detail: (row["detail"] ?? {}) as Record<string, unknown>,
+      detail: sanitize(row["detail"] ?? {}),
       createdAt: str(row["created_at"]),
     };
   });

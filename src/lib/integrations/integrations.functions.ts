@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { IntegrationProviderInput } from "./types";
 
 async function assertStaff(context: {
   userId: string;
@@ -131,7 +132,7 @@ export const updateIntegrationProviderFlags = createServerFn({ method: "POST" })
 
 export const saveIntegrationProvider = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .inputValidator((input: unknown): IntegrationProviderInput =>
     z
       .object({
         providerKey: keySchema,

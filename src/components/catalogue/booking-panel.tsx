@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarDays, CreditCard, Wallet, Loader2, Users, BedDouble } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { CalendarDays, CreditCard, Loader2, Users, BedDouble } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,20 +13,8 @@ import {
   type DepartureOption,
 } from "@/lib/itinerary";
 import { portal, type PortalUser } from "@/lib/portal-store";
-import { chargeWallet, ledger, shortfall } from "@/lib/wallet-ledger";
-import { accountApi } from "@/lib/account-data";
 import { trackCatalogueEvent } from "@/lib/catalogue-client";
-
-const SUPPLIER_MAP: Record<string, "cruises" | "rail" | "private_jets" | "activities" | "packages"> =
-  {
-    cruises: "cruises",
-    "cruises-expedition": "cruises",
-    "cruises-river": "cruises",
-    "cruises-world": "cruises",
-    rail: "rail",
-    aviation: "private_jets",
-    activities: "activities",
-  };
+import { createBookingEnquiry } from "@/lib/booking-requests.functions";
 
 export function BookingPanel({ product }: { product: CatalogueProduct }) {
   const nav = useNavigate();
@@ -36,7 +25,7 @@ export function BookingPanel({ product }: { product: CatalogueProduct }) {
   const [singleRoom, setSingleRoom] = useState(false);
   const [payFull, setPayFull] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [tick, setTick] = useState(0);
+  const requestBooking = useServerFn(createBookingEnquiry);
 
   useEffect(() => {
     setMe(portal.session());
@@ -49,85 +38,36 @@ export function BookingPanel({ product }: { product: CatalogueProduct }) {
     [product, guests, departure, singleRoom],
   );
   const amountDue = payFull ? price.total : price.depositDue;
-  const balance = useMemo(
-    () => (me ? ledger.balance(me.email, "USD") : 0),
-    [me, tick],
-  );
   const bookable = (product.priceFrom ?? 0) > 0 && departures.length > 0;
 
-  async function confirm(via: "wallet" | "gateway") {
+  async function reserve() {
     if (!me) {
-      toast.error("Sign in to complete your booking.");
+      toast.error("Sign in to reserve this journey.");
       nav({ to: "/auth" });
       return;
     }
     if (!departure) return;
-    const reference = `WW-${product.slug.slice(0, 6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-    const label = `${product.title} · ${departure.label}`;
-
-    if (via === "gateway" || balance < amountDue) {
-      shortfall.set({
-        amount: Math.max(amountDue - (via === "gateway" ? 0 : balance), 1),
-        currency: "USD",
-        returnTo: typeof window !== "undefined" ? window.location.pathname : "/",
-        label,
-      });
-      toast.info(
-        via === "gateway"
-          ? "Complete secure payment to confirm this booking."
-          : `Wallet short by ${money(amountDue - balance)} — top up to confirm.`,
-      );
-      nav({ to: "/wallet" });
-      return;
-    }
 
     setBusy(true);
     try {
-      const charge = chargeWallet({
-        userEmail: me.email,
-        amount: amountDue,
-        currency: "USD",
-        supplier: SUPPLIER_MAP[product.kind] ?? "packages",
-        bookingRef: reference,
-        description: label,
-      });
-      if (!charge.ok) {
-        shortfall.set({
-          amount: charge.shortfall,
-          currency: "USD",
-          returnTo: typeof window !== "undefined" ? window.location.pathname : "/",
-          label,
-        });
-        nav({ to: "/wallet" });
-        return;
-      }
-      await accountApi.addBooking({
-        reference,
-        title: product.title,
-        product_type: product.kind,
-        supplier: product.supplier,
-        status: payFull ? "confirmed" : "deposit-paid",
-        currency: "USD",
-        amount: price.total,
-        travel_date: departure.date,
-        details: {
+      // Price, status and balances are established by the server, not here.
+      const result = await requestBooking({
+        data: {
+          kind: product.kind,
+          slug: product.slug,
+          departureDate: departure.date,
           guests,
           singleRoom,
-          paid: amountDue,
-          balanceDue: payFull ? 0 : price.balanceDue,
-          perGuest: price.perGuest,
-          taxes: price.taxes,
-          location: product.location,
-          slug: product.slug,
-          gateway: "wallet",
+          payFull,
         },
       });
       trackCatalogueEvent("booking_conversion", { kind: product.kind, slug: product.slug });
-      setTick((t) => t + 1);
-      toast.success(`Booking ${reference} confirmed — paid ${money(amountDue)} from your wallet.`);
+      toast.success(
+        `Reservation ${result.reference} created — ${money(result.amountDue)} due to confirm.`,
+      );
       nav({ to: "/account/bookings" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Booking could not be completed.");
+      toast.error(err instanceof Error ? err.message : "Reservation could not be created.");
     } finally {
       setBusy(false);
     }
@@ -233,22 +173,19 @@ export function BookingPanel({ product }: { product: CatalogueProduct }) {
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
-        <Button className="w-full" disabled={busy} onClick={() => confirm("wallet")}>
+        <Button className="w-full" disabled={busy} onClick={() => void reserve()}>
           {busy ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <Wallet className="mr-2 h-4 w-4" />
+            <CreditCard className="mr-2 h-4 w-4" />
           )}
-          Pay {money(amountDue)} with wallet
-        </Button>
-        <Button variant="outline" className="w-full" disabled={busy} onClick={() => confirm("gateway")}>
-          <CreditCard className="mr-2 h-4 w-4" /> Card, UPI or PayPal
+          Reserve · {money(amountDue)} due to confirm
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
         {me
-          ? `Wallet balance ${money(balance)}. Top-ups settle instantly via Razorpay or PayPal.`
-          : "Sign in to pay from your Worldway wallet or a card."}
+          ? "Your reservation is held while our team confirms availability. Payment is taken securely, and the booking is confirmed only once payment clears."
+          : "Sign in to reserve this journey and pay securely."}
       </p>
     </div>
   );
