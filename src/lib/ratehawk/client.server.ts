@@ -90,7 +90,14 @@ export async function ratehawkCall<T>(
 ): Promise<RatehawkResult<T>> {
   const environment = ratehawkEnvironment();
   const startedAt = Date.now();
-  const meta = { operation, environment, httpStatus: null as number | null, latencyMs: 0, attempts: 0 };
+  const meta: RatehawkCallMeta = {
+    operation,
+    environment,
+    httpStatus: null,
+    latencyMs: 0,
+    attempts: 0,
+    supplierStatus: null,
+  };
 
   if (!ratehawkEnabled()) {
     meta.latencyMs = Date.now() - startedAt;
