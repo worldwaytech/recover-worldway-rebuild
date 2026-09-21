@@ -21,6 +21,38 @@ export type IntegrationSyncStrategy = "full" | "cursor" | "updated-since" | "ind
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 export type JsonRecord = { [key: string]: JsonValue };
 
+/**
+ * Configuration accepted by "Add New Supplier/API". Credentials are referenced
+ * by secure secret NAME only — secret values never pass through this form.
+ */
+export interface IntegrationProviderInput {
+  providerKey: string;
+  name: string;
+  category: string;
+  summary: string;
+  baseUrl: string;
+  authKind: IntegrationAuthKind;
+  authHeader?: string | undefined;
+  tokenPath?: string | undefined;
+  secretNames: string[];
+  catalogPath?: string | undefined;
+  healthPath?: string | undefined;
+  capabilities: string[];
+  collections: string[];
+  rateLimitPerSecond: number;
+  maxRetries: number;
+  timeoutMs: number;
+  syncStrategy: IntegrationSyncStrategy;
+  paginationMode: "none" | "page" | "offset" | "cursor";
+  recordPath?: string | undefined;
+  fieldMap: Record<string, string>;
+  dedupeKeys: string[];
+  conflictPolicy: IntegrationConflictPolicy;
+  webhookSecretName?: string | undefined;
+  docsUrl?: string | undefined;
+  notes?: string | undefined;
+}
+
 export type IntegrationConnectionState =
   | "connected"
   | "not-connected"
