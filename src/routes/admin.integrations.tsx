@@ -52,6 +52,7 @@ import type {
   IntegrationLogRow,
   IntegrationProductRow,
   IntegrationProvider,
+  IntegrationProviderInput,
   IntegrationRunRow,
   IntegrationSettings,
 } from "@/lib/integrations/types";
