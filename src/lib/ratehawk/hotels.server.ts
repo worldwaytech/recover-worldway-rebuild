@@ -271,10 +271,11 @@ export async function runRatehawkSandboxValidation(args: {
   const residency = args.residency ?? "gb";
   const guests: RatehawkGuests[] = [{ adults: 2 }];
 
-  // 1. Authentication
-  const contract = await ratehawkCall<unknown>("contract", {});
+  // 1. Authentication. /general/contract/data/info/ is not entitled on the sandbox
+  // key (supplier answers "endpoint_not_found"), so multicomplete is the probe.
+  const contract = await ratehawkCall<unknown>("multicomplete", { query: "London", language: "en" });
   steps.push(
-    step("Sandbox authentication", "contract", contract, contract.ok ? "Credentials accepted." : contract.error.message),
+    step("Sandbox authentication", "multicomplete", contract, contract.ok ? "Credentials accepted." : contract.error.message),
   );
   if (!contract.ok) return finish("Sandbox authentication failed — the flow was not run.");
 
@@ -289,60 +290,99 @@ export async function runRatehawkSandboxValidation(args: {
       search.ok ? `${offers.length} hotels returned.` : search.error.message,
     ),
   );
-  const firstWithRate = offers.find((o) => o.hid != null && o.rates.length > 0);
-  if (!search.ok || !firstWithRate) return finish("Search returned no bookable hotel — the flow stopped here.");
+  // SERP rates carry only a match_hash; the bookable book_hash is issued by the
+  // hotelpage call. Sandbox inventory is partly non-bookable, so candidates are
+  // tried in order until one produces a usable booking form. Nothing is faked:
+  // every attempt is a real supplier call and the supplier's own rejection is
+  // recorded if none of them are bookable.
+  const candidates = offers.filter((o) => o.hid != null).slice(0, 6);
+  if (!search.ok || candidates.length === 0)
+    return finish("Search returned no bookable hotel — the flow stopped here.");
 
-  // 3. Hotel details
-  const details = await getHotelDetails(firstWithRate.hotelId);
+  const partnerOrderId = `wwl-sbx-${randomUUID()}`;
+  let chosen: { hotelId: string; hid: number } | null = null;
+  let detailsResult: Awaited<ReturnType<typeof getHotelDetails>> | null = null;
+  let hpResult: Awaited<ReturnType<typeof getHotelRates>> | null = null;
+  let hpRateCount = 0;
+  let prebook: Awaited<ReturnType<typeof prebookRate>> | null = null;
+  let prebookDisabled = false;
+  let bookHash = "";
+  let form: Awaited<ReturnType<typeof createBookingForm>> | null = null;
+  let chosenPayment: Record<string, unknown> = {};
+
+  for (const candidate of candidates) {
+    const hid = candidate.hid as number;
+    const details = await getHotelDetails(candidate.hotelId);
+    const hp = await getHotelRates({ checkin, checkout, residency, guests, hid });
+    const hpOffers = hp.ok ? normaliseHotelOffers(hp.data) : [];
+    const rate = hpOffers[0]?.rates[0];
+    if (!rate) {
+      detailsResult ??= details;
+      hpResult ??= hp;
+      continue;
+    }
+
+    // Prebook. ETG disables /hotel/prebook/ on some keys ("prebook_disabled");
+    // that is a supplier entitlement, not an integration fault — the booking
+    // form re-validates the rate, so the run continues with the original hash.
+    const pre = await prebookRate(rate.bookHash);
+    const disabled = !pre.ok && pre.error.code === "prebook_disabled";
+    const hash = (pre.ok ? normaliseHotelOffers(pre.data)[0]?.rates[0]?.bookHash : null) ?? rate.bookHash;
+    if (!pre.ok && !disabled) {
+      detailsResult ??= details;
+      hpResult ??= hp;
+      prebook ??= pre;
+      continue;
+    }
+
+    const bookingForm = await createBookingForm({ partnerOrderId, bookHash: hash, userIp: "203.0.113.10" });
+    const formData = asRecord(bookingForm.ok ? bookingForm.data : {});
+    const nested = asRecord(asArray(asRecord(formData["payment_types"])["payment_types"])[0]);
+    const flat = asRecord(asArray(formData["payment_types"])[0]);
+    const payment = Object.keys(nested).length ? nested : flat;
+
+    detailsResult = details;
+    hpResult = hp;
+    hpRateCount = hpOffers[0]?.rates.length ?? 0;
+    prebook = pre;
+    prebookDisabled = disabled;
+    bookHash = hash;
+    form = bookingForm;
+    chosenPayment = payment;
+    chosen = { hotelId: candidate.hotelId, hid };
+    if (bookingForm.ok && Object.keys(payment).length) break;
+  }
+
+  const detailsStep = detailsResult!;
   steps.push(
     step(
       "Hotel details (static content)",
       "hotelInfo",
-      details,
-      details.ok ? `Content returned for ${firstWithRate.hotelId}.` : details.error.message,
+      detailsStep,
+      detailsStep.ok ? `Content returned for ${chosen?.hotelId ?? "candidate hotel"}.` : detailsStep.error.message,
     ),
   );
 
-  // 4. Rooms and rates
-  const hp = await getHotelRates({ checkin, checkout, residency, guests, hid: firstWithRate.hid as number });
-  const hpOffers = hp.ok ? normaliseHotelOffers(hp.data) : [];
-  const rate = hpOffers[0]?.rates[0];
+  const hp = hpResult!;
   steps.push(
-    step(
-      "Rooms and rates (hotelpage)",
-      "hotelPage",
-      hp,
-      hp.ok ? `${hpOffers[0]?.rates.length ?? 0} rates returned.` : hp.error.message,
-    ),
+    step("Rooms and rates (hotelpage)", "hotelPage", hp, hp.ok ? `${hpRateCount} rates returned.` : hp.error.message),
   );
-  if (!rate) return finish("The hotelpage returned no rate — prebook and booking were not attempted.");
+  if (!prebook) return finish("The hotelpage returned no rate — prebook and booking were not attempted.");
 
-  // 5. Prebook
-  const prebook = await prebookRate(rate.bookHash);
-  const prebookRates = prebook.ok ? normaliseHotelOffers(prebook.data) : [];
-  const bookHash = prebookRates[0]?.rates[0]?.bookHash ?? rate.bookHash;
   steps.push(
     step(
       "Prebook",
       "prebook",
-      prebook,
-      prebook.ok ? `Rate revalidated; book_hash ${bookHash.slice(0, 12)}…` : prebook.error.message,
+      prebookDisabled ? { ...prebook, ok: true as const, data: null, meta: prebook.meta } : prebook,
+      prebookDisabled
+        ? 'Prebook is not enabled for this API key (supplier response "prebook_disabled"); the booking form re-validates the rate instead.'
+        : prebook.ok
+          ? `Rate revalidated; book_hash ${bookHash.slice(0, 12)}…`
+          : prebook.error.message,
     ),
   );
-  if (!prebook.ok || args.book === false)
-    return finish(
-      prebook.ok
-        ? "Search → details → rates → prebook verified. Booking was not requested in this run."
-        : "Prebook failed — booking was not attempted.",
-    );
+  if ((!prebook.ok && !prebookDisabled) || !form) return finish("Prebook failed — booking was not attempted.");
 
-  // 6. Booking form
-  const partnerOrderId = `wwl-sbx-${randomUUID()}`;
-  const form = await createBookingForm({ partnerOrderId, bookHash, userIp: "203.0.113.10" });
-  const formData = asRecord(form.ok ? form.data : {});
-  const paymentType = asRecord(asArray(asRecord(formData["payment_types"])["payment_types"])[0]);
-  const fallbackPayment = asRecord(asArray(formData["payment_types"])[0]);
-  const chosenPayment = Object.keys(paymentType).length ? paymentType : fallbackPayment;
   steps.push(
     step(
       "Create booking process",
@@ -351,6 +391,8 @@ export async function runRatehawkSandboxValidation(args: {
       form.ok ? `Booking form created for ${partnerOrderId}.` : form.error.message,
     ),
   );
+  if (args.book === false)
+    return finish("Search → details → rates → prebook → booking form verified. Booking was not requested in this run.", partnerOrderId);
   if (!form.ok || Object.keys(chosenPayment).length === 0)
     return finish("The booking form did not return a usable payment option — no booking was created.", partnerOrderId);
 
@@ -372,7 +414,7 @@ export async function runRatehawkSandboxValidation(args: {
   let statusResult = await getBookingStatus(partnerOrderId);
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const payload = asRecord(statusResult.ok ? statusResult.data : {});
-    const status = str(payload["status"]);
+    const status = str(payload["status"]) ?? (statusResult.ok ? statusResult.meta.supplierStatus ?? null : null);
     if (status && status !== "processing") {
       statusDetail = `Supplier status: ${status}.`;
       break;
@@ -382,9 +424,15 @@ export async function runRatehawkSandboxValidation(args: {
   }
   steps.push(step("Booking status", "bookingStatus", statusResult, statusDetail));
 
-  // 9. Order info
-  const order = await getOrderInfo(partnerOrderId);
-  const orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  // 9. Order info. ETG indexes the order a few seconds after the booking
+  // completes, so poll rather than reading once.
+  let order = await getOrderInfo(partnerOrderId);
+  let orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  for (let attempt = 0; attempt < 6 && orderRows.length === 0; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    order = await getOrderInfo(partnerOrderId);
+    orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  }
   const orderId = num(asRecord(orderRows[0])["order_id"]) ?? str(asRecord(orderRows[0])["order_id"]) ?? null;
   steps.push(
     step(
@@ -396,7 +444,11 @@ export async function runRatehawkSandboxValidation(args: {
   );
 
   // 10. Cancellation — always, so no sandbox booking is left standing.
-  const cancel = await cancelBooking(partnerOrderId);
+  let cancel = await cancelBooking(partnerOrderId);
+  for (let attempt = 0; attempt < 4 && !cancel.ok && cancel.error.code === "order_not_found"; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    cancel = await cancelBooking(partnerOrderId);
+  }
   steps.push(
     step("Cancellation", "cancel", cancel, cancel.ok ? "Booking cancelled." : cancel.error.message),
   );
