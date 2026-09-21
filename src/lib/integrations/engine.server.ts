@@ -11,7 +11,7 @@
 // the server and are never returned to the browser. When a credential or the
 // supplier's documented endpoint is unavailable the provider is recorded as
 // NOT CONNECTED — connection status is never fabricated.
-import { createHash, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import type { Admin, SupplierRecord } from "./adapters.server";
 import { getAdapter, listAdapters } from "./adapters.server";
 import type {
@@ -438,6 +438,15 @@ export async function listProviders(): Promise<IntegrationProvider[]> {
   return (rows ?? []).map((r) => toProvider(r as Row, tally.get((r as Row)["provider_key"] as string) ?? 0));
 }
 
+async function productCountFor(providerKey: string): Promise<number> {
+  const db = await admin();
+  const { count } = await db
+    .from("integration_products")
+    .select("id", { count: "exact", head: true })
+    .eq("provider_key", providerKey);
+  return count ?? 0;
+}
+
 export async function getProvider(providerKey: string): Promise<IntegrationProvider | null> {
   const db = await admin();
   const { data } = await db
@@ -445,7 +454,8 @@ export async function getProvider(providerKey: string): Promise<IntegrationProvi
     .select("*")
     .eq("provider_key", providerKey)
     .maybeSingle();
-  return data ? toProvider(data as Row) : null;
+  if (!data) return null;
+  return toProvider(data as Row, await productCountFor(providerKey));
 }
 
 export async function upsertProvider(
@@ -453,6 +463,9 @@ export async function upsertProvider(
   actor: { id?: string | null; email?: string | null },
 ): Promise<IntegrationProvider> {
   const db = await admin();
+  // Operator-supplied base URLs are validated before they can ever be fetched.
+  const baseUrl = typeof input["base_url"] === "string" ? input["base_url"].trim() : "";
+  if (baseUrl) assertSafeSupplierUrl(baseUrl);
   const payload: Row = { ...input, created_by: input["created_by"] ?? actor.id ?? null };
   const { data, error } = await db
     .from("integration_providers")
@@ -468,8 +481,9 @@ export async function upsertProvider(
     providerKey: input.provider_key,
     detail: { name: input.name, origin: input["origin"] ?? "custom" },
   });
-  return toProvider(data as Row);
+  return toProvider(data as Row, await productCountFor(input.provider_key));
 }
+
 
 export async function setProviderFlags(
   providerKey: string,
@@ -515,8 +529,56 @@ async function takeToken(provider: IntegrationProvider): Promise<void> {
 
 const tokenCache = new Map<string, { token: string; expires: number }>();
 
+/**
+ * SSRF defence: supplier base URLs and endpoint paths are operator-supplied, so
+ * every outbound integration call must resolve to a public HTTPS host. Private,
+ * loopback, link-local and metadata addresses are refused before the fetch.
+ */
+const BLOCKED_HOSTS = new Set([
+  "localhost",
+  "127.0.0.1",
+  "0.0.0.0",
+  "::1",
+  "metadata.google.internal",
+  "169.254.169.254",
+]);
+
+export function assertSafeSupplierUrl(raw: string): URL {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("Supplier URL is not a valid absolute URL.");
+  }
+  if (url.protocol !== "https:") throw new Error("Supplier URLs must use HTTPS.");
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (BLOCKED_HOSTS.has(host) || host.endsWith(".localhost") || host.endsWith(".internal")) {
+    throw new Error("Supplier host is not publicly routable.");
+  }
+  // IPv4 literals in private / loopback / link-local / CGNAT ranges.
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    const priv =
+      a === 10 ||
+      a === 127 ||
+      a === 0 ||
+      (a === 192 && b === 168) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 169 && b === 254) ||
+      (a === 100 && b >= 64 && b <= 127);
+    if (priv) throw new Error("Supplier host resolves to a private address.");
+  }
+  // IPv6 loopback / unique-local / link-local literals.
+  if (host.includes(":") && /^(::1|fc|fd|fe8|fe9|fea|feb)/i.test(host)) {
+    throw new Error("Supplier host resolves to a private address.");
+  }
+  return url;
+}
+
 async function oauthToken(provider: IntegrationProvider): Promise<string | null> {
   if (provider.authKind !== "oauth2-client-credentials" || !provider.tokenPath) return null;
+
   const hit = tokenCache.get(provider.providerKey);
   if (hit && hit.expires > Date.now()) return hit.token;
   const [idName, secretName] = provider.secretNames;
@@ -529,7 +591,9 @@ async function oauthToken(provider: IntegrationProvider): Promise<string | null>
     client_secret: clientSecret,
   });
   if (provider.scope) body.set("scope", provider.scope);
-  const res = await fetch(`${provider.baseUrl}${provider.tokenPath}`, {
+  const tokenUrl = assertSafeSupplierUrl(`${provider.baseUrl}${provider.tokenPath}`);
+  const res = await fetch(tokenUrl.toString(), {
+
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
@@ -589,8 +653,23 @@ export async function providerRequest(
   let attempts = 0;
   let lastStatus = 0;
   let lastError = "";
+  let retryDelayMs: number | null = null;
 
-  const url = new URL(path.startsWith("http") ? path : `${provider.baseUrl}${path}`);
+
+  let url: URL;
+  try {
+    url = assertSafeSupplierUrl(path.startsWith("http") ? path : `${provider.baseUrl}${path}`);
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      attempts: 0,
+      latencyMs: 0,
+      body: null,
+      error: err instanceof Error ? err.message : "Unsafe supplier URL.",
+    };
+  }
+
   for (const [k, v] of Object.entries(init.query ?? {})) url.searchParams.set(k, v);
 
   while (attempts < attemptsAllowed) {
@@ -642,12 +721,21 @@ export async function providerRequest(
           error: typeof body === "string" ? body.slice(0, 400) : `HTTP ${res.status}`,
         };
       lastError = `HTTP ${res.status}`;
+      // Honour the supplier's own throttling instruction when present.
+      const retryAfter = Number(res.headers.get("retry-after"));
+      if (Number.isFinite(retryAfter) && retryAfter > 0) {
+        retryDelayMs = Math.min(30_000, Math.ceil(retryAfter * 1000));
+      }
     } catch (err) {
       clearTimeout(timer);
       lastError = err instanceof Error ? err.message : "request failed";
     }
-    await new Promise((r) => setTimeout(r, 250 * attempts));
+    // Exponential backoff with jitter so retries never align across providers.
+    const backoff = retryDelayMs ?? Math.min(8_000, 250 * 2 ** (attempts - 1));
+    retryDelayMs = null;
+    await new Promise((r) => setTimeout(r, backoff + Math.floor(Math.random() * 250)));
   }
+
   return {
     ok: false,
     status: lastStatus,
@@ -1127,15 +1215,29 @@ export async function syncAllProviders(options: {
       const last = p.lastSyncAt ? new Date(p.lastSyncAt).getTime() : 0;
       if (Date.now() - last < p.autoSyncIntervalMinutes * 60_000) continue;
     }
-    out.push(
-      await syncProvider({
+    // Providers are synced sequentially and staggered so a batch never bursts
+    // several suppliers' rate limits at the same moment. One supplier failing
+    // never aborts the batch.
+    if (out.length > 0) await new Promise((r) => setTimeout(r, 750));
+    try {
+      out.push(
+        await syncProvider({
+          providerKey: p.providerKey,
+          scope: options.scope ?? "incremental",
+          ...(options.trigger ? { trigger: options.trigger } : {}),
+          ...(options.actor ? { actor: options.actor } : {}),
+        }),
+      );
+    } catch (err) {
+      await logIntegration({
         providerKey: p.providerKey,
-        scope: options.scope ?? "incremental",
-        ...(options.trigger ? { trigger: options.trigger } : {}),
-        ...(options.actor ? { actor: options.actor } : {}),
-      }),
-    );
+        operation: "sync",
+        status: "error",
+        message: err instanceof Error ? err.message.slice(0, 400) : "sync failed",
+      });
+    }
   }
+
   return out;
 }
 
@@ -1207,13 +1309,77 @@ export async function productApiData(
     .eq("external_id", externalId)
     .maybeSingle();
   const { rows } = await listProducts({ providerKey, query: externalId, limit: 1 });
-  const logs = await listLogs({ providerKey, limit: 10 });
+  // Prefer log lines that mention this product; fall back to recent provider logs
+  // so the dialog is never empty for a product that has not been synced alone.
+  const providerLogs = await listLogs({ providerKey, limit: 60 });
+  const scoped = providerLogs.filter((l) => JSON.stringify(l).includes(externalId));
   return {
     product: rows[0] ?? null,
     supplierRecord: sanitize(((data ?? {}) as Row)["supplier_record"]),
-    logs,
+    logs: (scoped.length > 0 ? scoped : providerLogs).slice(0, 10),
   };
 }
+
+/**
+ * Manual conflict resolution: a product whose supplier fingerprint changed under
+ * a manual-review policy is parked in `conflict_state = "review"`. Staff either
+ * accept the supplier record (keep) or request a fresh pull (resync).
+ */
+export async function resolveProductConflict(
+  providerKey: string,
+  externalId: string,
+  resolution: "accept-supplier" | "resync",
+  actor: { id?: string | null; email?: string | null } = {},
+): Promise<{ ok: boolean; detail: string }> {
+  const db = await admin();
+  if (resolution === "resync") {
+    const run = await syncProvider({ providerKey, scope: "product", externalId, actor });
+    await recordAudit({
+      ...actor,
+      action: "product.conflict.resync",
+      providerKey,
+      detail: { externalId, runStatus: run.status },
+    });
+    return { ok: run.status === "success", detail: `Re-pulled from supplier (${run.status}).` };
+  }
+  await db
+    .from("integration_products")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({ conflict_state: "none", last_error: null } as any)
+    .eq("provider_key", providerKey)
+    .eq("external_id", externalId);
+  await recordAudit({
+    ...actor,
+    action: "product.conflict.accept",
+    providerKey,
+    detail: { externalId },
+  });
+  return { ok: true, detail: "Supplier record accepted." };
+}
+
+/**
+ * Crash recovery: a worker that dies mid-sync leaves its run row in "running"
+ * forever. Any run older than the reaper window is closed as failed so health,
+ * due-provider logic and the console stop waiting on a run that cannot finish.
+ */
+export async function reapStaleSyncRuns(maxMinutes = 30): Promise<number> {
+  const db = await admin();
+  const cutoff = new Date(Date.now() - maxMinutes * 60_000).toISOString();
+  const { data } = await db
+    .from("integration_sync_runs")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({
+      status: "failed",
+      finished_at: new Date().toISOString(),
+      error: `Run abandoned: no completion within ${maxMinutes} minutes.`,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+    .eq("status", "running")
+    .lt("started_at", cutoff)
+    .select("id");
+  return (data ?? []).length;
+}
+
 
 // --------------------------------------------------------------- log reads
 export async function listRuns(filter: {
@@ -1309,49 +1475,140 @@ export async function handleWebhook(
   providerKey: string,
   rawBody: string,
   signature: string | null,
+  timestampHeader?: string | null,
 ): Promise<{ accepted: boolean; reason: string }> {
   const db = await admin();
   const provider = await getProvider(providerKey);
   if (!provider) return { accepted: false, reason: "unknown supplier" };
+
+  // A supplier without a configured signing secret cannot be verified, so the
+  // payload is never processed — it is recorded and refused.
   const secretName = provider.webhookSecretName;
   const secret = secretName ? (process.env[secretName] ?? "").trim() : "";
+
+  const payloadHash = createHash("sha256").update(rawBody).digest("hex");
   let valid = false;
-  if (secret && signature) {
-    const expected = createHash("sha256").update(`${secret}${rawBody}`).digest("hex");
-    const a = Buffer.from(signature.replace(/^sha256=/, ""));
-    const b = Buffer.from(expected);
+  let algorithm = "none";
+  let reason = "";
+
+  if (!secret) {
+    reason = "webhook secret not configured";
+  } else if (!signature) {
+    reason = "missing signature";
+  } else {
+    // Documented scheme: HMAC-SHA256 over the raw body, optionally prefixed by a
+    // timestamp that is also covered by the signature (`t=<unix>,v1=<hex>`).
+    const parts = new Map(
+      signature
+        .split(",")
+        .map((p) => p.trim().split("="))
+        .filter((p): p is [string, string] => p.length === 2)
+        .map(([k, v]) => [k.trim(), v.trim()]),
+    );
+    const ts = parts.get("t") ?? timestampHeader ?? null;
+    const provided = (parts.get("v1") ?? signature).replace(/^sha256=/, "").trim();
+    const signedPayload = ts ? `${ts}.${rawBody}` : rawBody;
+    const expected = createHmac("sha256", secret).update(signedPayload).digest("hex");
+    algorithm = "hmac-sha256";
+    const a = Buffer.from(provided, "utf8");
+    const b = Buffer.from(expected, "utf8");
     valid = a.length === b.length && timingSafeEqual(a, b);
+    if (!valid) reason = "invalid signature";
+    // Replay window: a signed timestamp older than five minutes is refused.
+    if (valid && ts) {
+      const seconds = Number(ts);
+      const ms = Number.isFinite(seconds) ? (seconds > 1e12 ? seconds : seconds * 1000) : NaN;
+      if (!Number.isFinite(ms) || Math.abs(Date.now() - ms) > 5 * 60_000) {
+        valid = false;
+        reason = "signature timestamp outside the replay window";
+      }
+    }
   }
+
   let payload: unknown = null;
   try {
     payload = rawBody ? JSON.parse(rawBody) : null;
   } catch {
     payload = null;
+    if (valid) {
+      valid = false;
+      reason = "payload is not valid JSON";
+    }
   }
-  await db.from("integration_webhook_events").insert({
-    provider_key: providerKey,
-    event_type: ((payload ?? {}) as Row)["event"] as string | null,
-    signature_valid: valid,
-    payload: sanitize(payload ?? {}),
-    processed: false,
-    error: valid ? null : "signature rejected",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
+
+  const payloadRow = (payload ?? {}) as Row;
+  const eventId =
+    typeof payloadRow["id"] === "string"
+      ? payloadRow["id"]
+      : typeof payloadRow["event_id"] === "string"
+        ? (payloadRow["event_id"] as string)
+        : null;
+
+  const { data: inserted, error: insertError } = await db
+    .from("integration_webhook_events")
+    .insert({
+      provider_key: providerKey,
+      event_type: (payloadRow["event"] as string | null) ?? null,
+      event_id: eventId,
+      payload_hash: payloadHash,
+      signature_algorithm: algorithm,
+      signature_valid: valid,
+      payload: sanitize(payload ?? {}),
+      processed: false,
+      attempts: 0,
+      error: valid ? null : reason,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+    .select("id")
+    .maybeSingle();
+
+  // Unique partial indexes on (provider_key, event_id) and (provider_key,
+  // payload_hash) make a duplicate delivery a no-op rather than a second sync.
+  if (insertError) {
+    await logIntegration({
+      providerKey,
+      operation: "webhook",
+      status: "skipped",
+      message: "Duplicate delivery ignored.",
+    });
+    return { accepted: true, reason: "duplicate delivery ignored" };
+  }
+
   if (!valid) {
     await logIntegration({
       providerKey,
       operation: "webhook",
       status: "error",
-      message: secret ? "Signature rejected." : "No webhook secret configured for this supplier.",
+      message: reason || "Signature rejected.",
     });
-    return { accepted: false, reason: secret ? "invalid signature" : "webhook secret not configured" };
+    return { accepted: false, reason: reason || "invalid signature" };
   }
-  await syncProvider({ providerKey, scope: "incremental", trigger: "webhook" });
-  await db
-    .from("integration_webhook_events")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ processed: true } as any)
-    .eq("provider_key", providerKey)
-    .eq("processed", false);
-  return { accepted: true, reason: "processed" };
+
+  const eventRowId = inserted ? (inserted as Row)["id"] : null;
+  try {
+    await syncProvider({ providerKey, scope: "incremental", trigger: "webhook" });
+    if (eventRowId)
+      await db
+        .from("integration_webhook_events")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ processed: true, attempts: 1, processed_at: new Date().toISOString() } as any)
+        .eq("id", eventRowId as string);
+    return { accepted: true, reason: "processed" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "processing failed";
+    if (eventRowId)
+      await db
+        .from("integration_webhook_events")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ attempts: 1, error: message.slice(0, 400) } as any)
+        .eq("id", eventRowId as string);
+    await logIntegration({
+      providerKey,
+      operation: "webhook",
+      status: "error",
+      message: message.slice(0, 400),
+    });
+    return { accepted: false, reason: "processing failed" };
+  }
 }
+

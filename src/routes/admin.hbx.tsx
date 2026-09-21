@@ -12,6 +12,7 @@ import {
   probeHbxBookingReadiness,
   runHbxSync,
 } from "@/lib/hbx/hbx.functions";
+import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTable";
 
 type Suite = "hotels" | "activities" | "transfers";
 type Overview = Awaited<ReturnType<typeof getHbxAdminOverview>>;
@@ -238,6 +239,9 @@ function HbxConsole() {
           )}
         </CardContent>
       </Card>
+      <ProductProvenanceTable providerKey="hbx-hotels" title="HBX hotels provenance" />
+      <ProductProvenanceTable providerKey="hbx-activities" title="HBX activities provenance" />
+      <ProductProvenanceTable providerKey="hbx-transfers" title="HBX transfers provenance" />
     </div>
   );
 }
@@ -247,6 +251,7 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="truncate text-right">{value}</dd>
+
     </div>
   );
 }

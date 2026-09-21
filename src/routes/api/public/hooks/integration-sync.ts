@@ -19,13 +19,17 @@ export const Route = createFileRoute("/api/public/hooks/integration-sync")({
       POST: async ({ request }) => {
         if (!authorised(request)) return Response.json({ error: "unauthorised" }, { status: 401 });
         try {
-          const { syncAllProviders } = await import("@/lib/integrations/engine.server");
+          const { syncAllProviders, reapStaleSyncRuns } = await import(
+            "@/lib/integrations/engine.server"
+          );
+          // Close runs abandoned by a crashed worker before scheduling new work.
+          const reaped = await reapStaleSyncRuns();
           const results = await syncAllProviders({
             scope: "incremental",
             trigger: "auto",
             onlyDue: true,
           });
-          return Response.json({ ok: true, processed: results.length, results });
+          return Response.json({ ok: true, reaped, processed: results.length, results });
         } catch (error) {
           return Response.json(
             { ok: false, error: error instanceof Error ? error.message : "sync failed" },

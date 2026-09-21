@@ -2626,6 +2626,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_booking: {
+        Args: { _booking_id: string; _reason?: string }
+        Returns: {
+          amount: number | null
+          amount_paid: number
+          assigned_to: string | null
+          balance_due: number
+          cancellation_reason: string | null
+          created_at: string
+          currency: string
+          deposit_amount: number | null
+          details: Json
+          id: string
+          idempotency_key: string | null
+          product_type: string
+          reference: string
+          sla_due_at: string | null
+          status: string
+          supplier: string | null
+          supplier_reference: string | null
+          supplier_status: string
+          title: string
+          travel_date: string | null
+          trip_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2637,6 +2671,49 @@ export type Database = {
       owns_booking: {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
+      }
+      record_staff_payment: {
+        Args: {
+          _amount: number
+          _booking_id: string
+          _gateway_reference?: string
+          _idempotency_key?: string
+          _installment_id?: string
+          _kind?: string
+          _method?: string
+          _note?: string
+        }
+        Returns: {
+          amount: number | null
+          amount_paid: number
+          assigned_to: string | null
+          balance_due: number
+          cancellation_reason: string | null
+          created_at: string
+          currency: string
+          deposit_amount: number | null
+          details: Json
+          id: string
+          idempotency_key: string | null
+          product_type: string
+          reference: string
+          sla_due_at: string | null
+          status: string
+          supplier: string | null
+          supplier_reference: string | null
+          supplier_status: string
+          title: string
+          travel_date: string | null
+          trip_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       staff_update_booking: {
         Args: {
