@@ -4,6 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { JsonValue } from "@/lib/integrations/types";
 
 async function assertAdmin(context: unknown) {
   const { isAdmin } = await import("@/lib/wwl.server");
@@ -92,7 +93,7 @@ export const suggestRatehawkDestinations = createServerFn({ method: "POST" })
     const { suggestDestinations } = await import("./hotels.server");
     const result = await suggestDestinations(data.query);
     return result.ok
-      ? { ok: true as const, data: result.data, meta: result.meta }
+      ? { ok: true as const, data: result.data as JsonValue, meta: result.meta }
       : { ok: false as const, error: result.error, meta: result.meta };
   });
 
@@ -117,7 +118,7 @@ export const getRatehawkHotelDetails = createServerFn({ method: "POST" })
     const { getHotelDetails } = await import("./hotels.server");
     const result = await getHotelDetails(data.hotelId);
     return result.ok
-      ? { ok: true as const, data: result.data, meta: result.meta }
+      ? { ok: true as const, data: result.data as JsonValue, meta: result.meta }
       : { ok: false as const, error: result.error, meta: result.meta };
   });
 
@@ -161,7 +162,7 @@ export const getRatehawkBookingStatus = createServerFn({ method: "POST" })
     const { getBookingStatus } = await import("./hotels.server");
     const result = await getBookingStatus(data.partnerOrderId);
     return result.ok
-      ? { ok: true as const, data: result.data, meta: result.meta }
+      ? { ok: true as const, data: result.data as JsonValue, meta: result.meta }
       : { ok: false as const, error: result.error, meta: result.meta };
   });
 
@@ -174,7 +175,7 @@ export const getRatehawkOrderInfo = createServerFn({ method: "POST" })
     const { getOrderInfo } = await import("./hotels.server");
     const result = await getOrderInfo(data.partnerOrderId);
     return result.ok
-      ? { ok: true as const, data: result.data, meta: result.meta }
+      ? { ok: true as const, data: result.data as JsonValue, meta: result.meta }
       : { ok: false as const, error: result.error, meta: result.meta };
   });
 
@@ -187,7 +188,7 @@ export const cancelRatehawkBooking = createServerFn({ method: "POST" })
     const { cancelBooking } = await import("./hotels.server");
     const result = await cancelBooking(data.partnerOrderId);
     return result.ok
-      ? { ok: true as const, data: result.data, meta: result.meta }
+      ? { ok: true as const, data: result.data as JsonValue, meta: result.meta }
       : { ok: false as const, error: result.error, meta: result.meta };
   });
 
