@@ -224,3 +224,50 @@ export const getIntegrationProductData = createServerFn({ method: "POST" })
     });
     return productApiData(data.providerKey, data.externalId);
   });
+/**
+ * Supplier-scoped product ledger for the per-supplier admin consoles.
+ * Same staff authorization and same records as the Sync Center products tab.
+ */
+export const getSupplierProductLedger = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        providerKey: keySchema,
+        query: z.string().max(200).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertStaff(context as never);
+    const { listProducts } = await import("./engine.server");
+    return listProducts({
+      providerKey: data.providerKey,
+      ...(data.query ? { query: data.query } : {}),
+      limit: data.limit ?? 100,
+    });
+  });
+
+/** Resolve a product parked in manual review: accept the supplier record or re-pull it. */
+export const resolveIntegrationConflict = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        providerKey: keySchema,
+        externalId: z.string().min(1).max(200),
+        resolution: z.enum(["accept-supplier", "resync"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertStaff(context as never);
+    const { resolveProductConflict } = await import("./engine.server");
+    return resolveProductConflict(
+      data.providerKey,
+      data.externalId,
+      data.resolution,
+      actor(context),
+    );
+  });

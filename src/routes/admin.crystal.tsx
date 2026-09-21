@@ -12,6 +12,7 @@ import {
 } from "@/lib/crystal/crystal-booking.functions";
 import type { CrystalConnectorStatus } from "@/lib/crystal/connector.server";
 import type { CrystalGateState, CrystalProdReadiness } from "@/lib/crystal/booking-contract";
+import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTable";
 
 
 export const Route = createFileRoute("/admin/crystal")({
@@ -366,6 +367,7 @@ function CrystalConsole() {
           </Card>
         </>
       ) : null}
+      <ProductProvenanceTable providerKey="crystal-cruises" title="Crystal Cruises provenance" />
     </div>
   );
 }

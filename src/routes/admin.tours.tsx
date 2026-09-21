@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, ShieldCheck, ShieldAlert, HelpCircle } from "lucide-react";
 import { getToursWriteScope } from "@/lib/tours.functions";
 import type { ToursWriteScopeReport } from "@/lib/tours.server";
+import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTable";
 
 export const Route = createFileRoute("/admin/tours")({
   head: () => ({
@@ -149,6 +150,7 @@ function ToursDiagnostics() {
           </CardContent>
         </Card>
       </div>
+      <ProductProvenanceTable providerKey="g-adventures" title="G Adventures provenance" />
     </div>
   );
 }

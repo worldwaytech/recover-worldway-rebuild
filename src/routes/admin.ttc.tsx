@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
 import { getTtcAdminOverview, probeTtcApiAccess, runTtcContentSync } from "@/lib/ttc/ttc.functions";
 import { TTC_BRANDS, TTC_BRAND_ORDER } from "@/lib/ttc/config";
+import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTable";
 
 type Overview = Awaited<ReturnType<typeof getTtcAdminOverview>>;
 
@@ -224,6 +225,7 @@ function TtcConsole() {
       ) : (
         <p className="text-sm text-muted-foreground">Loading the TTC console…</p>
       )}
+      <ProductProvenanceTable providerKey="ttc" title="TTC product provenance" />
     </div>
   );
 }

@@ -76,20 +76,9 @@ export const portal = {
     _session = null;
     emit();
   },
-  async updateRole(id: string, role: Role) {
-    const { supabase } = await import("@/integrations/supabase/client");
-    // Delete existing roles for this user, then insert the new role.
-    await supabase.from("user_roles").delete().eq("user_id", id);
-    await supabase.from("user_roles").insert({ user_id: id, role });
-    _users = _users.map((u) => (u.id === id ? { ...u, role } : u));
-    emit();
-  },
-  async remove(_id: string) {
-    // Deleting auth users requires service-role; expose via server fn in a
-    // future milestone. For now, remove from local cache only.
-    _users = _users.filter((u) => u.id !== _id);
-    emit();
-  },
+  // Role grants and account deactivation are privileged operations. They run
+  // only through the server-verified Super Admin functions used by /admin/users
+  // (setManagedUserRole / setManagedUserActive), never from the browser.
   // Cache updaters used by the auth hydration hook.
   _setSession(u: PortalUser | null) {
     _session = u;

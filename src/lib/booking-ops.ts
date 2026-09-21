@@ -314,6 +314,13 @@ export const bookingOps = {
     });
   },
 
+  /**
+   * Staff-only: record a payment or refund atomically.
+   *
+   * The payment row, booking balances, instalment state and timeline entry are
+   * written inside one database transaction, and `idempotency_key` makes a
+   * retried request safe — the same key never records a second payment.
+   */
   async recordPayment(
     booking: Booking,
     input: {
@@ -323,60 +330,41 @@ export const bookingOps = {
       gateway_reference?: string;
       note?: string;
       installmentId?: string;
+      idempotencyKey?: string;
     },
-  ): Promise<void> {
+  ): Promise<Booking> {
     const kind = input.kind ?? "payment";
-    const signed = kind === "refund" ? -Math.abs(input.amount) : Math.abs(input.amount);
-    const payment = must(
-      await supabase
-        .from("booking_payments")
-        .insert({
-          booking_id: booking.id,
-          user_id: booking.user_id,
-          kind,
-          amount: Math.abs(input.amount),
-          currency: booking.currency ?? "USD",
-          method: input.method ?? "wallet",
-          gateway_reference: input.gateway_reference ?? null,
-          note: input.note ?? null,
-        })
-        .select()
-        .single(),
-    );
-
-    const paid = Math.max(0, Number(booking.amount_paid ?? 0) + signed);
-    const total = Number(booking.amount ?? 0);
-    const { error: upErr } = await supabase.rpc("staff_update_booking", {
+    const { data, error } = await supabase.rpc("record_staff_payment", {
       _booking_id: booking.id,
-      _amount_paid: paid,
-      _balance_due: Math.max(0, total - paid),
+      _amount: Math.abs(input.amount),
+      _kind: kind,
+      _method: input.method ?? "manual",
+      _gateway_reference: input.gateway_reference ?? undefined,
+      _note: input.note ?? undefined,
+      _installment_id: input.installmentId ?? undefined,
+      _idempotency_key: input.idempotencyKey ?? undefined,
     });
-    if (upErr) throw new Error(upErr.message);
+    if (error) throw new Error(error.message);
+    const updated = (data as unknown as Booking) ?? booking;
 
-    if (input.installmentId) {
-      await supabase
-        .from("booking_installments")
-        .update({ status: "paid", paid_at: new Date().toISOString() })
-        .eq("id", input.installmentId);
-    }
-
-    await bookingOps.logEvent({
-      booking_id: booking.id,
-      event_type: `payment.${kind}`,
-      summary: `${kind === "refund" ? "Refund" : "Payment"} of ${money(Math.abs(input.amount), booking.currency ?? "USD")} recorded`,
-      actor_label: "Worldway payments",
-      detail: { payment_id: payment.id, method: input.method ?? "wallet" },
-    });
-
-    await bookingOps.issueDocument(
-      { ...booking, amount_paid: paid, balance_due: Math.max(0, total - paid) },
-      kind === "refund" ? "credit_note" : "receipt",
-    );
-
+    // Receipt and customer notification are follow-ups: a failure here must not
+    // undo the recorded payment, so they run after the transaction commits.
+    await bookingOps.issueDocument(updated, kind === "refund" ? "credit_note" : "receipt");
     await bookingOps.notify(booking.user_id, booking.id, {
       event: `payment.${kind}`,
       title: kind === "refund" ? "Refund issued" : "Payment received",
       body: `${money(Math.abs(input.amount), booking.currency ?? "USD")} on booking ${booking.reference}.`,
     });
+    return updated;
+  },
+
+  /** Cancels a booking while preserving its full history (no rows are deleted). */
+  async cancel(booking: Booking, reason?: string): Promise<Booking> {
+    const { data, error } = await supabase.rpc("cancel_booking", {
+      _booking_id: booking.id,
+      _reason: reason ?? undefined,
+    });
+    if (error) throw new Error(error.message);
+    return (data as unknown as Booking) ?? booking;
   },
 };
