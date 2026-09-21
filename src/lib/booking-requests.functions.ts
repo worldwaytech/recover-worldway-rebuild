@@ -9,6 +9,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getCatalogueProductBySlug } from "@/lib/catalogue-engine";
+import type { CollectionKind } from "@/lib/catalogue-types";
 import { departureOptions, priceBreakdown } from "@/lib/itinerary";
 
 const inputSchema = z.object({
@@ -38,7 +39,7 @@ export const createBookingEnquiry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => inputSchema.parse(input))
   .handler(async ({ data, context }): Promise<BookingEnquiryResult> => {
-    const product = getCatalogueProductBySlug(data.slug);
+    const product = getCatalogueProductBySlug(data.kind as CollectionKind, data.slug);
     if (!product) throw new Error("This experience is no longer available.");
     if ((product.priceFrom ?? 0) <= 0)
       throw new Error("This experience is quoted on request — please send an enquiry.");
