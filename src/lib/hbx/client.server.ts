@@ -137,7 +137,7 @@ export interface HbxCallOptions {
   /** Endpoint key from the suite config, or an absolute path starting with `/`. */
   path: string;
   api?: "content" | "booking";
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "DELETE";
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
   /** Cache lifetime override in seconds. 0 disables caching for this call. */

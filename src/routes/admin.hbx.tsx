@@ -10,12 +10,14 @@ import {
   getHbxAdminOverview,
   invalidateHbxCache,
   probeHbxBookingReadiness,
+  runHbxHotelCertification,
   runHbxSync,
 } from "@/lib/hbx/hbx.functions";
 import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTable";
 
 type Suite = "hotels" | "activities" | "transfers";
 type Overview = Awaited<ReturnType<typeof getHbxAdminOverview>>;
+type Certification = Awaited<ReturnType<typeof runHbxHotelCertification>>;
 
 export const Route = createFileRoute("/admin/hbx")({
   head: () => ({
@@ -36,10 +38,30 @@ function HbxConsole() {
   const sync = useServerFn(runHbxSync);
   const clear = useServerFn(invalidateHbxCache);
   const probe = useServerFn(probeHbxBookingReadiness);
+  const certify = useServerFn(runHbxHotelCertification);
 
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [cert, setCert] = useState<Certification | null>(null);
+
+  async function onCertify() {
+    setBusy("certify");
+    setCert(null);
+    try {
+      const res = (await certify({ data: {} })) as Certification;
+      setCert(res);
+      toast[res.passed ? "success" : "warning"](
+        res.passed
+          ? `Hotel certification passed in ${res.environment} — booking ${res.bookingReference} created and cancelled.`
+          : "Hotel certification finished with failures — see the step list.",
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Certification run failed.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function refresh(withProbe = false) {
     setLoading(true);
@@ -180,6 +202,59 @@ function HbxConsole() {
           );
         })}
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Hotel booking certification (test environment only)</CardTitle>
+          <Button
+            size="sm"
+            onClick={() => void onCertify()}
+            disabled={busy === "certify" || data?.environment !== "test"}
+          >
+            {busy === "certify" ? "Running…" : "Run certification cycle"}
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3 text-xs">
+          <p className="text-muted-foreground">
+            Connectivity → availability → CheckRate → test booking → booking detail → cancellation.
+            The run is refused unless <code>HBX_ENVIRONMENT</code> is <code>test</code>, and the
+            reservation it creates is cancelled inside the same run.
+          </p>
+          {cert ? (
+            <div className="space-y-2">
+              <p>
+                <span className={cert.passed ? "text-emerald-600" : "text-destructive"}>
+                  {cert.passed ? "PASSED" : "FAILED"}
+                </span>{" "}
+                · environment {cert.environment} · booking {cert.bookingReference ?? "—"} · final
+                state {cert.finalBookingStatus ?? "—"}
+              </p>
+              <table className="w-full text-left">
+                <thead className="text-muted-foreground">
+                  <tr>
+                    <th className="py-1 pr-4">Step</th>
+                    <th className="py-1 pr-4">Result</th>
+                    <th className="py-1 pr-4">HTTP</th>
+                    <th className="py-1">Detail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cert.steps.map((s) => (
+                    <tr key={s.step} className="border-t border-border/50">
+                      <td className="py-1 pr-4">{s.step}</td>
+                      <td className={`py-1 pr-4 ${s.ok ? "text-emerald-600" : "text-destructive"}`}>
+                        {s.ok ? "PASS" : "FAIL"}
+                      </td>
+                      <td className="py-1 pr-4">{s.status || "—"}</td>
+                      <td className="py-1">{s.detail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
