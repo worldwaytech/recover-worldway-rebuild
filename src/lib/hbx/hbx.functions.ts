@@ -208,3 +208,25 @@ export const probeHbxBookingReadiness = createServerFn({ method: "POST" })
     const res = await fetchTransferReference("vehicles");
     return { suite: data.suite, ok: res.ok, status: res.status, message: res.error?.message ?? "Reachable." };
   });
+
+/**
+ * Admin-only HBX hotel certification cycle. Runs only in the TEST environment
+ * (guarded server-side) and covers connectivity → availability → CheckRate →
+ * test booking → booking detail → cancellation, then verifies the final state.
+ */
+export const runHbxHotelCertification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        destinationCode: z.string().min(2).max(10).optional(),
+        checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { runHotelCertification } = await import("./hotel-booking.server");
+    return runHotelCertification(data);
+  });
