@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarDays, CreditCard, Wallet, Loader2, Users, BedDouble } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { CalendarDays, CreditCard, Loader2, Users, BedDouble } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -171,22 +172,19 @@ export function BookingPanel({ product }: { product: CatalogueProduct }) {
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
-        <Button className="w-full" disabled={busy} onClick={() => confirm("wallet")}>
+        <Button className="w-full" disabled={busy} onClick={() => void reserve()}>
           {busy ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <Wallet className="mr-2 h-4 w-4" />
+            <CreditCard className="mr-2 h-4 w-4" />
           )}
-          Pay {money(amountDue)} with wallet
-        </Button>
-        <Button variant="outline" className="w-full" disabled={busy} onClick={() => confirm("gateway")}>
-          <CreditCard className="mr-2 h-4 w-4" /> Card, UPI or PayPal
+          Reserve · {money(amountDue)} due to confirm
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
         {me
-          ? `Wallet balance ${money(balance)}. Top-ups settle instantly via Razorpay or PayPal.`
-          : "Sign in to pay from your Worldway wallet or a card."}
+          ? "Your reservation is held while our team confirms availability. Payment is taken securely, and the booking is confirmed only once payment clears."
+          : "Sign in to reserve this journey and pay securely."}
       </p>
     </div>
   );
