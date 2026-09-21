@@ -143,30 +143,16 @@ function SuperAdmin() {
             <ScrollText className="h-4 w-4 text-primary" /> Role management
           </div>
         </div>
-        <ul className="divide-y divide-border/40 text-sm">
-          {users.map((u) => (
-            <li key={u.id} className="flex items-center justify-between py-3">
-              <div>
-                {u.name} <span className="text-muted-foreground">· {u.email}</span>
-              </div>
-              <select
-                value={u.role}
-                onChange={(e) => {
-                  portal.updateRole(u.id, e.target.value as Role);
-                  admin.log("role.change", `${u.email} → ${e.target.value}`, "critical", me.email);
-                  setUsers(portal.users());
-                }}
-                className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs"
-              >
-                {(["b2c", "b2b", "agent", "admin", "super_admin"] as const).map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </li>
-          ))}
-        </ul>
+        <p className="text-sm text-muted-foreground">
+          Roles are granted and revoked on the Users screen, where every change is verified
+          server-side and written to the audit log.
+        </p>
+        <Link
+          to="/admin/users"
+          className="mt-4 inline-flex items-center gap-2 text-sm text-primary underline-offset-4 hover:underline"
+        >
+          Open user &amp; role administration
+        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
