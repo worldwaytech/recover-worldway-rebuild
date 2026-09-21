@@ -37,10 +37,30 @@ function HbxConsole() {
   const sync = useServerFn(runHbxSync);
   const clear = useServerFn(invalidateHbxCache);
   const probe = useServerFn(probeHbxBookingReadiness);
+  const certify = useServerFn(runHbxHotelCertification);
 
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [cert, setCert] = useState<Certification | null>(null);
+
+  async function onCertify() {
+    setBusy("certify");
+    setCert(null);
+    try {
+      const res = (await certify({ data: {} })) as Certification;
+      setCert(res);
+      toast[res.passed ? "success" : "warning"](
+        res.passed
+          ? `Hotel certification passed in ${res.environment} — booking ${res.bookingReference} created and cancelled.`
+          : "Hotel certification finished with failures — see the step list.",
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Certification run failed.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function refresh(withProbe = false) {
     setLoading(true);
