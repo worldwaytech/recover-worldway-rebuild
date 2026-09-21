@@ -12,6 +12,7 @@ import { getCatalogueProductBySlug } from "@/lib/catalogue-engine";
 import { departureOptions, priceBreakdown } from "@/lib/itinerary";
 
 const inputSchema = z.object({
+  kind: z.string().min(1).max(60),
   slug: z.string().min(1).max(160),
   departureDate: z.string().min(4).max(40),
   guests: z.number().int().min(1).max(8),

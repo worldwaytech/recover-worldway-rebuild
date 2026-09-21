@@ -53,6 +53,7 @@ export function BookingPanel({ product }: { product: CatalogueProduct }) {
       // Price, status and balances are established by the server, not here.
       const result = await requestBooking({
         data: {
+          kind: product.kind,
           slug: product.slug,
           departureDate: departure.date,
           guests,
@@ -60,7 +61,7 @@ export function BookingPanel({ product }: { product: CatalogueProduct }) {
           payFull,
         },
       });
-      trackCatalogueEvent("booking_request", { kind: product.kind, slug: product.slug });
+      trackCatalogueEvent("booking_conversion", { kind: product.kind, slug: product.slug });
       toast.success(
         `Reservation ${result.reference} created — ${money(result.amountDue)} due to confirm.`,
       );
