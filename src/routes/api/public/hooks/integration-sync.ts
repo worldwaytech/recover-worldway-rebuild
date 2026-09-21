@@ -4,13 +4,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "crypto";
 
-function authorised(request: Request): boolean {
-  const secret = (process.env["INTEGRATION_SYNC_SECRET"] ?? "").trim();
-  const supplied = request.headers.get("x-integration-sync-secret") ?? "";
+function matches(supplied: string, secret: string): boolean {
   if (!secret || !supplied) return false;
   const a = Buffer.from(supplied);
   const b = Buffer.from(secret);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// Two accepted callers: the operator secret (manual/external schedulers) and the
+// database schedule token used by the version-controlled hourly job.
+function authorised(request: Request): boolean {
+  const supplied = request.headers.get("x-integration-sync-secret") ?? "";
+  return (
+    matches(supplied, (process.env["INTEGRATION_SYNC_SECRET"] ?? "").trim()) ||
+    matches(supplied, (process.env["INTEGRATION_SYNC_SCHEDULE_TOKEN"] ?? "").trim())
+  );
 }
 
 export const Route = createFileRoute("/api/public/hooks/integration-sync")({
