@@ -411,9 +411,15 @@ export async function runRatehawkSandboxValidation(args: {
   }
   steps.push(step("Booking status", "bookingStatus", statusResult, statusDetail));
 
-  // 9. Order info
-  const order = await getOrderInfo(partnerOrderId);
-  const orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  // 9. Order info. ETG indexes the order a few seconds after the booking
+  // completes, so poll rather than reading once.
+  let order = await getOrderInfo(partnerOrderId);
+  let orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  for (let attempt = 0; attempt < 6 && orderRows.length === 0; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    order = await getOrderInfo(partnerOrderId);
+    orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  }
   const orderId = num(asRecord(orderRows[0])["order_id"]) ?? str(asRecord(orderRows[0])["order_id"]) ?? null;
   steps.push(
     step(
@@ -425,7 +431,11 @@ export async function runRatehawkSandboxValidation(args: {
   );
 
   // 10. Cancellation — always, so no sandbox booking is left standing.
-  const cancel = await cancelBooking(partnerOrderId);
+  let cancel = await cancelBooking(partnerOrderId);
+  for (let attempt = 0; attempt < 4 && !cancel.ok && cancel.error.code === "order_not_found"; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    cancel = await cancelBooking(partnerOrderId);
+  }
   steps.push(
     step("Cancellation", "cancel", cancel, cancel.ok ? "Booking cancelled." : cancel.error.message),
   );
