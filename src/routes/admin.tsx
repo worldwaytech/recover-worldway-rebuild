@@ -42,6 +42,7 @@ const NAV = [
   { to: "/admin/crystal", label: "Crystal Cruises", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/tours", label: "Tours connector", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/hbx", label: "HBX connector", icon: <PlugZap className="h-4 w-4" /> },
+  { to: "/admin/ratehawk", label: "RateHawk", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/tripjack", label: "TripJack certification", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/users", label: "Users", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/agents", label: "Agents", icon: <Briefcase className="h-4 w-4" /> },
