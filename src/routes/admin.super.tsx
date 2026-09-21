@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { portal, type PortalUser, type Role } from "@/lib/portal-store";
+import { portal, type PortalUser } from "@/lib/portal-store";
 import { admin } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
 import { useVerifiedRole } from "@/hooks/use-verified-role";
