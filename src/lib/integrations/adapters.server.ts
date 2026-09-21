@@ -427,8 +427,44 @@ const viatorAdapter: SupplierAdapter = {
   },
 };
 
+// ---------------------------------------------------------------- RateHawk
+// RateHawk (Emerging Travel Group) is a live-search bedbank: rates are quoted
+// per request and there is no static product catalogue to synchronise until the
+// sandbox certification completes, so fetchAll reports `live: false` honestly
+// rather than inventing records.
+const ratehawkAdapter: SupplierAdapter = {
+  id: "ratehawk",
+  label: "RateHawk (ETG) — hotels",
+  async probe() {
+    const { ratehawkCredentialStatus, ratehawkProbe } = await import("@/lib/ratehawk/client.server");
+    const credentials = ratehawkCredentialStatus();
+    if (!credentials.configured)
+      return {
+        ok: false,
+        status: null,
+        detail: `NOT CONNECTED — missing ${credentials.missing.join(" and ")}.`,
+      };
+    const res = await ratehawkProbe();
+    return { ok: res.ok, status: res.status, detail: res.detail };
+  },
+  async fetchAll() {
+    const { ratehawkCredentialStatus, ratehawkEnvironment } = await import("@/lib/ratehawk/client.server");
+    const credentials = ratehawkCredentialStatus();
+    return {
+      records: [],
+      live: false,
+      warnings: [
+        credentials.configured
+          ? `RateHawk (${ratehawkEnvironment()}) is a live-search supplier: availability and rates are quoted per request, so no static catalogue is synchronised.`
+          : `NOT CONNECTED — missing ${credentials.missing.join(" and ")}.`,
+      ],
+    };
+  },
+};
+
 const ADAPTERS: SupplierAdapter[] = [
   crystalAdapter,
+  ratehawkAdapter,
   ttcAdapter,
   hbxAdapter("hotels"),
   hbxAdapter("activities"),
