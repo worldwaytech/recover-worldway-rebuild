@@ -204,6 +204,59 @@ function HbxConsole() {
       </div>
 
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Hotel booking certification (test environment only)</CardTitle>
+          <Button
+            size="sm"
+            onClick={() => void onCertify()}
+            disabled={busy === "certify" || data?.environment !== "test"}
+          >
+            {busy === "certify" ? "Running…" : "Run certification cycle"}
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3 text-xs">
+          <p className="text-muted-foreground">
+            Connectivity → availability → CheckRate → test booking → booking detail → cancellation.
+            The run is refused unless <code>HBX_ENVIRONMENT</code> is <code>test</code>, and the
+            reservation it creates is cancelled inside the same run.
+          </p>
+          {cert ? (
+            <div className="space-y-2">
+              <p>
+                <span className={cert.passed ? "text-emerald-600" : "text-destructive"}>
+                  {cert.passed ? "PASSED" : "FAILED"}
+                </span>{" "}
+                · environment {cert.environment} · booking {cert.bookingReference ?? "—"} · final
+                state {cert.finalBookingStatus ?? "—"}
+              </p>
+              <table className="w-full text-left">
+                <thead className="text-muted-foreground">
+                  <tr>
+                    <th className="py-1 pr-4">Step</th>
+                    <th className="py-1 pr-4">Result</th>
+                    <th className="py-1 pr-4">HTTP</th>
+                    <th className="py-1">Detail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cert.steps.map((s) => (
+                    <tr key={s.step} className="border-t border-border/50">
+                      <td className="py-1 pr-4">{s.step}</td>
+                      <td className={`py-1 pr-4 ${s.ok ? "text-emerald-600" : "text-destructive"}`}>
+                        {s.ok ? "PASS" : "FAIL"}
+                      </td>
+                      <td className="py-1 pr-4">{s.status || "—"}</td>
+                      <td className="py-1">{s.detail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Configuration</CardTitle>
         </CardHeader>
