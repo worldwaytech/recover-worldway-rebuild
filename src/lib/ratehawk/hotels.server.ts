@@ -271,10 +271,11 @@ export async function runRatehawkSandboxValidation(args: {
   const residency = args.residency ?? "gb";
   const guests: RatehawkGuests[] = [{ adults: 2 }];
 
-  // 1. Authentication
-  const contract = await ratehawkCall<unknown>("contract", {});
+  // 1. Authentication. /general/contract/data/info/ is not entitled on the sandbox
+  // key (supplier answers "endpoint_not_found"), so multicomplete is the probe.
+  const contract = await ratehawkCall<unknown>("multicomplete", { query: "London", language: "en" });
   steps.push(
-    step("Sandbox authentication", "contract", contract, contract.ok ? "Credentials accepted." : contract.error.message),
+    step("Sandbox authentication", "multicomplete", contract, contract.ok ? "Credentials accepted." : contract.error.message),
   );
   if (!contract.ok) return finish("Sandbox authentication failed — the flow was not run.");
 
