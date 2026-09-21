@@ -2672,6 +2672,10 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
+      owns_cruisea_booking: {
+        Args: { _booking_id: string; _user_id: string }
+        Returns: boolean
+      }
       record_staff_payment: {
         Args: {
           _amount: number
