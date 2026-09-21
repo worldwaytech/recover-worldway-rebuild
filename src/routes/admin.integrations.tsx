@@ -294,7 +294,7 @@ function Audit({ rows }: { rows: IntegrationAuditRow[] }) { return <div classNam
 function Loading() { return <div className="flex items-center justify-center py-20 text-sm text-muted-foreground"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading supplier control plane…</div>; }
 function Empty({ text }: { text: string }) { return <div className="py-12 text-center text-sm text-muted-foreground">{text}</div>; }
 
-type AddData = Parameters<ReturnType<typeof useServerFn<typeof saveIntegrationProvider>>>[0] extends { data: infer T } ? T : never;
+type AddData = Parameters<typeof saveIntegrationProvider>[0] extends { data: infer T } ? T : never;
 
 function AddProviderDialog({ open, onOpenChange, onSave }: { open: boolean; onOpenChange: (v: boolean) => void; onSave: (data: AddData) => Promise<void> }) {
   const [form, setForm] = useState({ name: "", providerKey: "", category: "other", summary: "", baseUrl: "", authKind: "api-key-header", authHeader: "", secretNames: "", catalogPath: "", healthPath: "", capabilities: "catalog", collections: "", syncStrategy: "full", paginationMode: "none", recordPath: "", fieldMap: "{}", dedupeKeys: "external_id", conflictPolicy: "supplier-wins", webhookSecretName: "", docsUrl: "", notes: "" });

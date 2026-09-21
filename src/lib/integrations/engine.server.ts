@@ -15,6 +15,8 @@ import { createHash, timingSafeEqual } from "crypto";
 import type { Admin, SupplierRecord } from "./adapters.server";
 import { getAdapter, listAdapters } from "./adapters.server";
 import type {
+  JsonRecord,
+  JsonValue,
   IntegrationAuditRow,
   IntegrationConnectionState,
   IntegrationLogRow,
