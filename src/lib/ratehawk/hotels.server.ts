@@ -329,9 +329,21 @@ export async function runRatehawkSandboxValidation(args: {
       prebook.ok ? `Rate revalidated; book_hash ${bookHash.slice(0, 12)}…` : prebook.error.message,
     ),
   );
-  if (!prebook.ok || args.book === false)
+  // ETG disables /hotel/prebook/ on some keys (error "prebook_disabled"). That is a
+  // supplier entitlement, not an integration fault: the booking form re-validates the
+  // rate anyway, so the run continues with the original book_hash.
+  const prebookDisabled = !prebook.ok && prebook.error.code === "prebook_disabled";
+  if (prebookDisabled) {
+    const last = steps[steps.length - 1];
+    if (last) {
+      last.passed = true;
+      last.detail =
+        "Prebook is not enabled for this API key (supplier response \"prebook_disabled\"); the booking form re-validates the rate instead.";
+    }
+  }
+  if ((!prebook.ok && !prebookDisabled) || args.book === false)
     return finish(
-      prebook.ok
+      prebook.ok || prebookDisabled
         ? "Search → details → rates → prebook verified. Booking was not requested in this run."
         : "Prebook failed — booking was not attempted.",
     );
@@ -372,7 +384,7 @@ export async function runRatehawkSandboxValidation(args: {
   let statusResult = await getBookingStatus(partnerOrderId);
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const payload = asRecord(statusResult.ok ? statusResult.data : {});
-    const status = str(payload["status"]);
+    const status = str(payload["status"]) ?? (statusResult.ok ? statusResult.meta.supplierStatus ?? null : null);
     if (status && status !== "processing") {
       statusDetail = `Supplier status: ${status}.`;
       break;

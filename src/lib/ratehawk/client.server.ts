@@ -137,6 +137,8 @@ export async function ratehawkCall<T>(
           Authorization: authorization,
           "Content-Type": "application/json",
           Accept: "application/json",
+          // ETG sits behind Cloudflare; a missing/unknown UA is rejected with 403 (error 1010).
+          "User-Agent": "WorldwayTravelsGroup/1.0 (+https://worldwaytravelsgroup.com)",
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -172,7 +174,8 @@ export async function ratehawkCall<T>(
       }
 
       // ETG answers HTTP 200 with `status: "error"` for business failures.
-      if (envelope.status && envelope.status !== "ok") {
+      // "processing" is a legitimate in-flight state for asynchronous booking status.
+      if (envelope.status && envelope.status !== "ok" && envelope.status !== "processing") {
         lastError = errorFrom(
           envelope.error ?? "supplier_error",
           `RateHawk reported "${envelope.error ?? envelope.status}".`,
@@ -182,6 +185,7 @@ export async function ratehawkCall<T>(
       }
 
       meta.latencyMs = Date.now() - startedAt;
+      meta.supplierStatus = envelope.status ?? null;
       void logRatehawk(operation, "success", meta, null);
       return { ok: true, data: (envelope.data ?? null) as T, meta };
     } catch (error) {
@@ -229,7 +233,9 @@ async function logRatehawk(
 
 /** Cheapest authenticated read — used for Test Connection and API Health. */
 export async function ratehawkProbe(): Promise<{ ok: boolean; status: number | null; detail: string }> {
-  const result = await ratehawkCall<unknown>("contract", {});
+  // The sandbox key has no /general/contract/data/info/ entitlement, so the
+  // cheapest authenticated read that every key can make is multicomplete.
+  const result = await ratehawkCall<unknown>("multicomplete", { query: "London", language: "en" });
   if (result.ok)
     return {
       ok: true,

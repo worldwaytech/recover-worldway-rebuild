@@ -2,6 +2,8 @@
 import type { RatehawkEnvironment, RatehawkOperation } from "./config";
 
 export interface RatehawkCallMeta {
+  /** ETG envelope status ("ok" | "processing"), when the supplier returned one. */
+  supplierStatus?: string | null;
   operation: RatehawkOperation;
   environment: RatehawkEnvironment;
   httpStatus: number | null;
