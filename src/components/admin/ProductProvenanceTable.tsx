@@ -20,6 +20,7 @@ import {
 import {
   getIntegrationProductData,
   getSupplierProductLedger,
+  resolveIntegrationConflict,
   runIntegrationSync,
 } from "@/lib/integrations/integrations.functions";
 import type { IntegrationProductRow } from "@/lib/integrations/types";
@@ -50,6 +51,7 @@ export function ProductProvenanceTable({
   const loadLedger = useServerFn(getSupplierProductLedger);
   const syncProvider = useServerFn(runIntegrationSync);
   const loadApiData = useServerFn(getIntegrationProductData);
+  const resolveConflict = useServerFn(resolveIntegrationConflict);
 
   const [rows, setRows] = useState<IntegrationProductRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -156,8 +158,38 @@ export function ProductProvenanceTable({
                     {p.syncStatus}
                   </Badge>
                   {p.conflictState !== "none" && (
-                    <div className="mt-1 text-xs text-destructive">
-                      Conflict: {p.conflictState}
+                    <div className="mt-1 space-y-1">
+                      <div className="text-xs text-destructive">Conflict: {p.conflictState}</div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 px-2 text-[0.7rem]"
+                        disabled={busy !== null}
+                        onClick={() =>
+                          void (async () => {
+                            setBusy(`conflict:${p.id}`);
+                            try {
+                              const out = await resolveConflict({
+                                data: {
+                                  providerKey: p.providerKey,
+                                  externalId: p.externalId,
+                                  resolution: "accept-supplier",
+                                },
+                              });
+                              toast.success(out.detail);
+                              await refresh(query);
+                            } catch (err) {
+                              toast.error(
+                                err instanceof Error ? err.message : "Could not resolve.",
+                              );
+                            } finally {
+                              setBusy(null);
+                            }
+                          })()
+                        }
+                      >
+                        Accept supplier data
+                      </Button>
                     </div>
                   )}
                   {p.lastError && (
