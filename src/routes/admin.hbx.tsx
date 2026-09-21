@@ -17,6 +17,7 @@ import { ProductProvenanceTable } from "@/components/admin/ProductProvenanceTabl
 
 type Suite = "hotels" | "activities" | "transfers";
 type Overview = Awaited<ReturnType<typeof getHbxAdminOverview>>;
+type Certification = Awaited<ReturnType<typeof runHbxHotelCertification>>;
 
 export const Route = createFileRoute("/admin/hbx")({
   head: () => ({
