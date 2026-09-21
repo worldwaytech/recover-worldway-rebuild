@@ -17,7 +17,7 @@ import {
   type RatehawkEnvironment,
   type RatehawkOperation,
 } from "./config";
-import type { RatehawkError, RatehawkResult } from "./types";
+import type { RatehawkCallMeta, RatehawkError, RatehawkResult } from "./types";
 
 export function ratehawkEnvironment(): RatehawkEnvironment {
   const raw = (process.env[RATEHAWK_ENV_VAR] ?? "sandbox").toLowerCase();
