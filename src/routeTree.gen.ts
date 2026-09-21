@@ -150,6 +150,7 @@ import { Route as AdminToursRouteImport } from './routes/admin.tours'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
+import { Route as AdminRatehawkRouteImport } from './routes/admin.ratehawk'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
@@ -910,6 +911,11 @@ const AdminSeoRoute = AdminSeoRouteImport.update({
   path: '/seo',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRatehawkRoute = AdminRatehawkRouteImport.update({
+  id: '/ratehawk',
+  path: '/ratehawk',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
@@ -1274,6 +1280,7 @@ export interface FileRoutesByFullPath {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/ratehawk': typeof AdminRatehawkRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
@@ -1442,6 +1449,7 @@ export interface FileRoutesByTo {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/ratehawk': typeof AdminRatehawkRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
@@ -1637,6 +1645,7 @@ export interface FileRoutesById {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/ratehawk': typeof AdminRatehawkRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
@@ -1835,6 +1844,7 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/ratehawk'
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
@@ -2003,6 +2013,7 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/ratehawk'
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
@@ -2197,6 +2208,7 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/ratehawk'
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
@@ -3387,6 +3399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSeoRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ratehawk': {
+      id: '/admin/ratehawk'
+      path: '/ratehawk'
+      fullPath: '/admin/ratehawk'
+      preLoaderRoute: typeof AdminRatehawkRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/payments': {
       id: '/admin/payments'
       path: '/payments'
@@ -3801,6 +3820,7 @@ interface AdminRouteChildren {
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminRatehawkRoute: typeof AdminRatehawkRoute
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
@@ -3826,6 +3846,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminRatehawkRoute: AdminRatehawkRoute,
   AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
