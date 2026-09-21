@@ -290,7 +290,9 @@ export async function runRatehawkSandboxValidation(args: {
       search.ok ? `${offers.length} hotels returned.` : search.error.message,
     ),
   );
-  const firstWithRate = offers.find((o) => o.hid != null && o.rates.length > 0);
+  // SERP rates carry only a match_hash; the bookable book_hash is issued by the
+  // hotelpage call, so a candidate only needs a hotel id at this stage.
+  const firstWithRate = offers.find((o) => o.hid != null);
   if (!search.ok || !firstWithRate) return finish("Search returned no bookable hotel — the flow stopped here.");
 
   // 3. Hotel details
