@@ -64,7 +64,44 @@ type Detail = {
   meetingPoint: string | null;
   pickup: string | null;
   ticketInfo: string | null;
+  ageBands: AgeBandRule[];
+  bookingLimits: {
+    minTravelersPerBooking: number | null;
+    maxTravelersPerBooking: number | null;
+  };
+  productOptions: {
+    code: string;
+    title: string;
+    description: string | null;
+    languageGuides: { type: string; language: string }[];
+  }[];
+  bookingQuestionIds: string[];
+  travelerPickup: {
+    pickupOptionType: string | null;
+    allowCustomTravelerPickup: boolean;
+    additionalInfo: string | null;
+    minutesBeforeDepartureTimeForPickup: number | null;
+    locationRefs: string[];
+  } | null;
+  languageGuides: { type: string; language: string }[];
+  bookingConfirmationSettings: {
+    confirmationType: string | null;
+    bookingCutoffType: string | null;
+    bookingCutoffInMinutes: number | null;
+    allowBookingRequestsWithinCutoff: boolean | null;
+  };
 };
+
+/** Bands offered when a product publishes none (Viator always sells adults). */
+const FALLBACK_BANDS: AgeBandRule[] = [
+  {
+    ageBand: "ADULT",
+    startAge: null,
+    endAge: null,
+    minTravelersPerBooking: null,
+    maxTravelersPerBooking: null,
+  },
+];
 
 function Section({
   id,
