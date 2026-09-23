@@ -1573,8 +1573,11 @@ export async function handleWebhook(
     .insert({
       provider_key: providerKey,
       event_type: (payloadRow["event"] as string | null) ?? null,
-      event_id: eventId,
-      payload_hash: payloadHash,
+      event_id: valid ? eventId : null,
+      // Only verified deliveries claim the content fingerprint. A rejected
+      // delivery must never block the supplier's later, correctly-signed retry
+      // of the same event.
+      payload_hash: valid ? payloadHash : null,
       signature_algorithm: algorithm,
       signature_valid: valid,
       payload: sanitize(payload ?? {}),
@@ -1586,16 +1589,33 @@ export async function handleWebhook(
     .select("id")
     .maybeSingle();
 
-  // Unique partial indexes on (provider_key, event_id) and (provider_key,
-  // payload_hash) make a duplicate delivery a no-op rather than a second sync.
-  if (insertError) {
+  if (!valid) {
     await logIntegration({
       providerKey,
       operation: "webhook",
-      status: "skipped",
-      message: "Duplicate delivery ignored.",
+      status: "error",
+      message: reason || "Signature rejected.",
     });
-    return { accepted: true, reason: "duplicate delivery ignored" };
+    return { accepted: false, reason: reason || "invalid signature" };
+  }
+
+  // Unique partial indexes on (provider_key, event_id) and (provider_key,
+  // payload_hash) make a repeated verified delivery a no-op rather than a second
+  // sync. Any other insert failure is a real error, not a duplicate.
+  if (insertError) {
+    const duplicate =
+      (insertError as { code?: string }).code === "23505" ||
+      /duplicate key|unique constraint/i.test(insertError.message ?? "");
+    await logIntegration({
+      providerKey,
+      operation: "webhook",
+      status: duplicate ? "skipped" : "error",
+      message: duplicate
+        ? "Duplicate delivery ignored."
+        : `Webhook could not be recorded: ${insertError.message}`,
+    });
+    if (duplicate) return { accepted: true, reason: "duplicate delivery ignored" };
+    return { accepted: false, reason: "webhook could not be recorded" };
   }
 
   if (!valid) {
