@@ -9,8 +9,17 @@ import {
   getViatorProduct,
   getViatorReviews,
   getViatorSchedule,
+  priceViatorActivity,
   searchViatorProducts,
 } from "@/lib/viator.functions";
+import {
+  ageBandLabel,
+  sortAgeBands,
+  validatePaxMixAgainstBands,
+  type AgeBandRule,
+  type ViatorAgeBand,
+} from "@/lib/viator/age-bands";
+import { VIATOR_PRIVACY_URL, VIATOR_TERMS_URL } from "@/lib/viator/voucher";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ViatorActivityCheckout,
