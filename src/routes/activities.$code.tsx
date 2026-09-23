@@ -175,24 +175,120 @@ function ActivityDetailPage() {
 
   // booking state
   const [date, setDate] = useState("");
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
-  const [extras, setExtras] = useState<string[]>([]);
+  const [pax, setPax] = useState<Record<string, number>>({ ADULT: 2 });
+  const [optionCode, setOptionCode] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [languageGuide, setLanguageGuide] = useState("");
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [checkoutMode, setCheckoutMode] = useState<ActivityCheckoutMode | null>(null);
+  const quote = useServerFn(priceViatorActivity);
+  const [live, setLive] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    total: number | null;
+    currency: string | null;
+    startTimes: string[];
+    message: string | null;
+  }>({
+    checking: false,
+    available: null,
+    total: null,
+    currency: null,
+    startTimes: [],
+    message: null,
+  });
+
+  const bands = sortAgeBands(product?.ageBands?.length ? product.ageBands : FALLBACK_BANDS);
+  const paxMix = bands
+    .map((b) => ({ ageBand: b.ageBand, count: pax[b.ageBand] ?? 0 }))
+    .filter((p) => p.count > 0);
+  const travellers = paxMix.reduce((sum, p) => sum + p.count, 0);
+  const paxCheck = validatePaxMixAgainstBands(paxMix, bands, product?.bookingLimits ?? {});
+  const selectedOption = product?.productOptions?.find((o) => o.code === optionCode) ?? null;
+  const guideChoices = selectedOption?.languageGuides?.length
+    ? selectedOption.languageGuides
+    : (product?.languageGuides ?? []);
+
+  /** Real availability + real total from Viator for the chosen date and pax mix. */
+  const refreshQuote = useCallback(async () => {
+    if (!product || !date || !paxMix.length || !paxCheck.ok) {
+      setLive((s) => ({ ...s, available: null, total: null, message: null }));
+      return;
+    }
+    setLive((s) => ({ ...s, checking: true, message: null }));
+    try {
+      const res = (await quote({
+        data: {
+          productCode: product.productCode,
+          travelDate: date,
+          currency: product.currency,
+          paxMix,
+          ...(optionCode ? { productOptionCode: optionCode } : {}),
+          ...(startTime ? { startTime } : {}),
+        },
+      })) as {
+        ok: boolean;
+        available: boolean;
+        total: number | null;
+        currency: string;
+        error?: string;
+        startTimes?: string[];
+      };
+      setLive({
+        checking: false,
+        available: res.ok ? res.available : null,
+        total: res.total,
+        currency: res.currency,
+        startTimes: res.startTimes ?? [],
+        message: res.ok
+          ? res.available
+            ? null
+            : "These places are not available for that date and party. Try another date."
+          : (res.error ?? "Live pricing is unavailable right now."),
+      });
+    } catch (err) {
+      setLive({
+        checking: false,
+        available: null,
+        total: null,
+        currency: null,
+        startTimes: [],
+        message: err instanceof Error ? err.message : "Live pricing is unavailable right now.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.productCode, date, JSON.stringify(paxMix), optionCode, startTime, paxCheck.ok]);
+
+  useEffect(() => {
+    void refreshQuote();
+  }, [refreshQuote]);
 
   const startInstantCheckout = (mode: ActivityCheckoutMode) => {
     setBookingError(null);
     const [firstName, ...rest] = form.full_name.trim().split(/\s+/);
     if (!date || !firstName || !rest.length || !form.email.trim()) {
+      setBookingError("Add your travel date, full name and email to continue.");
+      return;
+    }
+    if (!/^\+[1-9]\d{7,14}$/.test(form.phone.replace(/[^\d+]/g, ""))) {
       setBookingError(
-        mode === "pay_now"
-          ? "Add your travel date, full name and email to book and pay now."
-          : "Add your travel date, full name and email to hold your places and pay later.",
+        "The operator needs a contact number in international format, for example +971501234567.",
       );
+      return;
+    }
+    if (!paxCheck.ok) {
+      setBookingError(paxCheck.reason);
+      return;
+    }
+    if (product?.productOptions?.length && !optionCode) {
+      setBookingError("Choose which option of this experience you want.");
+      return;
+    }
+    if (live.available === false) {
+      setBookingError("Those places are not available. Pick another date or party size.");
       return;
     }
     setCheckoutMode(mode);
