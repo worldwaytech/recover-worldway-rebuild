@@ -729,83 +729,118 @@ function ActivityDetailPage() {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                      Adults
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={adults}
-                      onChange={(e) => setAdults(Math.max(1, Number(e.target.value)))}
-                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                      Children
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={20}
-                      value={children}
-                      onChange={(e) => setChildren(Math.max(0, Number(e.target.value)))}
-                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
-                    />
-                  </label>
-                </div>
-
-                <fieldset>
+                {/* travellers — exactly the age groups this experience sells */}
+                <fieldset className="space-y-2">
                   <legend className="mb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    Optional extras
+                    Travellers
                   </legend>
-                  {["Private transfer", "Travel insurance", "Private guide"].map((x) => (
+                  {bands.map((band) => (
                     <label
-                      key={x}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                      key={band.ageBand}
+                      className="flex items-center justify-between gap-3 text-sm"
                     >
+                      <span className="text-muted-foreground">{ageBandLabel(band)}</span>
                       <input
-                        type="checkbox"
-                        checked={extras.includes(x)}
-                        onChange={() =>
-                          setExtras((prev) =>
-                            prev.includes(x) ? prev.filter((e) => e !== x) : [...prev, x],
-                          )
+                        type="number"
+                        min={band.ageBand === "ADULT" ? 1 : 0}
+                        max={band.maxTravelersPerBooking ?? 20}
+                        value={pax[band.ageBand] ?? 0}
+                        onChange={(e) =>
+                          setPax((prev) => ({
+                            ...prev,
+                            [band.ageBand]: Math.max(0, Number(e.target.value)),
+                          }))
                         }
+                        className="w-20 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
                       />
-                      {x} <span className="text-xs">+$45</span>
                     </label>
                   ))}
+                  {!paxCheck.ok ? (
+                    <p role="alert" className="text-[11px] text-destructive">
+                      {paxCheck.reason}
+                    </p>
+                  ) : null}
                 </fieldset>
 
-                <div className="space-y-1 rounded-lg border border-border/60 bg-background/40 p-3 text-xs text-muted-foreground">
+                {product.productOptions.length ? (
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      Option
+                    </span>
+                    <select
+                      value={optionCode}
+                      onChange={(e) => {
+                        setOptionCode(e.target.value);
+                        setLanguageGuide("");
+                      }}
+                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
+                    >
+                      <option value="">Select an option</option>
+                      {product.productOptions.map((o) => (
+                        <option key={o.code} value={o.code}>
+                          {o.title}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedOption?.description ? (
+                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                        {selectedOption.description}
+                      </span>
+                    ) : null}
+                  </label>
+                ) : null}
+
+                {guideChoices.length ? (
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      Guide language
+                    </span>
+                    <select
+                      value={languageGuide}
+                      onChange={(e) => setLanguageGuide(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
+                    >
+                      <option value="">No preference</option>
+                      {guideChoices.map((g) => (
+                        <option
+                          key={`${g.type}-${g.language}`}
+                          value={`${g.type}|${g.language}`}
+                        >
+                          {g.language.toUpperCase()} — {g.type.toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                {/* live supplier pricing — never an invented estimate */}
+                <div
+                  data-testid="activity-live-price"
+                  className="space-y-1 rounded-lg border border-border/60 bg-background/40 p-3 text-xs text-muted-foreground"
+                >
                   <div className="flex justify-between">
                     <span>
-                      {adults} adult{adults > 1 ? "s" : ""}
+                      {travellers} traveller{travellers === 1 ? "" : "s"}
                     </span>
-                    <span>{money(unit != null ? unit * adults : null, product.currency)}</span>
+                    <span>{date || "select a date"}</span>
                   </div>
-                  {children > 0 ? (
-                    <div className="flex justify-between">
-                      <span>{children} child</span>
-                      <span>
-                        {money(unit != null ? unit * 0.6 * children : null, product.currency)}
-                      </span>
-                    </div>
-                  ) : null}
-                  {extras.length ? (
-                    <div className="flex justify-between">
-                      <span>Extras</span>
-                      <span>{money(extrasCost, product.currency)}</span>
-                    </div>
-                  ) : null}
                   <div className="flex justify-between border-t border-border/60 pt-1 text-sm text-foreground">
-                    <span>Estimated total</span>
-                    <span>{money(total, product.currency)}</span>
+                    <span>Total</span>
+                    <span>
+                      {live.checking
+                        ? "Checking…"
+                        : live.total != null
+                          ? money(live.total, live.currency ?? product.currency)
+                          : "—"}
+                    </span>
                   </div>
+                  {live.message ? <p className="text-[11px]">{live.message}</p> : null}
+                  {live.total != null && live.available ? (
+                    <p className="text-[11px]">
+                      Confirmed live with the operator for this date and party. Taxes and fees
+                      included.
+                    </p>
+                  ) : null}
                 </div>
 
                 <input
