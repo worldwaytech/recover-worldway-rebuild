@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 const TABS = [
   { to: "/hotels", label: "Live Search", exact: true },
-  { to: "/hotels/hbx", label: "HBX", exact: false },
+  { to: "/hotels/hbx", label: "Live Hotels", exact: false },
 ] as const;
 
 export const Route = createFileRoute("/hotels")({

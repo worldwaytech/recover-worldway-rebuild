@@ -12,12 +12,12 @@ const SECTIONS: { id: Suite; label: string; blurb: string }[] = [
   {
     id: "hotels",
     label: "Hotels",
-    blurb: "The HBX hotel portfolio with full content, facilities and imagery.",
+    blurb: "Live hotel inventory with full content, facilities and imagery.",
   },
   {
     id: "activities",
     label: "Experiences",
-    blurb: "Curated experiences and activities from the HBX Activities catalogue.",
+    blurb: "Curated experiences and activities from our live activities catalogue.",
   },
   {
     id: "transfers",
@@ -29,16 +29,16 @@ const SECTIONS: { id: Suite; label: string; blurb: string }[] = [
 export const Route = createFileRoute("/hotels/hbx")({
   head: () => ({
     meta: [
-      { title: "HBX Collection — Hotels, Experiences & Transfers | Worldway" },
+      { title: "Live Hotels — Hotels, Experiences & Transfers | Worldway" },
       {
         name: "description",
         content:
-          "Search the HBX Group collection: hotels, experiences and private transfers, with live supplier content curated by Worldway Travels Group.",
+          "Search the Worldway Travels Group live collection: hotels, experiences and private transfers, curated for your journey.",
       },
-      { property: "og:title", content: "HBX Collection — Worldway Travels Group" },
+      { property: "og:title", content: "Live Hotels — Worldway Travels Group" },
       {
         property: "og:description",
-        content: "Hotels, experiences and transfers from the HBX Group portfolio.",
+        content: "Hotels, experiences and transfers from the Worldway live portfolio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -77,7 +77,7 @@ function HbxPage() {
         })) as HbxCatalogueResult;
         setResult(res);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "The HBX catalogue could not be loaded.");
+        setError(e instanceof Error ? e.message : "The live hotel catalogue could not be loaded.");
       } finally {
         setLoading(false);
       }
@@ -101,9 +101,9 @@ function HbxPage() {
   return (
     <PageShell>
       <PageHero
-        eyebrow="HBX Group Collection"
-        title="Hotels, experiences and transfers — one supplier, three portfolios."
-        subtitle="Live HBX content, normalised into the Worldway catalogue with full supplier traceability."
+        eyebrow="Worldway Live Collection"
+        title="Hotels, experiences and transfers — live, in one place."
+        subtitle="Live inventory, normalised into the Worldway catalogue for a seamless booking experience."
         image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2000&q=80"
       />
 
@@ -127,7 +127,7 @@ function HbxPage() {
         ))}
       </div>
 
-      <SearchCard title={`${section.label} — HBX`}>
+      <SearchCard title={`${section.label} — Live`}>
         <p className="mb-5 text-sm text-muted-foreground">{section.blurb}</p>
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -243,7 +243,7 @@ function HbxPage() {
                       </p>
                     ) : null}
                     <p className="pt-2 text-[0.6rem] uppercase tracking-[0.25em] text-muted-foreground">
-                      HBX ref {item.supplierCode}
+                      Worldway ref {item.supplierCode}
                     </p>
                   </div>
                 </article>

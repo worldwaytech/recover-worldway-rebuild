@@ -326,7 +326,7 @@ function HotelCard({ hotel, token }: { hotel: Hotel; token: string | null }) {
             {open ? "Hide details" : "Property details"}
           </button>
           <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            {hotel.supplier ? `${hotel.supplier} · ` : ""}UP17 Live
+            {hotel.supplier ? `${hotel.supplier} · ` : ""}Live inventory
           </span>
         </div>
 
