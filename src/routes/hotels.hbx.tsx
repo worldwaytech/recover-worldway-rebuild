@@ -127,7 +127,7 @@ function HbxPage() {
         ))}
       </div>
 
-      <SearchCard title={`${section.label} — HBX`}>
+      <SearchCard title={`${section.label} — Live`}>
         <p className="mb-5 text-sm text-muted-foreground">{section.blurb}</p>
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
