@@ -190,14 +190,12 @@ function ActivityDetailPage() {
     available: boolean | null;
     total: number | null;
     currency: string | null;
-    startTimes: string[];
     message: string | null;
   }>({
     checking: false,
     available: null,
     total: null,
     currency: null,
-    startTimes: [],
     message: null,
   });
 
@@ -235,14 +233,12 @@ function ActivityDetailPage() {
         total: number | null;
         currency: string;
         error?: string;
-        startTimes?: string[];
       };
       setLive({
         checking: false,
         available: res.ok ? res.available : null,
         total: res.total,
         currency: res.currency,
-        startTimes: res.startTimes ?? [],
         message: res.ok
           ? res.available
             ? null
@@ -255,7 +251,6 @@ function ActivityDetailPage() {
         available: null,
         total: null,
         currency: null,
-        startTimes: [],
         message: err instanceof Error ? err.message : "Live pricing is unavailable right now.",
       });
     }
