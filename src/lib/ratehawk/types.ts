@@ -79,4 +79,11 @@ export interface RatehawkCertificationReport {
   orderId: string | number | null;
   steps: RatehawkCertificationStep[];
   message: string;
+  /** Worldway's own resolved lifecycle status, when a booking was submitted. */
+  internalStatus?: string;
+  supplierStatus?: string | null;
+  /** Customer-facing price (supplier cost + Worldway markup/fees). */
+  customerPrice?: unknown;
+  /** Worldway voucher — only present for a confirmed booking. */
+  voucher?: unknown;
 }

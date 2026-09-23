@@ -684,12 +684,3 @@ export async function runRatehawkSandboxValidation(args: {
     voucher: customer.voucher,
   };
 }
-
-  return finish(
-    steps.every((s) => s.passed)
-      ? "Full sandbox flow verified: search, details, rates, prebook, booking, status, order info and cancellation."
-      : "The sandbox flow completed with failures — see the step list.",
-    partnerOrderId,
-    orderId,
-  );
-}
