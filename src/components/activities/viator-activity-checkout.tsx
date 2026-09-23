@@ -292,7 +292,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     for (const q of [...grouped.perBooking, ...grouped.pickup]) {
       const value = (answers[key(q.id)] ?? "").trim();
       if (!value) continue;
-      if (q.format === "LOCATION_REF_OR_FREE_TEXT") {
+      if (q.type === "LOCATION_REF_OR_FREE_TEXT") {
         const isRef = pickupInfo?.locations.some((l) => l.reference === value) ?? false;
         out.push({
           question: q.id,
@@ -513,7 +513,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
                       </select>
                     ) : (
                       <input
-                        type={q.format === "TIME" ? "time" : q.format === "DATE" ? "date" : "text"}
+                        type={q.type === "TIME" ? "time" : q.type === "DATE" ? "date" : "text"}
                         maxLength={q.maxLength ?? undefined}
                         value={answers[key(q.id)] ?? ""}
                         onChange={(e) => setAnswer(q.id, 0, e.target.value)}
@@ -554,7 +554,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
                       </select>
                     ) : (
                       <input
-                        type={q.format === "TIME" ? "time" : q.format === "DATE" ? "date" : "text"}
+                        type={q.type === "TIME" ? "time" : q.type === "DATE" ? "date" : "text"}
                         maxLength={q.maxLength ?? undefined}
                         value={answers[key(q.id)] ?? ""}
                         onChange={(e) => setAnswer(q.id, 0, e.target.value)}
@@ -582,7 +582,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
                         </span>
                         <input
                           type={
-                            q.format === "TIME" ? "time" : q.format === "DATE" ? "date" : "text"
+                            q.type === "TIME" ? "time" : q.type === "DATE" ? "date" : "text"
                           }
                           maxLength={q.maxLength ?? undefined}
                           value={answers[key(q.id, n)] ?? ""}
