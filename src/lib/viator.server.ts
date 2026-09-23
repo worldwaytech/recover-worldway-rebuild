@@ -2,6 +2,10 @@
 // Auth: `exp-api-key` header. Sandbox and production share the same contract,
 // only the base URL differs (VIATOR_API_ENV=sandbox|production).
 
+import { isViatorAgeBand, type AgeBandRule } from "@/lib/viator/age-bands";
+import type { BookingQuestion, BookingQuestionGroup } from "@/lib/viator/booking-questions";
+
+
 export type ViatorProduct = {
   productCode: string;
   title: string;
@@ -61,15 +65,27 @@ function headers(): Record<string, string> | null {
   };
 }
 
+/** Default timeout for content/availability calls. */
+export const VIATOR_DEFAULT_TIMEOUT_MS = 15_000;
+/**
+ * Viator explicitly recommends a 120s timeout for booking calls: some products
+ * depend on external supplier systems, so a booking may take up to 120s (and a
+ * timeout does NOT mean the booking failed — the status endpoint is authoritative).
+ */
+export const VIATOR_BOOKING_TIMEOUT_MS = 120_000;
+
 export async function viatorFetch<T>(
   path: string,
-  init: { method: "GET" | "POST"; body?: unknown },
-): Promise<{ ok: boolean; status: number; error?: string; data?: T }> {
+  init: { method: "GET" | "POST"; body?: unknown; timeoutMs?: number },
+): Promise<{ ok: boolean; status: number; error?: string; data?: T; timedOut?: boolean }> {
   const h = headers();
   if (!h) return { ok: false, status: 503, error: "Viator API key not configured." };
   const base = viatorEnvironment() === "production" ? PROD_BASE : SANDBOX_BASE;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(
+    () => controller.abort(),
+    init.timeoutMs ?? VIATOR_DEFAULT_TIMEOUT_MS,
+  );
   try {
     const res = await fetch(`${base}${path}`, {
       method: init.method,
@@ -93,10 +109,16 @@ export async function viatorFetch<T>(
     }
     return { ok: true, status: res.status, data: json as T };
   } catch (err) {
+    const aborted = controller.signal.aborted;
     return {
       ok: false,
-      status: 502,
-      error: err instanceof Error ? err.message : "Viator request failed",
+      status: aborted ? 504 : 502,
+      ...(aborted ? { timedOut: true } : {}),
+      error: aborted
+        ? "Viator did not respond in time."
+        : err instanceof Error
+          ? err.message
+          : "Viator request failed",
     };
   } finally {
     clearTimeout(timer);
@@ -528,6 +550,36 @@ export type ViatorProductDetail = ViatorProduct & {
   coordinates: { lat: number; lng: number } | null;
   bookingQuestionsCount: number;
   ticketInfo: string | null;
+  /** Age bands the supplier actually sells, with real ages and per-band limits. */
+  ageBands: AgeBandRule[];
+  bookingLimits: {
+    minTravelersPerBooking: number | null;
+    maxTravelersPerBooking: number | null;
+  };
+  /** Product options (tour grades); empty when the product has a single option. */
+  productOptions: {
+    code: string;
+    title: string;
+    description: string | null;
+    languageGuides: { type: string; language: string }[];
+  }[];
+  /** Booking-question ids this product requires. */
+  bookingQuestionIds: string[];
+  travelerPickup: {
+    pickupOptionType: string | null;
+    allowCustomTravelerPickup: boolean;
+    additionalInfo: string | null;
+    minutesBeforeDepartureTimeForPickup: number | null;
+    locationRefs: string[];
+  } | null;
+  languageGuides: { type: string; language: string }[];
+  bookingConfirmationSettings: {
+    confirmationType: string | null;
+    bookingCutoffType: string | null;
+    bookingCutoffInMinutes: number | null;
+    /** Hours the supplier has to confirm a MANUAL product. */
+    allowBookingRequestsWithinCutoff: boolean | null;
+  };
 };
 
 type RawDetail = RawProduct & {
@@ -549,10 +601,44 @@ type RawDetail = RawProduct & {
   logistics?: {
     start?: { description?: string; location?: { ref?: string } }[];
     end?: { description?: string }[];
-    travelerPickup?: { pickupOptionType?: string; additionalInfo?: string; allowCustomTravelerPickup?: boolean };
+    travelerPickup?: {
+      pickupOptionType?: string;
+      additionalInfo?: string;
+      allowCustomTravelerPickup?: boolean;
+      minutesBeforeDepartureTimeForPickup?: number;
+      locations?: { location?: { ref?: string }; pickupType?: string }[];
+    };
   };
   bookingQuestions?: string[];
   ticketInfo?: { ticketTypeDescription?: string; ticketTypes?: string[] };
+  pricingInfo?: {
+    type?: string;
+    ageBands?: {
+      ageBand?: string;
+      startAge?: number;
+      endAge?: number;
+      minTravelersPerBooking?: number;
+      maxTravelersPerBooking?: number;
+      plusMinusOne?: boolean;
+    }[];
+  };
+  bookingRequirements?: {
+    minTravelersPerBooking?: number;
+    maxTravelersPerBooking?: number;
+    requiresAdultForBooking?: boolean;
+  };
+  productOptions?: {
+    productOptionCode?: string;
+    title?: string;
+    description?: string;
+    languageGuides?: { type?: string; language?: string }[];
+  }[];
+  bookingConfirmationSettings?: {
+    bookingCutoffType?: string;
+    bookingCutoffInMinutes?: number;
+    confirmationType?: string;
+    allowBookingRequestsWithinCutoff?: boolean;
+  };
 };
 
 function textList(rows?: { otherDescription?: string; description?: string; typeDescription?: string }[]) {
@@ -628,12 +714,64 @@ export async function viatorProductFull(code: string, currency = "USD") {
     coordinates: null,
     bookingQuestionsCount: (raw.bookingQuestions ?? []).length,
     ticketInfo: raw.ticketInfo?.ticketTypeDescription ?? null,
+    ageBands: (raw.pricingInfo?.ageBands ?? [])
+      .filter((b) => b.ageBand && isViatorAgeBand(b.ageBand))
+      .map((b) => ({
+        ageBand: b.ageBand as AgeBandRule["ageBand"],
+        startAge: b.startAge ?? null,
+        endAge: b.endAge ?? null,
+        minTravelersPerBooking: b.minTravelersPerBooking ?? null,
+        maxTravelersPerBooking: b.maxTravelersPerBooking ?? null,
+      })),
+    bookingLimits: {
+      minTravelersPerBooking: raw.bookingRequirements?.minTravelersPerBooking ?? null,
+      maxTravelersPerBooking: raw.bookingRequirements?.maxTravelersPerBooking ?? null,
+    },
+    productOptions: (raw.productOptions ?? [])
+      .filter((o) => o.productOptionCode)
+      .map((o) => ({
+        code: o.productOptionCode as string,
+        title: (o.title ?? o.productOptionCode) as string,
+        description: o.description?.trim() || null,
+        languageGuides: (o.languageGuides ?? [])
+          .filter((l) => l.type && l.language)
+          .map((l) => ({ type: l.type as string, language: l.language as string })),
+      })),
+    bookingQuestionIds: raw.bookingQuestions ?? [],
+    travelerPickup: raw.logistics?.travelerPickup
+      ? {
+          pickupOptionType: raw.logistics.travelerPickup.pickupOptionType ?? null,
+          allowCustomTravelerPickup:
+            raw.logistics.travelerPickup.allowCustomTravelerPickup === true,
+          additionalInfo: raw.logistics.travelerPickup.additionalInfo?.trim() || null,
+          minutesBeforeDepartureTimeForPickup:
+            raw.logistics.travelerPickup.minutesBeforeDepartureTimeForPickup ?? null,
+          locationRefs: (raw.logistics.travelerPickup.locations ?? [])
+            .map((l) => l.location?.ref ?? "")
+            .filter(Boolean),
+        }
+      : null,
+    languageGuides: (raw.languageGuides ?? [])
+      .filter((l) => l.type && l.language)
+      .map((l) => ({ type: l.type as string, language: l.language as string })),
+    bookingConfirmationSettings: {
+      confirmationType:
+        raw.bookingConfirmationSettings?.confirmationType ?? raw.confirmationType ?? null,
+      bookingCutoffType: raw.bookingConfirmationSettings?.bookingCutoffType ?? null,
+      bookingCutoffInMinutes: raw.bookingConfirmationSettings?.bookingCutoffInMinutes ?? null,
+      allowBookingRequestsWithinCutoff:
+        raw.bookingConfirmationSettings?.allowBookingRequestsWithinCutoff ?? null,
+    },
   };
   return { ok: true as const, status: 200, product: detail };
 }
 
 // ---------- reviews ----------
 
+/**
+ * Viator requires the review's source to be attributed to the traveller
+ * (Viator or Tripadvisor), so `provider` is carried through to the UI.
+ */
 export async function viatorReviews(code: string, limit = 6) {
   const res = await viatorFetch<{
     reviews?: {
@@ -642,6 +780,9 @@ export async function viatorReviews(code: string, limit = 6) {
       text?: string;
       publishedDate?: string;
       reviewerName?: string;
+      provider?: string;
+      reviewReference?: string;
+      submissionDate?: string;
     }[];
     totalReviewsSummary?: { totalReviews?: number; combinedAverageRating?: number };
   }>("/reviews/product", {
@@ -664,10 +805,109 @@ export async function viatorReviews(code: string, limit = 6) {
       rating: r.rating ?? null,
       title: r.title ?? "",
       text: r.text ?? "",
-      date: r.publishedDate ?? null,
+      date: r.publishedDate ?? r.submissionDate ?? null,
       author: r.reviewerName ?? "Traveller",
+      /** "VIATOR" | "TRIPADVISOR" — must be shown next to the review. */
+      provider: (r.provider ?? "").trim().toUpperCase() || null,
     })),
   };
+}
+
+// ---------- booking questions dictionary ----------
+
+type RawBookingQuestion = {
+  id?: string;
+  legacyBookingQuestionId?: number;
+  type?: string;
+  group?: string;
+  label?: string;
+  hint?: string;
+  units?: string[];
+  required?: string;
+  maxLength?: number;
+  allowedAnswers?: string[];
+};
+
+let questionCache: { at: number; rows: BookingQuestion[] } | null = null;
+const QUESTION_TTL_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * Full Viator booking-question dictionary (`/products/booking-questions`).
+ * Products reference these by id, so the dictionary is cached in memory.
+ */
+export async function viatorBookingQuestionDictionary(): Promise<BookingQuestion[]> {
+  if (questionCache && Date.now() - questionCache.at < QUESTION_TTL_MS) return questionCache.rows;
+  const res = await viatorFetch<{ bookingQuestions?: RawBookingQuestion[] }>(
+    "/products/booking-questions",
+    { method: "GET" },
+  );
+  const rows = (res.data?.bookingQuestions ?? [])
+    .filter((q) => q.id)
+    .map<BookingQuestion>((q) => ({
+      id: q.id as string,
+      label: q.label?.trim() || (q.id as string),
+      type: q.type ?? "STRING",
+      required:
+        q.required === "MANDATORY" || q.required === "CONDITIONAL" ? q.required : "OPTIONAL",
+      group: (q.group === "PER_TRAVELER" ? "PER_TRAVELER" : "PER_BOOKING") as BookingQuestionGroup,
+      hint: q.hint?.trim() || null,
+      maxLength: q.maxLength ?? null,
+      allowedAnswers: q.allowedAnswers ?? [],
+      units: q.units ?? [],
+    }));
+  if (rows.length) questionCache = { at: Date.now(), rows };
+  return rows;
+}
+
+/** The questions a specific product requires, resolved from the dictionary. */
+export async function viatorProductBookingQuestions(
+  ids: readonly string[],
+): Promise<BookingQuestion[]> {
+  if (!ids.length) return [];
+  const dict = await viatorBookingQuestionDictionary();
+  const byId = new Map(dict.map((q) => [q.id, q] as const));
+  return ids.map((id) => byId.get(id)).filter((q): q is BookingQuestion => Boolean(q));
+}
+
+// ---------- pickup locations ----------
+
+/** Resolves pickup location refs to human-readable places (`/locations/bulk`). */
+export async function viatorLocationsBulk(refs: readonly string[]): Promise<
+  { ref: string; name: string; address: string | null }[]
+> {
+  const unique = Array.from(new Set(refs.filter(Boolean))).slice(0, 500);
+  if (!unique.length) return [];
+  const res = await viatorFetch<{
+    locations?: {
+      reference?: string;
+      provider?: string;
+      name?: string;
+      address?: {
+        street?: string;
+        administrativeArea?: string;
+        city?: string;
+        country?: string;
+        postcode?: string;
+      };
+      center?: { latitude?: number; longitude?: number };
+    }[];
+  }>("/locations/bulk", { method: "POST", body: { locations: unique } });
+  return (res.data?.locations ?? [])
+    .filter((l) => l.reference)
+    .map((l) => {
+      const a = l.address;
+      const address = a
+        ? [a.street, a.city, a.administrativeArea, a.postcode, a.country]
+            .map((s) => (s ?? "").trim())
+            .filter(Boolean)
+            .join(", ")
+        : "";
+      return {
+        ref: l.reference as string,
+        name: l.name?.trim() || address || (l.reference as string),
+        address: address || null,
+      };
+    });
 }
 
 // ---------- live availability + pricing ----------
