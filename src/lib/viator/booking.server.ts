@@ -4,6 +4,7 @@
 
 import {
   VIATOR_BOOKING_ACCESS_MESSAGE,
+  VIATOR_BOOKING_TIMEOUT_MS,
   isViatorEndpointDenied,
   viatorFetch,
 } from "@/lib/viator.server";
@@ -17,6 +18,7 @@ import {
   resolveHostingOrigin,
   type HoldRequestInput,
   type BookerInput,
+  type FraudPreventionDetails,
   type PaxMix,
 } from "@/lib/viator/checkout-contract";
 
@@ -128,7 +130,13 @@ export type CartHold = {
   holdExpiresAt: string | null;
   currency: string;
   total: number | null;
-  items: { itemRef: string; bookingRef: string | null }[];
+  /** Viator returns one bookable (or rejected) item per requested item. */
+  items: {
+    partnerBookingRef: string;
+    bookingRef: string | null;
+    status: string;
+    rejectionReason: string | null;
+  }[];
   /** Origin sent to Viator as `hostingUrl` (for audit/diagnostics). */
   hostingUrl: string;
 };
@@ -136,7 +144,8 @@ export type CartHold = {
 export async function viatorCartHold(input: {
   hold: HoldRequestInput;
   partnerCartRef: string;
-  partnerItemRef: string;
+  /** Our own unique booking reference — reused on retry so no duplicate is created. */
+  partnerBookingRef: string;
   booker: BookerInput;
 }): Promise<CartHold> {
   const { hold } = input;
@@ -156,10 +165,9 @@ export async function viatorCartHold(input: {
     },
     items: [
       {
-        partnerItemRef: input.partnerItemRef,
+        partnerBookingRef: input.partnerBookingRef,
         productCode: hold.productCode,
         travelDate: hold.travelDate,
-        currency: hold.currency,
         paxMix: hold.paxMix.map((p) => ({ ageBand: p.ageBand, numberOfTravelers: p.count })),
         ...(hold.productOptionCode ? { productOptionCode: hold.productOptionCode } : {}),
         ...(hold.startTime ? { startTime: hold.startTime } : {}),
@@ -168,7 +176,11 @@ export async function viatorCartHold(input: {
     ],
   };
 
-  const res = await viatorFetch<unknown>("/bookings/cart/hold", { method: "POST", body });
+  const res = await viatorFetch<unknown>("/bookings/cart/hold", {
+    method: "POST",
+    body,
+    timeoutMs: VIATOR_BOOKING_TIMEOUT_MS,
+  });
   const empty: CartHold = {
     ok: false,
     cartRef: "",
@@ -197,11 +209,42 @@ export async function viatorCartHold(input: {
     ]) ?? "";
   const cartRef = pick<string>(data, ["cartRef", "cartReference"]) ?? "";
   const rawItems = pick<Record<string, unknown>[]>(data, ["items", "bookings"]) ?? [];
-  const priceObj = pick<Record<string, unknown>>(data, ["totalPrice", "cartPrice"]);
+  const priceObj = pick<Record<string, unknown>>(data, [
+    "totalHeldPrice",
+    "totalPrice",
+    "cartPrice",
+  ]);
   const priceLeaf = pick<Record<string, unknown>>(priceObj, ["price"]) ?? priceObj;
 
   if (!cartRef || !token) {
     return { ...empty, error: "Viator did not return a payment session for this cart." };
+  }
+
+  const items = rawItems.map((i) => {
+    const holdInfo = pick<Record<string, unknown>>(i, ["bookingHoldInfo"]);
+    return {
+      partnerBookingRef:
+        pick<string>(i, ["partnerBookingRef", "partnerItemRef", "itemRef"]) ??
+        input.partnerBookingRef,
+      bookingRef: pick<string>(i, ["bookingRef", "bookingReference"]) ?? null,
+      status: pick<string>(i, ["status"]) ?? "",
+      rejectionReason: pick<string>(i, ["rejectionReason", "reason"]) ?? null,
+      holdExpiry:
+        pick<string>(holdInfo, ["availabilityHoldExpiry", "expiry", "expiresAt"]) ??
+        pick<string>(i, ["holdExpiryTime", "expiresAt"]) ??
+        null,
+    };
+  });
+
+  const rejected = items.filter((i) => i.status.toUpperCase() === "REJECTED");
+  if (items.length && rejected.length === items.length) {
+    return {
+      ...empty,
+      items: items.map(({ holdExpiry: _h, ...rest }) => rest),
+      error:
+        rejected[0]?.rejectionReason ??
+        "This experience is no longer available for the selected date and travellers.",
+    };
   }
 
   return {
@@ -212,7 +255,7 @@ export async function viatorCartHold(input: {
       pick<string>(paymentSession, ["expiresAt", "sessionExpiryTime", "expiryTime"]) ?? null,
     holdExpiresAt:
       pick<string>(data, ["holdExpiryTime", "expiresAt", "cartExpiryTime"]) ??
-      pick<string>(rawItems[0], ["holdExpiryTime", "expiresAt"]) ??
+      items.find((i) => i.holdExpiry)?.holdExpiry ??
       null,
     currency: pick<string>(data, ["currency"]) ?? hold.currency,
     total:
@@ -222,34 +265,60 @@ export async function viatorCartHold(input: {
         "total",
         "amount",
       ]) ?? null,
-    items: rawItems.map((i) => ({
-      itemRef: pick<string>(i, ["partnerItemRef", "itemRef"]) ?? input.partnerItemRef,
-      bookingRef: pick<string>(i, ["bookingRef", "bookingReference"]) ?? null,
-    })),
+    items: items.map(({ holdExpiry: _h, ...rest }) => rest),
     hostingUrl,
   };
 }
 
 // -------------------------------------------------------------------- cart/book
 
+export type ViatorVoucherInfo = {
+  url: string | null;
+  format: string | null;
+  type: string | null;
+  /** true → Viator flagged the transaction; the voucher must be delivered securely. */
+  isVoucherRestrictionRequired: boolean;
+};
+
 export type CartBook = {
   ok: boolean;
   error?: string;
+  /** True when the call timed out / 5xx'd — the booking may still exist. */
+  indeterminate?: boolean;
   statuses: string[];
   bookingRef: string | null;
   itineraryRef: string | null;
+  voucherInfo: ViatorVoucherInfo | null;
   raw: unknown;
 };
+
+function readVoucherInfo(source: unknown): ViatorVoucherInfo | null {
+  const v = pick<Record<string, unknown>>(source, ["voucherInfo"]);
+  if (!v) return null;
+  return {
+    url: pick<string>(v, ["url"]) ?? null,
+    format: pick<string>(v, ["format"]) ?? null,
+    type: pick<string>(v, ["type"]) ?? null,
+    isVoucherRestrictionRequired: pick<boolean>(v, ["isVoucherRestrictionRequired"]) === true,
+  };
+}
 
 export async function viatorCartBook(input: {
   cartRef: string;
   paymentToken: string;
   booker: Required<BookerInput>;
   items: {
-    partnerItemRef: string;
-    travellers: { bandId?: string | undefined; firstName: string; lastName: string }[];
-    bookingQuestionAnswers?: { question: string; answer: string; travelerNum?: number }[];
+    /** Viator-generated bookingRef from cart/hold. */
+    bookingRef: string;
+    languageGuide?: { type: string; language: string } | undefined;
+    bookingQuestionAnswers?: {
+      question: string;
+      answer: string;
+      travelerNum?: number;
+      unit?: string;
+    }[];
   }[];
+  fraudPreventionDetails?: FraudPreventionDetails | undefined;
 }): Promise<CartBook> {
   const body = {
     cartRef: input.cartRef,
@@ -257,28 +326,40 @@ export async function viatorCartBook(input: {
     bookerInfo: { firstName: input.booker.firstName, lastName: input.booker.lastName },
     communication: {
       email: input.booker.email,
-      ...(input.booker.phone ? { phone: input.booker.phone } : {}),
+      phone: input.booker.phone,
     },
+    ...(input.fraudPreventionDetails &&
+    Object.keys(input.fraudPreventionDetails).length
+      ? { additionalBookingDetails: { fraudPreventionDetails: input.fraudPreventionDetails } }
+      : {}),
     items: input.items.map((item) => ({
-      partnerItemRef: item.partnerItemRef,
-      travelerInfo: item.travellers.map((t) => ({
-        ...(t.bandId ? { bandId: t.bandId } : {}),
-        firstName: t.firstName,
-        lastName: t.lastName,
-      })),
+      bookingRef: item.bookingRef,
+      ...(item.languageGuide ? { languageGuide: item.languageGuide } : {}),
       bookingQuestionAnswers: item.bookingQuestionAnswers ?? [],
     })),
   };
 
-  const res = await viatorFetch<unknown>("/bookings/cart/book", { method: "POST", body });
+  const res = await viatorFetch<unknown>("/bookings/cart/book", {
+    method: "POST",
+    body,
+    timeoutMs: VIATOR_BOOKING_TIMEOUT_MS,
+  });
   if (!res.ok || !res.data) {
     const error = bookingError(res.status, res.error);
+    /**
+     * Viator: a timeout or 5xx does NOT mean the booking failed. The caller must
+     * resolve the real outcome via /bookings/status using the same reference and
+     * must never blindly retry the booking.
+     */
+    const indeterminate = res.timedOut === true || res.status >= 500;
     return {
       ok: false,
       ...(error ? { error } : {}),
+      ...(indeterminate ? { indeterminate: true } : {}),
       statuses: [],
       bookingRef: null,
       itineraryRef: null,
+      voucherInfo: null,
       raw: null,
     };
   }
@@ -295,30 +376,58 @@ export async function viatorCartBook(input: {
       pick<string>(data, ["itineraryRef", "itineraryReference"]) ??
       pick<string>(items[0], ["itineraryRef"]) ??
       null,
+    voucherInfo: readVoucherInfo(data) ?? readVoucherInfo(items[0]),
     raw: data,
   };
 }
 
 // -------------------------------------------------------------------- status
 
-export async function viatorBookingStatus(bookingRef: string): Promise<{
+export type ViatorBookingStatus = {
   ok: boolean;
   error?: string;
   statuses: string[];
-}> {
+  /** Viator's hint for when to poll again for a non-final status. */
+  nextPollAt: string | null;
+  voucherInfo: ViatorVoucherInfo | null;
+};
+
+/**
+ * Authoritative booking outcome. `/bookings/status` takes ONE reference —
+ * either Viator's `bookingRef` or our own `partnerBookingRef` (which lets us
+ * resolve a booking even when the book call timed out before returning a ref).
+ */
+export async function viatorBookingStatus(
+  ref: string | { bookingRef?: string; partnerBookingRef?: string },
+): Promise<ViatorBookingStatus> {
+  const body =
+    typeof ref === "string"
+      ? { bookingRef: ref }
+      : ref.bookingRef
+        ? { bookingRef: ref.bookingRef }
+        : { partnerBookingRef: ref.partnerBookingRef };
+  if (!body.bookingRef && !body.partnerBookingRef) {
+    return { ok: false, error: "A booking reference is required.", statuses: [], nextPollAt: null, voucherInfo: null };
+  }
   const res = await viatorFetch<unknown>("/bookings/status", {
     method: "POST",
-    body: { bookingRefs: [bookingRef] },
+    body,
+    timeoutMs: VIATOR_BOOKING_TIMEOUT_MS,
   });
   if (!res.ok || !res.data) {
     const error = bookingError(res.status, res.error);
-    return { ok: false, ...(error ? { error } : {}), statuses: [] };
+    return { ok: false, ...(error ? { error } : {}), statuses: [], nextPollAt: null, voucherInfo: null };
   }
   const data = res.data as Record<string, unknown>;
   const items = pick<Record<string, unknown>[]>(data, ["bookings", "items"]) ?? [];
+  const statuses = items.length
+    ? items.map((i) => pick<string>(i, ["status", "bookingStatus"]) ?? "").filter(Boolean)
+    : [pick<string>(data, ["status"]) ?? ""].filter(Boolean);
   return {
     ok: true,
-    statuses: items.map((i) => pick<string>(i, ["status", "bookingStatus"]) ?? "").filter(Boolean),
+    statuses,
+    nextPollAt: pick<string>(data, ["nextPollAt"]) ?? pick<string>(items[0], ["nextPollAt"]) ?? null,
+    voucherInfo: readVoucherInfo(data) ?? readVoucherInfo(items[0]),
   };
 }
 

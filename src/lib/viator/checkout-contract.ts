@@ -149,15 +149,55 @@ export type BookerInput = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/**
+ * Viator requires `communication.phone` in international format, starting with
+ * `+` followed by the country code (E.164). Anything else is rejected by the
+ * supplier at booking time, so we reject it before the call.
+ */
+const E164_RE = /^\+[1-9]\d{6,14}$/;
+
+/** Normalises user input to E.164, keeping only `+` and digits. */
+export function normalisePhone(raw: string): string {
+  const trimmed = raw.trim().replace(/[\s().-]/g, "");
+  if (!trimmed) return "";
+  const plus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/\D/g, "");
+  return digits ? `${plus ? "+" : ""}${digits}` : "";
+}
+
+export function isValidInternationalPhone(raw: string): boolean {
+  return E164_RE.test(normalisePhone(raw));
+}
+
 export function validateBooker(input: BookerInput): Required<BookerInput> {
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
   const email = input.email.trim().toLowerCase();
-  const phone = (input.phone ?? "").trim();
+  const phone = normalisePhone(input.phone ?? "");
   if (firstName.length < 1 || lastName.length < 1) throw new Error("Booker name is required.");
   if (!EMAIL_RE.test(email)) throw new Error("A valid booker email is required.");
+  if (!phone) {
+    throw new Error("A contact phone number in international format (e.g. +971501234567) is required.");
+  }
+  if (!E164_RE.test(phone)) {
+    throw new Error("Phone number must start with + and the country code (e.g. +971501234567).");
+  }
   return { firstName, lastName, email, phone };
 }
+
+/**
+ * Viator `fraudPreventionDetails` — the officially supported fields only.
+ * Values come from configuration/account data, never invented per booking.
+ */
+export type FraudPreventionDetails = {
+  subChannelId?: string;
+  agencyId?: string;
+  agentId?: string;
+  /** How the voucher reaches the traveller. */
+  voucherDeliveryType?: "EMAIL" | "TEXT" | "PRINTED" | "OTHER";
+  /** ISO date the customer's account was created, when known. */
+  customerMemberSince?: string;
+};
 
 /** UI/persistence state for an activity booking. */
 export type ActivityBookingState =
@@ -168,16 +208,29 @@ export type ActivityBookingState =
   | "rejected"
   | "failed";
 
-/** Maps Viator cart/book item statuses to our internal state. */
+/**
+ * Maps Viator statuses to our internal state.
+ *
+ * Official values (BookingBookStatus / BookingStatusResponse.status):
+ * CONFIRMED, PENDING, REJECTED, CANCELED, IN_PROGRESS, ON_HOLD, FAILED.
+ * PENDING / IN_PROGRESS / ON_HOLD are *not* final — they must be resolved by
+ * polling /bookings/status, never treated as a failure.
+ */
 export function mapViatorBookingStatus(statuses: readonly string[]): ActivityBookingState {
   const upper = statuses.map((s) => (s ?? "").trim().toUpperCase()).filter(Boolean);
   if (!upper.length) return "failed";
   if (upper.some((s) => s === "FAILED" || s === "ERROR")) return "failed";
-  if (upper.some((s) => s === "REJECTED" || s === "DECLINED" || s === "CANCELLED")) {
+  if (upper.some((s) => s === "REJECTED" || s === "DECLINED" || s === "CANCELLED" || s === "CANCELED")) {
     return "rejected";
   }
   if (upper.every((s) => s === "CONFIRMED" || s === "AMENDED")) return "confirmed";
   return "paid_pending_confirmation";
+}
+
+/** True while Viator has not reached a final outcome for the booking. */
+export function isTransientViatorStatus(status: string): boolean {
+  const s = (status ?? "").trim().toUpperCase();
+  return s === "PENDING" || s === "IN_PROGRESS" || s === "ON_HOLD" || s === "";
 }
 
 /** A hold is usable while it has not expired (with a small safety margin). */
