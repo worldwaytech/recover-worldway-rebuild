@@ -7,11 +7,14 @@
 import { randomUUID } from "crypto";
 import { RATEHAWK_ENDPOINTS, RATEHAWK_LIMITS, type RatehawkOperation } from "./config";
 import { ratehawkCall, ratehawkEnvironment } from "./client.server";
+import { WORLDWAY_DEFAULT_PRICING, computeCustomerPrice, type WorldwayPricingConfig } from "./pricing";
+import { buildWorldwayVoucher, mapRatehawkStatus, type RatehawkInternalStatus } from "./voucher";
 import type {
   RatehawkCancellationPolicy,
   RatehawkCertificationReport,
   RatehawkCertificationStep,
   RatehawkHotelOffer,
+  RatehawkMoney,
   RatehawkRate,
   RatehawkResult,
   RatehawkTaxLine,
@@ -215,6 +218,188 @@ export async function getOrderInfo(partnerOrderId: string) {
 export async function cancelBooking(partnerOrderId: string) {
   return ratehawkCall<unknown>("cancel", { partner_order_id: partnerOrderId });
 }
+
+// ------------------------------------------- authoritative outcome resolution
+/**
+ * Worldway markup/fees, read from server-side configuration. Unset values mean
+ * no markup rather than an invented commercial figure.
+ */
+export function worldwayPricingConfig(): WorldwayPricingConfig {
+  const n = (name: string, fallback: number) => {
+    const raw = process.env[name];
+    const parsed = raw == null ? NaN : Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  };
+  return {
+    markupPercent: n("RATEHAWK_MARKUP_PERCENT", WORLDWAY_DEFAULT_PRICING.markupPercent),
+    serviceFeePercent: n("RATEHAWK_SERVICE_FEE_PERCENT", WORLDWAY_DEFAULT_PRICING.serviceFeePercent),
+    fixedFee: n("RATEHAWK_FIXED_FEE", WORLDWAY_DEFAULT_PRICING.fixedFee),
+  };
+}
+
+export interface RatehawkBookingOutcome {
+  partnerOrderId: string;
+  internalStatus: RatehawkInternalStatus;
+  supplierStatus: string | null;
+  supplierError: string | null;
+  orderId: string | number | null;
+  orderStatus: string | null;
+  order: Record<string, unknown> | null;
+  attempts: number;
+  detail: string;
+}
+
+/**
+ * Resolves the real outcome of a submitted booking from the authoritative
+ * endpoints. `unknown` is never treated as a final failure: the status endpoint
+ * is polled until it returns a terminal answer, and the order record is read as
+ * the final authority. No booking is ever submitted again from here.
+ */
+export async function resolveBookingOutcome(
+  partnerOrderId: string,
+  options: { maxAttempts?: number; delayMs?: number } = {},
+): Promise<RatehawkBookingOutcome> {
+  const maxAttempts = options.maxAttempts ?? 12;
+  const delayMs = options.delayMs ?? 3_000;
+
+  let supplierStatus: string | null = null;
+  let supplierError: string | null = null;
+  let attempts = 0;
+
+  for (let i = 0; i < maxAttempts; i += 1) {
+    attempts = i + 1;
+    const status = await getBookingStatus(partnerOrderId);
+    const payload = asRecord(status.ok ? status.data : {});
+    supplierStatus = str(payload["status"]) ?? status.meta.supplierStatus ?? null;
+    supplierError = status.ok ? null : status.error.code;
+
+    // A definitive supplier verdict: soldout / book_limit / anything but unknown.
+    if (supplierError && supplierError !== "unknown") break;
+    // Terminal success states.
+    if (supplierStatus && !["processing", "error"].includes(supplierStatus)) break;
+    if (status.ok && num(payload["percent"]) === 100) break;
+    if (i < maxAttempts - 1) await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  // The order record is the final authority (and the only place the RateHawk
+  // order id appears). A missing order simply means nothing was created.
+  let order = await getOrderInfo(partnerOrderId);
+  let rows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  for (let i = 0; i < 5 && rows.length === 0; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    order = await getOrderInfo(partnerOrderId);
+    rows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  }
+  const row = rows.length ? asRecord(rows[0]) : null;
+  const orderId = row ? (num(row["order_id"]) ?? str(row["order_id"])) : null;
+  const orderStatus = row ? str(row["status"]) : null;
+
+  const internalStatus = mapRatehawkStatus({
+    supplierStatus,
+    dataStatus: supplierStatus,
+    errorCode: supplierError,
+    orderStatus,
+  });
+
+  const detail =
+    internalStatus === "confirmed"
+      ? `Confirmed by RateHawk (order ${String(orderId ?? "unknown")}).`
+      : internalStatus === "pending"
+        ? `Still processing at RateHawk after ${attempts} status checks — no duplicate booking was submitted.`
+        : internalStatus === "cancelled"
+          ? "The order exists at RateHawk and is cancelled."
+          : `RateHawk rejected the booking: ${supplierError ?? supplierStatus ?? "no reason given"}.`;
+
+  return {
+    partnerOrderId,
+    internalStatus,
+    supplierStatus,
+    supplierError,
+    orderId,
+    orderStatus,
+    order: row,
+    attempts,
+    detail,
+  };
+}
+
+/**
+ * Submits the booking exactly once and resolves its real outcome. The supplier
+ * is sent only its own net cost — markup never leaves our side.
+ */
+export async function finaliseBooking(args: {
+  partnerOrderId: string;
+  userEmail: string;
+  userPhone: string;
+  rooms: { guests: RatehawkGuestName[] }[];
+  paymentType: Record<string, unknown>;
+  language?: string;
+  arrivalDatetime?: string | null;
+}): Promise<{ submission: RatehawkResult<unknown>; outcome: RatehawkBookingOutcome }> {
+  const submission = await startBooking(args);
+  const submissionError = submission.ok ? null : submission.error.code;
+
+  // Hard supplier rejections that mean nothing was created and no status exists.
+  if (submissionError && !["unknown", "timeout", "network_error"].includes(submissionError)) {
+    return {
+      submission,
+      outcome: {
+        partnerOrderId: args.partnerOrderId,
+        internalStatus: mapRatehawkStatus({ errorCode: submissionError }),
+        supplierStatus: submission.meta.supplierStatus ?? null,
+        supplierError: submissionError,
+        orderId: null,
+        orderStatus: null,
+        order: null,
+        attempts: 0,
+        detail: `RateHawk rejected the booking request: ${submissionError}.`,
+      },
+    };
+  }
+
+  // "unknown" (or a transport failure) is not an answer — resolve it.
+  return { submission, outcome: await resolveBookingOutcome(args.partnerOrderId) };
+}
+
+/**
+ * Customer-facing output for a confirmed RateHawk booking: the Worldway selling
+ * price and the voucher. Returns a null voucher unless the booking is confirmed.
+ */
+export function buildCustomerBookingOutput(args: {
+  outcome: RatehawkBookingOutcome;
+  supplierNet: RatehawkMoney;
+  hotelName: string | null;
+  hotelId: string | null;
+  hid: number | null;
+  checkin: string;
+  checkout: string;
+  roomName: string | null;
+  mealType: string | null;
+  guests: RatehawkGuestName[];
+  cancellationPolicies: RatehawkCancellationPolicy[];
+  pricing?: WorldwayPricingConfig;
+}) {
+  const price = computeCustomerPrice(args.supplierNet, args.pricing ?? worldwayPricingConfig());
+  const cancellationInfo = asRecord(asRecord(args.outcome.order ?? {})["cancellation_info"]);
+  const voucher = buildWorldwayVoucher({
+    worldwayReference: args.outcome.partnerOrderId,
+    ratehawkOrderId: args.outcome.orderId,
+    status: args.outcome.internalStatus,
+    hotelName: args.hotelName,
+    hotelId: args.hotelId,
+    hid: args.hid,
+    checkin: args.checkin,
+    checkout: args.checkout,
+    roomName: args.roomName,
+    mealType: args.mealType,
+    guests: args.guests.map((g) => ({ firstName: g.first_name, lastName: g.last_name })),
+    price,
+    cancellationPolicies: args.cancellationPolicies,
+    freeCancellationBefore: str(cancellationInfo["free_cancellation_before"]),
+  });
+  return { price, voucher };
+}
+
 
 // --------------------------------------------------- sandbox validation runner
 function step(
