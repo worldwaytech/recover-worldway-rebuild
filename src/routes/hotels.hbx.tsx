@@ -12,12 +12,12 @@ const SECTIONS: { id: Suite; label: string; blurb: string }[] = [
   {
     id: "hotels",
     label: "Hotels",
-    blurb: "The HBX hotel portfolio with full content, facilities and imagery.",
+    blurb: "Live hotel inventory with full content, facilities and imagery.",
   },
   {
     id: "activities",
     label: "Experiences",
-    blurb: "Curated experiences and activities from the HBX Activities catalogue.",
+    blurb: "Curated experiences and activities from our live activities catalogue.",
   },
   {
     id: "transfers",
