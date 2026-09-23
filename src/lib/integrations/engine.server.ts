@@ -1618,16 +1618,6 @@ export async function handleWebhook(
     return { accepted: false, reason: "webhook could not be recorded" };
   }
 
-  if (!valid) {
-    await logIntegration({
-      providerKey,
-      operation: "webhook",
-      status: "error",
-      message: reason || "Signature rejected.",
-    });
-    return { accepted: false, reason: reason || "invalid signature" };
-  }
-
   const eventRowId = inserted ? (inserted as Row)["id"] : null;
   try {
     await syncProvider({ providerKey, scope: "incremental", trigger: "webhook" });
