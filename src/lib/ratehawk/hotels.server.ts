@@ -7,11 +7,14 @@
 import { randomUUID } from "crypto";
 import { RATEHAWK_ENDPOINTS, RATEHAWK_LIMITS, type RatehawkOperation } from "./config";
 import { ratehawkCall, ratehawkEnvironment } from "./client.server";
+import { WORLDWAY_DEFAULT_PRICING, computeCustomerPrice, type WorldwayPricingConfig } from "./pricing";
+import { buildWorldwayVoucher, mapRatehawkStatus, type RatehawkInternalStatus } from "./voucher";
 import type {
   RatehawkCancellationPolicy,
   RatehawkCertificationReport,
   RatehawkCertificationStep,
   RatehawkHotelOffer,
+  RatehawkMoney,
   RatehawkRate,
   RatehawkResult,
   RatehawkTaxLine,
@@ -216,6 +219,188 @@ export async function cancelBooking(partnerOrderId: string) {
   return ratehawkCall<unknown>("cancel", { partner_order_id: partnerOrderId });
 }
 
+// ------------------------------------------- authoritative outcome resolution
+/**
+ * Worldway markup/fees, read from server-side configuration. Unset values mean
+ * no markup rather than an invented commercial figure.
+ */
+export function worldwayPricingConfig(): WorldwayPricingConfig {
+  const n = (name: string, fallback: number) => {
+    const raw = process.env[name];
+    const parsed = raw == null ? NaN : Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  };
+  return {
+    markupPercent: n("RATEHAWK_MARKUP_PERCENT", WORLDWAY_DEFAULT_PRICING.markupPercent),
+    serviceFeePercent: n("RATEHAWK_SERVICE_FEE_PERCENT", WORLDWAY_DEFAULT_PRICING.serviceFeePercent),
+    fixedFee: n("RATEHAWK_FIXED_FEE", WORLDWAY_DEFAULT_PRICING.fixedFee),
+  };
+}
+
+export interface RatehawkBookingOutcome {
+  partnerOrderId: string;
+  internalStatus: RatehawkInternalStatus;
+  supplierStatus: string | null;
+  supplierError: string | null;
+  orderId: string | number | null;
+  orderStatus: string | null;
+  order: Record<string, unknown> | null;
+  attempts: number;
+  detail: string;
+}
+
+/**
+ * Resolves the real outcome of a submitted booking from the authoritative
+ * endpoints. `unknown` is never treated as a final failure: the status endpoint
+ * is polled until it returns a terminal answer, and the order record is read as
+ * the final authority. No booking is ever submitted again from here.
+ */
+export async function resolveBookingOutcome(
+  partnerOrderId: string,
+  options: { maxAttempts?: number; delayMs?: number } = {},
+): Promise<RatehawkBookingOutcome> {
+  const maxAttempts = options.maxAttempts ?? 12;
+  const delayMs = options.delayMs ?? 3_000;
+
+  let supplierStatus: string | null = null;
+  let supplierError: string | null = null;
+  let attempts = 0;
+
+  for (let i = 0; i < maxAttempts; i += 1) {
+    attempts = i + 1;
+    const status = await getBookingStatus(partnerOrderId);
+    const payload = asRecord(status.ok ? status.data : {});
+    supplierStatus = str(payload["status"]) ?? status.meta.supplierStatus ?? null;
+    supplierError = status.ok ? null : status.error.code;
+
+    // A definitive supplier verdict: soldout / book_limit / anything but unknown.
+    if (supplierError && supplierError !== "unknown") break;
+    // Terminal success states.
+    if (supplierStatus && !["processing", "error"].includes(supplierStatus)) break;
+    if (status.ok && num(payload["percent"]) === 100) break;
+    if (i < maxAttempts - 1) await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  // The order record is the final authority (and the only place the RateHawk
+  // order id appears). A missing order simply means nothing was created.
+  let order = await getOrderInfo(partnerOrderId);
+  let rows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  for (let i = 0; i < 5 && rows.length === 0; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    order = await getOrderInfo(partnerOrderId);
+    rows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
+  }
+  const row = rows.length ? asRecord(rows[0]) : null;
+  const orderId = row ? (num(row["order_id"]) ?? str(row["order_id"])) : null;
+  const orderStatus = row ? str(row["status"]) : null;
+
+  const internalStatus = mapRatehawkStatus({
+    supplierStatus,
+    dataStatus: supplierStatus,
+    errorCode: supplierError,
+    orderStatus,
+  });
+
+  const detail =
+    internalStatus === "confirmed"
+      ? `Confirmed by RateHawk (order ${String(orderId ?? "unknown")}).`
+      : internalStatus === "pending"
+        ? `Still processing at RateHawk after ${attempts} status checks — no duplicate booking was submitted.`
+        : internalStatus === "cancelled"
+          ? "The order exists at RateHawk and is cancelled."
+          : `RateHawk rejected the booking: ${supplierError ?? supplierStatus ?? "no reason given"}.`;
+
+  return {
+    partnerOrderId,
+    internalStatus,
+    supplierStatus,
+    supplierError,
+    orderId,
+    orderStatus,
+    order: row,
+    attempts,
+    detail,
+  };
+}
+
+/**
+ * Submits the booking exactly once and resolves its real outcome. The supplier
+ * is sent only its own net cost — markup never leaves our side.
+ */
+export async function finaliseBooking(args: {
+  partnerOrderId: string;
+  userEmail: string;
+  userPhone: string;
+  rooms: { guests: RatehawkGuestName[] }[];
+  paymentType: Record<string, unknown>;
+  language?: string;
+  arrivalDatetime?: string | null;
+}): Promise<{ submission: RatehawkResult<unknown>; outcome: RatehawkBookingOutcome }> {
+  const submission = await startBooking(args);
+  const submissionError = submission.ok ? null : submission.error.code;
+
+  // Hard supplier rejections that mean nothing was created and no status exists.
+  if (submissionError && !["unknown", "timeout", "network_error"].includes(submissionError)) {
+    return {
+      submission,
+      outcome: {
+        partnerOrderId: args.partnerOrderId,
+        internalStatus: mapRatehawkStatus({ errorCode: submissionError }),
+        supplierStatus: submission.meta.supplierStatus ?? null,
+        supplierError: submissionError,
+        orderId: null,
+        orderStatus: null,
+        order: null,
+        attempts: 0,
+        detail: `RateHawk rejected the booking request: ${submissionError}.`,
+      },
+    };
+  }
+
+  // "unknown" (or a transport failure) is not an answer — resolve it.
+  return { submission, outcome: await resolveBookingOutcome(args.partnerOrderId) };
+}
+
+/**
+ * Customer-facing output for a confirmed RateHawk booking: the Worldway selling
+ * price and the voucher. Returns a null voucher unless the booking is confirmed.
+ */
+export function buildCustomerBookingOutput(args: {
+  outcome: RatehawkBookingOutcome;
+  supplierNet: RatehawkMoney;
+  hotelName: string | null;
+  hotelId: string | null;
+  hid: number | null;
+  checkin: string;
+  checkout: string;
+  roomName: string | null;
+  mealType: string | null;
+  guests: RatehawkGuestName[];
+  cancellationPolicies: RatehawkCancellationPolicy[];
+  pricing?: WorldwayPricingConfig;
+}) {
+  const price = computeCustomerPrice(args.supplierNet, args.pricing ?? worldwayPricingConfig());
+  const cancellationInfo = asRecord(asRecord(args.outcome.order ?? {})["cancellation_info"]);
+  const voucher = buildWorldwayVoucher({
+    worldwayReference: args.outcome.partnerOrderId,
+    ratehawkOrderId: args.outcome.orderId,
+    status: args.outcome.internalStatus,
+    hotelName: args.hotelName,
+    hotelId: args.hotelId,
+    hid: args.hid,
+    checkin: args.checkin,
+    checkout: args.checkout,
+    roomName: args.roomName,
+    mealType: args.mealType,
+    guests: args.guests.map((g) => ({ firstName: g.first_name, lastName: g.last_name })),
+    price,
+    cancellationPolicies: args.cancellationPolicies,
+    freeCancellationBefore: str(cancellationInfo["free_cancellation_before"]),
+  });
+  return { price, voucher };
+}
+
+
 // --------------------------------------------------- sandbox validation runner
 function step(
   name: string,
@@ -309,6 +494,7 @@ export async function runRatehawkSandboxValidation(args: {
   let bookHash = "";
   let form: Awaited<ReturnType<typeof createBookingForm>> | null = null;
   let chosenPayment: Record<string, unknown> = {};
+  let chosenRate: RatehawkRate | null = null;
 
   for (const candidate of candidates) {
     const hid = candidate.hid as number;
@@ -350,6 +536,7 @@ export async function runRatehawkSandboxValidation(args: {
     form = bookingForm;
     chosenPayment = payment;
     chosen = { hotelId: candidate.hotelId, hid };
+    chosenRate = rate;
     if (bookingForm.ok && Object.keys(payment).length) break;
   }
 
@@ -396,68 +583,104 @@ export async function runRatehawkSandboxValidation(args: {
   if (!form.ok || Object.keys(chosenPayment).length === 0)
     return finish("The booking form did not return a usable payment option — no booking was created.", partnerOrderId);
 
-  // 7. Start booking
-  const start = await startBooking({
+  // 7. Submit the booking once, then resolve the authoritative outcome. The
+  // supplier receives only its own net cost; markup is applied on our side.
+  const sandboxGuests: RatehawkGuestName[] = [
+    { first_name: "Sandbox", last_name: "Traveller" },
+    { first_name: "Sandbox", last_name: "Companion" },
+  ];
+  const { submission: start, outcome } = await finaliseBooking({
     partnerOrderId,
-    userEmail: "sandbox@worldwaytravelsgroup.com",
+    userEmail: "reservations@worldwaytravelsgroup.com",
     userPhone: "+441234567890",
-    rooms: [{ guests: [{ first_name: "Sandbox", last_name: "Traveller" }, { first_name: "Sandbox", last_name: "Companion" }] }],
+    rooms: [{ guests: sandboxGuests }],
     paymentType: chosenPayment,
   });
-  steps.push(
-    step("Start booking process", "bookingFinish", start, start.ok ? "Booking submitted." : start.error.message),
-  );
-  if (!start.ok) return finish("The booking could not be submitted.", partnerOrderId);
-
-  // 8. Booking status (asynchronous — poll)
-  let statusDetail = "No terminal status was returned within the polling window.";
-  let statusResult = await getBookingStatus(partnerOrderId);
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    const payload = asRecord(statusResult.ok ? statusResult.data : {});
-    const status = str(payload["status"]) ?? (statusResult.ok ? statusResult.meta.supplierStatus ?? null : null);
-    if (status && status !== "processing") {
-      statusDetail = `Supplier status: ${status}.`;
-      break;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 3_000));
-    statusResult = await getBookingStatus(partnerOrderId);
-  }
-  steps.push(step("Booking status", "bookingStatus", statusResult, statusDetail));
-
-  // 9. Order info. ETG indexes the order a few seconds after the booking
-  // completes, so poll rather than reading once.
-  let order = await getOrderInfo(partnerOrderId);
-  let orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
-  for (let attempt = 0; attempt < 6 && orderRows.length === 0; attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 3_000));
-    order = await getOrderInfo(partnerOrderId);
-    orderRows = asArray(asRecord(order.ok ? order.data : {})["orders"]);
-  }
-  const orderId = num(asRecord(orderRows[0])["order_id"]) ?? str(asRecord(orderRows[0])["order_id"]) ?? null;
+  const submissionUnknown = !start.ok && start.error.code === "unknown";
   steps.push(
     step(
-      "Order info",
-      "orderInfo",
-      order,
-      order.ok ? `${orderRows.length} order record(s); order id ${orderId ?? "not returned"}.` : order.error.message,
+      "Start booking process",
+      "bookingFinish",
+      submissionUnknown ? { ...start, ok: true as const, data: null, meta: start.meta } : start,
+      start.ok
+        ? "Booking submitted."
+        : submissionUnknown
+          ? 'Supplier answered "unknown" — resolved against the booking status and order endpoints instead of failing.'
+          : start.error.message,
     ),
   );
 
-  // 10. Cancellation — always, so no sandbox booking is left standing.
-  let cancel = await cancelBooking(partnerOrderId);
-  for (let attempt = 0; attempt < 4 && !cancel.ok && cancel.error.code === "order_not_found"; attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 5_000));
-    cancel = await cancelBooking(partnerOrderId);
-  }
-  steps.push(
-    step("Cancellation", "cancel", cancel, cancel.ok ? "Booking cancelled." : cancel.error.message),
-  );
+  // 8. Booking status — the authoritative resolution of "unknown".
+  steps.push({
+    step: "Booking status (authoritative resolution)",
+    endpoint: RATEHAWK_ENDPOINTS.bookingStatus,
+    httpStatus: null,
+    passed: outcome.internalStatus === "confirmed",
+    detail: `${outcome.detail} Internal status: ${outcome.internalStatus}.`,
+    latencyMs: 0,
+  });
 
-  return finish(
-    steps.every((s) => s.passed)
-      ? "Full sandbox flow verified: search, details, rates, prebook, booking, status, order info and cancellation."
-      : "The sandbox flow completed with failures — see the step list.",
-    partnerOrderId,
-    orderId,
-  );
+  // 9. Order info — the RateHawk order id and order status.
+  const orderId = outcome.orderId;
+  steps.push({
+    step: "Order info",
+    endpoint: RATEHAWK_ENDPOINTS.orderInfo,
+    httpStatus: null,
+    passed: outcome.internalStatus === "confirmed" ? orderId != null : true,
+    detail: `Order ${String(orderId ?? "not created")}; supplier order status ${outcome.orderStatus ?? "none"}.`,
+    latencyMs: 0,
+  });
+
+  // 10. Customer output: Worldway selling price and voucher (confirmed only).
+  const customer = buildCustomerBookingOutput({
+    outcome,
+    supplierNet: chosenRate?.price ?? { amount: num(chosenPayment["amount"]), currency: str(chosenPayment["currency_code"]) },
+    hotelName: chosenRate?.roomName ? (chosen?.hotelId ?? null) : (chosen?.hotelId ?? null),
+    hotelId: chosen?.hotelId ?? null,
+    hid: chosen?.hid ?? null,
+    checkin,
+    checkout,
+    roomName: chosenRate?.roomName ?? null,
+    mealType: chosenRate?.mealType ?? null,
+    guests: sandboxGuests,
+    cancellationPolicies: chosenRate?.cancellationPolicies ?? [],
+  });
+  steps.push({
+    step: "Worldway customer voucher",
+    endpoint: "internal",
+    httpStatus: null,
+    passed: outcome.internalStatus === "confirmed" ? customer.voucher != null : true,
+    detail:
+      outcome.internalStatus === "confirmed"
+        ? customer.voucher
+          ? `Voucher issued for ${partnerOrderId}; customer total ${customer.price?.customerTotal ?? "—"} ${customer.price?.currency ?? ""} on a supplier cost of ${customer.price?.supplierNet.amount ?? "—"}.`
+          : "Confirmed, but no supplier amount was available so no voucher was issued."
+        : `No voucher — the booking is ${outcome.internalStatus}.`,
+    latencyMs: 0,
+  });
+
+  // 11. Cancellation — only when an order actually exists, so no sandbox
+  // booking is left standing and no phantom cancellation is attempted.
+  if (orderId != null && outcome.internalStatus === "confirmed") {
+    let cancel = await cancelBooking(partnerOrderId);
+    for (let attempt = 0; attempt < 4 && !cancel.ok && cancel.error.code === "order_not_found"; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+      cancel = await cancelBooking(partnerOrderId);
+    }
+    steps.push(step("Cancellation", "cancel", cancel, cancel.ok ? "Booking cancelled." : cancel.error.message));
+  }
+
+  return {
+    ...finish(
+      steps.every((s) => s.passed)
+        ? "Full sandbox flow verified: search, details, rates, prebook, booking, authoritative status, order info, voucher and cancellation."
+        : "The sandbox flow completed with failures — see the step list.",
+      partnerOrderId,
+      orderId,
+    ),
+    internalStatus: outcome.internalStatus,
+    supplierStatus: outcome.supplierStatus,
+    customerPrice: customer.price,
+    voucher: customer.voucher,
+  };
 }

@@ -1,5 +1,7 @@
 // RateHawk (ETG v3) — shared, client-safe result shapes.
 import type { RatehawkEnvironment, RatehawkOperation } from "./config";
+import type { WorldwayCustomerPrice } from "./pricing";
+import type { RatehawkInternalStatus, WorldwayVoucher } from "./voucher";
 
 export interface RatehawkCallMeta {
   /** ETG envelope status ("ok" | "processing"), when the supplier returned one. */
@@ -79,4 +81,11 @@ export interface RatehawkCertificationReport {
   orderId: string | number | null;
   steps: RatehawkCertificationStep[];
   message: string;
+  /** Worldway's own resolved lifecycle status, when a booking was submitted. */
+  internalStatus?: RatehawkInternalStatus;
+  supplierStatus?: string | null;
+  /** Customer-facing price (supplier cost + Worldway markup/fees). */
+  customerPrice?: WorldwayCustomerPrice | null;
+  /** Worldway voucher — only present for a confirmed booking. */
+  voucher?: WorldwayVoucher | null;
 }

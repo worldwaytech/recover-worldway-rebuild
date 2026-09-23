@@ -361,7 +361,25 @@ function RatehawkConsole() {
             <p className="text-muted-foreground">{report.message}</p>
             {report.partnerOrderId && (
               <p className="font-mono text-xs">
-                partner order {report.partnerOrderId} · order {String(report.orderId ?? "—")}
+                partner order {report.partnerOrderId} · order {String(report.orderId ?? "—")} · status{" "}
+                {report.internalStatus ?? "—"}
+              </p>
+            )}
+            {report.customerPrice && (
+              <p className="text-xs text-muted-foreground">
+                Supplier cost {report.customerPrice.supplierNet.amount} {report.customerPrice.currency} · markup{" "}
+                {report.customerPrice.markupPercent}% ({report.customerPrice.markupAmount}) · fees{" "}
+                {report.customerPrice.serviceFeeAmount + report.customerPrice.fixedFee} · customer pays{" "}
+                <span className="font-medium text-foreground">
+                  {report.customerPrice.customerTotal} {report.customerPrice.currency}
+                </span>
+              </p>
+            )}
+            {report.voucher && (
+              <p className="text-xs">
+                Worldway voucher issued — {report.voucher.worldwayReference} · RateHawk{" "}
+                {String(report.voucher.ratehawkOrderId ?? "—")} · {report.voucher.room.name ?? "room"} ·{" "}
+                {report.voucher.stay.checkin} → {report.voucher.stay.checkout} ({report.voucher.stay.nights} nights)
               </p>
             )}
             <table className="w-full text-sm">
