@@ -372,6 +372,12 @@ export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
       pricing: "/airservice/rest/ssr",
       booking: "/airservice/rest/book",
     },
+    // UP17's air search is a POST/JSON endpoint; a GET returns 404. The probe
+    // sends the same payload shape the live flight search uses.
+    requests: {
+      health: { method: "POST", body: () => up17ProbePayload() },
+      catalog: { method: "POST", body: () => up17ProbePayload() },
+    },
     capabilities: ["catalog", "availability", "pricing", "booking", "media"],
     collections: ["flights", "hotels", "buses"],
     rateLimitPerSecond: 5,
