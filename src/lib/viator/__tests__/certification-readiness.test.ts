@@ -175,8 +175,8 @@ describe("worldway activity voucher", () => {
     pickup: null,
     languageGuide: null,
     productOption: null,
-    email: "guest@example.com",
-    phone: "+971501234567",
+    customerEmail: "guest@example.com",
+    customerPhone: "+971501234567",
     voucherRestrictionRequired: false,
     supplierVoucherUrl: null,
   };
