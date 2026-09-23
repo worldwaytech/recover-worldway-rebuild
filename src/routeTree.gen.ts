@@ -181,6 +181,7 @@ import { Route as CrystalCruisesShipsIndexRouteImport } from './routes/crystal-c
 import { Route as CrystalCruisesDestinationsIndexRouteImport } from './routes/crystal-cruises.destinations.index'
 import { Route as VoyagesCruiseaBookingsRouteImport } from './routes/voyages.cruisea.bookings'
 import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
+import { Route as TransfersVoucherReferenceRouteImport } from './routes/transfers.voucher.$reference'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
@@ -201,6 +202,7 @@ import { Route as VoyagesCruiseaBookingIdRouteImport } from './routes/voyages.cr
 import { Route as DestinationsRegionCountryDestinationRouteImport } from './routes/destinations.$region.$country.$destination'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
 import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/public/hooks/integration-sync'
+import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/api/public/hooks/hbx-transfers-refresh'
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 import { Route as ApiPublicHooksCruiseaHoldSweepRouteImport } from './routes/api/public/hooks/cruisea-hold-sweep'
 import { Route as ApiPublicHooksIntegrationWebhookProviderKeyRouteImport } from './routes/api/public/hooks/integration-webhook.$providerKey'
@@ -1070,6 +1072,12 @@ const TtcBrandSlugRoute = TtcBrandSlugRouteImport.update({
   path: '/ttc/$brand/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransfersVoucherReferenceRoute =
+  TransfersVoucherReferenceRouteImport.update({
+    id: '/voucher/$reference',
+    path: '/voucher/$reference',
+    getParentRoute: () => TransfersRoute,
+  } as any)
 const ToursJourneyIdRoute = ToursJourneyIdRouteImport.update({
   id: '/journey/$id',
   path: '/journey/$id',
@@ -1179,6 +1187,12 @@ const ApiPublicHooksIntegrationSyncRoute =
     path: '/api/public/hooks/integration-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksHbxTransfersRefreshRoute =
+  ApiPublicHooksHbxTransfersRefreshRouteImport.update({
+    id: '/api/public/hooks/hbx-transfers-refresh',
+    path: '/api/public/hooks/hbx-transfers-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCrystalHoldSweepRoute =
   ApiPublicHooksCrystalHoldSweepRouteImport.update({
     id: '/api/public/hooks/crystal-hold-sweep',
@@ -1248,7 +1262,7 @@ export interface FileRoutesByFullPath {
   '/tailor-made': typeof TailorMadeRouteWithChildren
   '/terms': typeof TermsRoute
   '/tours': typeof ToursRouteWithChildren
-  '/transfers': typeof TransfersRoute
+  '/transfers': typeof TransfersRouteWithChildren
   '/trip-builder': typeof TripBuilderRoute
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
@@ -1378,6 +1392,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
   '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/voyages/cruisea/bookings': typeof VoyagesCruiseaBookingsRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
@@ -1387,6 +1402,7 @@ export interface FileRoutesByFullPath {
   '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
+  '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
@@ -1422,7 +1438,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
-  '/transfers': typeof TransfersRoute
+  '/transfers': typeof TransfersRouteWithChildren
   '/trip-builder': typeof TripBuilderRoute
   '/trust': typeof TrustRoute
   '/wallet': typeof WalletRoute
@@ -1545,6 +1561,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
   '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/voyages/cruisea/bookings': typeof VoyagesCruiseaBookingsRoute
   '/crystal-cruises/destinations': typeof CrystalCruisesDestinationsIndexRoute
@@ -1554,6 +1571,7 @@ export interface FileRoutesByTo {
   '/voyages/cruisea': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
+  '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
@@ -1613,7 +1631,7 @@ export interface FileRoutesById {
   '/tailor-made': typeof TailorMadeRouteWithChildren
   '/terms': typeof TermsRoute
   '/tours': typeof ToursRouteWithChildren
-  '/transfers': typeof TransfersRoute
+  '/transfers': typeof TransfersRouteWithChildren
   '/trip-builder': typeof TripBuilderRoute
   '/trust': typeof TrustRoute
   '/villas': typeof VillasRouteWithChildren
@@ -1743,6 +1761,7 @@ export interface FileRoutesById {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
+  '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
   '/ttc/$brand/$slug': typeof TtcBrandSlugRoute
   '/voyages/cruisea/bookings': typeof VoyagesCruiseaBookingsRoute
   '/crystal-cruises/destinations/': typeof CrystalCruisesDestinationsIndexRoute
@@ -1752,6 +1771,7 @@ export interface FileRoutesById {
   '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
+  '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
@@ -1942,6 +1962,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/transfers/voucher/$reference'
     | '/ttc/$brand/$slug'
     | '/voyages/cruisea/bookings'
     | '/crystal-cruises/destinations/'
@@ -1951,6 +1972,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
+    | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
@@ -2109,6 +2131,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/voyages/$code'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/transfers/voucher/$reference'
     | '/ttc/$brand/$slug'
     | '/voyages/cruisea/bookings'
     | '/crystal-cruises/destinations'
@@ -2118,6 +2141,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
+    | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
@@ -2306,6 +2330,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
+    | '/transfers/voucher/$reference'
     | '/ttc/$brand/$slug'
     | '/voyages/cruisea/bookings'
     | '/crystal-cruises/destinations/'
@@ -2315,6 +2340,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
+    | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/destinations/$region/$country/$destination'
@@ -2374,7 +2400,7 @@ export interface RootRouteChildren {
   TailorMadeRoute: typeof TailorMadeRouteWithChildren
   TermsRoute: typeof TermsRoute
   ToursRoute: typeof ToursRouteWithChildren
-  TransfersRoute: typeof TransfersRoute
+  TransfersRoute: typeof TransfersRouteWithChildren
   TripBuilderRoute: typeof TripBuilderRoute
   TrustRoute: typeof TrustRoute
   VillasRoute: typeof VillasRouteWithChildren
@@ -2403,6 +2429,7 @@ export interface RootRouteChildren {
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
   ApiPublicHooksCruiseaHoldSweepRoute: typeof ApiPublicHooksCruiseaHoldSweepRoute
   ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
+  ApiPublicHooksHbxTransfersRefreshRoute: typeof ApiPublicHooksHbxTransfersRefreshRoute
   ApiPublicHooksIntegrationSyncRoute: typeof ApiPublicHooksIntegrationSyncRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
   VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
@@ -3616,6 +3643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TtcBrandSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/transfers/voucher/$reference': {
+      id: '/transfers/voucher/$reference'
+      path: '/voucher/$reference'
+      fullPath: '/transfers/voucher/$reference'
+      preLoaderRoute: typeof TransfersVoucherReferenceRouteImport
+      parentRoute: typeof TransfersRoute
+    }
     '/tours/journey/$id': {
       id: '/tours/journey/$id'
       path: '/journey/$id'
@@ -3754,6 +3788,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/integration-sync'
       fullPath: '/api/public/hooks/integration-sync'
       preLoaderRoute: typeof ApiPublicHooksIntegrationSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/hbx-transfers-refresh': {
+      id: '/api/public/hooks/hbx-transfers-refresh'
+      path: '/api/public/hooks/hbx-transfers-refresh'
+      fullPath: '/api/public/hooks/hbx-transfers-refresh'
+      preLoaderRoute: typeof ApiPublicHooksHbxTransfersRefreshRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/crystal-hold-sweep': {
@@ -4218,6 +4259,18 @@ const ToursRouteChildren: ToursRouteChildren = {
 
 const ToursRouteWithChildren = ToursRoute._addFileChildren(ToursRouteChildren)
 
+interface TransfersRouteChildren {
+  TransfersVoucherReferenceRoute: typeof TransfersVoucherReferenceRoute
+}
+
+const TransfersRouteChildren: TransfersRouteChildren = {
+  TransfersVoucherReferenceRoute: TransfersVoucherReferenceRoute,
+}
+
+const TransfersRouteWithChildren = TransfersRoute._addFileChildren(
+  TransfersRouteChildren,
+)
+
 interface VillasRouteChildren {
   VillasSlugRoute: typeof VillasSlugRoute
   VillasIndexRoute: typeof VillasIndexRoute
@@ -4334,7 +4387,7 @@ const rootRouteChildren: RootRouteChildren = {
   TailorMadeRoute: TailorMadeRouteWithChildren,
   TermsRoute: TermsRoute,
   ToursRoute: ToursRouteWithChildren,
-  TransfersRoute: TransfersRoute,
+  TransfersRoute: TransfersRouteWithChildren,
   TripBuilderRoute: TripBuilderRoute,
   TrustRoute: TrustRoute,
   VillasRoute: VillasRouteWithChildren,
@@ -4364,6 +4417,8 @@ const rootRouteChildren: RootRouteChildren = {
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,
   ApiPublicHooksCruiseaHoldSweepRoute: ApiPublicHooksCruiseaHoldSweepRoute,
   ApiPublicHooksCrystalHoldSweepRoute: ApiPublicHooksCrystalHoldSweepRoute,
+  ApiPublicHooksHbxTransfersRefreshRoute:
+    ApiPublicHooksHbxTransfersRefreshRoute,
   ApiPublicHooksIntegrationSyncRoute: ApiPublicHooksIntegrationSyncRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
   VoyagesCruiseaBookingIdRoute: VoyagesCruiseaBookingIdRoute,

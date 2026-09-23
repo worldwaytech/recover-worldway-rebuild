@@ -318,6 +318,8 @@ export interface HbxError {
   message: string;
   status: number;
   retryable: boolean;
+  /** Raw supplier error text (server-side/admin use only; never shown to customers). */
+  detail?: string;
 }
 
 export interface HbxResult<T> {

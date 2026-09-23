@@ -8,7 +8,7 @@ import { HBX_SUITE_CONFIG, HBX_SUPPLIER_ID, type HbxSuite } from "./config";
 import { hbxCacheInvalidate, hbxCredentialStatus, hbxEnvironment, hbxSuiteEnabled } from "./client.server";
 import { fetchHotelContentPage } from "./hotels.server";
 import { fetchActivityContentPage } from "./activities.server";
-import { fetchTransferRoutes } from "./transfers.server";
+import { fetchTransferPointsPage, fetchTransferRoutes } from "./transfers.server";
 import type { HbxActivityProduct, HbxHotelProduct, HbxTransferProduct } from "./types";
 
 export interface HbxSyncOutcome {
@@ -343,6 +343,36 @@ export async function syncHbxActivities(opts: {
   };
 }
 
+const POINT_PAGE = 1000;
+const MAX_HOTEL_PAGES = 60;
+
+async function syncTransferPointsForCountry(countryCode: string): Promise<{ received: number; written: number; failed: boolean; message: string }> {
+  const environment = hbxEnvironment();
+  const db = await admin();
+  let received = 0;
+  let written = 0;
+  for (const kind of ["terminals", "hotels"] as const) {
+    for (let page = 0; page < (kind === "hotels" ? MAX_HOTEL_PAGES : 10); page++) {
+      const res = await fetchTransferPointsPage(kind, { countryCode, offset: page * POINT_PAGE, limit: POINT_PAGE });
+      if (!res.ok || !res.data) {
+        return { received, written, failed: true, message: res.error?.message ?? `Transfer ${kind} could not be retrieved.` };
+      }
+      received += res.data.length;
+      const now = new Date().toISOString();
+      const rows = res.data.map((r) => ({ ...r, environment, synced_at: now }));
+      for (let i = 0; i < rows.length; i += 250) {
+        const { error } = await db
+          .from("hbx_transfer_points" as never)
+          .upsert(rows.slice(i, i + 250) as never, { onConflict: "environment,point_type,code" });
+        if (error) return { received, written, failed: true, message: "Could not persist transfer points." };
+        written += Math.min(250, rows.length - i);
+      }
+      if (res.data.length < POINT_PAGE) break;
+    }
+  }
+  return { received, written, failed: false, message: "" };
+}
+
 export async function syncHbxTransfers(opts: {
   countryCodes?: string[] | undefined;
 } = {}): Promise<HbxSyncOutcome> {
@@ -350,7 +380,7 @@ export async function syncHbxTransfers(opts: {
   if (blocked) return blocked;
 
   const started = Date.now();
-  const countries = (opts.countryCodes?.length ? opts.countryCodes : ["ES", "AE", "GB", "IN", "US"])
+  const countries = (opts.countryCodes?.length ? opts.countryCodes : ["ES", "IT", "AE", "GB", "IN", "US"])
     .map((c) => c.trim().toUpperCase())
     .filter(Boolean)
     .slice(0, 25);
@@ -364,7 +394,19 @@ export async function syncHbxTransfers(opts: {
 
   try {
     for (const countryCode of countries) {
+      // Transfer points (airports, ports, stations, hotels) power search and
+      // product mapping. The legacy /routes content endpoint is not published
+      // on the Transfers Cache API (404), so routes are best-effort only.
+      const pts = await syncTransferPointsForCountry(countryCode);
+      received += pts.received;
+      written += pts.written;
+      if (pts.failed) {
+        failed += 1;
+        status = received > 0 ? "partial" : "failed";
+        message = pts.message;
+      }
       const res = await fetchTransferRoutes({ countryCode });
+      if (!res.ok && res.status === 404) continue;
       if (!res.ok || !res.data) {
         failed += 1;
         status = received > 0 ? "partial" : "failed";
