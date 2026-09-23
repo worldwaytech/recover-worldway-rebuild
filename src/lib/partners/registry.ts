@@ -3,6 +3,24 @@
 // capabilities, rate limits and cache policy from these records.
 import type { PartnerConnectorConfig } from "./types";
 
+/** Minimal, valid UP17 air-search payload used as a reachability probe. */
+function up17ProbePayload() {
+  const when = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return {
+    UserIp: "1.1.1.1",
+    Adult: 1,
+    Child: 0,
+    Infant: 0,
+    DirectFlight: false,
+    JourneyType: 1,
+    PreferredCarriers: [],
+    CabinClass: 1,
+    AirSegments: [{ Origin: "DEL", Destination: "BOM", PreferredTime: `${when}T00:00:00` }],
+    Sources: null,
+  };
+}
+
+
 export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
   {
     id: "abercrombie-kent",
