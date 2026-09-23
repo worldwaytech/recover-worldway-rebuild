@@ -166,7 +166,7 @@ describe("worldway activity voucher", () => {
     productTitle: "Desert dinner",
     travelDate: "2026-05-01",
     startTime: null,
-    travellers: [{ travelerNum: 1, firstName: "Ada", lastName: "Lovelace" }],
+    travellers: [{ firstName: "Ada", lastName: "Lovelace", ageBand: "ADULT" }],
     paxMix: [{ ageBand: "ADULT" as const, count: 1 }],
     currency: "USD",
     total: 120,
