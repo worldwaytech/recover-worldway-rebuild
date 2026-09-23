@@ -29,16 +29,16 @@ const SECTIONS: { id: Suite; label: string; blurb: string }[] = [
 export const Route = createFileRoute("/hotels/hbx")({
   head: () => ({
     meta: [
-      { title: "HBX Collection — Hotels, Experiences & Transfers | Worldway" },
+      { title: "Live Hotels — Hotels, Experiences & Transfers | Worldway" },
       {
         name: "description",
         content:
-          "Search the HBX Group collection: hotels, experiences and private transfers, with live supplier content curated by Worldway Travels Group.",
+          "Search the Worldway Travels Group live collection: hotels, experiences and private transfers, curated for your journey.",
       },
-      { property: "og:title", content: "HBX Collection — Worldway Travels Group" },
+      { property: "og:title", content: "Live Hotels — Worldway Travels Group" },
       {
         property: "og:description",
-        content: "Hotels, experiences and transfers from the HBX Group portfolio.",
+        content: "Hotels, experiences and transfers from the Worldway live portfolio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
