@@ -1275,6 +1275,57 @@ export type Database = {
         }
         Relationships: []
       }
+      hbx_transfer_points: {
+        Row: {
+          city: string | null
+          code: string
+          country_code: string | null
+          created_at: string
+          destination_code: string | null
+          environment: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          point_type: string
+          supplier_payload: Json
+          synced_at: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          code: string
+          country_code?: string | null
+          created_at?: string
+          destination_code?: string | null
+          environment: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          point_type: string
+          supplier_payload?: Json
+          synced_at?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          code?: string
+          country_code?: string | null
+          created_at?: string
+          destination_code?: string | null
+          environment?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          point_type?: string
+          supplier_payload?: Json
+          synced_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hbx_transfer_routes: {
         Row: {
           code: string

@@ -143,6 +143,8 @@ export interface HbxCallOptions {
   /** Cache lifetime override in seconds. 0 disables caching for this call. */
   cacheTtlSeconds?: number;
   operation?: string;
+  /** Single attempt only — used for non-idempotent writes (bookings, cancellations). */
+  noRetry?: boolean;
 }
 
 function buildUrl(opts: HbxCallOptions, environment: HbxEnvironment): string {
@@ -273,7 +275,8 @@ export async function hbxCall<T>(opts: HbxCallOptions): Promise<HbxResult<T>> {
   let lastStatus = 0;
   let lastMessage: string | undefined;
 
-  while (attempts < Math.max(1, cfg.maxRetries)) {
+  const maxAttempts = opts.noRetry ? 1 : Math.max(1, cfg.maxRetries);
+  while (attempts < maxAttempts) {
     attempts += 1;
     await throttle(opts.suite);
     try {
@@ -298,7 +301,7 @@ export async function hbxCall<T>(opts: HbxCallOptions): Promise<HbxResult<T>> {
             supplierMessage: lastMessage,
           }),
         );
-        if (isRetryableStatus(res.status) && attempts < cfg.maxRetries) {
+        if (isRetryableStatus(res.status) && attempts < maxAttempts) {
           const retryAfter = Number(res.headers.get("retry-after"));
           const delay = Number.isFinite(retryAfter) && retryAfter > 0
             ? Math.min(retryAfter * 1000, 10000)
@@ -318,7 +321,7 @@ export async function hbxCall<T>(opts: HbxCallOptions): Promise<HbxResult<T>> {
           continue;
         }
         return fail<T>(
-          normaliseHttpError(res.status, lastMessage),
+          { ...normaliseHttpError(res.status, lastMessage), detail: lastMessage },
           opts,
           environment,
           requestId,
@@ -375,7 +378,7 @@ export async function hbxCall<T>(opts: HbxCallOptions): Promise<HbxResult<T>> {
     } catch (e) {
       const aborted = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
       lastMessage = e instanceof Error ? e.message : "network error";
-      if (attempts < cfg.maxRetries) {
+      if (attempts < maxAttempts) {
         await new Promise((r) => setTimeout(r, backoffDelayMs(attempts)));
         continue;
       }
