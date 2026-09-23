@@ -77,7 +77,7 @@ function HbxPage() {
         })) as HbxCatalogueResult;
         setResult(res);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "The HBX catalogue could not be loaded.");
+        setError(e instanceof Error ? e.message : "The live hotel catalogue could not be loaded.");
       } finally {
         setLoading(false);
       }
