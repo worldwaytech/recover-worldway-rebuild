@@ -156,7 +156,14 @@ function ActivityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviews, setReviews] = useState<
-    { rating: number | null; title: string; text: string; author: string; date: string | null }[]
+    {
+      rating: number | null;
+      title: string;
+      text: string;
+      author: string;
+      date: string | null;
+      provider?: string | null;
+    }[]
   >([]);
   const [schedule, setSchedule] = useState<{ dates: string[]; fromPrice: number | null }>({
     dates: [],
@@ -640,6 +647,12 @@ function ActivityDetailPage() {
                           {"★".repeat(Math.round(r.rating ?? 0))}
                           <span className="ml-2 text-xs text-muted-foreground">{r.author}</span>
                         </p>
+                        {/* Review source attribution is contractually required next to each review. */}
+                        {r.provider ? (
+                          <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                            Review via {r.provider === "TRIPADVISOR" ? "Tripadvisor" : "Viator"}
+                          </p>
+                        ) : null}
                         {r.title ? (
                           <p className="mt-1 font-medium text-foreground">{r.title}</p>
                         ) : null}
@@ -918,6 +931,17 @@ function ActivityDetailPage() {
                 >
                   {submitting ? "Submitting…" : "Request a held reservation"}
                 </button>
+                <p className="text-[10px] leading-relaxed text-muted-foreground">
+                  Booking this experience is subject to the operator’s{" "}
+                  <a href={VIATOR_TERMS_URL} target="_blank" rel="noreferrer" className="underline">
+                    terms &amp; conditions
+                  </a>{" "}
+                  and{" "}
+                  <a href={VIATOR_PRIVACY_URL} target="_blank" rel="noreferrer" className="underline">
+                    privacy policy
+                  </a>
+                  .
+                </p>
                 <Link
                   to="/concierge"
                   search={{ prompt: `Help me plan around the experience “${product.title}”.` }}
