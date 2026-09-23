@@ -181,12 +181,20 @@ export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
     auth: { kind: "api-key-header", secrets: ["VIATOR_API_KEY"], header: "exp-api-key" },
     endpoints: {
       health: "/products/tags",
-      catalog: "/products/search",
+      // Bulk ingestion uses the documented GET modified-since feed; /products/search
+      // is a POST endpoint that requires a destination filter, so it is not a
+      // catalogue-wide read.
+      catalog: "/products/modified-since",
       catalogDelta: "/products/modified-since",
       availability: "/availability/schedules",
       pricing: "/availability/check",
       booking: "/bookings/cart/book",
       cancellation: "/bookings/{id}/cancel",
+    },
+    // Viator rejects requests without an explicit API version in Accept.
+    requests: {
+      health: { method: "GET", headers: { Accept: "application/json;version=2.0" } },
+      catalog: { method: "GET", headers: { Accept: "application/json;version=2.0" } },
     },
     capabilities: [
       "catalog",
