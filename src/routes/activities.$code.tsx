@@ -369,10 +369,6 @@ function ActivityDetailPage() {
   }, [product?.destinationNames?.[0]]);
 
   const unit = schedule.fromPrice ?? product?.price ?? null;
-  const travellers = adults + children;
-  const extrasCost = extras.length * 45;
-  const subtotal = unit != null ? unit * adults + unit * 0.6 * children : null;
-  const total = subtotal != null ? subtotal + extrasCost : null;
 
   async function submitBooking(e: React.FormEvent) {
     e.preventDefault();
@@ -391,10 +387,8 @@ function ActivityDetailPage() {
         phone: form.phone || null,
         party_size: travellers,
         travel_month: date ? date.slice(0, 7) : null,
-        budget: total != null ? `${product.currency} ${Math.round(total)}` : null,
-        message: [form.message, extras.length ? `Extras: ${extras.join(", ")}` : ""]
-          .filter(Boolean)
-          .join(" — "),
+        budget: live.total != null ? `${live.currency ?? product.currency} ${Math.round(live.total)}` : null,
+        message: form.message,
       });
       if (insertError) throw new Error(insertError.message);
       trackCatalogueEvent("booking_conversion", { kind: "activity", slug: product.productCode });
@@ -861,8 +855,10 @@ function ActivityDetailPage() {
                   className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
                 />
                 <input
-                  placeholder="Phone (optional)"
+                  required
+                  placeholder="Phone with country code, e.g. +971501234567"
                   aria-label="Phone"
+                  inputMode="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
@@ -938,12 +934,18 @@ function ActivityDetailPage() {
                 productTitle={product.title}
                 travelDate={date}
                 currency={product.currency}
-                paxMix={[
-                  { ageBand: "ADULT", count: adults },
-                  ...(children > 0
-                    ? [{ ageBand: "CHILD" as const, count: children }]
-                    : []),
-                ]}
+                paxMix={paxMix}
+                ageBands={bands}
+                {...(optionCode ? { productOptionCode: optionCode } : {})}
+                {...(languageGuide
+                  ? {
+                      languageGuide: {
+                        type: languageGuide.split("|")[0] ?? "",
+                        language: languageGuide.split("|")[1] ?? "",
+                      },
+                    }
+                  : {})}
+                {...(live.total != null ? { quotedTotal: live.total } : {})}
                 booker={{
                   firstName: form.full_name.trim().split(/\s+/)[0] ?? "",
                   lastName: form.full_name.trim().split(/\s+/).slice(1).join(" "),
