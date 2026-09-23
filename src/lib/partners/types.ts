@@ -98,6 +98,20 @@ export interface PartnerConnectorConfig {
   feed?: PartnerFeedConfig;
   /** Vertical templates this supplier is expected to populate. */
   templates?: string[];
+  /** Per-operation request shape for suppliers whose probe/catalogue endpoints
+   *  are not plain GETs (e.g. POST search endpoints or versioned Accept headers). */
+  requests?: {
+    health?: PartnerRequestSpec;
+    catalog?: PartnerRequestSpec;
+  };
+}
+
+/** How a specific supplier operation must be called. */
+export interface PartnerRequestSpec {
+  method?: string;
+  headers?: Record<string, string>;
+  /** Static body, or a factory when the payload needs a fresh date. */
+  body?: unknown | (() => unknown);
 }
 
 export interface PartnerHealth {

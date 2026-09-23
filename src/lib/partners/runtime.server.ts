@@ -158,10 +158,21 @@ async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
+/** Resolve a configured request spec into concrete fetch options. */
+function specToInit(spec?: PartnerRequestSpec): {
+  method?: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+} {
+  if (!spec) return {};
+  const body = typeof spec.body === "function" ? (spec.body as () => unknown)() : spec.body;
+  return { method: spec.method, body, headers: spec.headers };
+}
+
 export async function partnerRequest(
   cfg: PartnerConnectorConfig,
   path: string,
-  init: { method?: string; body?: unknown } = {},
+  init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<PartnerRequestResult> {
   const started = Date.now();
   let attempts = 0;
