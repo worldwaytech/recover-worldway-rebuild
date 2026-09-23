@@ -418,7 +418,7 @@ export const bookViatorActivityCart = createServerFn({ method: "POST" })
         itineraryReference: result.itineraryRef,
         productCode: record.product_code,
         productTitle: record.product_title ?? record.product_code,
-        travelDate: record.travel_date,
+        travelDate: record.travel_date ?? "",
         startTime: audit.startTime ?? null,
         travellers: answers.length
           ? buildVoucherTravellers(answers, paxMix, booker)
