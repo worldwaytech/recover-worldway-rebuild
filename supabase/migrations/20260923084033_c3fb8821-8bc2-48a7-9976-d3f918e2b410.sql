@@ -1,0 +1,2 @@
+ALTER TABLE public.cruisea_bookings DROP CONSTRAINT IF EXISTS cruisea_bookings_status_check;
+ALTER TABLE public.cruisea_bookings ADD CONSTRAINT cruisea_bookings_status_check CHECK (status = ANY (ARRAY['Inquiry'::text, 'Held'::text, 'Confirmed'::text, 'Cancelled'::text, 'Expired'::text]));
