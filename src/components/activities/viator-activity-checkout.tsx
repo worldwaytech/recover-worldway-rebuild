@@ -18,6 +18,15 @@ import {
   type ActivityBookingState,
   type PaxMix,
 } from "@/lib/viator/checkout-contract";
+import { getViatorBookingQuestions } from "@/lib/viator.functions";
+import {
+  LOCATION_REFERENCE_UNIT,
+  FREETEXT_UNIT,
+  groupBookingQuestions,
+  type BookingQuestion,
+  type BookingQuestionAnswer,
+} from "@/lib/viator/booking-questions";
+import type { AgeBandRule } from "@/lib/viator/age-bands";
 
 type PaymentHandler = {
   submit: (
@@ -75,6 +84,10 @@ export type ActivityCheckoutProps = {
   paxMix: PaxMix;
   productOptionCode?: string;
   startTime?: string;
+  languageGuide?: { type: string; language: string };
+  ageBands?: AgeBandRule[];
+  /** Live total already quoted on the product page, for display continuity. */
+  quotedTotal?: number;
   booker: { firstName: string; lastName: string; email: string; phone?: string };
   /**
    * pay_now   — hold, then immediately present the card form.
@@ -115,6 +128,26 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     sessionExpiresAt: string | null;
   } | null>(null);
   const [billing, setBilling] = useState({ country: "US", postalCode: "" });
+  const travellerCount = props.paxMix.reduce((sum, p) => sum + p.count, 0);
+  const loadQuestions = useServerFn(getViatorBookingQuestions);
+  const [questions, setQuestions] = useState<BookingQuestion[]>([]);
+  const [pickupInfo, setPickupInfo] = useState<{
+    pickupOptionType: string | null;
+    allowCustomTravelerPickup: boolean;
+    additionalInfo: string | null;
+    locations: { reference: string; name: string | null; address: string | null }[];
+  } | null>(null);
+  /** answers keyed `${questionId}#${travelerNum}` (0 = per-booking). */
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [travellerNames, setTravellerNames] = useState<
+    { firstName: string; lastName: string }[]
+  >(() =>
+    Array.from({ length: travellerCount }, (_, i) =>
+      i === 0
+        ? { firstName: props.booker.firstName, lastName: props.booker.lastName }
+        : { firstName: "", lastName: "" },
+    ),
+  );
   const [result, setResult] = useState<{
     state: ActivityBookingState | string;
     bookingReference: string | null;
@@ -134,6 +167,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
             paxMix: props.paxMix,
             ...(props.productOptionCode ? { productOptionCode: props.productOptionCode } : {}),
             ...(props.startTime ? { startTime: props.startTime } : {}),
+            ...(props.languageGuide ? { languageGuide: props.languageGuide } : {}),
             booker: props.booker,
             lines: [{ supplier: "viator", productKind: "activity" }],
           },
@@ -170,6 +204,34 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The supplier's own booking questions (per booking, per traveller, pickup).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = (await loadQuestions({ data: { code: props.productCode } })) as {
+          ok: boolean;
+          questions: BookingQuestion[];
+          pickup: {
+            pickupOptionType: string | null;
+            allowCustomTravelerPickup: boolean;
+            additionalInfo: string | null;
+            locations: { reference: string; name: string | null; address: string | null }[];
+          } | null;
+        };
+        if (cancelled || !res.ok) return;
+        setQuestions(res.questions ?? []);
+        setPickupInfo(res.pickup ?? null);
+      } catch {
+        /* questions are re-validated server-side before booking */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.productCode]);
 
   // Step 2: mount Viator's hosted card iFrame.
   useEffect(() => {
