@@ -101,9 +101,9 @@ function HbxPage() {
   return (
     <PageShell>
       <PageHero
-        eyebrow="HBX Group Collection"
-        title="Hotels, experiences and transfers — one supplier, three portfolios."
-        subtitle="Live HBX content, normalised into the Worldway catalogue with full supplier traceability."
+        eyebrow="Worldway Live Collection"
+        title="Hotels, experiences and transfers — live, in one place."
+        subtitle="Live inventory, normalised into the Worldway catalogue for a seamless booking experience."
         image="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2000&q=80"
       />
 
