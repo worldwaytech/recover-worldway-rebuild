@@ -368,8 +368,9 @@ export async function sweepExpiredCruiseaHolds(limit = 25) {
 
   let released = 0;
   let skipped = 0;
+  const failures: string[] = [];
   for (const row of data ?? []) {
-    const { data: claimed } = await supabaseAdmin
+    const { data: claimed, error: claimError } = await supabaseAdmin
       .from("cruisea_bookings")
       .update({ status: "Expired", payment_status: "Cancelled", hold_expires_at: null })
       .eq("id", row.id)
@@ -377,6 +378,13 @@ export async function sweepExpiredCruiseaHolds(limit = 25) {
       .eq("hold_expires_at", row.hold_expires_at)
       .select("id")
       .maybeSingle();
+    if (claimError) {
+      // A rejected update means the cabin would silently stay out of sale, so
+      // it is reported rather than counted as a harmless skip.
+      failures.push(`${row.id}: ${claimError.message}`);
+      console.error("cruisea hold sweep failed", { id: row.id, message: claimError.message });
+      continue;
+    }
     if (!claimed) {
       skipped += 1;
       continue;
@@ -384,5 +392,5 @@ export async function sweepExpiredCruiseaHolds(limit = 25) {
     await releaseInventory(row.cabin_id);
     released += 1;
   }
-  return { scanned: (data ?? []).length, released, skipped };
+  return { scanned: (data ?? []).length, released, skipped, failed: failures.length, failures };
 }

@@ -12,6 +12,7 @@ import type {
   PartnerHealth,
   PartnerLogEntry,
   PartnerMode,
+  PartnerRequestSpec,
   PartnerSyncResult,
 } from "./types";
 
@@ -158,10 +159,21 @@ async function sleep(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
+/** Resolve a configured request spec into concrete fetch options. */
+function specToInit(spec?: PartnerRequestSpec): {
+  method?: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+} {
+  if (!spec) return {};
+  const body = typeof spec.body === "function" ? (spec.body as () => unknown)() : spec.body;
+  return { method: spec.method, body, headers: spec.headers };
+}
+
 export async function partnerRequest(
   cfg: PartnerConnectorConfig,
   path: string,
-  init: { method?: string; body?: unknown } = {},
+  init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<PartnerRequestResult> {
   const started = Date.now();
   let attempts = 0;
@@ -181,7 +193,7 @@ export async function partnerRequest(
       await sleep(1000 / cfg.rateLimitPerSecond);
       continue;
     }
-    const headers = authHeaders(cfg);
+    const headers = { ...authHeaders(cfg), ...(init.headers ?? {}) };
     if (cfg.auth.kind === "oauth2-client-credentials") {
       const token = await oauthToken(cfg);
       if (!token)
@@ -296,7 +308,7 @@ export async function checkHealth(cfg: PartnerConnectorConfig): Promise<PartnerH
   };
   if (missing.length || !cfg.endpoints.health) return base;
 
-  const res = await partnerRequest(cfg, cfg.endpoints.health);
+  const res = await partnerRequest(cfg, cfg.endpoints.health, specToInit(cfg.requests?.health));
   return {
     ...base,
     reachable: res.ok,
@@ -607,7 +619,7 @@ export async function syncCatalogue(
     opts.since && cfg.endpoints.catalogDelta
       ? cfg.endpoints.catalogDelta.replace("{since}", encodeURIComponent(opts.since))
       : cfg.endpoints.catalog;
-  const res = await partnerRequest(cfg, path);
+  const res = await partnerRequest(cfg, path, specToInit(cfg.requests?.catalog));
 
   if (!res.ok) {
     if (cfg.feed) {

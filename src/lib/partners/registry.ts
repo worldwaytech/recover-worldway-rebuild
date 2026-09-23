@@ -3,6 +3,24 @@
 // capabilities, rate limits and cache policy from these records.
 import type { PartnerConnectorConfig } from "./types";
 
+/** Minimal, valid UP17 air-search payload used as a reachability probe. */
+function up17ProbePayload() {
+  const when = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return {
+    UserIp: "1.1.1.1",
+    Adult: 1,
+    Child: 0,
+    Infant: 0,
+    DirectFlight: false,
+    JourneyType: 1,
+    PreferredCarriers: [],
+    CabinClass: 1,
+    AirSegments: [{ Origin: "DEL", Destination: "BOM", PreferredTime: `${when}T00:00:00` }],
+    Sources: null,
+  };
+}
+
+
 export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
   {
     id: "abercrombie-kent",
@@ -181,12 +199,20 @@ export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
     auth: { kind: "api-key-header", secrets: ["VIATOR_API_KEY"], header: "exp-api-key" },
     endpoints: {
       health: "/products/tags",
-      catalog: "/products/search",
+      // Bulk ingestion uses the documented GET modified-since feed; /products/search
+      // is a POST endpoint that requires a destination filter, so it is not a
+      // catalogue-wide read.
+      catalog: "/products/modified-since",
       catalogDelta: "/products/modified-since",
       availability: "/availability/schedules",
       pricing: "/availability/check",
       booking: "/bookings/cart/book",
       cancellation: "/bookings/{id}/cancel",
+    },
+    // Viator rejects requests without an explicit API version in Accept.
+    requests: {
+      health: { method: "GET", headers: { Accept: "application/json;version=2.0" } },
+      catalog: { method: "GET", headers: { Accept: "application/json;version=2.0" } },
     },
     capabilities: [
       "catalog",
@@ -363,6 +389,12 @@ export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
       availability: "/airservice/rest/search",
       pricing: "/airservice/rest/ssr",
       booking: "/airservice/rest/book",
+    },
+    // UP17's air search is a POST/JSON endpoint; a GET returns 404. The probe
+    // sends the same payload shape the live flight search uses.
+    requests: {
+      health: { method: "POST", body: () => up17ProbePayload() },
+      catalog: { method: "POST", body: () => up17ProbePayload() },
     },
     capabilities: ["catalog", "availability", "pricing", "booking", "media"],
     collections: ["flights", "hotels", "buses"],
