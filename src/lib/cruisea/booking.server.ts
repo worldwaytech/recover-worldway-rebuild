@@ -392,5 +392,5 @@ export async function sweepExpiredCruiseaHolds(limit = 25) {
     await releaseInventory(row.cabin_id);
     released += 1;
   }
-  return { scanned: (data ?? []).length, released, skipped };
+  return { scanned: (data ?? []).length, released, skipped, failed: failures.length, failures };
 }
