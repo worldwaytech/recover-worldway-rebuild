@@ -72,7 +72,7 @@ function HotelsPage() {
         subtitle="Curated palaces, villas, and design hotels around the world."
         image="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=2000&q=80"
       />
-      <SearchCard title="Hotel Search — UP17 Live">
+      <SearchCard title="Hotel Search — Live">
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <Field label="Destination">

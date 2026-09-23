@@ -167,7 +167,7 @@ export function Up17CityAutocomplete({
                   {r.city}, {r.country}
                 </div>
                 <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  UP17 City ID · {r.cityId}
+                  City ID · {r.cityId}
                 </div>
               </li>
             ))
