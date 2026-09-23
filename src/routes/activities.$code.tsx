@@ -9,8 +9,17 @@ import {
   getViatorProduct,
   getViatorReviews,
   getViatorSchedule,
+  priceViatorActivity,
   searchViatorProducts,
 } from "@/lib/viator.functions";
+import {
+  ageBandLabel,
+  sortAgeBands,
+  validatePaxMixAgainstBands,
+  type AgeBandRule,
+  type ViatorAgeBand,
+} from "@/lib/viator/age-bands";
+import { VIATOR_PRIVACY_URL, VIATOR_TERMS_URL } from "@/lib/viator/voucher";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ViatorActivityCheckout,
@@ -64,7 +73,44 @@ type Detail = {
   meetingPoint: string | null;
   pickup: string | null;
   ticketInfo: string | null;
+  ageBands: AgeBandRule[];
+  bookingLimits: {
+    minTravelersPerBooking: number | null;
+    maxTravelersPerBooking: number | null;
+  };
+  productOptions: {
+    code: string;
+    title: string;
+    description: string | null;
+    languageGuides: { type: string; language: string }[];
+  }[];
+  bookingQuestionIds: string[];
+  travelerPickup: {
+    pickupOptionType: string | null;
+    allowCustomTravelerPickup: boolean;
+    additionalInfo: string | null;
+    minutesBeforeDepartureTimeForPickup: number | null;
+    locationRefs: string[];
+  } | null;
+  languageGuides: { type: string; language: string }[];
+  bookingConfirmationSettings: {
+    confirmationType: string | null;
+    bookingCutoffType: string | null;
+    bookingCutoffInMinutes: number | null;
+    allowBookingRequestsWithinCutoff: boolean | null;
+  };
 };
+
+/** Bands offered when a product publishes none (Viator always sells adults). */
+const FALLBACK_BANDS: AgeBandRule[] = [
+  {
+    ageBand: "ADULT",
+    startAge: null,
+    endAge: null,
+    minTravelersPerBooking: null,
+    maxTravelersPerBooking: null,
+  },
+];
 
 function Section({
   id,
@@ -110,7 +156,14 @@ function ActivityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviews, setReviews] = useState<
-    { rating: number | null; title: string; text: string; author: string; date: string | null }[]
+    {
+      rating: number | null;
+      title: string;
+      text: string;
+      author: string;
+      date: string | null;
+      provider?: string | null;
+    }[]
   >([]);
   const [schedule, setSchedule] = useState<{ dates: string[]; fromPrice: number | null }>({
     dates: [],
@@ -129,24 +182,115 @@ function ActivityDetailPage() {
 
   // booking state
   const [date, setDate] = useState("");
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
-  const [extras, setExtras] = useState<string[]>([]);
+  const [pax, setPax] = useState<Record<string, number>>({ ADULT: 2 });
+  const [optionCode, setOptionCode] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [languageGuide, setLanguageGuide] = useState("");
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [checkoutMode, setCheckoutMode] = useState<ActivityCheckoutMode | null>(null);
+  const quote = useServerFn(priceViatorActivity);
+  const [live, setLive] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    total: number | null;
+    currency: string | null;
+    message: string | null;
+  }>({
+    checking: false,
+    available: null,
+    total: null,
+    currency: null,
+    message: null,
+  });
+
+  const bands = sortAgeBands(product?.ageBands?.length ? product.ageBands : FALLBACK_BANDS);
+  const paxMix = bands
+    .map((b) => ({ ageBand: b.ageBand, count: pax[b.ageBand] ?? 0 }))
+    .filter((p) => p.count > 0);
+  const travellers = paxMix.reduce((sum, p) => sum + p.count, 0);
+  const paxCheck = validatePaxMixAgainstBands(paxMix, bands, product?.bookingLimits ?? {});
+  const selectedOption = product?.productOptions?.find((o) => o.code === optionCode) ?? null;
+  const guideChoices = selectedOption?.languageGuides?.length
+    ? selectedOption.languageGuides
+    : (product?.languageGuides ?? []);
+
+  /** Real availability + real total from Viator for the chosen date and pax mix. */
+  const refreshQuote = useCallback(async () => {
+    if (!product || !date || !paxMix.length || !paxCheck.ok) {
+      setLive((s) => ({ ...s, available: null, total: null, message: null }));
+      return;
+    }
+    setLive((s) => ({ ...s, checking: true, message: null }));
+    try {
+      const res = (await quote({
+        data: {
+          productCode: product.productCode,
+          travelDate: date,
+          currency: product.currency,
+          paxMix,
+          ...(optionCode ? { productOptionCode: optionCode } : {}),
+          ...(startTime ? { startTime } : {}),
+        },
+      })) as {
+        ok: boolean;
+        available: boolean;
+        total: number | null;
+        currency: string;
+        error?: string;
+      };
+      setLive({
+        checking: false,
+        available: res.ok ? res.available : null,
+        total: res.total,
+        currency: res.currency,
+        message: res.ok
+          ? res.available
+            ? null
+            : "These places are not available for that date and party. Try another date."
+          : (res.error ?? "Live pricing is unavailable right now."),
+      });
+    } catch (err) {
+      setLive({
+        checking: false,
+        available: null,
+        total: null,
+        currency: null,
+        message: err instanceof Error ? err.message : "Live pricing is unavailable right now.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.productCode, date, JSON.stringify(paxMix), optionCode, startTime, paxCheck.ok]);
+
+  useEffect(() => {
+    void refreshQuote();
+  }, [refreshQuote]);
 
   const startInstantCheckout = (mode: ActivityCheckoutMode) => {
     setBookingError(null);
     const [firstName, ...rest] = form.full_name.trim().split(/\s+/);
     if (!date || !firstName || !rest.length || !form.email.trim()) {
+      setBookingError("Add your travel date, full name and email to continue.");
+      return;
+    }
+    if (!/^\+[1-9]\d{7,14}$/.test(form.phone.replace(/[^\d+]/g, ""))) {
       setBookingError(
-        mode === "pay_now"
-          ? "Add your travel date, full name and email to book and pay now."
-          : "Add your travel date, full name and email to hold your places and pay later.",
+        "The operator needs a contact number in international format, for example +971501234567.",
       );
+      return;
+    }
+    if (!paxCheck.ok) {
+      setBookingError(paxCheck.reason);
+      return;
+    }
+    if (product?.productOptions?.length && !optionCode) {
+      setBookingError("Choose which option of this experience you want.");
+      return;
+    }
+    if (live.available === false) {
+      setBookingError("Those places are not available. Pick another date or party size.");
       return;
     }
     setCheckoutMode(mode);
@@ -232,10 +376,6 @@ function ActivityDetailPage() {
   }, [product?.destinationNames?.[0]]);
 
   const unit = schedule.fromPrice ?? product?.price ?? null;
-  const travellers = adults + children;
-  const extrasCost = extras.length * 45;
-  const subtotal = unit != null ? unit * adults + unit * 0.6 * children : null;
-  const total = subtotal != null ? subtotal + extrasCost : null;
 
   async function submitBooking(e: React.FormEvent) {
     e.preventDefault();
@@ -254,10 +394,8 @@ function ActivityDetailPage() {
         phone: form.phone || null,
         party_size: travellers,
         travel_month: date ? date.slice(0, 7) : null,
-        budget: total != null ? `${product.currency} ${Math.round(total)}` : null,
-        message: [form.message, extras.length ? `Extras: ${extras.join(", ")}` : ""]
-          .filter(Boolean)
-          .join(" — "),
+        budget: live.total != null ? `${live.currency ?? product.currency} ${Math.round(live.total)}` : null,
+        message: form.message,
       });
       if (insertError) throw new Error(insertError.message);
       trackCatalogueEvent("booking_conversion", { kind: "activity", slug: product.productCode });
@@ -509,6 +647,12 @@ function ActivityDetailPage() {
                           {"★".repeat(Math.round(r.rating ?? 0))}
                           <span className="ml-2 text-xs text-muted-foreground">{r.author}</span>
                         </p>
+                        {/* Review source attribution is contractually required next to each review. */}
+                        {r.provider ? (
+                          <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                            Review via {r.provider === "TRIPADVISOR" ? "Tripadvisor" : "Viator"}
+                          </p>
+                        ) : null}
                         {r.title ? (
                           <p className="mt-1 font-medium text-foreground">{r.title}</p>
                         ) : null}
@@ -592,83 +736,118 @@ function ActivityDetailPage() {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                      Adults
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={adults}
-                      onChange={(e) => setAdults(Math.max(1, Number(e.target.value)))}
-                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                      Children
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={20}
-                      value={children}
-                      onChange={(e) => setChildren(Math.max(0, Number(e.target.value)))}
-                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
-                    />
-                  </label>
-                </div>
-
-                <fieldset>
+                {/* travellers — exactly the age groups this experience sells */}
+                <fieldset className="space-y-2">
                   <legend className="mb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    Optional extras
+                    Travellers
                   </legend>
-                  {["Private transfer", "Travel insurance", "Private guide"].map((x) => (
+                  {bands.map((band) => (
                     <label
-                      key={x}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                      key={band.ageBand}
+                      className="flex items-center justify-between gap-3 text-sm"
                     >
+                      <span className="text-muted-foreground">{ageBandLabel(band)}</span>
                       <input
-                        type="checkbox"
-                        checked={extras.includes(x)}
-                        onChange={() =>
-                          setExtras((prev) =>
-                            prev.includes(x) ? prev.filter((e) => e !== x) : [...prev, x],
-                          )
+                        type="number"
+                        min={band.ageBand === "ADULT" ? 1 : 0}
+                        max={band.maxTravelersPerBooking ?? 20}
+                        value={pax[band.ageBand] ?? 0}
+                        onChange={(e) =>
+                          setPax((prev) => ({
+                            ...prev,
+                            [band.ageBand]: Math.max(0, Number(e.target.value)),
+                          }))
                         }
+                        className="w-20 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
                       />
-                      {x} <span className="text-xs">+$45</span>
                     </label>
                   ))}
+                  {!paxCheck.ok ? (
+                    <p role="alert" className="text-[11px] text-destructive">
+                      {paxCheck.reason}
+                    </p>
+                  ) : null}
                 </fieldset>
 
-                <div className="space-y-1 rounded-lg border border-border/60 bg-background/40 p-3 text-xs text-muted-foreground">
+                {product.productOptions.length ? (
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      Option
+                    </span>
+                    <select
+                      value={optionCode}
+                      onChange={(e) => {
+                        setOptionCode(e.target.value);
+                        setLanguageGuide("");
+                      }}
+                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
+                    >
+                      <option value="">Select an option</option>
+                      {product.productOptions.map((o) => (
+                        <option key={o.code} value={o.code}>
+                          {o.title}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedOption?.description ? (
+                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                        {selectedOption.description}
+                      </span>
+                    ) : null}
+                  </label>
+                ) : null}
+
+                {guideChoices.length ? (
+                  <label className="block text-sm">
+                    <span className="mb-1 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                      Guide language
+                    </span>
+                    <select
+                      value={languageGuide}
+                      onChange={(e) => setLanguageGuide(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
+                    >
+                      <option value="">No preference</option>
+                      {guideChoices.map((g) => (
+                        <option
+                          key={`${g.type}-${g.language}`}
+                          value={`${g.type}|${g.language}`}
+                        >
+                          {g.language.toUpperCase()} — {g.type.toLowerCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                {/* live supplier pricing — never an invented estimate */}
+                <div
+                  data-testid="activity-live-price"
+                  className="space-y-1 rounded-lg border border-border/60 bg-background/40 p-3 text-xs text-muted-foreground"
+                >
                   <div className="flex justify-between">
                     <span>
-                      {adults} adult{adults > 1 ? "s" : ""}
+                      {travellers} traveller{travellers === 1 ? "" : "s"}
                     </span>
-                    <span>{money(unit != null ? unit * adults : null, product.currency)}</span>
+                    <span>{date || "select a date"}</span>
                   </div>
-                  {children > 0 ? (
-                    <div className="flex justify-between">
-                      <span>{children} child</span>
-                      <span>
-                        {money(unit != null ? unit * 0.6 * children : null, product.currency)}
-                      </span>
-                    </div>
-                  ) : null}
-                  {extras.length ? (
-                    <div className="flex justify-between">
-                      <span>Extras</span>
-                      <span>{money(extrasCost, product.currency)}</span>
-                    </div>
-                  ) : null}
                   <div className="flex justify-between border-t border-border/60 pt-1 text-sm text-foreground">
-                    <span>Estimated total</span>
-                    <span>{money(total, product.currency)}</span>
+                    <span>Total</span>
+                    <span>
+                      {live.checking
+                        ? "Checking…"
+                        : live.total != null
+                          ? money(live.total, live.currency ?? product.currency)
+                          : "—"}
+                    </span>
                   </div>
+                  {live.message ? <p className="text-[11px]">{live.message}</p> : null}
+                  {live.total != null && live.available ? (
+                    <p className="text-[11px]">
+                      Confirmed live with the operator for this date and party. Taxes and fees
+                      included.
+                    </p>
+                  ) : null}
                 </div>
 
                 <input
@@ -689,8 +868,10 @@ function ActivityDetailPage() {
                   className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
                 />
                 <input
-                  placeholder="Phone (optional)"
+                  required
+                  placeholder="Phone with country code, e.g. +971501234567"
                   aria-label="Phone"
+                  inputMode="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
@@ -750,6 +931,17 @@ function ActivityDetailPage() {
                 >
                   {submitting ? "Submitting…" : "Request a held reservation"}
                 </button>
+                <p className="text-[10px] leading-relaxed text-muted-foreground">
+                  Booking this experience is subject to the operator’s{" "}
+                  <a href={VIATOR_TERMS_URL} target="_blank" rel="noreferrer" className="underline">
+                    terms &amp; conditions
+                  </a>{" "}
+                  and{" "}
+                  <a href={VIATOR_PRIVACY_URL} target="_blank" rel="noreferrer" className="underline">
+                    privacy policy
+                  </a>
+                  .
+                </p>
                 <Link
                   to="/concierge"
                   search={{ prompt: `Help me plan around the experience “${product.title}”.` }}
@@ -766,12 +958,18 @@ function ActivityDetailPage() {
                 productTitle={product.title}
                 travelDate={date}
                 currency={product.currency}
-                paxMix={[
-                  { ageBand: "ADULT", count: adults },
-                  ...(children > 0
-                    ? [{ ageBand: "CHILD" as const, count: children }]
-                    : []),
-                ]}
+                paxMix={paxMix}
+                ageBands={bands}
+                {...(optionCode ? { productOptionCode: optionCode } : {})}
+                {...(languageGuide
+                  ? {
+                      languageGuide: {
+                        type: languageGuide.split("|")[0] ?? "",
+                        language: languageGuide.split("|")[1] ?? "",
+                      },
+                    }
+                  : {})}
+                {...(live.total != null ? { quotedTotal: live.total } : {})}
                 booker={{
                   firstName: form.full_name.trim().split(/\s+/)[0] ?? "",
                   lastName: form.full_name.trim().split(/\s+/).slice(1).join(" "),

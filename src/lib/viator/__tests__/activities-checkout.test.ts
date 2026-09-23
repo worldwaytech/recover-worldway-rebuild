@@ -169,11 +169,32 @@ describe("billing + booker validation", () => {
   });
   it("requires a valid booker email", () => {
     expect(() =>
-      validateBooker({ firstName: "A", lastName: "B", email: "not-an-email" }),
+      validateBooker({
+        firstName: "A",
+        lastName: "B",
+        email: "not-an-email",
+        phone: "+971501234567",
+      }),
     ).toThrow();
-    expect(validateBooker({ firstName: " Ada ", lastName: "L", email: "A@B.CO" }).email).toBe(
-      "a@b.co",
-    );
+    expect(
+      validateBooker({
+        firstName: " Ada ",
+        lastName: "L",
+        email: "A@B.CO",
+        phone: "+971 50 123 4567",
+      }).email,
+    ).toBe("a@b.co");
+  });
+  // Viator requires communication.phone in international format for booking.
+  it("requires a phone number in international format", () => {
+    expect(() => validateBooker({ firstName: "A", lastName: "B", email: "a@b.co" })).toThrow();
+    expect(() =>
+      validateBooker({ firstName: "A", lastName: "B", email: "a@b.co", phone: "0501234567" }),
+    ).toThrow();
+    expect(
+      validateBooker({ firstName: "A", lastName: "B", email: "a@b.co", phone: "+971501234567" })
+        .phone,
+    ).toBe("+971501234567");
   });
 });
 

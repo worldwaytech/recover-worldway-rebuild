@@ -79,6 +79,69 @@ export const getViatorSchedule = createServerFn({ method: "POST" })
     return viatorSchedule(data.code, data.currency ?? "USD");
   });
 
+/**
+ * The product's real booking questions (per-booking, per-traveller and pickup),
+ * resolved from Viator's dictionary, plus its pickup locations.
+ */
+export const getViatorBookingQuestions = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ code: z.string().min(1).max(60) }).parse(d))
+  .handler(async ({ data }) => {
+    const { viatorProductFull, viatorProductBookingQuestions, viatorLocationsBulk } = await import(
+      "./viator.server"
+    );
+    const res = await viatorProductFull(data.code);
+    if (!res.ok || !res.product) {
+      return { ok: false as const, questions: [], pickup: null, travellerNames: false };
+    }
+    const questions = await viatorProductBookingQuestions(res.product.bookingQuestionIds);
+    const pickupRefs = res.product.travelerPickup?.locationRefs ?? [];
+    const locations = pickupRefs.length ? await viatorLocationsBulk(pickupRefs) : [];
+    return {
+      ok: true as const,
+      questions,
+      travellerNames: res.product.bookingQuestionIds.some(
+        (id) => id === "FULL_NAMES_FIRST" || id === "FULL_NAMES_LAST",
+      ),
+      pickup: res.product.travelerPickup
+        ? { ...res.product.travelerPickup, locations }
+        : null,
+    };
+  });
+
+/** Live availability + real total for a specific date and pax mix. */
+export const priceViatorActivity = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        productCode: z.string().min(1).max(60),
+        travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        currency: z.string().length(3).optional(),
+        paxMix: z
+          .array(
+            z.object({
+              ageBand: z.enum(["ADULT", "SENIOR", "YOUTH", "CHILD", "INFANT"]),
+              count: z.number().int().min(0).max(30),
+            }),
+          )
+          .min(1)
+          .max(5),
+        productOptionCode: z.string().max(60).optional(),
+        startTime: z.string().max(10).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { viatorCheckAvailability } = await import("./viator/booking.server");
+    return viatorCheckAvailability({
+      productCode: data.productCode,
+      travelDate: data.travelDate,
+      currency: (data.currency ?? "USD").toUpperCase(),
+      paxMix: data.paxMix.filter((p) => p.count > 0),
+      ...(data.productOptionCode ? { productOptionCode: data.productOptionCode } : {}),
+      ...(data.startTime ? { startTime: data.startTime } : {}),
+    });
+  });
+
 export const getViatorCategories = createServerFn({ method: "GET" }).handler(async () => {
   const { viatorTags } = await import("./viator.server");
   const rows = await viatorTags();
