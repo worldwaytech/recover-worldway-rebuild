@@ -37,21 +37,21 @@ function AdminBokunPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <button
           disabled={busy !== null}
-          onClick={() => run("verify", () => verifyBokunEnvironment({ data: undefined } as never))}
+          onClick={() => run("verify", () => verifyBokunEnvironment())}
           className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
         >
           {busy === "verify" ? "Verifying…" : "Verify environment (read-only)"}
         </button>
         <button
           disabled={busy !== null}
-          onClick={() => run("smoke", () => runBokunSmokeTest({ data: undefined } as never))}
+          onClick={() => run("smoke", () => runBokunSmokeTest())}
           className="rounded-md border border-border bg-card px-4 py-2 text-foreground disabled:opacity-50"
         >
           {busy === "smoke" ? "Running…" : "Run read-only smoke test"}
         </button>
         <button
           disabled={busy !== null}
-          onClick={() => run("sync", () => syncBokunCatalogue({ data: undefined } as never))}
+          onClick={() => run("sync", () => syncBokunCatalogue())}
           className="rounded-md border border-border bg-card px-4 py-2 text-foreground disabled:opacity-50"
         >
           {busy === "sync" ? "Syncing…" : "Sync catalogue"}
