@@ -82,6 +82,7 @@ import { Route as RiverCruisesIndexRouteImport } from './routes/river-cruises.in
 import { Route as RailIndexRouteImport } from './routes/rail.index'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PolarExpeditionsIndexRouteImport } from './routes/polar-expeditions.index'
+import { Route as MerchantIndexRouteImport } from './routes/merchant.index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
@@ -575,6 +576,11 @@ const PolarExpeditionsIndexRoute = PolarExpeditionsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PolarExpeditionsRoute,
+} as any)
+const MerchantIndexRoute = MerchantIndexRouteImport.update({
+  id: '/merchant/',
+  path: '/merchant/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   id: '/marketplace/',
@@ -1391,6 +1397,7 @@ export interface FileRoutesByFullPath {
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/merchant/': typeof MerchantIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
@@ -1565,6 +1572,7 @@ export interface FileRoutesByTo {
   '/insurance': typeof InsuranceIndexRoute
   '/journeys': typeof JourneysIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
+  '/merchant': typeof MerchantIndexRoute
   '/polar-expeditions': typeof PolarExpeditionsIndexRoute
   '/portal': typeof PortalIndexRoute
   '/rail': typeof RailIndexRoute
@@ -1768,6 +1776,7 @@ export interface FileRoutesById {
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/merchant/': typeof MerchantIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
@@ -1973,6 +1982,7 @@ export interface FileRouteTypes {
     | '/insurance/'
     | '/journeys/'
     | '/marketplace/'
+    | '/merchant/'
     | '/polar-expeditions/'
     | '/portal/'
     | '/rail/'
@@ -2147,6 +2157,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/journeys'
     | '/marketplace'
+    | '/merchant'
     | '/polar-expeditions'
     | '/portal'
     | '/rail'
@@ -2349,6 +2360,7 @@ export interface FileRouteTypes {
     | '/insurance/'
     | '/journeys/'
     | '/marketplace/'
+    | '/merchant/'
     | '/polar-expeditions/'
     | '/portal/'
     | '/rail/'
@@ -2467,6 +2479,7 @@ export interface RootRouteChildren {
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MerchantIndexRoute: typeof MerchantIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
   VoyagesIndexRoute: typeof VoyagesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -3001,6 +3014,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/polar-expeditions/'
       preLoaderRoute: typeof PolarExpeditionsIndexRouteImport
       parentRoute: typeof PolarExpeditionsRoute
+    }
+    '/merchant/': {
+      id: '/merchant/'
+      path: '/merchant'
+      fullPath: '/merchant/'
+      preLoaderRoute: typeof MerchantIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/marketplace/': {
       id: '/marketplace/'
@@ -4488,6 +4508,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MerchantIndexRoute: MerchantIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
   VoyagesIndexRoute: VoyagesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
