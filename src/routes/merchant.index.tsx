@@ -66,7 +66,15 @@ function MerchantPage() {
             className="overflow-hidden rounded-xl border border-border bg-card transition hover:shadow-lg"
           >
             {p.image ? (
-              <img src={p.image} alt={p.title} className="h-44 w-full object-cover" loading="lazy" />
+              <img
+                src={p.image}
+                alt={p.title}
+                className="h-44 w-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
             ) : (
               <div className="h-44 w-full bg-muted" />
             )}

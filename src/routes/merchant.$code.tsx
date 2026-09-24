@@ -151,6 +151,9 @@ function MerchantDetailPage() {
               src={product.images[0]}
               alt={product.title}
               className="mt-4 h-72 w-full rounded-xl object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
             />
           )}
           <p className="mt-4 whitespace-pre-line text-muted-foreground">{product.description}</p>
