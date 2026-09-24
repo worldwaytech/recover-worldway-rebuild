@@ -82,6 +82,7 @@ import { Route as RiverCruisesIndexRouteImport } from './routes/river-cruises.in
 import { Route as RailIndexRouteImport } from './routes/rail.index'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PolarExpeditionsIndexRouteImport } from './routes/polar-expeditions.index'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
 import { Route as HotelsIndexRouteImport } from './routes/hotels.index'
@@ -121,6 +122,7 @@ import { Route as PortalPreferencesRouteImport } from './routes/portal.preferenc
 import { Route as PortalNotificationsRouteImport } from './routes/portal.notifications'
 import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
+import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
 import { Route as HotelsHbxRouteImport } from './routes/hotels.hbx'
@@ -161,6 +163,7 @@ import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
+import { Route as AdminBokunRouteImport } from './routes/admin.bokun'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminApiRouteImport } from './routes/admin.api'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
@@ -572,6 +575,11 @@ const PolarExpeditionsIndexRoute = PolarExpeditionsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PolarExpeditionsRoute,
 } as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/marketplace/',
+  path: '/marketplace/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JourneysIndexRoute = JourneysIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -767,6 +775,11 @@ const PolarExpeditionsSlugRoute = PolarExpeditionsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => PolarExpeditionsRoute,
+} as any)
+const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
+  id: '/marketplace/$id',
+  path: '/marketplace/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const JourneysCodeRoute = JourneysCodeRouteImport.update({
   id: '/$code',
@@ -966,6 +979,11 @@ const AdminContentRoute = AdminContentRouteImport.update({
 const AdminBookingsRoute = AdminBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBokunRoute = AdminBokunRouteImport.update({
+  id: '/bokun',
+  path: '/bokun',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
@@ -1284,6 +1302,7 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
@@ -1324,6 +1343,7 @@ export interface FileRoutesByFullPath {
   '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
+  '/marketplace/$id': typeof MarketplaceIdRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1363,6 +1383,7 @@ export interface FileRoutesByFullPath {
   '/hotels/': typeof HotelsIndexRoute
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
@@ -1455,6 +1476,7 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
@@ -1494,6 +1516,7 @@ export interface FileRoutesByTo {
   '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
+  '/marketplace/$id': typeof MarketplaceIdRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1533,6 +1556,7 @@ export interface FileRoutesByTo {
   '/hotels': typeof HotelsIndexRoute
   '/insurance': typeof InsuranceIndexRoute
   '/journeys': typeof JourneysIndexRoute
+  '/marketplace': typeof MarketplaceIndexRoute
   '/polar-expeditions': typeof PolarExpeditionsIndexRoute
   '/portal': typeof PortalIndexRoute
   '/rail': typeof RailIndexRoute
@@ -1653,6 +1677,7 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
@@ -1693,6 +1718,7 @@ export interface FileRoutesById {
   '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
+  '/marketplace/$id': typeof MarketplaceIdRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1732,6 +1758,7 @@ export interface FileRoutesById {
   '/hotels/': typeof HotelsIndexRoute
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
@@ -1854,6 +1881,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
+    | '/admin/bokun'
     | '/admin/bookings'
     | '/admin/content'
     | '/admin/crm'
@@ -1894,6 +1922,7 @@ export interface FileRouteTypes {
     | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
+    | '/marketplace/$id'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -1933,6 +1962,7 @@ export interface FileRouteTypes {
     | '/hotels/'
     | '/insurance/'
     | '/journeys/'
+    | '/marketplace/'
     | '/polar-expeditions/'
     | '/portal/'
     | '/rail/'
@@ -2025,6 +2055,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
+    | '/admin/bokun'
     | '/admin/bookings'
     | '/admin/content'
     | '/admin/crm'
@@ -2064,6 +2095,7 @@ export interface FileRouteTypes {
     | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
+    | '/marketplace/$id'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2103,6 +2135,7 @@ export interface FileRouteTypes {
     | '/hotels'
     | '/insurance'
     | '/journeys'
+    | '/marketplace'
     | '/polar-expeditions'
     | '/portal'
     | '/rail'
@@ -2222,6 +2255,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
+    | '/admin/bokun'
     | '/admin/bookings'
     | '/admin/content'
     | '/admin/crm'
@@ -2262,6 +2296,7 @@ export interface FileRouteTypes {
     | '/hotels/hbx'
     | '/insurance/$slug'
     | '/journeys/$code'
+    | '/marketplace/$id'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2301,6 +2336,7 @@ export interface FileRouteTypes {
     | '/hotels/'
     | '/insurance/'
     | '/journeys/'
+    | '/marketplace/'
     | '/polar-expeditions/'
     | '/portal/'
     | '/rail/'
@@ -2413,9 +2449,11 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  MarketplaceIdRoute: typeof MarketplaceIdRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
   VoyagesIndexRoute: typeof VoyagesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -2950,6 +2988,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PolarExpeditionsIndexRouteImport
       parentRoute: typeof PolarExpeditionsRoute
     }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/marketplace'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/journeys/': {
       id: '/journeys/'
       path: '/'
@@ -3222,6 +3267,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/polar-expeditions/$slug'
       preLoaderRoute: typeof PolarExpeditionsSlugRouteImport
       parentRoute: typeof PolarExpeditionsRoute
+    }
+    '/marketplace/$id': {
+      id: '/marketplace/$id'
+      path: '/marketplace/$id'
+      fullPath: '/marketplace/$id'
+      preLoaderRoute: typeof MarketplaceIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/journeys/$code': {
       id: '/journeys/$code'
@@ -3501,6 +3553,13 @@ declare module '@tanstack/react-router' {
       path: '/bookings'
       fullPath: '/admin/bookings'
       preLoaderRoute: typeof AdminBookingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bokun': {
+      id: '/admin/bokun'
+      path: '/bokun'
+      fullPath: '/admin/bokun'
+      preLoaderRoute: typeof AdminBokunRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/audit': {
@@ -3851,6 +3910,7 @@ interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApiRoute: typeof AdminApiRoute
   AdminAuditRoute: typeof AdminAuditRoute
+  AdminBokunRoute: typeof AdminBokunRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
@@ -3877,6 +3937,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApiRoute: AdminApiRoute,
   AdminAuditRoute: AdminAuditRoute,
+  AdminBokunRoute: AdminBokunRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
@@ -4401,9 +4462,11 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ActivitiesCodeRoute: ActivitiesCodeRoute,
   BlogSlugRoute: BlogSlugRoute,
+  MarketplaceIdRoute: MarketplaceIdRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
   VoyagesIndexRoute: VoyagesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
