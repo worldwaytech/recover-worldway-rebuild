@@ -302,8 +302,7 @@ export const bookMerchantExperience = createServerFn({ method: "POST" })
       status: result.state,
       ...(result.bookingRef ? { bookingRef: result.bookingRef } : {}),
       ...(result.voucherUrl ? { voucherUrl: result.voucherUrl } : {}),
-      ...(result.retailPrice !== null ? { retailPrice: result.retailPrice } : {}),
-      cancellation: result.cancellationPolicy ?? undefined,
+      ...(result.retailTotal !== null ? { retailPrice: result.retailTotal } : {}),
     });
     return {
       ok: result.state === "confirmed",
@@ -388,9 +387,9 @@ export const cancelMerchantExperience = createServerFn({ method: "POST" })
       partnerBookingRef: record.partner_booking_ref,
       status: "cancelled",
       cancellation: {
-        quote,
-        reasonCode: data.reasonCode,
-        supplierStatus: cancel.status,
+        refundAmount: quote.refundAmount,
+        refundPercentage: quote.refundPercentage,
+        currency: quote.currency ?? record.currency,
       },
     });
     return {
