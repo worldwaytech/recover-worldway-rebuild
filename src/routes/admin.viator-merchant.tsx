@@ -36,7 +36,7 @@ function AdminViatorMerchantPage() {
   async function runSmoke() {
     setBusy(true);
     try {
-      setSmoke(await adminMerchantSmokeTest({ data: {} }));
+      setSmoke(await adminMerchantSmokeTest());
     } finally {
       setBusy(false);
     }
