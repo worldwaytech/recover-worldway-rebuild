@@ -23,15 +23,23 @@ export type MerchantSearchResult = {
   products: MerchantProductSummary[];
 };
 
+/** Pick the largest image variant (variants are not reliably ordered). */
+function bestVariantUrl(image: Record<string, unknown> | undefined): string | null {
+  if (!image) return null;
+  const variants = pick<Record<string, unknown>[]>(image, ["variants"]) ?? [];
+  const sized = variants
+    .map((v) => ({ url: pick<string>(v, ["url"]), width: pick<number>(v, ["width"]) ?? 0 }))
+    .filter((v): v is { url: string; width: number } => Boolean(v.url));
+  if (sized.length === 0) return pick<string>(image, ["url"]) ?? null;
+  sized.sort((a, b) => b.width - a.width);
+  return sized[0]?.url ?? null;
+}
+
 function summarizeProduct(raw: Record<string, unknown>): MerchantProductSummary {
   const images = pick<Record<string, unknown>[]>(raw, ["images"]) ?? [];
   const cover =
     images.find((i) => pick<boolean>(i, ["isCover"]) === true) ?? images[0];
-  const variants = pick<Record<string, unknown>[]>(cover, ["variants"]) ?? [];
-  const image =
-    pick<string>(variants[variants.length - 1], ["url"]) ??
-    pick<string>(cover, ["url"]) ??
-    null;
+  const image = bestVariantUrl(cover);
   const pricing = pick<Record<string, unknown>>(raw, ["pricing"]);
   const summary = pick<Record<string, unknown>>(pricing, ["summary"]);
   const reviews = pick<Record<string, unknown>>(raw, ["reviews"]);
@@ -117,10 +125,7 @@ export async function merchantProduct(code: string): Promise<MerchantProductDeta
   }
   const raw = res.data;
   const images = (pick<Record<string, unknown>[]>(raw, ["images"]) ?? [])
-    .map((i) => {
-      const variants = pick<Record<string, unknown>[]>(i, ["variants"]) ?? [];
-      return pick<string>(variants[variants.length - 1], ["url"]) ?? null;
-    })
+    .map((i) => bestVariantUrl(i))
     .filter((u): u is string => Boolean(u))
     .slice(0, 8);
   const pricing = pick<Record<string, unknown>>(raw, ["pricing"]);
