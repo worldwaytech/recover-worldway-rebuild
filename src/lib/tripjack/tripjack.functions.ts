@@ -342,7 +342,7 @@ export const updateTripjackCertificationCase = createServerFn({ method: "POST" }
         worldwayBookingId: z.string().uuid().nullable().optional(),
         supplierBookingId: z.string().max(40).nullable().optional(),
         confirmationNumbers: z.array(z.string().max(60)).max(20).optional(),
-        correlationIds: z.array(z.string().max(120)).max(50).optional(),
+        correlationIds: z.array(z.string().max(120).regex(/^[A-Za-z0-9._:-]+$/)).max(50).optional(),
         notes: z.string().max(2000).nullable().optional(),
       })
       .parse(d),
