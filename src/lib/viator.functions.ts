@@ -138,7 +138,7 @@ async function loadBookingQuestions(code: string) {
         ? { ...res.product.travelerPickup, locations }
         : null,
     };
-  });
+}
 
 /** Live availability + real total for a specific date and pax mix. */
 export const priceViatorActivity = createServerFn({ method: "POST" })
