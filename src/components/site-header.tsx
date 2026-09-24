@@ -53,6 +53,7 @@ const NAV: NavItem[] = [
       { to: "/ttc", label: "TTC Guided Journeys" },
       { to: "/tours/browse", label: "Browse Collections" },
       { to: "/activities", label: "Activities" },
+      { to: "/marketplace", label: "Tours Marketplace" },
       { to: "/transfers", label: "Transfers" },
       { to: "/buses", label: "Coach & Bus" },
       { to: "/trip-builder", label: "Trip Builder" },
