@@ -188,7 +188,7 @@ export async function updateMerchantBooking(input: {
   voucherUrl?: string | null;
   retailPrice?: number | null;
   failureReason?: string | null;
-  cancellation?: unknown;
+  cancellation?: MerchantCancellation | null;
 }): Promise<void> {
   const t = await table();
   const values: Record<string, unknown> = {
