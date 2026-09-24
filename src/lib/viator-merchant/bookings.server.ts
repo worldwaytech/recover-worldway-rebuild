@@ -32,10 +32,11 @@ export type MerchantBookingRow = {
   booked_at: string | null;
   cancelled_at: string | null;
   created_at: string;
+  audit: unknown;
 };
 
 const COLUMNS =
-  "id, user_id, partner_booking_ref, partner_cart_ref, cart_ref, booking_ref, product_code, product_title, option_code, start_time, travel_date, language_guide, traveller_count, retail_price, currency, status, payment_status, voucher_url, failure_reason, cancellation, booker, booked_at, cancelled_at, created_at";
+  "id, user_id, partner_booking_ref, partner_cart_ref, cart_ref, booking_ref, product_code, product_title, option_code, start_time, travel_date, language_guide, traveller_count, retail_price, currency, status, payment_status, voucher_url, failure_reason, cancellation, booker, booked_at, cancelled_at, created_at, audit";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 async function table(): Promise<any> {
