@@ -46,6 +46,27 @@ export const getViatorConnectorStatus = createServerFn({ method: "GET" }).handle
   return viatorStatus();
 });
 
+// Product lookups are public catalogue reads. To stop callers using the
+// server's supplier key as an open proxy, codes are strictly validated and
+// every result (including "not found") is cached, so repeated or enumerated
+// lookups are answered locally instead of reaching the supplier.
+const PRODUCT_TTL_MS = 30 * 60 * 1000;
+const MISS_TTL_MS = 6 * 60 * 60 * 1000;
+const MAX_CACHE = 2000;
+const productCache = new Map<string, { at: number; ttl: number; value: unknown }>();
+async function cachedProductLookup<T>(key: string, load: () => Promise<T>, isHit: (v: T) => boolean): Promise<T> {
+  const now = Date.now();
+  const entry = productCache.get(key);
+  if (entry && now - entry.at < entry.ttl) return entry.value as T;
+  const value = await load();
+  if (productCache.size >= MAX_CACHE) {
+    const oldest = productCache.keys().next().value;
+    if (oldest) productCache.delete(oldest);
+  }
+  productCache.set(key, { at: now, ttl: isHit(value) ? PRODUCT_TTL_MS : MISS_TTL_MS, value });
+  return value;
+}
+
 const VIATOR_CODE = z.string().regex(/^[A-Za-z0-9_-]{1,60}$/, "Invalid product code");
 const codeSchema = z.object({
   code: VIATOR_CODE,
@@ -56,7 +77,12 @@ export const getViatorProduct = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => codeSchema.parse(d))
   .handler(async ({ data }) => {
     const { viatorProductFull } = await import("./viator.server");
-    return viatorProductFull(data.code, data.currency ?? "USD");
+    const currency = data.currency ?? "USD";
+    return cachedProductLookup(
+      `product:${data.code}:${currency}`,
+      () => viatorProductFull(data.code, currency),
+      (r) => r.ok,
+    );
   });
 
 export const getViatorReviews = createServerFn({ method: "POST" })
@@ -86,7 +112,12 @@ export const getViatorSchedule = createServerFn({ method: "POST" })
  */
 export const getViatorBookingQuestions = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ code: VIATOR_CODE }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }) =>
+    cachedProductLookup(`questions:${data.code}`, () => loadBookingQuestions(data.code), (r) => r.ok),
+  );
+
+async function loadBookingQuestions(code: string) {
+    const data = { code };
     const { viatorProductFull, viatorProductBookingQuestions, viatorLocationsBulk } = await import(
       "./viator.server"
     );
