@@ -8,16 +8,21 @@ describe("bokun client signing", () => {
     expect(bokunDate(d)).toBe("2026-09-24 10:30:05");
   });
 
-  it("builds the signature as Base64 HMAC-SHA1 over accessKey+date+method+path", () => {
-    // Golden vector computed independently (openssl dgst -sha1 -hmac).
-    const sig = bokunSignature("secret", "access", "2026-09-24 10:30:05", "GET", "/activity.json/search");
-    expect(sig).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
-    expect(sig).toHaveLength(28);
-    // Method case is normalised.
-    expect(bokunSignature("secret", "access", "2026-09-24 10:30:05", "get", "/x")).toBe(
-      bokunSignature("secret", "access", "2026-09-24 10:30:05", "GET", "/x"),
+  it("matches the official Bókun documentation golden vector", () => {
+    // From Bókun's "Configuring the platform for API usage and authentication":
+    // secret 23e2c7da…, access de235a6a…, date 2013-11-09 14:33:46, POST
+    // /activity.json/search?lang=EN&currency=ISK -> XrOiTYa9Y34zscnLCsAEh8ieoyo=
+    const sig = bokunSignature(
+      "23e2c7da7f7048e5b46f96bc91324800",
+      "de235a6a15c340b6b1e1cb5f3687d04a",
+      "2013-11-09 14:33:46",
+      "POST",
+      "/activity.json/search?lang=EN&currency=ISK",
     );
-    // Path participates in the signature.
+    expect(sig).toBe("XrOiTYa9Y34zscnLCsAEh8ieoyo=");
+  });
+
+  it("signs the path, so different paths yield different signatures", () => {
     expect(bokunSignature("secret", "access", "2026-09-24 10:30:05", "GET", "/a")).not.toBe(
       bokunSignature("secret", "access", "2026-09-24 10:30:05", "GET", "/b"),
     );
