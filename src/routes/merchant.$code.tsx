@@ -93,6 +93,12 @@ function MerchantDetailPage() {
         setError("Phone number must start with + and the country code (e.g. +971501234567).");
         return;
       }
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess.session) {
+        setError("Please sign in to complete this booking.");
+        return;
+      }
       const guide =
         language && product?.languageGuides.length
           ? { type: product.languageGuides.find((g) => g.language === language)?.type ?? "GUIDE", language }
@@ -131,8 +137,13 @@ function MerchantDetailPage() {
         to: "/merchant/booking/$ref",
         params: { ref: hold.partnerBookingRef },
       });
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      setError(
+        msg.includes("Unauthorized")
+          ? "Please sign in to complete this booking."
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
