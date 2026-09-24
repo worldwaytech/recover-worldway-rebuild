@@ -46,7 +46,7 @@ export const getViatorConnectorStatus = createServerFn({ method: "GET" }).handle
   return viatorStatus();
 });
 
-const VIATOR_CODE = z.string().regex(/^\d{1,12}P\d{1,6}$/, "Invalid product code");
+const VIATOR_CODE = z.string().regex(/^[A-Za-z0-9_-]{1,60}$/, "Invalid product code");
 const codeSchema = z.object({
   code: VIATOR_CODE,
   currency: z.string().regex(/^[A-Z]{3}$/).optional(),
