@@ -33,8 +33,8 @@ export function bokunDate(d = new Date()): string {
 }
 
 /**
- * Bókun request signature:
- * Base64( HMAC-SHA1( secretKey, accessKey + date + method + path ) )
+ * Bókun request signature per the official docs:
+ * Base64( HMAC-SHA1( secretKey, date + accessKey + method + path ) )
  * where `path` includes the query string. Exported for unit tests.
  */
 export function bokunSignature(
@@ -45,7 +45,7 @@ export function bokunSignature(
   path: string,
 ): string {
   return createHmac("sha1", secretKey)
-    .update(accessKey + date + method.toUpperCase() + path)
+    .update(date + accessKey + method.toUpperCase() + path)
     .digest("base64");
 }
 
