@@ -241,8 +241,8 @@ export function TransferFlow() {
           remark: String(f.get("remark") || "") || null,
         },
       });
-      if (res.bookingId) navigate({ to: "/transfers/voucher/$reference", params: { reference: res.worldwayReference } });
-      else setError(res.message);
+      if (res.ok && res.bookingId) navigate({ to: "/transfers/voucher/$reference", params: { reference: res.worldwayReference } });
+      else setError(res.message ?? "Booking failed. Please try again.");
     } catch (err) {
       setError(err instanceof Error && /unauth/i.test(err.message) ? "Please sign in to book." : "Booking failed. Please try again.");
     } finally {
