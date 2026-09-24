@@ -181,10 +181,29 @@ export const searchTransfers = createServerFn({ method: "POST" })
     return callPartner("transfers", toPartnerTransferPayload(data));
   });
 
+/** Server-side AI entitlement: Elite tiers or business roles only. */
+async function assertAiEntitlement(ctx: { supabase: any; userId: string }) {
+  const { data: profile } = await ctx.supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", ctx.userId)
+    .maybeSingle();
+  const tier = (profile?.tier as string | null) ?? "traveler";
+  if (tier === "elite" || tier === "elite_plus") return;
+  const { data: roles } = await ctx.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId);
+  const allowed = new Set(["agent", "admin", "super_admin", "b2b"]);
+  if ((roles ?? []).some((r: { role: string }) => allowed.has(r.role))) return;
+  throw new Error("This feature is reserved for Worldway Elite members.");
+}
+
 export const buildTrip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => tripBuilderSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAiEntitlement(context);
     const { callPartner } = await import("./wwl.server");
     return callPartner("tripBuilder", data);
   });
@@ -207,7 +226,8 @@ export const quotePrivateJet = createServerFn({ method: "POST" })
 export const conciergeChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => conciergeSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAiEntitlement(context);
     const { callPartner } = await import("./wwl.server");
     return callPartner("concierge", data);
   });
