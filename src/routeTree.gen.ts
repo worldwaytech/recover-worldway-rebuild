@@ -147,6 +147,7 @@ import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions
 import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
 import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
+import { Route as AdminViatorMerchantRouteImport } from './routes/admin.viator-merchant'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
@@ -905,6 +906,11 @@ const AgentBookingsRoute = AgentBookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => AgentRoute,
 } as any)
+const AdminViatorMerchantRoute = AdminViatorMerchantRouteImport.update({
+  id: '/viator-merchant',
+  path: '/viator-merchant',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -1346,6 +1352,7 @@ export interface FileRoutesByFullPath {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
   '/agent/collateral': typeof AgentCollateralRoute
@@ -1524,6 +1531,7 @@ export interface FileRoutesByTo {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
   '/agent/collateral': typeof AgentCollateralRoute
@@ -1729,6 +1737,7 @@ export interface FileRoutesById {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
   '/agent/collateral': typeof AgentCollateralRoute
@@ -1937,6 +1946,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-merchant'
     | '/agent/bookings'
     | '/agent/clients'
     | '/agent/collateral'
@@ -2115,6 +2125,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-merchant'
     | '/agent/bookings'
     | '/agent/clients'
     | '/agent/collateral'
@@ -2319,6 +2330,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-merchant'
     | '/agent/bookings'
     | '/agent/clients'
     | '/agent/collateral'
@@ -3496,6 +3508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentBookingsRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/admin/viator-merchant': {
+      id: '/admin/viator-merchant'
+      path: '/viator-merchant'
+      fullPath: '/admin/viator-merchant'
+      preLoaderRoute: typeof AdminViatorMerchantRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -4010,6 +4029,7 @@ interface AdminRouteChildren {
   AdminTripjackRoute: typeof AdminTripjackRoute
   AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminViatorMerchantRoute: typeof AdminViatorMerchantRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -4037,6 +4057,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTripjackRoute: AdminTripjackRoute,
   AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminViatorMerchantRoute: AdminViatorMerchantRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

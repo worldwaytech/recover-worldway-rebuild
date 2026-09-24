@@ -54,6 +54,7 @@ const NAV: NavItem[] = [
       { to: "/tours/browse", label: "Browse Collections" },
       { to: "/activities", label: "Activities" },
       { to: "/marketplace", label: "Tours Marketplace" },
+      { to: "/merchant", label: "Merchant" },
       { to: "/transfers", label: "Transfers" },
       { to: "/buses", label: "Coach & Bus" },
       { to: "/trip-builder", label: "Trip Builder" },
