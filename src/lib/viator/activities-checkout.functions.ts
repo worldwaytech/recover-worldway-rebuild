@@ -35,6 +35,32 @@ import {
 import { validatePaxMixAgainstBands } from "@/lib/viator/age-bands";
 import { buildActivityVoucher } from "@/lib/viator/voucher";
 
+async function sha256Hex(value: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * A reservation may only be read or submitted by whoever created it: the
+ * signed-in owner, or the browser holding the one-time access token issued
+ * at hold time (only its SHA-256 hash is stored).
+ */
+async function callerOwnsReservation(
+  record: { user_id: string | null; audit: unknown },
+  accessToken: string | undefined,
+): Promise<boolean> {
+  const audit = (record.audit ?? {}) as { accessTokenHash?: string };
+  if (accessToken && audit.accessTokenHash) {
+    if ((await sha256Hex(accessToken)) === audit.accessTokenHash) return true;
+  }
+  if (record.user_id) {
+    const { optionalUserId } = await import("@/lib/payments/payments.server");
+    const uid = await optionalUserId();
+    if (uid && uid === record.user_id) return true;
+  }
+  return false;
+}
+
 type HoldInputPayload = {
   productCode: string;
   productTitle?: string;
@@ -149,6 +175,8 @@ export const holdViatorActivityCart = createServerFn({ method: "POST" })
       const amount = held.total ?? availability.total ?? 0;
       const { insertActivityHold } = await import("@/lib/viator/activity-bookings.server");
       const { optionalUserId } = await import("@/lib/payments/payments.server");
+      const accessToken = crypto.randomUUID() + crypto.randomUUID();
+      const accessTokenHash = await sha256Hex(accessToken);
       await insertActivityHold({
         user_id: await optionalUserId(),
         cart_reference: held.cartRef,
@@ -175,6 +203,7 @@ export const holdViatorActivityCart = createServerFn({ method: "POST" })
           cancellationPolicy: product?.cancellationPolicy?.description ?? null,
           meetingPoint: product?.meetingPoint ?? null,
           hostingUrl: held.hostingUrl,
+          accessTokenHash,
         },
       });
 
@@ -182,6 +211,7 @@ export const holdViatorActivityCart = createServerFn({ method: "POST" })
         ok: true as const,
         route: decision.route,
         cartRef: held.cartRef,
+        accessToken,
         paymentSessionToken: held.paymentSessionToken,
         paymentScriptUrl: VIATOR_PAYMENT_SCRIPT_URL,
         currency: held.currency,
@@ -221,6 +251,7 @@ export const bookViatorActivityCart = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       cartRef: string;
+      accessToken?: string;
       paymentToken: string;
       billing: { country: string; postalCode: string };
       booker: { firstName: string; lastName: string; email: string; phone?: string };
@@ -254,7 +285,9 @@ export const bookViatorActivityCart = createServerFn({ method: "POST" })
     }
 
     const record = await getActivityBooking(data.cartRef.trim());
-    if (!record) return { ok: false as const, error: "Reservation not found." };
+    if (!record || !(await callerOwnsReservation(record, data.accessToken))) {
+      return { ok: false as const, error: "Reservation not found." };
+    }
 
     const gate = canSubmitBooking({
       state: record.status as ActivityBookingState,
@@ -496,13 +529,16 @@ function buildVoucherTravellers(
 
 /** Poll endpoint for pending supplier confirmations. */
 export const viatorActivityBookingStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: { cartRef: string }) => data)
+  .inputValidator((data: { cartRef: string; accessToken?: string }) => ({
+    cartRef: String(data?.cartRef ?? "").slice(0, 200),
+    accessToken: typeof data?.accessToken === "string" ? data.accessToken.slice(0, 200) : undefined,
+  }))
   .handler(async ({ data }) => {
     const { getActivityBooking, finaliseActivityBooking } = await import(
       "@/lib/viator/activity-bookings.server"
     );
     const record = await getActivityBooking(data.cartRef);
-    if (!record) return { ok: false as const, error: "Reservation not found." };
+    if (!record || !(await callerOwnsReservation(record, data.accessToken))) return { ok: false as const, error: "Reservation not found." };
     const audit = (record.audit ?? {}) as BookAudit;
     const partnerBookingRef =
       audit.partnerBookingRef ?? audit.partnerItemRef ?? `${record.cart_reference}-1`;

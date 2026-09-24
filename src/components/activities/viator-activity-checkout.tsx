@@ -121,6 +121,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   const [formReady, setFormReady] = useState(false);
   const [session, setSession] = useState<{
     cartRef: string;
+    accessToken: string;
     token: string;
     total: number;
     currency: string;
@@ -175,6 +176,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
           ok: boolean;
           error?: string;
           cartRef?: string;
+          accessToken?: string;
           paymentSessionToken?: string;
           total?: number;
           currency?: string;
@@ -188,6 +190,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
         }
         setSession({
           cartRef: res.cartRef,
+          accessToken: res.accessToken ?? "",
           token: res.paymentSessionToken,
           total: res.total ?? 0,
           currency: res.currency ?? props.currency,
@@ -264,10 +267,10 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   }, [session, phase]);
 
   const pollUntilSettled = useCallback(
-    async (cartRef: string) => {
+    async (cartRef: string, accessToken: string) => {
       for (let i = 0; i < 8; i += 1) {
         await new Promise((r) => setTimeout(r, 3000));
-        const res = (await poll({ data: { cartRef } })) as {
+        const res = (await poll({ data: { cartRef, accessToken } })) as {
           ok: boolean;
           state?: string;
           bookingReference?: string | null;
@@ -341,6 +344,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
       const res = (await book({
         data: {
           cartRef: session.cartRef,
+          accessToken: session.accessToken,
           paymentToken: tokenised.paymentToken,
           billing: { country: billing.country, postalCode: billing.postalCode },
           booker: props.booker,
@@ -360,7 +364,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
       }
       setResult({ state: res.state ?? "confirmed", bookingReference: res.bookingReference ?? null });
       setPhase("done");
-      if (res.state === "paid_pending_confirmation") void pollUntilSettled(session.cartRef);
+      if (res.state === "paid_pending_confirmation") void pollUntilSettled(session.cartRef, session.accessToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment was not completed.");
       setPhase("paying");
