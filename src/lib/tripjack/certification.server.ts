@@ -126,8 +126,11 @@ export async function loadCertificationOverview(client: Client) {
   const cases: CertificationCaseView[] = [];
   for (const c of TRIPJACK_CERTIFICATION_CASES) {
     const row = byKey.get(c.key);
-    const supplierBookingId = row?.supplier_booking_id ?? undefined;
-    const correlationIds = asStringArray(row?.correlation_ids);
+    // Only plain identifier characters may reach the PostgREST filter syntax.
+    const SAFE_ID = /^[A-Za-z0-9_\-:.]{1,120}$/;
+    const rawBookingId = row?.supplier_booking_id ?? undefined;
+    const supplierBookingId = rawBookingId && SAFE_ID.test(rawBookingId) ? rawBookingId : undefined;
+    const correlationIds = asStringArray(row?.correlation_ids).filter((id) => SAFE_ID.test(id));
     let evidenceCount = 0;
     if (supplierBookingId || correlationIds.length) {
       const q = client.from("tripjack_api_logs").select("id", { count: "exact", head: true });
