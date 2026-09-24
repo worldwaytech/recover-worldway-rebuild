@@ -82,6 +82,7 @@ import { Route as RiverCruisesIndexRouteImport } from './routes/river-cruises.in
 import { Route as RailIndexRouteImport } from './routes/rail.index'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PolarExpeditionsIndexRouteImport } from './routes/polar-expeditions.index'
+import { Route as MerchantIndexRouteImport } from './routes/merchant.index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as JourneysIndexRouteImport } from './routes/journeys.index'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
@@ -122,6 +123,7 @@ import { Route as PortalPreferencesRouteImport } from './routes/portal.preferenc
 import { Route as PortalNotificationsRouteImport } from './routes/portal.notifications'
 import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
+import { Route as MerchantCodeRouteImport } from './routes/merchant.$code'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
@@ -145,6 +147,7 @@ import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions
 import { Route as AgentCollateralRouteImport } from './routes/agent.collateral'
 import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
+import { Route as AdminViatorMerchantRouteImport } from './routes/admin.viator-merchant'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
@@ -187,6 +190,7 @@ import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as TransfersVoucherReferenceRouteImport } from './routes/transfers.voucher.$reference'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
+import { Route as MerchantBookingRefRouteImport } from './routes/merchant.booking.$ref'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
 import { Route as CrystalCruisesVoyagesCodeRouteImport } from './routes/crystal-cruises.voyages.$code'
 import { Route as CrystalCruisesShipsSlugRouteImport } from './routes/crystal-cruises.ships.$slug'
@@ -576,6 +580,11 @@ const PolarExpeditionsIndexRoute = PolarExpeditionsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PolarExpeditionsRoute,
 } as any)
+const MerchantIndexRoute = MerchantIndexRouteImport.update({
+  id: '/merchant/',
+  path: '/merchant/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   id: '/marketplace/',
   path: '/marketplace/',
@@ -777,6 +786,11 @@ const PolarExpeditionsSlugRoute = PolarExpeditionsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => PolarExpeditionsRoute,
 } as any)
+const MerchantCodeRoute = MerchantCodeRouteImport.update({
+  id: '/merchant/$code',
+  path: '/merchant/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
   id: '/marketplace/$id',
   path: '/marketplace/$id',
@@ -891,6 +905,11 @@ const AgentBookingsRoute = AgentBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
   getParentRoute: () => AgentRoute,
+} as any)
+const AdminViatorMerchantRoute = AdminViatorMerchantRouteImport.update({
+  id: '/viator-merchant',
+  path: '/viator-merchant',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
@@ -1106,6 +1125,11 @@ const ToursBrowseHubRoute = ToursBrowseHubRouteImport.update({
   id: '/browse/$hub',
   path: '/browse/$hub',
   getParentRoute: () => ToursRoute,
+} as any)
+const MerchantBookingRefRoute = MerchantBookingRefRouteImport.update({
+  id: '/merchant/booking/$ref',
+  path: '/merchant/booking/$ref',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DestinationsRegionCountryRoute =
   DestinationsRegionCountryRouteImport.update({
@@ -1328,6 +1352,7 @@ export interface FileRoutesByFullPath {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
   '/agent/collateral': typeof AgentCollateralRoute
@@ -1351,6 +1376,7 @@ export interface FileRoutesByFullPath {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1391,6 +1417,7 @@ export interface FileRoutesByFullPath {
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/merchant/': typeof MerchantIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
@@ -1418,6 +1445,7 @@ export interface FileRoutesByFullPath {
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
+  '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1503,6 +1531,7 @@ export interface FileRoutesByTo {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
   '/agent/collateral': typeof AgentCollateralRoute
@@ -1525,6 +1554,7 @@ export interface FileRoutesByTo {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1565,6 +1595,7 @@ export interface FileRoutesByTo {
   '/insurance': typeof InsuranceIndexRoute
   '/journeys': typeof JourneysIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
+  '/merchant': typeof MerchantIndexRoute
   '/polar-expeditions': typeof PolarExpeditionsIndexRoute
   '/portal': typeof PortalIndexRoute
   '/rail': typeof RailIndexRoute
@@ -1591,6 +1622,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
+  '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1705,6 +1737,7 @@ export interface FileRoutesById {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
   '/agent/clients': typeof AgentClientsRoute
   '/agent/collateral': typeof AgentCollateralRoute
@@ -1728,6 +1761,7 @@ export interface FileRoutesById {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1768,6 +1802,7 @@ export interface FileRoutesById {
   '/insurance/': typeof InsuranceIndexRoute
   '/journeys/': typeof JourneysIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
+  '/merchant/': typeof MerchantIndexRoute
   '/polar-expeditions/': typeof PolarExpeditionsIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/rail/': typeof RailIndexRoute
@@ -1795,6 +1830,7 @@ export interface FileRoutesById {
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
+  '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1910,6 +1946,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-merchant'
     | '/agent/bookings'
     | '/agent/clients'
     | '/agent/collateral'
@@ -1933,6 +1970,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -1973,6 +2011,7 @@ export interface FileRouteTypes {
     | '/insurance/'
     | '/journeys/'
     | '/marketplace/'
+    | '/merchant/'
     | '/polar-expeditions/'
     | '/portal/'
     | '/rail/'
@@ -2000,6 +2039,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
     | '/destinations/$region/$country'
+    | '/merchant/booking/$ref'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2085,6 +2125,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-merchant'
     | '/agent/bookings'
     | '/agent/clients'
     | '/agent/collateral'
@@ -2107,6 +2148,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2147,6 +2189,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/journeys'
     | '/marketplace'
+    | '/merchant'
     | '/polar-expeditions'
     | '/portal'
     | '/rail'
@@ -2173,6 +2216,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
+    | '/merchant/booking/$ref'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2286,6 +2330,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-merchant'
     | '/agent/bookings'
     | '/agent/clients'
     | '/agent/collateral'
@@ -2309,6 +2354,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2349,6 +2395,7 @@ export interface FileRouteTypes {
     | '/insurance/'
     | '/journeys/'
     | '/marketplace/'
+    | '/merchant/'
     | '/polar-expeditions/'
     | '/portal/'
     | '/rail/'
@@ -2376,6 +2423,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
     | '/destinations/$region/$country'
+    | '/merchant/booking/$ref'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2463,10 +2511,12 @@ export interface RootRouteChildren {
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
   BlogSlugRoute: typeof BlogSlugRoute
   MarketplaceIdRoute: typeof MarketplaceIdRoute
+  MerchantCodeRoute: typeof MerchantCodeRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MerchantIndexRoute: typeof MerchantIndexRoute
   TtcIndexRoute: typeof TtcIndexRoute
   VoyagesIndexRoute: typeof VoyagesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -2475,6 +2525,7 @@ export interface RootRouteChildren {
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
+  MerchantBookingRefRoute: typeof MerchantBookingRefRoute
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   VoyagesCruiseaBookingsRoute: typeof VoyagesCruiseaBookingsRoute
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
@@ -3002,6 +3053,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PolarExpeditionsIndexRouteImport
       parentRoute: typeof PolarExpeditionsRoute
     }
+    '/merchant/': {
+      id: '/merchant/'
+      path: '/merchant'
+      fullPath: '/merchant/'
+      preLoaderRoute: typeof MerchantIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/': {
       id: '/marketplace/'
       path: '/marketplace'
@@ -3282,6 +3340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PolarExpeditionsSlugRouteImport
       parentRoute: typeof PolarExpeditionsRoute
     }
+    '/merchant/$code': {
+      id: '/merchant/$code'
+      path: '/merchant/$code'
+      fullPath: '/merchant/$code'
+      preLoaderRoute: typeof MerchantCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/$id': {
       id: '/marketplace/$id'
       path: '/marketplace/$id'
@@ -3442,6 +3507,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/agent/bookings'
       preLoaderRoute: typeof AgentBookingsRouteImport
       parentRoute: typeof AgentRoute
+    }
+    '/admin/viator-merchant': {
+      id: '/admin/viator-merchant'
+      path: '/viator-merchant'
+      fullPath: '/admin/viator-merchant'
+      preLoaderRoute: typeof AdminViatorMerchantRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/users': {
       id: '/admin/users'
@@ -3737,6 +3809,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToursBrowseHubRouteImport
       parentRoute: typeof ToursRoute
     }
+    '/merchant/booking/$ref': {
+      id: '/merchant/booking/$ref'
+      path: '/merchant/booking/$ref'
+      fullPath: '/merchant/booking/$ref'
+      preLoaderRoute: typeof MerchantBookingRefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/destinations/$region/$country': {
       id: '/destinations/$region/$country'
       path: '/$country'
@@ -3950,6 +4029,7 @@ interface AdminRouteChildren {
   AdminTripjackRoute: typeof AdminTripjackRoute
   AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminViatorMerchantRoute: typeof AdminViatorMerchantRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -3977,6 +4057,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTripjackRoute: AdminTripjackRoute,
   AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminViatorMerchantRoute: AdminViatorMerchantRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -4484,10 +4565,12 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesCodeRoute: ActivitiesCodeRoute,
   BlogSlugRoute: BlogSlugRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
+  MerchantCodeRoute: MerchantCodeRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MerchantIndexRoute: MerchantIndexRoute,
   TtcIndexRoute: TtcIndexRoute,
   VoyagesIndexRoute: VoyagesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
@@ -4496,6 +4579,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
+  MerchantBookingRefRoute: MerchantBookingRefRoute,
   TtcBrandSlugRoute: TtcBrandSlugRoute,
   VoyagesCruiseaBookingsRoute: VoyagesCruiseaBookingsRoute,
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,

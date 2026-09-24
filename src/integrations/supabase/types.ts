@@ -2843,6 +2843,93 @@ export type Database = {
         }
         Relationships: []
       }
+      viator_merchant_bookings: {
+        Row: {
+          audit: Json | null
+          booked_at: string | null
+          booker: Json | null
+          booking_ref: string | null
+          cancellation: Json | null
+          cancelled_at: string | null
+          cart_ref: string | null
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          language_guide: string | null
+          option_code: string | null
+          partner_booking_ref: string
+          partner_cart_ref: string | null
+          payment_status: string
+          product_code: string
+          product_title: string | null
+          retail_price: number | null
+          start_time: string | null
+          status: string
+          travel_date: string | null
+          traveller_count: number
+          updated_at: string
+          user_id: string
+          voucher_url: string | null
+        }
+        Insert: {
+          audit?: Json | null
+          booked_at?: string | null
+          booker?: Json | null
+          booking_ref?: string | null
+          cancellation?: Json | null
+          cancelled_at?: string | null
+          cart_ref?: string | null
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          language_guide?: string | null
+          option_code?: string | null
+          partner_booking_ref: string
+          partner_cart_ref?: string | null
+          payment_status?: string
+          product_code: string
+          product_title?: string | null
+          retail_price?: number | null
+          start_time?: string | null
+          status?: string
+          travel_date?: string | null
+          traveller_count?: number
+          updated_at?: string
+          user_id: string
+          voucher_url?: string | null
+        }
+        Update: {
+          audit?: Json | null
+          booked_at?: string | null
+          booker?: Json | null
+          booking_ref?: string | null
+          cancellation?: Json | null
+          cancelled_at?: string | null
+          cart_ref?: string | null
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          language_guide?: string | null
+          option_code?: string | null
+          partner_booking_ref?: string
+          partner_cart_ref?: string | null
+          payment_status?: string
+          product_code?: string
+          product_title?: string | null
+          retail_price?: number | null
+          start_time?: string | null
+          status?: string
+          travel_date?: string | null
+          traveller_count?: number
+          updated_at?: string
+          user_id?: string
+          voucher_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
