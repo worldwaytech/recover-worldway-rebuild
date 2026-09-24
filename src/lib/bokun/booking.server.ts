@@ -60,30 +60,42 @@ export async function octoCreateBooking(req: OctoBookingCreateRequest) {
   });
 }
 
-export async function octoConfirmBooking(uuid: string) {
+const UUID = /^[0-9a-f-]{36}$/i;
+function bookingPath(uuid: string, suffix = "") {
+  if (!UUID.test(uuid)) throw new BokunError("Invalid booking uuid.", 400, activeEnvironment(), uuid);
+  return BOKUN_OCTO_ENDPOINTS.booking.replace("{uuid}", uuid) + suffix;
+}
+const write = { retry: false, timeoutMs: BOKUN_LIMITS.bookingTimeoutMs } as const;
+
+/** OCTO: POST /bookings/{uuid}/confirm — only after Worldway (Razorpay) payment is captured. */
+export async function octoConfirmBooking(
+  uuid: string,
+  contact?: { fullName?: string; emailAddress?: string; phoneNumber?: string },
+) {
   assertBookingsEnabled();
-  if (!/^[0-9a-f-]{36}$/i.test(uuid)) throw new BokunError("Invalid booking uuid.", 400, activeEnvironment(), uuid);
-  return octoFetch(BOKUN_OCTO_ENDPOINTS.booking.replace("{uuid}", uuid), {
-    method: "PATCH",
-    body: { status: "CONFIRMED" },
-    retry: false,
-    timeoutMs: BOKUN_LIMITS.bookingTimeoutMs,
-  });
+  const path = bookingPath(uuid, "/confirm");
+  return octoFetch(path, { method: "POST", body: contact ? { contact } : {}, ...write });
 }
 
+/** OCTO: PATCH /bookings/{uuid} — amendment (units, contact, notes, availability). */
+export async function octoAmendBooking(uuid: string, changes: Record<string, unknown>) {
+  assertBookingsEnabled();
+  const path = bookingPath(uuid);
+  return octoFetch(path, { method: "PATCH", body: changes, ...write });
+}
+
+/** OCTO: DELETE /bookings/{uuid} — cancellation (supplier cancellation rules apply). */
 export async function octoCancelBooking(uuid: string, reason?: string) {
   assertBookingsEnabled();
-  if (!/^[0-9a-f-]{36}$/i.test(uuid)) throw new BokunError("Invalid booking uuid.", 400, activeEnvironment(), uuid);
-  return octoFetch(BOKUN_OCTO_ENDPOINTS.booking.replace("{uuid}", uuid), {
-    method: "PATCH",
-    body: { status: "CANCELLED", ...(reason ? { cancellationReason: reason.slice(0, 200) } : {}) },
-    retry: false,
-    timeoutMs: BOKUN_LIMITS.bookingTimeoutMs,
+  const path = bookingPath(uuid);
+  return octoFetch(path, {
+    method: "DELETE",
+    body: reason ? { reason: reason.slice(0, 200) } : undefined,
+    ...write,
   });
 }
 
 /** Read-only status lookup — safe to call any time. */
 export async function octoGetBooking(uuid: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(uuid)) throw new BokunError("Invalid booking uuid.", 400, activeEnvironment(), uuid);
-  return octoFetch(BOKUN_OCTO_ENDPOINTS.booking.replace("{uuid}", uuid));
+  return octoFetch(bookingPath(uuid));
 }
