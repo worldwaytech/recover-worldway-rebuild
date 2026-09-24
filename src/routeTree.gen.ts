@@ -208,6 +208,7 @@ import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/
 import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/api/public/hooks/hbx-transfers-refresh'
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 import { Route as ApiPublicHooksCruiseaHoldSweepRouteImport } from './routes/api/public/hooks/cruisea-hold-sweep'
+import { Route as ApiPublicHooksBokunMarketplaceSyncRouteImport } from './routes/api/public/hooks/bokun-marketplace-sync'
 import { Route as ApiPublicHooksIntegrationWebhookProviderKeyRouteImport } from './routes/api/public/hooks/integration-webhook.$providerKey'
 
 const YachtsRoute = YachtsRouteImport.update({
@@ -1223,6 +1224,12 @@ const ApiPublicHooksCruiseaHoldSweepRoute =
     path: '/api/public/hooks/cruisea-hold-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksBokunMarketplaceSyncRoute =
+  ApiPublicHooksBokunMarketplaceSyncRouteImport.update({
+    id: '/api/public/hooks/bokun-marketplace-sync',
+    path: '/api/public/hooks/bokun-marketplace-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksIntegrationWebhookProviderKeyRoute =
   ApiPublicHooksIntegrationWebhookProviderKeyRouteImport.update({
     id: '/api/public/hooks/integration-webhook/$providerKey',
@@ -1421,6 +1428,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
   '/tours/browse/': typeof ToursBrowseIndexRoute
   '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
+  '/api/public/hooks/bokun-marketplace-sync': typeof ApiPublicHooksBokunMarketplaceSyncRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
@@ -1593,6 +1601,7 @@ export interface FileRoutesByTo {
   '/destinations/$region': typeof DestinationsRegionIndexRoute
   '/tours/browse': typeof ToursBrowseIndexRoute
   '/voyages/cruisea': typeof VoyagesCruiseaIndexRoute
+  '/api/public/hooks/bokun-marketplace-sync': typeof ApiPublicHooksBokunMarketplaceSyncRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
@@ -1796,6 +1805,7 @@ export interface FileRoutesById {
   '/destinations/$region/': typeof DestinationsRegionIndexRoute
   '/tours/browse/': typeof ToursBrowseIndexRoute
   '/voyages/cruisea/': typeof VoyagesCruiseaIndexRoute
+  '/api/public/hooks/bokun-marketplace-sync': typeof ApiPublicHooksBokunMarketplaceSyncRoute
   '/api/public/hooks/cruisea-hold-sweep': typeof ApiPublicHooksCruiseaHoldSweepRoute
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
@@ -2000,6 +2010,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/'
     | '/tours/browse/'
     | '/voyages/cruisea/'
+    | '/api/public/hooks/bokun-marketplace-sync'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
@@ -2172,6 +2183,7 @@ export interface FileRouteTypes {
     | '/destinations/$region'
     | '/tours/browse'
     | '/voyages/cruisea'
+    | '/api/public/hooks/bokun-marketplace-sync'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
@@ -2374,6 +2386,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/'
     | '/tours/browse/'
     | '/voyages/cruisea/'
+    | '/api/public/hooks/bokun-marketplace-sync'
     | '/api/public/hooks/cruisea-hold-sweep'
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
@@ -2465,6 +2478,7 @@ export interface RootRouteChildren {
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   VoyagesCruiseaBookingsRoute: typeof VoyagesCruiseaBookingsRoute
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
+  ApiPublicHooksBokunMarketplaceSyncRoute: typeof ApiPublicHooksBokunMarketplaceSyncRoute
   ApiPublicHooksCruiseaHoldSweepRoute: typeof ApiPublicHooksCruiseaHoldSweepRoute
   ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
   ApiPublicHooksHbxTransfersRefreshRoute: typeof ApiPublicHooksHbxTransfersRefreshRoute
@@ -3870,6 +3884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCruiseaHoldSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/bokun-marketplace-sync': {
+      id: '/api/public/hooks/bokun-marketplace-sync'
+      path: '/api/public/hooks/bokun-marketplace-sync'
+      fullPath: '/api/public/hooks/bokun-marketplace-sync'
+      preLoaderRoute: typeof ApiPublicHooksBokunMarketplaceSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/integration-webhook/$providerKey': {
       id: '/api/public/hooks/integration-webhook/$providerKey'
       path: '/api/public/hooks/integration-webhook/$providerKey'
@@ -4478,6 +4499,8 @@ const rootRouteChildren: RootRouteChildren = {
   TtcBrandSlugRoute: TtcBrandSlugRoute,
   VoyagesCruiseaBookingsRoute: VoyagesCruiseaBookingsRoute,
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,
+  ApiPublicHooksBokunMarketplaceSyncRoute:
+    ApiPublicHooksBokunMarketplaceSyncRoute,
   ApiPublicHooksCruiseaHoldSweepRoute: ApiPublicHooksCruiseaHoldSweepRoute,
   ApiPublicHooksCrystalHoldSweepRoute: ApiPublicHooksCrystalHoldSweepRoute,
   ApiPublicHooksHbxTransfersRefreshRoute:
