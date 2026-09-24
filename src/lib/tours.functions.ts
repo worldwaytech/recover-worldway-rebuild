@@ -149,13 +149,17 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
     return result;
   });
 
+/** Staff-only: confirms a supplier reservation. */
 export const confirmTourReservation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({ bookingId: z.string().max(40), serviceId: z.string().max(40).optional() })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
     const { confirmTourBooking } = await import("./tours-booking.server");
     return confirmTourBooking(data);
   });

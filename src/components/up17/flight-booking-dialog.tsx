@@ -152,6 +152,7 @@ export function FlightBookingDialog({
       amount: confirmedTotal,
       currency: currency || "INR",
       description: `Flight · ${summary}`,
+      flightFare: { resultIndex, searchTokenId },
       ...(lead ? { name: `${lead.first_name} ${lead.last_name}`.trim() } : {}),
       ...(lead?.email ? { email: lead.email.trim() } : {}),
       ...(lead?.contact_no ? { phone: lead.contact_no.trim() } : {}),

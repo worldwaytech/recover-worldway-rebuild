@@ -297,17 +297,29 @@ export async function exportCaseEvidence(client: Client, caseKey: string): Promi
   const correlationIds = asStringArray(row?.correlation_ids);
   if (!supplierBookingId && !correlationIds.length) return { files: [], count: 0 };
 
-  const filters: string[] = [];
-  if (supplierBookingId) filters.push(`supplier_booking_id.eq.${supplierBookingId}`);
-  if (correlationIds.length) filters.push(`correlation_id.in.(${correlationIds.join(",")})`);
-  const { data: logs, error } = await client
-    .from("tripjack_api_logs")
-    .select("*")
-    .or(filters.join(","))
-    .order("created_at", { ascending: true })
-    .limit(200);
-  if (error) throw new Error(error.message);
-  const rows = logs ?? [];
+  // Parameterised queries only — stored values never become filter syntax.
+  const byId = new Map<string, LogRow>();
+  if (supplierBookingId) {
+    const { data, error } = await client
+      .from("tripjack_api_logs")
+      .select("*")
+      .eq("supplier_booking_id", supplierBookingId)
+      .limit(200);
+    if (error) throw new Error(error.message);
+    for (const r of (data ?? []) as LogRow[]) byId.set((r as { id: string }).id, r);
+  }
+  if (correlationIds.length) {
+    const { data, error } = await client
+      .from("tripjack_api_logs")
+      .select("*")
+      .in("correlation_id", correlationIds)
+      .limit(200);
+    if (error) throw new Error(error.message);
+    for (const r of (data ?? []) as LogRow[]) byId.set((r as { id: string }).id, r);
+  }
+  const rows = [...byId.values()]
+    .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+    .slice(0, 200);
   const folder = safe(caseKey);
   const files = toFiles(rows, folder);
   files.unshift({
