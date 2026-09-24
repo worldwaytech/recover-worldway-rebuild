@@ -145,7 +145,7 @@ export async function listMerchantBookingsForUser(
     console.error("[merchant-booking] list failed", error.message);
     return [];
   }
-  return (data as MerchantBookingRow[]) ?? [];
+  return toRows(data);
 }
 
 export async function listAllMerchantBookings(): Promise<MerchantBookingRow[]> {
@@ -158,7 +158,7 @@ export async function listAllMerchantBookings(): Promise<MerchantBookingRow[]> {
     console.error("[merchant-booking] admin list failed", error.message);
     return [];
   }
-  return (data as MerchantBookingRow[]) ?? [];
+  return toRows(data);
 }
 
 /** Atomically claim a held booking for submission (blocks double-submit). */
