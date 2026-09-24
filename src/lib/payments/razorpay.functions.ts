@@ -20,6 +20,14 @@ const createOrderSchema = z
     email: z.string().trim().email().max(255).optional(),
     phone: z.string().trim().min(6).max(20).optional(),
     reference: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+    /** Flight fare to re-price server-side; the charged amount comes from this, not `amount`. */
+    flightFare: z
+      .object({
+        resultIndex: z.string().trim().min(1).max(200),
+        searchTokenId: z.string().trim().min(1).max(200),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -31,14 +39,15 @@ const verifySchema = z
   })
   .strict();
 
-/** Opens a Razorpay order. Membership amounts are resolved server-side and never trusted from the client. */
+/** Opens a Razorpay order. Amounts are always resolved server-side and never trusted from the client. */
 export const createPaymentOrder = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => createOrderSchema.parse(input))
   .handler(async ({ data }) => {
     const { resolvePaymentAmount, openOrder } = await import("./checkout.server");
     try {
-      const amount = resolvePaymentAmount(data);
-      return await openOrder({ ...data, ...amount });
+      const { flightFare: _ff, ...rest } = data;
+      const amount = await resolvePaymentAmount(data);
+      return await openOrder({ ...rest, ...amount });
     } catch (e) {
       return {
         ok: false as const,
