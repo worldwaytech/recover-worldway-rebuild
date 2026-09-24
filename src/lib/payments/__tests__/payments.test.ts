@@ -61,7 +61,7 @@ describe("amount and currency validation", () => {
   it("uses server-owned membership pricing and ignores client amounts", async () => {
     const { resolvePaymentAmount } = await import("../checkout.server");
     const { MEMBERSHIP_PLANS } = await import("../plans");
-    const resolved = resolvePaymentAmount({
+    const resolved = await resolvePaymentAmount({
       purpose: "membership",
       planId: "elite",
       currency: "INR",
@@ -74,25 +74,15 @@ describe("amount and currency validation", () => {
 
   it("rejects unknown membership plans", async () => {
     const { resolvePaymentAmount } = await import("../checkout.server");
-    expect(() =>
+    await expect(
       resolvePaymentAmount({ purpose: "membership", planId: "free_forever", currency: "USD" }),
-    ).toThrow();
+    ).rejects.toThrow();
   });
 
-  it("converts major units to minor units and enforces bounds", async () => {
+  it("never charges a client-supplied amount", async () => {
     const { resolvePaymentAmount } = await import("../checkout.server");
-    expect(resolvePaymentAmount({ purpose: "flight", amount: 5975.5, currency: "INR" }).amountMinor).toBe(
-      597550,
-    );
-    expect(() => resolvePaymentAmount({ purpose: "flight", amount: 0.5, currency: "INR" })).toThrow();
-    expect(() => resolvePaymentAmount({ purpose: "flight", currency: "INR" })).toThrow();
-  });
-
-  it("treats zero-decimal currencies without multiplying", async () => {
-    const { resolvePaymentAmount } = await import("../checkout.server");
-    expect(resolvePaymentAmount({ purpose: "tour", amount: 50_000, currency: "JPY" }).amountMinor).toBe(
-      50_000,
-    );
+    await expect(resolvePaymentAmount({ purpose: "flight", amount: 1, currency: "INR" })).rejects.toThrow();
+    await expect(resolvePaymentAmount({ purpose: "tour", amount: 50_000, currency: "JPY" })).rejects.toThrow();
   });
 });
 

@@ -53,6 +53,7 @@ export type PayRequest = {
   email?: string;
   phone?: string;
   reference?: Record<string, string | number | boolean>;
+  flightFare?: { resultIndex: string; searchTokenId: string };
 };
 
 /**
@@ -83,6 +84,7 @@ export function useRazorpayCheckout() {
             ...(req.email ? { email: req.email } : {}),
             ...(req.phone ? { phone: req.phone } : {}),
             ...(req.reference ? { reference: req.reference } : {}),
+            ...(req.flightFare ? { flightFare: req.flightFare } : {}),
           },
         });
 

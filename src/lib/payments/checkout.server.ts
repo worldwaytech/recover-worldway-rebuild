@@ -15,7 +15,6 @@ import {
   verifyCheckoutSignature,
 } from "./razorpay.server";
 import {
-  applyVerifiedMembership,
   getPaymentByOrderId,
   insertPaymentRecord,
   markPaymentStatus,
@@ -36,12 +35,18 @@ export type OrderInput = {
   reference?: Record<string, string | number | boolean>;
 };
 
-/** Resolves the amount that will actually be charged. Membership pricing is server-owned. */
-export function resolvePaymentAmount(input: OrderInput): {
+/**
+ * Resolves the amount that will actually be charged. Every amount is
+ * server-owned: memberships from the plan catalogue, flights from a live
+ * server-side fare confirmation. Client-supplied amounts are never charged.
+ */
+export async function resolvePaymentAmount(
+  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string } },
+): Promise<{
   amountMinor: number;
   currency: string;
   planId: string | null;
-} {
+}> {
   if (input.purpose === "membership") {
     const planId = input.planId ?? "";
     if (!isMembershipPlanId(planId)) {
@@ -51,22 +56,25 @@ export function resolvePaymentAmount(input: OrderInput): {
     return { amountMinor: plan.amountMinor, currency: plan.currency, planId };
   }
 
-  if (input.amount === undefined) {
-    throw new Error("A payment amount is required.");
+  if (input.purpose === "flight") {
+    if (!input.flightFare) throw new Error("The flight fare reference is required.");
+    const { up17ConfirmFare } = await import("@/lib/up17/up17.server");
+    const fare = await up17ConfirmFare(input.flightFare);
+    const total = fare.data?.total;
+    const currency = fare.data?.currency?.trim().toUpperCase();
+    if (!fare.ok || total === null || total === undefined || !currency) {
+      throw new Error("The live fare could not be verified. Please search again.");
+    }
+    const amountMinor = ZERO_DECIMAL_CURRENCIES.has(currency)
+      ? Math.round(total)
+      : toMinorUnits(total);
+    if (!Number.isSafeInteger(amountMinor) || amountMinor < 100) {
+      throw new Error("The live fare could not be verified. Please search again.");
+    }
+    return { amountMinor, currency, planId: null };
   }
 
-  const currency = input.currency || "INR";
-  const amountMinor = ZERO_DECIMAL_CURRENCIES.has(currency)
-    ? Math.round(input.amount)
-    : toMinorUnits(input.amount);
-
-  if (!Number.isFinite(amountMinor) || amountMinor < 100) {
-    throw new Error("The payment amount is too small to process.");
-  }
-  if (amountMinor > 200_000_000_00) {
-    throw new Error("The payment amount exceeds the permitted limit.");
-  }
-  return { amountMinor, currency, planId: input.planId ?? null };
+  throw new Error("Online payment is not available for this purchase yet.");
 }
 
 function receiptFor(purpose: string): string {
@@ -165,16 +173,8 @@ export async function confirmPayment(input: {
     return { ok: false as const, error: "The payment was not completed. Please try again." };
   }
 
-  // Membership is only granted once funds are actually captured; merely
-  // authorised payments wait for the verified payment webhook.
-  if (
-    payment.status === "captured" &&
-    record?.purpose === "membership" &&
-    record.user_id &&
-    record.plan_id
-  ) {
-    await applyVerifiedMembership(record.user_id, record.plan_id);
-  }
+  // Membership entitlement is granted ONLY by the signature-verified payment
+  // webhook (api/public/razorpay-webhook), never from this client-triggered path.
 
 
   return {
