@@ -126,12 +126,7 @@ export async function confirmPayment(input: {
   signature: string;
 }) {
   if (!verifyCheckoutSignature(input)) {
-    await markPaymentStatus({
-      orderId: input.orderId,
-      status: "failed",
-      paymentId: input.paymentId,
-      failureReason: "signature_mismatch",
-    });
+    // Unverified callers must not be able to change any payment record.
     return { ok: false as const, error: "Payment could not be verified. You have not been charged twice — contact support with your payment id." };
   }
 
@@ -170,7 +165,14 @@ export async function confirmPayment(input: {
     return { ok: false as const, error: "The payment was not completed. Please try again." };
   }
 
-  if (record?.purpose === "membership" && record.user_id && record.plan_id) {
+  // Membership is only granted once funds are actually captured; merely
+  // authorised payments wait for the verified payment webhook.
+  if (
+    payment.status === "captured" &&
+    record?.purpose === "membership" &&
+    record.user_id &&
+    record.plan_id
+  ) {
     await applyVerifiedMembership(record.user_id, record.plan_id);
   }
 
