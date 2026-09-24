@@ -120,12 +120,30 @@ export async function searchTours(input: SearchToursInput): Promise<BokunSearchR
 
 // ------------------------------------------------------------------ detail
 
-export async function getProduct(id: string): Promise<Record<string, unknown> & { summary: BokunProductSummary }> {
+export interface BokunProductDetail {
+  summary: BokunProductSummary;
+  description?: string;
+  photos: string[];
+  keywords: string[];
+}
+
+export async function getProduct(id: string): Promise<BokunProductDetail> {
   if (!/^[0-9]+$/.test(id)) throw new BokunError("Invalid product id.", 400, "test", id);
   const raw = await bokunFetch<Record<string, unknown>>(
     BOKUN_REST_ENDPOINTS.product.replace("{id}", id),
   );
-  return { ...raw, summary: summarize(raw) };
+  const photos = (pick<unknown[]>(raw, ["photos"]) ?? [])
+    .map((p) => {
+      const derived = pick<Record<string, unknown>>(p, ["derived"]);
+      return str(derived?.["original"]) ?? str(pick(p, ["originalUrl", "url", "sourceUrl"]));
+    })
+    .filter((u): u is string => Boolean(u));
+  return {
+    summary: summarize(raw),
+    description: str(pick(raw, ["description", "longDescription"])),
+    photos,
+    keywords: (pick<unknown[]>(raw, ["keywords"]) ?? []).filter((k): k is string => typeof k === "string"),
+  };
 }
 
 // -------------------------------------------------------------- availability

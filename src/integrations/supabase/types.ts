@@ -92,6 +92,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bokun_products: {
+        Row: {
+          city: string | null
+          country: string | null
+          cover_photo: string | null
+          currency: string | null
+          duration_text: string | null
+          id: string
+          price_from: number | null
+          product_id: string
+          summary: string | null
+          synced_at: string
+          title: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          cover_photo?: string | null
+          currency?: string | null
+          duration_text?: string | null
+          id?: string
+          price_from?: number | null
+          product_id: string
+          summary?: string | null
+          synced_at?: string
+          title: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          cover_photo?: string | null
+          currency?: string | null
+          duration_text?: string | null
+          id?: string
+          price_from?: number | null
+          product_id?: string
+          summary?: string | null
+          synced_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
       booking_documents: {
         Row: {
           booking_id: string

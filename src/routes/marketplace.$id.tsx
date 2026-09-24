@@ -48,8 +48,8 @@ function MarketplaceDetailPage() {
         {[s.city, s.country].filter(Boolean).join(", ")}
         {s.durationText ? ` · ${s.durationText}` : ""}
       </p>
-      {typeof product["description"] === "string" && (
-        <p className="mt-4 whitespace-pre-line text-foreground">{String(product["description"]).slice(0, 4000)}</p>
+      {product.description && (
+        <p className="mt-4 whitespace-pre-line text-foreground">{product.description.slice(0, 4000)}</p>
       )}
 
       <section className="mt-8">
