@@ -46,9 +46,10 @@ export const getViatorConnectorStatus = createServerFn({ method: "GET" }).handle
   return viatorStatus();
 });
 
+const VIATOR_CODE = z.string().regex(/^\d{1,12}P\d{1,6}$/, "Invalid product code");
 const codeSchema = z.object({
-  code: z.string().min(1).max(60),
-  currency: z.string().max(3).optional(),
+  code: VIATOR_CODE,
+  currency: z.string().regex(/^[A-Z]{3}$/).optional(),
 });
 
 export const getViatorProduct = createServerFn({ method: "POST" })
@@ -84,7 +85,7 @@ export const getViatorSchedule = createServerFn({ method: "POST" })
  * resolved from Viator's dictionary, plus its pickup locations.
  */
 export const getViatorBookingQuestions = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ code: z.string().min(1).max(60) }).parse(d))
+  .inputValidator((d: unknown) => z.object({ code: VIATOR_CODE }).parse(d))
   .handler(async ({ data }) => {
     const { viatorProductFull, viatorProductBookingQuestions, viatorLocationsBulk } = await import(
       "./viator.server"
