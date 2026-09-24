@@ -94,43 +94,172 @@ export type Database = {
       }
       bokun_products: {
         Row: {
+          active: boolean
+          cancellation_policy: Json | null
           city: string | null
+          content: Json
           country: string | null
           cover_photo: string | null
           currency: string | null
           duration_text: string | null
+          fingerprint: string | null
           id: string
+          photos: Json
           price_from: number | null
+          pricing: Json
           product_id: string
           summary: string | null
+          supplier_id: string | null
+          supplier_updated_at: string | null
           synced_at: string
           title: string
+          vendor_title: string | null
         }
         Insert: {
+          active?: boolean
+          cancellation_policy?: Json | null
           city?: string | null
+          content?: Json
           country?: string | null
           cover_photo?: string | null
           currency?: string | null
           duration_text?: string | null
+          fingerprint?: string | null
           id?: string
+          photos?: Json
           price_from?: number | null
+          pricing?: Json
           product_id: string
           summary?: string | null
+          supplier_id?: string | null
+          supplier_updated_at?: string | null
           synced_at?: string
           title: string
+          vendor_title?: string | null
         }
         Update: {
+          active?: boolean
+          cancellation_policy?: Json | null
           city?: string | null
+          content?: Json
           country?: string | null
           cover_photo?: string | null
           currency?: string | null
           duration_text?: string | null
+          fingerprint?: string | null
           id?: string
+          photos?: Json
           price_from?: number | null
+          pricing?: Json
           product_id?: string
           summary?: string | null
+          supplier_id?: string | null
+          supplier_updated_at?: string | null
           synced_at?: string
           title?: string
+          vendor_title?: string | null
+        }
+        Relationships: []
+      }
+      bokun_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          last_error: string | null
+          last_seen_at: string
+          product_count: number
+          source: string
+          status: string
+          supplier_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_seen_at?: string
+          product_count?: number
+          source?: string
+          status?: string
+          supplier_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_seen_at?: string
+          product_count?: number
+          source?: string
+          status?: string
+          supplier_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bokun_sync_runs: {
+        Row: {
+          created_at: string
+          created_count: number
+          deactivated_count: number
+          discovered: number
+          environment: string
+          errors: Json
+          failed_count: number
+          finished_at: string | null
+          id: string
+          product_lists: number
+          scope: string
+          started_at: string
+          status: string
+          suppliers: number
+          trigger: string
+          unchanged_count: number
+          updated_at: string
+          updated_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_count?: number
+          deactivated_count?: number
+          discovered?: number
+          environment: string
+          errors?: Json
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          product_lists?: number
+          scope: string
+          started_at?: string
+          status?: string
+          suppliers?: number
+          trigger: string
+          unchanged_count?: number
+          updated_at?: string
+          updated_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_count?: number
+          deactivated_count?: number
+          discovered?: number
+          environment?: string
+          errors?: Json
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          product_lists?: number
+          scope?: string
+          started_at?: string
+          status?: string
+          suppliers?: number
+          trigger?: string
+          unchanged_count?: number
+          updated_at?: string
+          updated_count?: number
         }
         Relationships: []
       }
