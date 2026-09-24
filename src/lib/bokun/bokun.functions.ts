@@ -105,3 +105,23 @@ export const runBokunSmokeTest = createServerFn({ method: "POST" })
     });
     return { steps, environment: process.env["BOKUN_ENVIRONMENT"] ?? "test (default until verified)" };
   });
+
+// ------------------------------------------------ marketplace sync (staff)
+
+export const runBokunMarketplaceSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ scope: z.enum(["full", "incremental"]) }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context as never);
+    const { runMarketplaceSync } = await import("./sync.server");
+    return runMarketplaceSync({ scope: data.scope, trigger: "manual" });
+  });
+
+export const getBokunMarketplaceOverview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStaff(context as never);
+    const { marketplaceOverview } = await import("./sync.server");
+    const { bookingsEnabled } = await import("./booking.server");
+    return { ...(await marketplaceOverview()), bookingsEnabled: bookingsEnabled() };
+  });
