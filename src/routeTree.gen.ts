@@ -123,6 +123,7 @@ import { Route as PortalPreferencesRouteImport } from './routes/portal.preferenc
 import { Route as PortalNotificationsRouteImport } from './routes/portal.notifications'
 import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
+import { Route as MerchantCodeRouteImport } from './routes/merchant.$code'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
@@ -188,6 +189,7 @@ import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as TransfersVoucherReferenceRouteImport } from './routes/transfers.voucher.$reference'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
+import { Route as MerchantBookingRefRouteImport } from './routes/merchant.booking.$ref'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
 import { Route as CrystalCruisesVoyagesCodeRouteImport } from './routes/crystal-cruises.voyages.$code'
 import { Route as CrystalCruisesShipsSlugRouteImport } from './routes/crystal-cruises.ships.$slug'
@@ -783,6 +785,11 @@ const PolarExpeditionsSlugRoute = PolarExpeditionsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => PolarExpeditionsRoute,
 } as any)
+const MerchantCodeRoute = MerchantCodeRouteImport.update({
+  id: '/merchant/$code',
+  path: '/merchant/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
   id: '/marketplace/$id',
   path: '/marketplace/$id',
@@ -1113,6 +1120,11 @@ const ToursBrowseHubRoute = ToursBrowseHubRouteImport.update({
   path: '/browse/$hub',
   getParentRoute: () => ToursRoute,
 } as any)
+const MerchantBookingRefRoute = MerchantBookingRefRouteImport.update({
+  id: '/merchant/booking/$ref',
+  path: '/merchant/booking/$ref',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DestinationsRegionCountryRoute =
   DestinationsRegionCountryRouteImport.update({
     id: '/$country',
@@ -1357,6 +1369,7 @@ export interface FileRoutesByFullPath {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1425,6 +1438,7 @@ export interface FileRoutesByFullPath {
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
+  '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1532,6 +1546,7 @@ export interface FileRoutesByTo {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1599,6 +1614,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
+  '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1736,6 +1752,7 @@ export interface FileRoutesById {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
   '/portal/notifications': typeof PortalNotificationsRoute
@@ -1804,6 +1821,7 @@ export interface FileRoutesById {
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
+  '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1942,6 +1960,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2010,6 +2029,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
     | '/destinations/$region/$country'
+    | '/merchant/booking/$ref'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2117,6 +2137,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2184,6 +2205,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/destinations/$slug'
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
+    | '/merchant/booking/$ref'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2320,6 +2342,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
     | '/portal/notifications'
@@ -2388,6 +2411,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
     | '/destinations/$region/$country'
+    | '/merchant/booking/$ref'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2475,6 +2499,7 @@ export interface RootRouteChildren {
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
   BlogSlugRoute: typeof BlogSlugRoute
   MarketplaceIdRoute: typeof MarketplaceIdRoute
+  MerchantCodeRoute: typeof MerchantCodeRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
@@ -2488,6 +2513,7 @@ export interface RootRouteChildren {
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
+  MerchantBookingRefRoute: typeof MerchantBookingRefRoute
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   VoyagesCruiseaBookingsRoute: typeof VoyagesCruiseaBookingsRoute
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
@@ -3302,6 +3328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PolarExpeditionsSlugRouteImport
       parentRoute: typeof PolarExpeditionsRoute
     }
+    '/merchant/$code': {
+      id: '/merchant/$code'
+      path: '/merchant/$code'
+      fullPath: '/merchant/$code'
+      preLoaderRoute: typeof MerchantCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/$id': {
       id: '/marketplace/$id'
       path: '/marketplace/$id'
@@ -3756,6 +3789,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tours/browse/$hub'
       preLoaderRoute: typeof ToursBrowseHubRouteImport
       parentRoute: typeof ToursRoute
+    }
+    '/merchant/booking/$ref': {
+      id: '/merchant/booking/$ref'
+      path: '/merchant/booking/$ref'
+      fullPath: '/merchant/booking/$ref'
+      preLoaderRoute: typeof MerchantBookingRefRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/destinations/$region/$country': {
       id: '/destinations/$region/$country'
@@ -4504,6 +4544,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesCodeRoute: ActivitiesCodeRoute,
   BlogSlugRoute: BlogSlugRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
+  MerchantCodeRoute: MerchantCodeRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
@@ -4517,6 +4558,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
+  MerchantBookingRefRoute: MerchantBookingRefRoute,
   TtcBrandSlugRoute: TtcBrandSlugRoute,
   VoyagesCruiseaBookingsRoute: VoyagesCruiseaBookingsRoute,
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,
