@@ -7,6 +7,21 @@ import type { MerchantBookingState } from "@/lib/viator-merchant/booking.server"
 
 type DbError = { message: string } | null;
 
+export type MerchantAuditEntry = { at: string; event: string; note?: string };
+
+export type MerchantCancellation = {
+  refundAmount: number | null;
+  refundPercentage: number | null;
+  currency: string;
+};
+
+export type MerchantBookerInfo = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
+
 export type MerchantBookingRow = {
   id: string;
   user_id: string;
@@ -27,12 +42,12 @@ export type MerchantBookingRow = {
   payment_status: string;
   voucher_url: string | null;
   failure_reason: string | null;
-  cancellation: unknown;
-  booker: unknown;
+  cancellation: MerchantCancellation | null;
+  booker: MerchantBookerInfo | null;
   booked_at: string | null;
   cancelled_at: string | null;
   created_at: string;
-  audit: unknown;
+  audit: MerchantAuditEntry[];
 };
 
 const COLUMNS =
@@ -45,7 +60,30 @@ async function table(): Promise<any> {
 }
 
 function toRow(data: unknown): MerchantBookingRow | null {
-  return (data as MerchantBookingRow | null) ?? null;
+  if (!data || typeof data !== "object") return null;
+  const raw = data as Record<string, unknown>;
+  const cancel = raw["cancellation"];
+  const booker = raw["booker"];
+  const audit = raw["audit"];
+  return {
+    ...(raw as unknown as MerchantBookingRow),
+    cancellation:
+      cancel && typeof cancel === "object" && !Array.isArray(cancel)
+        ? (cancel as MerchantCancellation)
+        : null,
+    booker:
+      booker && typeof booker === "object" && !Array.isArray(booker)
+        ? (booker as MerchantBookerInfo)
+        : null,
+    audit: Array.isArray(audit) ? (audit as MerchantAuditEntry[]) : [],
+  };
+}
+
+function toRows(data: unknown): MerchantBookingRow[] {
+  if (!Array.isArray(data)) return [];
+  return data
+    .map((row) => toRow(row))
+    .filter((row): row is MerchantBookingRow => row !== null);
 }
 
 export async function insertMerchantHold(row: {
