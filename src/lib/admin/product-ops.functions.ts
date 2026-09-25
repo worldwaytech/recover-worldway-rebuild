@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 type Ctx = {
   userId: string;
   supabase: {
-    rpc: (n: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+    rpc: (n: string, a: Row) => Promise<{ data: unknown; error: unknown }>;
     from: (t: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
 };
@@ -43,7 +43,8 @@ const AREA: Record<
   safari: { collections: ["safari"], quoteKinds: ["safari"], bookingTypes: ["safari"], providers: [] },
 };
 
-type Section = { title: string; count: number | null; note?: string; rows: Record<string, unknown>[] };
+type Row = Record<string, string | number | boolean | null>;
+type Section = { title: string; count: number | null; note?: string; rows: Row[] };
 
 async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
@@ -154,8 +155,8 @@ export const getProductOps = createServerFn({ method: "POST" })
             .from("integration_providers")
             .select("provider_key, name, enabled, contract_status")
             .in("provider_key", cfg.providers);
-          return (rows ?? []) as Record<string, unknown>[];
-        }, [] as Record<string, unknown>[])
+          return (rows ?? []) as Row[];
+        }, [] as Row[])
       : [];
 
     return { area: data.area, catalogue, sections, providers, generatedAt: new Date().toISOString() };
@@ -189,16 +190,16 @@ export const getViatorAffiliateOps = createServerFn({ method: "POST" })
           .select("created_at, step, method, path, http_status, ok, duration_ms, cart_ref, error")
           .order("created_at", { ascending: false })
           .limit(25);
-        return (data ?? []) as Record<string, unknown>[];
-      }, [] as Record<string, unknown>[]),
+        return (data ?? []) as Row[];
+      }, [] as Row[]),
       safe(async () => {
         const { data, count } = await ctx.supabase
           .from("viator_activity_bookings")
           .select("created_at, cart_reference, booking_reference, product_code, status, payment_status, travel_date, failure_reason", { count: "exact" })
           .order("created_at", { ascending: false })
           .limit(15);
-        return { rows: (data ?? []) as Record<string, unknown>[], count: count ?? 0 };
-      }, { rows: [] as Record<string, unknown>[], count: 0 }),
+        return { rows: (data ?? []) as Row[], count: count ?? 0 };
+      }, { rows: [] as Row[], count: 0 }),
     ]);
     const steps: Record<string, { calls: number; failures: number; last: string | null }> = {};
     for (const t of traces) {

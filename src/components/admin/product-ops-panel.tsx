@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { getProductOps, type ProductArea } from "@/lib/admin/product-ops.functions";
 
-export function DataTable({ rows }: { rows: Record<string, unknown>[] }) {
+export function DataTable({ rows }: { rows: Record<string, string | number | boolean | null>[] }) {
   if (!rows.length) return <p className="text-sm text-muted-foreground">No records yet.</p>;
   const cols = Object.keys(rows[0]!);
   return (
