@@ -317,13 +317,30 @@ export const up17FlightBookingLookup = createServerFn({ method: "POST" })
     z
       .object({
         searchTokenId: z.string().trim().min(1).max(200),
+        orderId: z.string().trim().min(1).max(100),
+        paymentId: z.string().trim().min(1).max(100),
         bookingId: z.string().trim().max(60).optional(),
         pnr: z.string().trim().max(20).optional(),
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    // Only the payer of a fulfilled order may read the booking it produced.
+    const { getPaymentByOrderId, optionalUserId } = await import("@/lib/payments/payments.server");
+    const denied = { ok: false as const, error: "Booking details are not available.", booking: null };
+    const pay = await getPaymentByOrderId(data.orderId);
+    if (!pay || pay.payment_id !== data.paymentId || pay.status !== "paid" || !pay.fulfilled_at) return denied;
+    if (pay.user_id) {
+      const uid = await optionalUserId();
+      if (uid !== pay.user_id) return denied;
+    }
+    const ref = (pay.fulfilment_reference ?? "").trim();
+    if (!ref || (ref !== (data.pnr ?? "") && ref !== (data.bookingId ?? ""))) return denied;
     const { up17FlightBookingDetail } = await import("./up17.server");
-    const res = await up17FlightBookingDetail(data);
+    const res = await up17FlightBookingDetail({
+      searchTokenId: data.searchTokenId,
+      bookingId: data.bookingId,
+      pnr: data.pnr,
+    });
     return { ok: res.ok, error: res.error, booking: res.data ?? null };
   });

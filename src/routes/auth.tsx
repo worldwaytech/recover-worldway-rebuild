@@ -186,7 +186,7 @@ function AuthPage() {
                   ))}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Admin & Super Admin roles can only be granted by an existing Super Admin.
+                  New accounts start as client accounts. Agent and business access is activated by our team after review.
                 </p>
               </div>
             </>
