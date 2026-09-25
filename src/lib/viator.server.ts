@@ -86,6 +86,11 @@ export async function viatorFetch<T>(
     () => controller.abort(),
     init.timeoutMs ?? VIATOR_DEFAULT_TIMEOUT_MS,
   );
+  const started = Date.now();
+  let status = 0;
+  let json: unknown = null;
+  let resHeaders: Headers | null = null;
+  let errorMsg: string | undefined;
   try {
     const res = await fetch(`${base}${path}`, {
       method: init.method,
@@ -93,35 +98,95 @@ export async function viatorFetch<T>(
       body: init.body ? JSON.stringify(init.body) : undefined,
       signal: controller.signal,
     });
+    status = res.status;
+    resHeaders = res.headers;
     const text = await res.text();
-    let json: unknown = null;
     try {
       json = text ? JSON.parse(text) : null;
     } catch {
-      json = null;
+      json = text ? { nonJsonBody: text.slice(0, 500) } : null;
     }
     if (!res.ok) {
       const msg =
         (json as { message?: string; errorMessage?: string } | null)?.message ??
         (json as { errorMessage?: string } | null)?.errorMessage ??
         `Viator responded ${res.status}`;
+      errorMsg = msg;
       return { ok: false, status: res.status, error: msg };
     }
     return { ok: true, status: res.status, data: json as T };
   } catch (err) {
     const aborted = controller.signal.aborted;
+    status = aborted ? 504 : 502;
+    errorMsg = aborted
+      ? "Viator did not respond in time."
+      : err instanceof Error
+        ? err.message
+        : "Viator request failed";
     return {
       ok: false,
-      status: aborted ? 504 : 502,
+      status,
       ...(aborted ? { timedOut: true } : {}),
-      error: aborted
-        ? "Viator did not respond in time."
-        : err instanceof Error
-          ? err.message
-          : "Viator request failed",
+      error: errorMsg,
     };
   } finally {
     clearTimeout(timer);
+    void recordViatorTrace({
+      path,
+      method: init.method,
+      status,
+      durationMs: Date.now() - started,
+      requestBody: init.body,
+      responseBody: json,
+      headers: resHeaders,
+      error: errorMsg,
+    });
+  }
+}
+
+/** Sanitized trace of booking-chain calls for Viator Tech Support. Never throws. */
+async function recordViatorTrace(t: {
+  path: string;
+  method: string;
+  status: number;
+  durationMs: number;
+  requestBody: unknown;
+  responseBody: unknown;
+  headers: Headers | null;
+  error: string | undefined;
+}): Promise<void> {
+  try {
+    const d = await import("@/lib/viator/diagnostics");
+    if (!d.isTracedViatorPath(t.path)) return;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const req = (t.requestBody ?? {}) as Record<string, unknown>;
+    const res = (t.responseBody ?? {}) as Record<string, unknown>;
+    const step = t.path.replace(/^\/(bookings\/)?/, "").replace(/\//g, "_") || t.path;
+    await supabaseAdmin.from("viator_diagnostic_traces").insert({
+      source: "server",
+      environment: viatorEnvironment(),
+      step,
+      method: t.method,
+      path: t.path,
+      http_status: t.status,
+      duration_ms: t.durationMs,
+      ok: t.status >= 200 && t.status < 300,
+      cart_ref:
+        (typeof res["cartRef"] === "string" ? (res["cartRef"] as string) : null) ??
+        (typeof req["cartRef"] === "string" ? (req["cartRef"] as string) : null),
+      partner_cart_ref:
+        typeof req["partnerCartRef"] === "string" ? (req["partnerCartRef"] as string) : null,
+      tracking_id: d.extractTrackingId(t.responseBody),
+      correlation: {
+        ...(t.headers ? d.pickCorrelationHeaders(t.headers) : {}),
+        acceptVersion: "2.0",
+      },
+      request: d.sanitizeForTrace(t.requestBody) as never,
+      response: d.sanitizeForTrace(t.responseBody) as never,
+      error: t.error ?? null,
+    });
+  } catch {
+    /* diagnostics must never affect the booking flow */
   }
 }
 
