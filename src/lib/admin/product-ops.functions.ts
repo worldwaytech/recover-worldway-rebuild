@@ -110,7 +110,7 @@ export const getProductOps = createServerFn({ method: "POST" })
 
     if (data.area === "cruisea") {
       for (const [table, title, cols] of [
-        ["cruisea_sailings", "Cruisea sailings", "id, created_at"],
+        ["cruisea_sailings", "Cruisea sailings", "cruise_line, departure_date, country, cruise_type, created_at"],
         ["cruisea_bookings", "Cruisea bookings", "booking_reference, created_at, status, payment_status"],
       ] as const) {
         sections.push(
@@ -132,7 +132,7 @@ export const getProductOps = createServerFn({ method: "POST" })
         await safe(async () => {
           const { data: rows, count, error } = await ctx.supabase
             .from("tripjack_api_logs")
-            .select("created_at, test_case, endpoint, http_status, duration_ms", { count: "exact" })
+            .select("created_at, suite, capability, method, path, response_status, outcome, duration_ms, supplier_booking_id", { count: "exact" })
             .order("created_at", { ascending: false })
             .limit(10);
           if (error) throw error;
@@ -152,7 +152,7 @@ export const getProductOps = createServerFn({ method: "POST" })
       ? await safe(async () => {
           const { data: rows } = await ctx.supabase
             .from("integration_providers")
-            .select("provider_key, name, enabled, contract_status, last_health_status, last_health_at")
+            .select("provider_key, name, enabled, contract_status")
             .in("provider_key", cfg.providers);
           return (rows ?? []) as Record<string, unknown>[];
         }, [] as Record<string, unknown>[])
@@ -186,7 +186,7 @@ export const getViatorAffiliateOps = createServerFn({ method: "POST" })
       safe(async () => {
         const { data } = await ctx.supabase
           .from("viator_diagnostic_traces")
-          .select("created_at, step, http_status, ok, duration_ms, cart_ref")
+          .select("created_at, step, method, path, http_status, ok, duration_ms, cart_ref, error")
           .order("created_at", { ascending: false })
           .limit(25);
         return (data ?? []) as Record<string, unknown>[];
@@ -236,10 +236,10 @@ export const probeViatorAffiliate = createServerFn({ method: "POST" })
     if (!v.viatorConfigured()) return { ok: false, detail: "VIATOR_API_KEY not configured." };
     const t0 = Date.now();
     const search = await safe(async () => {
-      const r = await v.searchViator({ query: data.destination } as never);
-      const items = (r as unknown as { products?: { code?: string; title?: string }[] }).products ?? [];
-      return { ok: true, count: items.length, sample: items.slice(0, 5).map((p) => ({ code: p.code, title: p.title })) };
-    }, { ok: false, count: 0, sample: [] as { code?: string; title?: string }[] });
+      const r = await v.searchViator({ destination: data.destination, pageSize: 5 });
+      const items = (r.products ?? []) as unknown as { code?: string; title?: string }[];
+      return { ok: r.ok, status: r.status, error: r.error ?? null, count: items.length, sample: items.slice(0, 5).map((p) => ({ code: p.code, title: p.title })) };
+    }, { ok: false, status: 0, error: "Search failed" as string | null, count: 0, sample: [] as { code?: string; title?: string }[] });
     const code = data.productCode ?? search.sample[0]?.code;
     const availability = code
       ? await safe(async () => {
