@@ -44,7 +44,6 @@ import { Route as HotelsRouteImport } from './routes/hotels'
 import { Route as HoneymoonRouteImport } from './routes/honeymoon'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as FlightsRouteImport } from './routes/flights'
-import { Route as FdFlightsRouteImport } from './routes/fd-flights'
 import { Route as FamilyRouteImport } from './routes/family'
 import { Route as ExpeditionCruisesRouteImport } from './routes/expedition-cruises'
 import { Route as ExecutiveRouteImport } from './routes/executive'
@@ -173,6 +172,7 @@ import { Route as AdminBokunRouteImport } from './routes/admin.bokun'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminApiRouteImport } from './routes/admin.api'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminAiriqRouteImport } from './routes/admin.airiq'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
 import { Route as ActivitiesCodeRouteImport } from './routes/activities.$code'
 import { Route as AccountTripsRouteImport } from './routes/account.trips'
@@ -391,11 +391,6 @@ const HelpRoute = HelpRouteImport.update({
 const FlightsRoute = FlightsRouteImport.update({
   id: '/flights',
   path: '/flights',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FdFlightsRoute = FdFlightsRouteImport.update({
-  id: '/fd-flights',
-  path: '/fd-flights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FamilyRoute = FamilyRouteImport.update({
@@ -1039,6 +1034,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAiriqRoute = AdminAiriqRouteImport.update({
+  id: '/airiq',
+  path: '/airiq',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAgentsRoute = AdminAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -1302,7 +1302,6 @@ export interface FileRoutesByFullPath {
   '/executive': typeof ExecutiveRoute
   '/expedition-cruises': typeof ExpeditionCruisesRouteWithChildren
   '/family': typeof FamilyRouteWithChildren
-  '/fd-flights': typeof FdFlightsRoute
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/honeymoon': typeof HoneymoonRouteWithChildren
@@ -1348,6 +1347,7 @@ export interface FileRoutesByFullPath {
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/airiq': typeof AdminAiriqRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -1501,7 +1501,6 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/executive': typeof ExecutiveRoute
-  '/fd-flights': typeof FdFlightsRoute
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/kyc': typeof KycRoute
@@ -1530,6 +1529,7 @@ export interface FileRoutesByTo {
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/airiq': typeof AdminAiriqRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -1693,7 +1693,6 @@ export interface FileRoutesById {
   '/executive': typeof ExecutiveRoute
   '/expedition-cruises': typeof ExpeditionCruisesRouteWithChildren
   '/family': typeof FamilyRouteWithChildren
-  '/fd-flights': typeof FdFlightsRoute
   '/flights': typeof FlightsRoute
   '/help': typeof HelpRoute
   '/honeymoon': typeof HoneymoonRouteWithChildren
@@ -1739,6 +1738,7 @@ export interface FileRoutesById {
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/airiq': typeof AdminAiriqRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -1905,7 +1905,6 @@ export interface FileRouteTypes {
     | '/executive'
     | '/expedition-cruises'
     | '/family'
-    | '/fd-flights'
     | '/flights'
     | '/help'
     | '/honeymoon'
@@ -1951,6 +1950,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
+    | '/admin/airiq'
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
@@ -2104,7 +2104,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/executive'
-    | '/fd-flights'
     | '/flights'
     | '/help'
     | '/kyc'
@@ -2133,6 +2132,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
+    | '/admin/airiq'
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
@@ -2295,7 +2295,6 @@ export interface FileRouteTypes {
     | '/executive'
     | '/expedition-cruises'
     | '/family'
-    | '/fd-flights'
     | '/flights'
     | '/help'
     | '/honeymoon'
@@ -2341,6 +2340,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
+    | '/admin/airiq'
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
@@ -2506,7 +2506,6 @@ export interface RootRouteChildren {
   ExecutiveRoute: typeof ExecutiveRoute
   ExpeditionCruisesRoute: typeof ExpeditionCruisesRouteWithChildren
   FamilyRoute: typeof FamilyRouteWithChildren
-  FdFlightsRoute: typeof FdFlightsRoute
   FlightsRoute: typeof FlightsRoute
   HelpRoute: typeof HelpRoute
   HoneymoonRoute: typeof HoneymoonRouteWithChildren
@@ -2823,13 +2822,6 @@ declare module '@tanstack/react-router' {
       path: '/flights'
       fullPath: '/flights'
       preLoaderRoute: typeof FlightsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fd-flights': {
-      id: '/fd-flights'
-      path: '/fd-flights'
-      fullPath: '/fd-flights'
-      preLoaderRoute: typeof FdFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/family': {
@@ -3728,6 +3720,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/airiq': {
+      id: '/admin/airiq'
+      path: '/airiq'
+      fullPath: '/admin/airiq'
+      preLoaderRoute: typeof AdminAiriqRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/agents': {
       id: '/admin/agents'
       path: '/agents'
@@ -4066,6 +4065,7 @@ const AccountRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminAgentsRoute: typeof AdminAgentsRoute
+  AdminAiriqRoute: typeof AdminAiriqRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApiRoute: typeof AdminApiRoute
   AdminAuditRoute: typeof AdminAuditRoute
@@ -4095,6 +4095,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgentsRoute: AdminAgentsRoute,
+  AdminAiriqRoute: AdminAiriqRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApiRoute: AdminApiRoute,
   AdminAuditRoute: AdminAuditRoute,
@@ -4584,7 +4585,6 @@ const rootRouteChildren: RootRouteChildren = {
   ExecutiveRoute: ExecutiveRoute,
   ExpeditionCruisesRoute: ExpeditionCruisesRouteWithChildren,
   FamilyRoute: FamilyRouteWithChildren,
-  FdFlightsRoute: FdFlightsRoute,
   FlightsRoute: FlightsRoute,
   HelpRoute: HelpRoute,
   HoneymoonRoute: HoneymoonRouteWithChildren,

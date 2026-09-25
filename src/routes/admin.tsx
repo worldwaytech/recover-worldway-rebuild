@@ -47,6 +47,7 @@ const NAV = [
   { to: "/admin/viator-merchant", label: "Viator Merchant (Sandbox)", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/viator-diagnostics", label: "Viator Diagnostic Export", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/tripjack", label: "TripJack certification", icon: <PlugZap className="h-4 w-4" /> },
+  { to: "/admin/airiq", label: "AIR iQ flights", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/users", label: "Users", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/agents", label: "Agents", icon: <Briefcase className="h-4 w-4" /> },
   { to: "/admin/kyc", label: "KYC & Compliance", icon: <BadgeCheck className="h-4 w-4" /> },
