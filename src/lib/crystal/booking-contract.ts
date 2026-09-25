@@ -12,7 +12,8 @@ export type CrystalBookingBlockReason =
   | "channel_context_missing"
   | "egress_not_confirmed"
   | "not_certified"
-  | "credentials_missing";
+  | "credentials_missing"
+  | "prod_booking_test_not_authorized";
 
 /** One activation gate in the Crystal PROD readiness check. */
 export type CrystalGateState = "green" | "amber" | "red" | "unknown";

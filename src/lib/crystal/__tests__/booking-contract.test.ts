@@ -127,7 +127,11 @@ describe("booking rail is fail-closed", () => {
     process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
     expect(bookingCapability().reason).toBe("not_certified");
     process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
+    // Still fail-closed until a real PROD booking test is explicitly authorised.
+    expect(bookingCapability().reason).toBe("prod_booking_test_not_authorized");
+    process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"] = "true";
     expect(bookingCapability().live).toBe(true);
+    delete process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"];
   });
 });
 
