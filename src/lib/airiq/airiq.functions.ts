@@ -186,7 +186,17 @@ async function issueTicket(bookingId: string) {
     await supabaseAdmin.from("bookings").update({ supplier_status: "fare-changed" }).eq("id", bookingId);
     return { ok: false as const, error: "The fare changed before ticketing; our flight desk will contact you." };
   }
-  await supabaseAdmin.from("bookings").update({ supplier_status: "ticketing" }).eq("id", bookingId);
+  // Atomic claim: only one caller can move a paid booking into ticketing (prevents duplicate bookings).
+  const { data: claimed } = await supabaseAdmin
+    .from("bookings")
+    .update({ supplier_status: "ticketing" })
+    .eq("id", bookingId)
+    .is("supplier_reference", null)
+    .in("supplier_status", ["paid-awaiting-ticket", "awaiting-ticketing"])
+    .select("id");
+  if (!claimed || claimed.length === 0) {
+    return { ok: false as const, error: "Your ticket is already being issued." };
+  }
   try {
     const res = await airiqBook({
       ticketId: d["ticketId"],
@@ -195,7 +205,17 @@ async function issueTicket(bookingId: string) {
       children: d["passengers"].children.map((p: Pax) => toSupplierPax(p)),
       infants: d["passengers"].infants.map((p: Pax, i: number) => toSupplierPax(p, String(i + 1))),
     });
+    if (!res.bookingId) throw new Error("No booking reference returned");
     await supabaseAdmin.from("bookings").update({ supplier_reference: res.bookingId, supplier_status: "ticketed", status: "confirmed" }).eq("id", bookingId);
+    // PNR / ticket details (read-only, safe to retry).
+    try {
+      const { airiqTicket } = await import("./client.server");
+      const t = await airiqTicket(res.bookingId);
+      const pnr = String(t["pnr"] ?? t["PNR"] ?? t["airline_pnr"] ?? "") || null;
+      await supabaseAdmin.from("bookings").update({ details: { ...d, ticket: t, pnr } }).eq("id", bookingId);
+    } catch (e) {
+      console.error("[prepurchased] ticket retrieval failed", e instanceof Error ? e.message : e);
+    }
     return { ok: true as const, supplierReference: res.bookingId, alreadyIssued: false };
   } catch (e) {
     // Indeterminate outcome: never retry blindly — staff resolve via ticket retrieval.
@@ -218,7 +238,7 @@ export const finalizePrePurchasedBooking = createServerFn({ method: "POST" })
     if (!p || p.user_id !== context.userId || p.status !== "paid" || !p.verified_at || ref["booking_id"] !== data.bookingId || Number(p.amount_minor) !== Math.round(Number(b.amount) * 100)) {
       return { ok: false as const, error: "Payment could not be matched to this booking." };
     }
-    await supabaseAdmin.from("bookings").update({ amount_paid: Number(b.amount), balance_due: 0, supplier_status: "paid-awaiting-ticket" }).eq("id", b.id);
+    await supabaseAdmin.from("bookings").update({ amount_paid: Number(b.amount), balance_due: 0, supplier_status: "paid-awaiting-ticket" }).eq("id", b.id).eq("amount_paid", 0);
     const t = await issueTicket(b.id);
     return { ok: true as const, ticketed: t.ok, message: t.ok ? "Your ticket has been issued." : t.error };
   });

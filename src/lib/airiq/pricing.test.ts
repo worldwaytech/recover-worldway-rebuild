@@ -13,8 +13,8 @@ describe("pre-purchased flight pricing", () => {
 
 describe("ticketing gate (mocked final step)", () => {
   afterEach(() => vi.unstubAllEnvs());
-  it("never calls the supplier when ticketing is not authorised", async () => {
-    vi.stubEnv("AIRIQ_BOOKING_ENABLED", "");
+  it("never calls the supplier when the emergency stop is on", async () => {
+    vi.stubEnv("AIRIQ_BOOKING_ENABLED", "false");
     const spy = vi.spyOn(globalThis, "fetch");
     await expect(
       airiqBook({ ticketId: "x", pax: { adult: 1, child: 0, infant: 0 }, adults: [], children: [], infants: [] }),
