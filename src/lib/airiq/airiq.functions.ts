@@ -48,7 +48,7 @@ export const listPrePurchasedDates = createServerFn({ method: "POST" })
 export const searchPrePurchasedFares = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => searchSchema.parse(i))
   .handler(async ({ data }) => {
-    const { airiqSearch, fareTotal } = await import("./client.server");
+    const { airiqSearch, customerTotal } = await import("./client.server");
     try {
       const fares = await airiqSearch(data);
       return {
@@ -56,7 +56,7 @@ export const searchPrePurchasedFares = createServerFn({ method: "POST" })
         currency: "INR",
         fares: fares
           .filter((f) => f.seats >= data.adult + data.child)
-          .map((f) => ({ ...f, total: fareTotal(f, data) })),
+          .map((f) => ({ ...f, price: customerTotal({ price: f.price, infantPrice: 0 }, { adult: 1, child: 0, infant: 0 }), infantPrice: customerTotal({ price: 0, infantPrice: f.infantPrice }, { adult: 0, child: 0, infant: 1 }), total: customerTotal(f, data) })),
       };
     } catch (e) {
       return { ok: false as const, currency: "INR", fares: [], error: friendly(e) };
@@ -91,7 +91,7 @@ export const reservePrePurchasedFare = createServerFn({ method: "POST" })
     if (data.adults.length !== data.adult || data.children.length !== data.child || data.infants.length !== data.infant) {
       return { ok: false as const, error: "Passenger details don't match the number of travellers." };
     }
-    const { airiqSearch, fareTotal } = await import("./client.server");
+    const { airiqSearch, fareTotal, customerTotal, WORLDWAY_MARKUP_PERCENT } = await import("./client.server");
     let fare;
     try {
       const fares = await airiqSearch(data);
@@ -111,7 +111,8 @@ export const reservePrePurchasedFare = createServerFn({ method: "POST" })
     if (data.infants.some((p) => !p.dob)) {
       return { ok: false as const, error: "Date of birth is required for every infant." };
     }
-    const total = fareTotal(fare, data);
+    const supplierTotal = fareTotal(fare, data);
+    const total = customerTotal(fare, data);
     const reference = `WW-PPF-${Date.now().toString(36).toUpperCase()}`;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
@@ -137,6 +138,7 @@ export const reservePrePurchasedFare = createServerFn({ method: "POST" })
           search: { origin: data.origin, destination: data.destination, date: data.date },
           passengers: { adults: data.adults, children: data.children, infants: data.infants },
           contact: { email: data.contactEmail, phone: data.contactPhone },
+          pricing: { supplierTotal, markupPercent: WORLDWAY_MARKUP_PERCENT, markup: total - supplierTotal, total },
           revalidatedAt: new Date().toISOString(),
         },
       })
