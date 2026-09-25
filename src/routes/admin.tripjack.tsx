@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { TRIPJACK_CERTIFICATION_STATUSES, type TripjackCertificationStatus } from "@/lib/tripjack/config";
 import {
+  exportTripjackCertificationPackage,
   exportTripjackEvidence,
   getTripjackCertification,
   updateTripjackCertificationCase,
@@ -45,14 +46,17 @@ function crc32(bytes: Uint8Array): number {
   for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]!) & 0xff]! ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
-function makeZip(files: Array<{ name: string; content: string }>): Blob {
+function makeZip(files: Array<{ name: string; content: string | Uint8Array }>): Blob {
+  return new Blob([zipBytes(files)] as BlobPart[], { type: "application/zip" });
+}
+function zipBytes(files: Array<{ name: string; content: string | Uint8Array }>): Uint8Array {
   const enc = new TextEncoder();
   const parts: Uint8Array[] = [];
   const central: Uint8Array[] = [];
   let offset = 0;
   for (const f of files) {
     const name = enc.encode(f.name);
-    const data = enc.encode(f.content);
+    const data = typeof f.content === "string" ? enc.encode(f.content) : f.content;
     const crc = crc32(data);
     const local = new DataView(new ArrayBuffer(30));
     local.setUint32(0, 0x04034b50, true);
@@ -96,7 +100,26 @@ function makeZip(files: Array<{ name: string; content: string }>): Blob {
   end.setUint32(12, cdSize, true);
   end.setUint32(16, offset, true);
   end.setUint16(20, 0, true);
-  return new Blob([...parts, ...central, new Uint8Array(end.buffer)] as BlobPart[], { type: "application/zip" });
+  const all = [...parts, ...central, new Uint8Array(end.buffer)];
+  const out = new Uint8Array(all.reduce((n, p) => n + p.length, 0));
+  let o = 0;
+  for (const p of all) { out.set(p, o); o += p.length; }
+  return out;
+}
+/** Minimal single-sheet .xlsx (inline strings) — no dependency. */
+function makeXlsx(header: string[], rows: Array<Array<string | number | null>>): Uint8Array {
+  const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const col = (i: number) => String.fromCharCode(65 + i);
+  const cell = (v: string | number | null, r: number, i: number) =>
+    typeof v === "number" ? `<c r="${col(i)}${r}"><v>${v}</v></c>` : `<c r="${col(i)}${r}" t="inlineStr"><is><t>${esc(v ?? "")}</t></is></c>`;
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${[header, ...rows].map((r, ri) => `<row r="${ri + 1}">${r.map((v, i) => cell(v, ri + 1, i)).join("")}</row>`).join("")}</sheetData></worksheet>`;
+  return zipBytes([
+    { name: "[Content_Types].xml", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>` },
+    { name: "_rels/.rels", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+    { name: "xl/workbook.xml", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Certification Log" sheetId="1" r:id="rId1"/></sheets></workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>` },
+    { name: "xl/worksheets/sheet1.xml", content: sheet },
+  ]);
 }
 function download(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -219,6 +242,20 @@ function TripjackConsole() {
   }, []);
 
   const suites = ["cabs", "tripsafe"] as const;
+  const pkgFn = useServerFn(exportTripjackCertificationPackage);
+  async function onExportPackage() {
+    try {
+      const r = await pkgFn();
+      const xlsx = makeXlsx(
+        ["Case ID", "Suite", "Step", "Evidence status", "Admin cases", "Correlation ID", "Timestamp (UTC)", "Endpoint", "HTTP", "Duration ms", "Outcome", "Booking/Policy ref", "Request file", "Response file"],
+        r.rows.map((x) => [x.stepId, x.suite, x.step, x.status, x.adminCases, x.correlationId, x.timestamp, x.endpoint, x.httpStatus, x.durationMs, x.outcome, x.reference, x.requestFile, x.responseFile]),
+      );
+      download(makeZip([{ name: "TripJack_UAT_Certification_Log.xlsx", content: xlsx }, ...r.files]), "TripJack_UAT_Certification_Evidence.zip");
+      toast.success(`${r.count} real supplier call(s) exported.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed.");
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -235,6 +272,9 @@ function TripjackConsole() {
           </Button>
           <Button variant="outline" onClick={() => void refresh(false)} disabled={loading}>
             <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+          </Button>
+          <Button onClick={() => void onExportPackage()} disabled={loading}>
+            <Download className="mr-2 h-4 w-4" /> Export certification package
           </Button>
         </div>
       </header>

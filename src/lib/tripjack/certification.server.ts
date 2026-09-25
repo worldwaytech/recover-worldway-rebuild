@@ -356,3 +356,75 @@ export async function exportCorrelationEvidence(client: Client, correlationIds: 
   const rows = logs ?? [];
   return { files: toFiles(rows, "evidence"), count: rows.length };
 }
+
+// ─── Full certification package (all real evidence, step-wise) ───────────────
+
+export const TRIPJACK_EVIDENCE_STEPS = [
+  { id: "TS-SEARCH", suite: "tripsafe", step: "Search", capabilities: ["search", "student", "amt"] },
+  { id: "TS-REVIEW", suite: "tripsafe", step: "Review", capabilities: ["review"] },
+  { id: "TS-BOOK", suite: "tripsafe", step: "Book", capabilities: ["book", "booking-details"] },
+  { id: "CAB-LOCSEARCH", suite: "cabs", step: "Location Search", capabilities: ["location-search"] },
+  { id: "CAB-LATLONG", suite: "cabs", step: "Get Latitude/Longitude", capabilities: ["location-latlong"] },
+  { id: "CAB-QUOTES", suite: "cabs", step: "Quotes", capabilities: ["quote"] },
+  { id: "CAB-REVIEW", suite: "cabs", step: "Review", capabilities: ["book"] },
+  { id: "CAB-PAY", suite: "cabs", step: "Pay", capabilities: ["payment", "booking-details"] },
+] as const;
+
+export type EvidenceStatus = "PASS" | "BLOCKED" | "FAILED" | "EVIDENCE_MISSING";
+
+function evidenceStatus(rows: LogRow[]): EvidenceStatus {
+  if (!rows.length) return "EVIDENCE_MISSING";
+  if (rows.some((r) => r.outcome === "ok" && r.response_status !== null && r.response_status >= 200 && r.response_status < 300)) return "PASS";
+  if (rows.some((r) => r.error_kind === "invalid-response" || [403, 404, 503].includes(r.response_status ?? 0))) return "BLOCKED";
+  return "FAILED";
+}
+
+export type PackageRow = {
+  stepId: string; suite: string; step: string; status: EvidenceStatus; adminCases: string;
+  correlationId: string; timestamp: string; endpoint: string; httpStatus: number | null; durationMs: number | null;
+  outcome: string; reference: string; requestFile: string; responseFile: string;
+};
+
+/** Every persisted real call, grouped per certification step. Nothing is synthesised. */
+export async function exportCertificationPackage(client: Client) {
+  const { data, error } = await client.from("tripjack_api_logs").select("*").order("created_at", { ascending: true }).limit(1000);
+  if (error) throw new Error(error.message);
+  const logs = (data ?? []) as LogRow[];
+  const { data: caseRows } = await client.from("tripjack_certification_cases").select("*");
+  const files: EvidenceFile[] = [];
+  const rows: PackageRow[] = [];
+  const steps: Record<string, unknown>[] = [];
+  let n = 0;
+  for (const s of TRIPJACK_EVIDENCE_STEPS) {
+    const mine = logs.filter((l) => l.suite === s.suite && (s.capabilities as readonly string[]).includes(l.capability));
+    const status = evidenceStatus(mine);
+    const adminCases = TRIPJACK_CERTIFICATION_CASES.filter((c) => c.suite === s.suite && c.capabilities.some((k) => (s.capabilities as readonly string[]).includes(k))).map((c) => c.key);
+    const lines = [`CASE ${s.id} — ${s.suite.toUpperCase()} ${s.step}`, `Admin cases: ${adminCases.join(", ")}`, `Evidence status: ${status}`, ""];
+    const calls: Record<string, unknown>[] = [];
+    for (const r of mine) {
+      n++;
+      const tag = `${String(n).padStart(3, "0")}_${s.id}_${safe(r.correlation_id)}`;
+      const endpoint = `${TRIPJACK_UAT_BASE_URL}${r.path}`;
+      const reqFile = `requests/request_${tag}.json`;
+      const resFile = `responses/response_${tag}.json`;
+      files.push({ name: reqFile, content: JSON.stringify({ caseId: s.id, correlationId: r.correlation_id, timestamp: r.created_at, method: r.method, url: endpoint, query: r.request_query, headers: { "Content-Type": "application/json", apikey: "[removed — never stored]" }, body: stripCredentials(r.request_body) ?? null }, null, 2) });
+      files.push({ name: resFile, content: JSON.stringify({ caseId: s.id, correlationId: r.correlation_id, timestamp: r.created_at, httpStatus: r.response_status, durationMs: r.duration_ms, outcome: r.outcome, errorKind: r.error_kind, body: stripCredentials(r.response_body) ?? null }, null, 2) });
+      const ref = r.supplier_booking_id ?? "";
+      lines.push(`[${r.created_at}] ${r.method} ${endpoint} cid=${r.correlation_id} http=${r.response_status ?? "-"} ${r.duration_ms}ms outcome=${r.outcome}${r.error_kind ? ` (${r.error_kind})` : ""}${ref ? ` ref=${ref}` : ""} log=${r.id}`);
+      calls.push({ correlationId: r.correlation_id, capability: r.capability, timestamp: r.created_at, endpoint, httpStatus: r.response_status, durationMs: r.duration_ms, outcome: r.outcome, errorKind: r.error_kind, reference: ref || null, requestFile: reqFile, responseFile: resFile, logId: r.id });
+      rows.push({ stepId: s.id, suite: s.suite, step: s.step, status, adminCases: adminCases.join(", "), correlationId: r.correlation_id, timestamp: r.created_at, endpoint, httpStatus: r.response_status, durationMs: r.duration_ms, outcome: r.outcome, reference: ref, requestFile: reqFile, responseFile: resFile });
+    }
+    if (!mine.length) {
+      lines.push("No real request/response recorded. Nothing reconstructed.", `Must capture: a real UAT ${s.step} call (${s.capabilities.join(" / ")}).`);
+      rows.push({ stepId: s.id, suite: s.suite, step: s.step, status, adminCases: adminCases.join(", "), correlationId: "", timestamp: "", endpoint: "", httpStatus: null, durationMs: null, outcome: "", reference: "", requestFile: "", responseFile: "" });
+    }
+    files.push({ name: `case_logs/${s.id}.log`, content: lines.join("\n") + "\n" });
+    steps.push({ caseId: s.id, suite: s.suite, step: s.step, status, adminCases, calls });
+  }
+  const generatedAt = new Date().toISOString();
+  files.unshift({ name: "TripJack_Certification_Evidence.json", content: JSON.stringify({ environment: "uat", baseUrl: TRIPJACK_UAT_BASE_URL, generatedAt, evidenceRows: logs.length, cases: steps, adminCaseRecords: (caseRows ?? []).map((c) => ({ caseKey: c.case_key, status: c.status, supplierBookingId: c.supplier_booking_id, confirmationNumbers: c.confirmation_numbers, correlationIds: c.correlation_ids, updatedAt: c.updated_at })) }, null, 2) });
+  files.push({ name: "EVIDENCE_INDEX.md", content: ["# Evidence Index", "", "| Case | Status | Correlation ID | Timestamp | HTTP | Ref | Request | Response |", "|---|---|---|---|---|---|---|---|", ...rows.map((r) => `| ${r.stepId} | ${r.status} | ${r.correlationId || "—"} | ${r.timestamp || "—"} | ${r.httpStatus ?? "—"} | ${r.reference || "—"} | ${r.requestFile || "—"} | ${r.responseFile || "—"} |`)].join("\n") + "\n" });
+  const pass = steps.filter((s) => s.status === "PASS").length;
+  files.push({ name: "FINAL_AUDIT_REPORT.md", content: [`# TripJack UAT Certification — Audit Report`, `Generated ${generatedAt} · UAT ${TRIPJACK_UAT_BASE_URL}`, "", `Real evidence rows: ${logs.length}. Steps with real passing evidence: ${pass}/${steps.length}.`, `Overall: ${pass === steps.length ? "ALL STEPS EVIDENCED" : "NOT READY — see missing/blocked steps"}`, "", ...steps.map((s) => `- ${s.caseId} (${s.suite} ${s.step}): ${s.status}`), "", "All payloads are unmodified supplier JSON from tripjack_api_logs. Credentials are never stored; the API key must be attached separately."].join("\n") + "\n" });
+  return { files, rows, count: logs.length };
+}

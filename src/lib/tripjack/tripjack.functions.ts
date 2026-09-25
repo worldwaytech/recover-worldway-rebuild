@@ -372,3 +372,12 @@ export const exportTripjackEvidence = createServerFn({ method: "POST" })
       ? exportCaseEvidence(context.supabase as never, data.caseKey)
       : exportCorrelationEvidence(context.supabase as never, data.correlationIds);
   });
+
+export const exportTripjackCertificationPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { isAdmin } = await import("@/lib/wwl.server");
+    if (!(await isAdmin(context as never))) throw new Error("Forbidden");
+    const { exportCertificationPackage } = await import("./certification.server");
+    return exportCertificationPackage(context.supabase as never);
+  });

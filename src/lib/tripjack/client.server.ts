@@ -156,6 +156,7 @@ async function persistEvidence(rec: EvidenceRecord): Promise<void> {
       duration_ms: rec.durationMs,
       outcome: rec.outcome,
       error_kind: rec.errorKind ?? null,
+      test_case: `${rec.suite}/${rec.capability}`,
       supplier_booking_id: supplierBookingIdFrom(rec.responseBody, rec.requestBody, rec.query),
     });
   } catch (error) {
