@@ -191,13 +191,22 @@ export async function holdCrystalVoyage(
       live.error ?? "Crystal could not confirm live availability for this voyage right now.",
     );
   }
+  // Match the exact grade first: a fare code (e.g. "FIT") is shared by every
+  // grade, so matching on it alone would pick the wrong suite grade and price.
   const match =
-    live.fares.find(
-      (f) =>
-        (input.fareCode && f.fareCode === input.fareCode) ||
-        (input.gradeId && f.gradeId === input.gradeId) ||
-        f.suiteCategory === input.suiteCategory,
-    ) ?? null;
+    (input.gradeId
+      ? live.fares.find(
+          (f) => f.gradeId === input.gradeId && (!input.fareCode || f.fareCode === input.fareCode),
+        )
+      : undefined) ??
+    (!input.gradeId
+      ? live.fares.find(
+          (f) =>
+            f.suiteCategory === input.suiteCategory &&
+            (!input.fareCode || f.fareCode === input.fareCode),
+        )
+      : undefined) ??
+    null;
   if (!match || match.price <= 0) {
     throw new Error("That suite grade is no longer offered on this sailing.");
   }
@@ -326,7 +335,14 @@ export async function holdCrystalVoyage(
     }),
   };
 
-  const { data, error } = await client.from("bookings").insert(insert).select("*").single();
+  // Customers cannot create booking rows directly (server-verified flows only),
+  // so the verified server inserts it with the caller's authenticated user id.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("bookings")
+    .insert({ ...insert, user_id: userId })
+    .select("*")
+    .single();
   if (error) {
     // Unique idempotency violation → return the winning row.
     const replay = await findByIdempotency(client, input.idempotencyKey);

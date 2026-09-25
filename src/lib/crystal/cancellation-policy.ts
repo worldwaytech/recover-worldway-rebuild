@@ -80,3 +80,9 @@ export function firstPenaltyDay(bands: CrystalPenaltyBand[] | null | undefined):
   const w = norm(bands).find((b) => (b.amountPercent ?? 0) > 0 || (b.fixedAmount ?? 0) > 0);
   return w ? w.daysFrom : null;
 }
+
+/** Days before departure when percentage-of-fare penalties begin (e.g. 120). */
+export function firstPercentPenaltyDay(bands: CrystalPenaltyBand[] | null | undefined): number | null {
+  const w = norm(bands).find((b) => (b.amountPercent ?? 0) > 0);
+  return w ? w.daysFrom : null;
+}
