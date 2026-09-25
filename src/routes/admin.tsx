@@ -125,7 +125,14 @@ function AdminLayout() {
   const fetchRegistry = useServerFn(getAdminRegistry);
   const registry = useQuery({
     queryKey: ["admin-registry-nav"],
-    queryFn: () => fetchRegistry(),
+    queryFn: async () => {
+      try {
+        return await fetchRegistry();
+      } catch {
+        return []; // non-critical: sidebar still renders without discovered connectors
+      }
+    },
+    retry: false,
     enabled: verified === "allowed",
     staleTime: 5 * 60_000,
   });
