@@ -212,7 +212,7 @@ async function issueTicket(bookingId: string) {
       const { airiqTicket } = await import("./client.server");
       const t = await airiqTicket(res.bookingId);
       const pnr = String(t["pnr"] ?? t["PNR"] ?? t["airline_pnr"] ?? "") || null;
-      await supabaseAdmin.from("bookings").update({ details: { ...d, ticket: t, pnr } }).eq("id", bookingId);
+      await supabaseAdmin.from("bookings").update({ details: { ...d, ticket: t, pnr } as never }).eq("id", bookingId);
     } catch (e) {
       console.error("[prepurchased] ticket retrieval failed", e instanceof Error ? e.message : e);
     }
