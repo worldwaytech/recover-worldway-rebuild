@@ -429,6 +429,9 @@ export const confirmInputSchema = z.object({
   bookingId: z.string().uuid(),
   idempotencyKey: z.string().trim().min(8).max(120),
   acceptedTerms: z.literal(true),
+  /** Version id of the cancellation policy the customer acknowledged. */
+  policyVersion: z.string().trim().min(8).max(80),
+  acceptedCancellationPolicy: z.literal(true),
 });
 
 export const cancelInputSchema = z.object({
@@ -470,6 +473,10 @@ export const STATUS_LABELS: Record<CrystalBookingStatus, string> = {
 };
 
 export interface CrystalBookingRecord {
+  cancellationPolicy?: { daysFrom: number; daysTo: number; amountPercent?: number; fixedAmount?: number }[];
+  policyVersion?: string;
+  policyAcceptedAt?: string;
+  fareCode?: string;
   id: string;
   reference: string;
   status: CrystalBookingStatus;

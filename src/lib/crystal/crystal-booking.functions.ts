@@ -59,7 +59,10 @@ export const confirmCrystalReservation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => confirmInputSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { confirmCrystalBooking } = await import("./booking.server");
+    const { confirmCrystalBooking, recordCancellationPolicyAcceptance } = await import(
+      "./booking.server"
+    );
+    await recordCancellationPolicyAcceptance(context.supabase, data.bookingId, data.policyVersion);
     return confirmCrystalBooking(context.supabase, data.bookingId, data.idempotencyKey);
   });
 
