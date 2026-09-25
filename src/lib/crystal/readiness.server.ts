@@ -319,6 +319,6 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
     railArmed: capability.live,
     gates,
     blockers,
-    probed: Boolean(result),
+    probed: probe && Boolean(result),
   };
 }
