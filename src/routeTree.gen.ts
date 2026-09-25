@@ -150,6 +150,7 @@ import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
 import { Route as AdminViatorMerchantRouteImport } from './routes/admin.viator-merchant'
 import { Route as AdminViatorDiagnosticsRouteImport } from './routes/admin.viator-diagnostics'
+import { Route as AdminViatorAffiliateRouteImport } from './routes/admin.viator-affiliate'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
@@ -931,6 +932,11 @@ const AdminViatorDiagnosticsRoute = AdminViatorDiagnosticsRouteImport.update({
   path: '/viator-diagnostics',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminViatorAffiliateRoute = AdminViatorAffiliateRouteImport.update({
+  id: '/viator-affiliate',
+  path: '/viator-affiliate',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -1412,6 +1418,7 @@ export interface FileRoutesByFullPath {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-affiliate': typeof AdminViatorAffiliateRoute
   '/admin/viator-diagnostics': typeof AdminViatorDiagnosticsRoute
   '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
@@ -1601,6 +1608,7 @@ export interface FileRoutesByTo {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-affiliate': typeof AdminViatorAffiliateRoute
   '/admin/viator-diagnostics': typeof AdminViatorDiagnosticsRoute
   '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
@@ -1817,6 +1825,7 @@ export interface FileRoutesById {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-affiliate': typeof AdminViatorAffiliateRoute
   '/admin/viator-diagnostics': typeof AdminViatorDiagnosticsRoute
   '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
@@ -2036,6 +2045,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-affiliate'
     | '/admin/viator-diagnostics'
     | '/admin/viator-merchant'
     | '/agent/bookings'
@@ -2225,6 +2235,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-affiliate'
     | '/admin/viator-diagnostics'
     | '/admin/viator-merchant'
     | '/agent/bookings'
@@ -2440,6 +2451,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-affiliate'
     | '/admin/viator-diagnostics'
     | '/admin/viator-merchant'
     | '/agent/bookings'
@@ -3650,6 +3662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminViatorDiagnosticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/viator-affiliate': {
+      id: '/admin/viator-affiliate'
+      path: '/viator-affiliate'
+      fullPath: '/admin/viator-affiliate'
+      preLoaderRoute: typeof AdminViatorAffiliateRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -4221,6 +4240,7 @@ interface AdminRouteChildren {
   AdminTripjackRoute: typeof AdminTripjackRoute
   AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminViatorAffiliateRoute: typeof AdminViatorAffiliateRoute
   AdminViatorDiagnosticsRoute: typeof AdminViatorDiagnosticsRoute
   AdminViatorMerchantRoute: typeof AdminViatorMerchantRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -4258,6 +4278,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTripjackRoute: AdminTripjackRoute,
   AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminViatorAffiliateRoute: AdminViatorAffiliateRoute,
   AdminViatorDiagnosticsRoute: AdminViatorDiagnosticsRoute,
   AdminViatorMerchantRoute: AdminViatorMerchantRoute,
   AdminIndexRoute: AdminIndexRoute,

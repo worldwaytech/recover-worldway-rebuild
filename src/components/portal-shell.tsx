@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { portal, type PortalUser } from "@/lib/portal-store";
 import { LogOut, Wallet, Sparkles } from "lucide-react";
 
-type NavItem = { to: string; label: string; icon?: ReactNode };
+type NavItem = { to: string; label: string; icon?: ReactNode; group?: string };
 
 export function PortalShell({
   user,
@@ -92,11 +92,17 @@ export function PortalShell({
       >
         {nav && (
           <aside className="space-y-1">
-            {nav.map((n) => {
+            {nav.map((n, i) => {
               const active = pathname === n.to;
+              const heading = n.group && n.group !== nav[i - 1]?.group ? n.group : null;
               return (
+                <div key={`${n.to}-${n.label}`}>
+                {heading && (
+                  <div className="px-3 pb-1 pt-4 text-[0.6rem] uppercase tracking-[0.25em] text-muted-foreground/70">
+                    {heading}
+                  </div>
+                )}
                 <Link
-                  key={n.to}
                   to={n.to}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                     active
@@ -107,6 +113,7 @@ export function PortalShell({
                   {n.icon}
                   {n.label}
                 </Link>
+                </div>
               );
             })}
           </aside>
