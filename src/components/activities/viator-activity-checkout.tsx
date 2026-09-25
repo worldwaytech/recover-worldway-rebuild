@@ -19,6 +19,7 @@ import {
   type PaxMix,
 } from "@/lib/viator/checkout-contract";
 import { getViatorBookingQuestions } from "@/lib/viator.functions";
+import { logViatorCheckoutEvent } from "@/lib/viator/diagnostics.functions";
 import {
   LOCATION_REFERENCE_UNIT,
   FREETEXT_UNIT,
@@ -36,13 +37,19 @@ type PaymentHandler = {
   unload?: () => void;
 };
 
+type RenderOpts = {
+  /** Element ID (payment.js calls document.getElementById on it). */
+  cardElementContainer: string;
+  onFormUpdate?: (e: { eventType: string; formValid?: boolean }) => void;
+};
+
 type PaymentInstance = {
-  renderCheckout: (opts: {
-    cardElementContainer: HTMLElement | string;
-    onFormUpdate?: (e: { eventType: string; formValid?: boolean }) => void;
-  }) => PaymentHandler;
+  renderCard?: (opts: RenderOpts) => PaymentHandler;
+  renderCheckout: (opts: RenderOpts) => PaymentHandler;
   destruct?: () => void;
 };
+
+const CARD_CONTAINER_ID = "viator-card-frame-holder";
 
 declare global {
   interface Window {
@@ -110,6 +117,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   const hold = useServerFn(holdViatorActivityCart);
   const book = useServerFn(bookViatorActivityCart);
   const poll = useServerFn(viatorActivityBookingStatus);
+  const logEvent = useServerFn(logViatorCheckoutEvent);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const handlerRef = useRef<PaymentHandler | null>(null);
@@ -119,6 +127,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(false);
+  const [, setFormLoaded] = useState(false);
   const [session, setSession] = useState<{
     cartRef: string;
     accessToken: string;
@@ -237,23 +246,54 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   }, [props.productCode]);
 
   // Step 2: mount Viator's hosted card iFrame.
+  // Viator's payment.js resolves `cardElementContainer` with
+  // document.getElementById(id) — it must be the element's ID string, not a
+  // DOM node (passing the node throws "e.replace is not a function" and the
+  // iFrame never renders).
   useEffect(() => {
     if (!session || phase !== "paying") return;
     let disposed = false;
+    const report = (event: string, detail?: string) =>
+      void logEvent({
+        data: {
+          cartRef: session.cartRef,
+          accessToken: session.accessToken,
+          event,
+          ...(detail ? { detail: detail.slice(0, 480) } : {}),
+          origin: window.location.origin,
+        },
+      }).catch(() => undefined);
     (async () => {
       try {
         await loadPaymentScript();
+        report("SCRIPT_LOADED");
+      } catch (err) {
+        report("SCRIPT_LOAD_FAILED", err instanceof Error ? err.message : undefined);
+        if (!disposed) setError("Could not load the secure payment form.");
+        return;
+      }
+      try {
         if (disposed || !containerRef.current || !window.Payment) return;
         const instance = window.Payment.init(session.token);
-        handlerRef.current = instance.renderCheckout({
-          cardElementContainer: containerRef.current,
+        const render = instance.renderCard ?? instance.renderCheckout;
+        handlerRef.current = render.call(instance, {
+          cardElementContainer: CARD_CONTAINER_ID,
           onFormUpdate: (e) => {
-            if (e.eventType === "FORM_LOADED") setFormReady(true);
-            if (e.eventType === "FORM_ERROR") setError("The secure card form failed to load.");
-            if (typeof e.formValid === "boolean") setFormReady(true);
+            if (e.eventType === "FORM_LOADED") {
+              report("FORM_LOADED");
+              setFormLoaded(true);
+            }
+            if (e.eventType === "FORM_ERROR") {
+              report("FORM_ERROR");
+              setError("The secure card form failed to load.");
+            }
+            if (e.eventType === "FORM_OVERDUE") report("FORM_OVERDUE");
+            if (typeof e.formValid === "boolean") setFormReady(e.formValid);
           },
         });
+        report("IFRAME_INIT");
       } catch (err) {
+        report("IFRAME_INIT_FAILED", err instanceof Error ? err.message : undefined);
         if (!disposed) {
           setError(err instanceof Error ? err.message : "Could not load the payment form.");
         }
@@ -264,6 +304,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
       handlerRef.current?.unload?.();
       handlerRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, phase]);
 
   const pollUntilSettled = useCallback(
@@ -634,6 +675,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
 
             <div
               ref={containerRef}
+              id={CARD_CONTAINER_ID}
               data-testid="viator-card-element"
               className="min-h-[220px] rounded-lg border border-border/60 bg-background/40 p-2"
             />
