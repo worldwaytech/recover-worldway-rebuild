@@ -168,6 +168,7 @@ import { Route as AdminHbxRouteImport } from './routes/admin.hbx'
 import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
+import { Route as AdminCatalogueSyncRouteImport } from './routes/admin.catalogue-sync'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminBokunRouteImport } from './routes/admin.bokun'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
@@ -1022,6 +1023,11 @@ const AdminContentRoute = AdminContentRouteImport.update({
   path: '/content',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCatalogueSyncRoute = AdminCatalogueSyncRouteImport.update({
+  id: '/catalogue-sync',
+  path: '/catalogue-sync',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBookingsRoute = AdminBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
@@ -1401,6 +1407,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/catalogue-sync': typeof AdminCatalogueSyncRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
@@ -1591,6 +1598,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/catalogue-sync': typeof AdminCatalogueSyncRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
@@ -1808,6 +1816,7 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/catalogue-sync': typeof AdminCatalogueSyncRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
@@ -2028,6 +2037,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/bokun'
     | '/admin/bookings'
+    | '/admin/catalogue-sync'
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
@@ -2218,6 +2228,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/bokun'
     | '/admin/bookings'
+    | '/admin/catalogue-sync'
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
@@ -2434,6 +2445,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/bokun'
     | '/admin/bookings'
+    | '/admin/catalogue-sync'
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
@@ -3788,6 +3800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContentRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/catalogue-sync': {
+      id: '/admin/catalogue-sync'
+      path: '/catalogue-sync'
+      fullPath: '/admin/catalogue-sync'
+      preLoaderRoute: typeof AdminCatalogueSyncRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/bookings': {
       id: '/admin/bookings'
       path: '/bookings'
@@ -4223,6 +4242,7 @@ interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBokunRoute: typeof AdminBokunRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminCatalogueSyncRoute: typeof AdminCatalogueSyncRoute
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
   AdminCrystalRoute: typeof AdminCrystalRoute
@@ -4261,6 +4281,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminBokunRoute: AdminBokunRoute,
   AdminBookingsRoute: AdminBookingsRoute,
+  AdminCatalogueSyncRoute: AdminCatalogueSyncRoute,
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
   AdminCrystalRoute: AdminCrystalRoute,

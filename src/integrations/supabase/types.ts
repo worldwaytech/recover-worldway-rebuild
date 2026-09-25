@@ -47,6 +47,69 @@ export type Database = {
         }
         Relationships: []
       }
+      aktg_journeys: {
+        Row: {
+          card: Json
+          code: string | null
+          content_hash: string | null
+          created_at: string
+          data: Json
+          deactivated_at: string | null
+          first_seen_at: string
+          id: string
+          is_active: boolean
+          journey_type: string | null
+          last_seen_at: string | null
+          slug: string
+          source_id: string
+          source_updated_at: string | null
+          source_url: string | null
+          title: string
+          updated_at: string
+          worldway_overrides: Json
+        }
+        Insert: {
+          card?: Json
+          code?: string | null
+          content_hash?: string | null
+          created_at?: string
+          data?: Json
+          deactivated_at?: string | null
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          journey_type?: string | null
+          last_seen_at?: string | null
+          slug: string
+          source_id: string
+          source_updated_at?: string | null
+          source_url?: string | null
+          title: string
+          updated_at?: string
+          worldway_overrides?: Json
+        }
+        Update: {
+          card?: Json
+          code?: string | null
+          content_hash?: string | null
+          created_at?: string
+          data?: Json
+          deactivated_at?: string | null
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          journey_type?: string | null
+          last_seen_at?: string | null
+          slug?: string
+          source_id?: string
+          source_updated_at?: string | null
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+          worldway_overrides?: Json
+        }
+        Relationships: []
+      }
       aviation_inquiries: {
         Row: {
           created_at: string
@@ -664,6 +727,60 @@ export type Database = {
           query?: string | null
           slug?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      catalogue_sync_sessions: {
+        Row: {
+          created: number
+          deactivated: number
+          detail: Json
+          discovered: number
+          error: string | null
+          failed: number
+          finished_at: string | null
+          id: string
+          provider: string
+          started_at: string
+          status: string
+          triggered_by: string | null
+          unchanged: number
+          updated: number
+          updated_at: string
+        }
+        Insert: {
+          created?: number
+          deactivated?: number
+          detail?: Json
+          discovered?: number
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          provider: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Update: {
+          created?: number
+          deactivated?: number
+          detail?: Json
+          discovered?: number
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          provider?: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+          unchanged?: number
+          updated?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2482,6 +2599,7 @@ export type Database = {
           brand: string
           created_at: string
           cursor: string | null
+          deactivated: number
           detail: Json
           discovered: number
           error: string | null
@@ -2501,6 +2619,7 @@ export type Database = {
           brand?: string
           created_at?: string
           cursor?: string | null
+          deactivated?: number
           detail?: Json
           discovered?: number
           error?: string | null
@@ -2520,6 +2639,7 @@ export type Database = {
           brand?: string
           created_at?: string
           cursor?: string | null
+          deactivated?: number
           detail?: Json
           discovered?: number
           error?: string | null
@@ -2546,6 +2666,7 @@ export type Database = {
           content_hash: string | null
           countries: Json
           created_at: string
+          deactivated_at: string | null
           departures: Json
           description: string | null
           destinations: Json
@@ -2560,7 +2681,9 @@ export type Database = {
           id: string
           images: Json
           inclusions: Json
+          is_active: boolean
           itinerary: Json
+          last_seen_at: string | null
           locale: string
           meals: Json
           name: string
@@ -2586,6 +2709,7 @@ export type Database = {
           transport: Json
           trip_type: string | null
           updated_at: string
+          worldway_overrides: Json
         }
         Insert: {
           accommodation?: Json
@@ -2595,6 +2719,7 @@ export type Database = {
           content_hash?: string | null
           countries?: Json
           created_at?: string
+          deactivated_at?: string | null
           departures?: Json
           description?: string | null
           destinations?: Json
@@ -2609,7 +2734,9 @@ export type Database = {
           id?: string
           images?: Json
           inclusions?: Json
+          is_active?: boolean
           itinerary?: Json
+          last_seen_at?: string | null
           locale?: string
           meals?: Json
           name: string
@@ -2635,6 +2762,7 @@ export type Database = {
           transport?: Json
           trip_type?: string | null
           updated_at?: string
+          worldway_overrides?: Json
         }
         Update: {
           accommodation?: Json
@@ -2644,6 +2772,7 @@ export type Database = {
           content_hash?: string | null
           countries?: Json
           created_at?: string
+          deactivated_at?: string | null
           departures?: Json
           description?: string | null
           destinations?: Json
@@ -2658,7 +2787,9 @@ export type Database = {
           id?: string
           images?: Json
           inclusions?: Json
+          is_active?: boolean
           itinerary?: Json
+          last_seen_at?: string | null
           locale?: string
           meals?: Json
           name?: string
@@ -2684,6 +2815,7 @@ export type Database = {
           transport?: Json
           trip_type?: string | null
           updated_at?: string
+          worldway_overrides?: Json
         }
         Relationships: []
       }

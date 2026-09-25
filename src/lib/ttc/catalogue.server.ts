@@ -72,7 +72,7 @@ export async function searchTtcCatalogue(
   const page = Math.max(1, filters.page ?? 1);
   const pageSize = Math.min(48, Math.max(6, filters.pageSize ?? 24));
 
-  let query = db.from("ttc_tours").select(CARD_COLUMNS, { count: "exact" });
+  let query = db.from("ttc_tours").select(CARD_COLUMNS, { count: "exact" }).eq("is_active", true);
 
   if (filters.q) {
     const term = filters.q.replace(/[%,()]/g, " ").trim();
@@ -131,6 +131,7 @@ export async function getTtcTour(brand: string, slug: string): Promise<TtcTourDe
   const { data, error } = await db
     .from("ttc_tours")
     .select(DETAIL_COLUMNS)
+    .eq("is_active", true)
     .eq("brand", brand)
     .eq("tour_slug", slug)
     .maybeSingle();
@@ -170,6 +171,7 @@ export async function getTtcFacets(): Promise<TtcFacets> {
   const { data, error } = await db
     .from("ttc_tours")
     .select("brand, brand_label, countries, tour_style, duration_days, price_from")
+    .eq("is_active", true)
     .limit(5000);
   if (error) throw new Error(`The TTC filters could not be loaded: ${error.message}`);
 
@@ -229,6 +231,7 @@ export async function listTtcTourKeys(limit = 2000) {
   const { data, error } = await db
     .from("ttc_tours")
     .select("brand, tour_slug, updated_at")
+    .eq("is_active", true)
     .order("brand")
     .limit(limit);
   if (error) throw new Error(error.message);
