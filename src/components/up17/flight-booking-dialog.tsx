@@ -212,6 +212,8 @@ export function FlightBookingDialog({
         const detail = await lookupBooking({
           data: {
             searchTokenId,
+            orderId: paid.orderId,
+            paymentId: paid.paymentId,
             ...(b.bookingId ? { bookingId: String(b.bookingId) } : {}),
             ...(b.pnr ? { pnr: String(b.pnr) } : {}),
           },
