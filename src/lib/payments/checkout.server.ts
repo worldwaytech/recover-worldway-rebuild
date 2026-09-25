@@ -41,7 +41,7 @@ export type OrderInput = {
  * server-side fare confirmation. Client-supplied amounts are never charged.
  */
 export async function resolvePaymentAmount(
-  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string } },
+  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string }; prePurchasedBookingId?: string },
 ): Promise<{
   amountMinor: number;
   currency: string;
@@ -54,6 +54,12 @@ export async function resolvePaymentAmount(
     }
     const plan = MEMBERSHIP_PLANS[planId];
     return { amountMinor: plan.amountMinor, currency: plan.currency, planId };
+  }
+
+  if (input.purpose === "flight" && input.prePurchasedBookingId) {
+    const { prePurchasedAmount } = await import("@/lib/airiq/payment.server");
+    const r = await prePurchasedAmount(input.prePurchasedBookingId, await optionalUserId());
+    return { ...r, planId: null };
   }
 
   if (input.purpose === "flight") {

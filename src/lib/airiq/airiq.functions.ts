@@ -213,27 +213,13 @@ export const finalizePrePurchasedBooking = createServerFn({ method: "POST" })
     if (!b || b.user_id !== context.userId || b.product_type !== PRODUCT_TYPE) return { ok: false as const, error: "Booking not found." };
     const { data: p } = await supabaseAdmin.from("payments").select("status, verified_at, amount_minor, reference, user_id").eq("order_id", data.orderId).maybeSingle();
     const ref = (p?.reference ?? {}) as Record<string, unknown>;
-    if (!p || p.status !== "paid" || !p.verified_at || ref["booking_id"] !== data.bookingId || Number(p.amount_minor) !== Math.round(Number(b.amount) * 100)) {
+    if (!p || p.user_id !== context.userId || p.status !== "paid" || !p.verified_at || ref["booking_id"] !== data.bookingId || Number(p.amount_minor) !== Math.round(Number(b.amount) * 100)) {
       return { ok: false as const, error: "Payment could not be matched to this booking." };
     }
     await supabaseAdmin.from("bookings").update({ amount_paid: b.amount, balance_due: 0, supplier_status: "paid-awaiting-ticket" }).eq("id", b.id);
     const t = await issueTicket(b.id);
     return { ok: true as const, ticketed: t.ok, message: t.ok ? "Your ticket has been issued." : t.error };
   });
-
-/** Used by the payment layer: server-authoritative amount for a pending booking. */
-export async function prePurchasedAmount(bookingId: string, userId: string | null) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: b } = await supabaseAdmin.from("bookings").select("user_id, amount, status, product_type, amount_paid, details").eq("id", bookingId).single();
-  if (!b || b.product_type !== PRODUCT_TYPE || !userId || b.user_id !== userId || b.status !== "pending" || Number(b.amount_paid) > 0) {
-    throw new Error("This booking can't be paid.");
-  }
-  const d = b.details as Record<string, any>;
-  const { airiqSearch } = await import("./client.server");
-  const live = (await airiqSearch({ ...d["search"], ...d["pax"] })).find((f) => f.ticketId === d["ticketId"]);
-  if (!live || live.price !== Number(d["fare"]?.price)) throw new Error("This fare has changed. Please search again.");
-  return { amountMinor: Math.round(Number(b.amount) * 100), currency: "INR" };
-}
 
 // ---------------- Staff ----------------
 async function assertStaff(client: any, userId: string) {

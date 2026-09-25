@@ -54,6 +54,7 @@ export type PayRequest = {
   phone?: string;
   reference?: Record<string, string | number | boolean>;
   flightFare?: { resultIndex: string; searchTokenId: string };
+  prePurchasedBookingId?: string;
 };
 
 /**
@@ -85,6 +86,7 @@ export function useRazorpayCheckout() {
             ...(req.phone ? { phone: req.phone } : {}),
             ...(req.reference ? { reference: req.reference } : {}),
             ...(req.flightFare ? { flightFare: req.flightFare } : {}),
+            ...(req.prePurchasedBookingId ? { prePurchasedBookingId: req.prePurchasedBookingId } : {}),
           },
         });
 
