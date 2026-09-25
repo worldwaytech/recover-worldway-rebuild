@@ -216,7 +216,7 @@ export const finalizePrePurchasedBooking = createServerFn({ method: "POST" })
     if (!p || p.user_id !== context.userId || p.status !== "paid" || !p.verified_at || ref["booking_id"] !== data.bookingId || Number(p.amount_minor) !== Math.round(Number(b.amount) * 100)) {
       return { ok: false as const, error: "Payment could not be matched to this booking." };
     }
-    await supabaseAdmin.from("bookings").update({ amount_paid: b.amount, balance_due: 0, supplier_status: "paid-awaiting-ticket" }).eq("id", b.id);
+    await supabaseAdmin.from("bookings").update({ amount_paid: Number(b.amount), balance_due: 0, supplier_status: "paid-awaiting-ticket" }).eq("id", b.id);
     const t = await issueTicket(b.id);
     return { ok: true as const, ticketed: t.ok, message: t.ok ? "Your ticket has been issued." : t.error };
   });
