@@ -150,6 +150,7 @@ import { Route as AgentClientsRouteImport } from './routes/agent.clients'
 import { Route as AgentBookingsRouteImport } from './routes/agent.bookings'
 import { Route as AdminViatorMerchantRouteImport } from './routes/admin.viator-merchant'
 import { Route as AdminViatorDiagnosticsRouteImport } from './routes/admin.viator-diagnostics'
+import { Route as AdminViatorAffiliateRouteImport } from './routes/admin.viator-affiliate'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
@@ -203,6 +204,13 @@ import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
 import { Route as ApiPublicSupplierImageRouteImport } from './routes/api/public/supplier-image'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
+import { Route as AdminOpsYachtsRouteImport } from './routes/admin.ops.yachts'
+import { Route as AdminOpsVillasRouteImport } from './routes/admin.ops.villas'
+import { Route as AdminOpsTripServicesRouteImport } from './routes/admin.ops.trip-services'
+import { Route as AdminOpsSafariRouteImport } from './routes/admin.ops.safari'
+import { Route as AdminOpsRailRouteImport } from './routes/admin.ops.rail'
+import { Route as AdminOpsCruiseaRouteImport } from './routes/admin.ops.cruisea'
+import { Route as AdminOpsAviationRouteImport } from './routes/admin.ops.aviation'
 import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -924,6 +932,11 @@ const AdminViatorDiagnosticsRoute = AdminViatorDiagnosticsRouteImport.update({
   path: '/viator-diagnostics',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminViatorAffiliateRoute = AdminViatorAffiliateRouteImport.update({
+  id: '/viator-affiliate',
+  path: '/viator-affiliate',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -1198,6 +1211,41 @@ const ApiPublicRazorpayWebhookRoute =
     path: '/api/public/razorpay-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminOpsYachtsRoute = AdminOpsYachtsRouteImport.update({
+  id: '/ops/yachts',
+  path: '/ops/yachts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpsVillasRoute = AdminOpsVillasRouteImport.update({
+  id: '/ops/villas',
+  path: '/ops/villas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpsTripServicesRoute = AdminOpsTripServicesRouteImport.update({
+  id: '/ops/trip-services',
+  path: '/ops/trip-services',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpsSafariRoute = AdminOpsSafariRouteImport.update({
+  id: '/ops/safari',
+  path: '/ops/safari',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpsRailRoute = AdminOpsRailRouteImport.update({
+  id: '/ops/rail',
+  path: '/ops/rail',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpsCruiseaRoute = AdminOpsCruiseaRouteImport.update({
+  id: '/ops/cruisea',
+  path: '/ops/cruisea',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpsAviationRoute = AdminOpsAviationRouteImport.update({
+  id: '/ops/aviation',
+  path: '/ops/aviation',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AccountBookingIdRoute = AccountBookingIdRouteImport.update({
   id: '/booking/$id',
   path: '/booking/$id',
@@ -1370,6 +1418,7 @@ export interface FileRoutesByFullPath {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-affiliate': typeof AdminViatorAffiliateRoute
   '/admin/viator-diagnostics': typeof AdminViatorDiagnosticsRoute
   '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
@@ -1457,6 +1506,13 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/admin/ops/aviation': typeof AdminOpsAviationRoute
+  '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
+  '/admin/ops/rail': typeof AdminOpsRailRoute
+  '/admin/ops/safari': typeof AdminOpsSafariRoute
+  '/admin/ops/trip-services': typeof AdminOpsTripServicesRoute
+  '/admin/ops/villas': typeof AdminOpsVillasRoute
+  '/admin/ops/yachts': typeof AdminOpsYachtsRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1552,6 +1608,7 @@ export interface FileRoutesByTo {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-affiliate': typeof AdminViatorAffiliateRoute
   '/admin/viator-diagnostics': typeof AdminViatorDiagnosticsRoute
   '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
@@ -1638,6 +1695,13 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/admin/ops/aviation': typeof AdminOpsAviationRoute
+  '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
+  '/admin/ops/rail': typeof AdminOpsRailRoute
+  '/admin/ops/safari': typeof AdminOpsSafariRoute
+  '/admin/ops/trip-services': typeof AdminOpsTripServicesRoute
+  '/admin/ops/villas': typeof AdminOpsVillasRoute
+  '/admin/ops/yachts': typeof AdminOpsYachtsRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1761,6 +1825,7 @@ export interface FileRoutesById {
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/viator-affiliate': typeof AdminViatorAffiliateRoute
   '/admin/viator-diagnostics': typeof AdminViatorDiagnosticsRoute
   '/admin/viator-merchant': typeof AdminViatorMerchantRoute
   '/agent/bookings': typeof AgentBookingsRoute
@@ -1848,6 +1913,13 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
+  '/admin/ops/aviation': typeof AdminOpsAviationRoute
+  '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
+  '/admin/ops/rail': typeof AdminOpsRailRoute
+  '/admin/ops/safari': typeof AdminOpsSafariRoute
+  '/admin/ops/trip-services': typeof AdminOpsTripServicesRoute
+  '/admin/ops/villas': typeof AdminOpsVillasRoute
+  '/admin/ops/yachts': typeof AdminOpsYachtsRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1973,6 +2045,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-affiliate'
     | '/admin/viator-diagnostics'
     | '/admin/viator-merchant'
     | '/agent/bookings'
@@ -2060,6 +2133,13 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/admin/ops/aviation'
+    | '/admin/ops/cruisea'
+    | '/admin/ops/rail'
+    | '/admin/ops/safari'
+    | '/admin/ops/trip-services'
+    | '/admin/ops/villas'
+    | '/admin/ops/yachts'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2155,6 +2235,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-affiliate'
     | '/admin/viator-diagnostics'
     | '/admin/viator-merchant'
     | '/agent/bookings'
@@ -2241,6 +2322,13 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/admin/ops/aviation'
+    | '/admin/ops/cruisea'
+    | '/admin/ops/rail'
+    | '/admin/ops/safari'
+    | '/admin/ops/trip-services'
+    | '/admin/ops/villas'
+    | '/admin/ops/yachts'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2363,6 +2451,7 @@ export interface FileRouteTypes {
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
+    | '/admin/viator-affiliate'
     | '/admin/viator-diagnostics'
     | '/admin/viator-merchant'
     | '/agent/bookings'
@@ -2450,6 +2539,13 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
+    | '/admin/ops/aviation'
+    | '/admin/ops/cruisea'
+    | '/admin/ops/rail'
+    | '/admin/ops/safari'
+    | '/admin/ops/trip-services'
+    | '/admin/ops/villas'
+    | '/admin/ops/yachts'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -3566,6 +3662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminViatorDiagnosticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/viator-affiliate': {
+      id: '/admin/viator-affiliate'
+      path: '/viator-affiliate'
+      fullPath: '/admin/viator-affiliate'
+      preLoaderRoute: typeof AdminViatorAffiliateRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -3937,6 +4040,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/ops/yachts': {
+      id: '/admin/ops/yachts'
+      path: '/ops/yachts'
+      fullPath: '/admin/ops/yachts'
+      preLoaderRoute: typeof AdminOpsYachtsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ops/villas': {
+      id: '/admin/ops/villas'
+      path: '/ops/villas'
+      fullPath: '/admin/ops/villas'
+      preLoaderRoute: typeof AdminOpsVillasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ops/trip-services': {
+      id: '/admin/ops/trip-services'
+      path: '/ops/trip-services'
+      fullPath: '/admin/ops/trip-services'
+      preLoaderRoute: typeof AdminOpsTripServicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ops/safari': {
+      id: '/admin/ops/safari'
+      path: '/ops/safari'
+      fullPath: '/admin/ops/safari'
+      preLoaderRoute: typeof AdminOpsSafariRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ops/rail': {
+      id: '/admin/ops/rail'
+      path: '/ops/rail'
+      fullPath: '/admin/ops/rail'
+      preLoaderRoute: typeof AdminOpsRailRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ops/cruisea': {
+      id: '/admin/ops/cruisea'
+      path: '/ops/cruisea'
+      fullPath: '/admin/ops/cruisea'
+      preLoaderRoute: typeof AdminOpsCruiseaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ops/aviation': {
+      id: '/admin/ops/aviation'
+      path: '/ops/aviation'
+      fullPath: '/admin/ops/aviation'
+      preLoaderRoute: typeof AdminOpsAviationRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/account/booking/$id': {
       id: '/account/booking/$id'
       path: '/booking/$id'
@@ -4088,9 +4240,17 @@ interface AdminRouteChildren {
   AdminTripjackRoute: typeof AdminTripjackRoute
   AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminViatorAffiliateRoute: typeof AdminViatorAffiliateRoute
   AdminViatorDiagnosticsRoute: typeof AdminViatorDiagnosticsRoute
   AdminViatorMerchantRoute: typeof AdminViatorMerchantRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminOpsAviationRoute: typeof AdminOpsAviationRoute
+  AdminOpsCruiseaRoute: typeof AdminOpsCruiseaRoute
+  AdminOpsRailRoute: typeof AdminOpsRailRoute
+  AdminOpsSafariRoute: typeof AdminOpsSafariRoute
+  AdminOpsTripServicesRoute: typeof AdminOpsTripServicesRoute
+  AdminOpsVillasRoute: typeof AdminOpsVillasRoute
+  AdminOpsYachtsRoute: typeof AdminOpsYachtsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -4118,9 +4278,17 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTripjackRoute: AdminTripjackRoute,
   AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminViatorAffiliateRoute: AdminViatorAffiliateRoute,
   AdminViatorDiagnosticsRoute: AdminViatorDiagnosticsRoute,
   AdminViatorMerchantRoute: AdminViatorMerchantRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminOpsAviationRoute: AdminOpsAviationRoute,
+  AdminOpsCruiseaRoute: AdminOpsCruiseaRoute,
+  AdminOpsRailRoute: AdminOpsRailRoute,
+  AdminOpsSafariRoute: AdminOpsSafariRoute,
+  AdminOpsTripServicesRoute: AdminOpsTripServicesRoute,
+  AdminOpsVillasRoute: AdminOpsVillasRoute,
+  AdminOpsYachtsRoute: AdminOpsYachtsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
