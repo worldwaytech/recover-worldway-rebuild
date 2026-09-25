@@ -15,6 +15,10 @@
 ## Queued
 - [ ] (superseded) Import the WorldwayLuxe "All Journeys" catalogue (https://worldwayluxe.com/all-journeys) into a new JOURNEYS → ALL JOURNEYS tab: full journey records (images, descriptions, destinations, regions, styles, interests, duration, group size, pricing, status, day-by-day itineraries, inclusions/exclusions, tags, source IDs, metadata), premium listing + detail pages with search/filter/sort, responsive and SEO-ready. Verify source vs destination counts afterwards.
 
+## Viator diagnostics (2026-09-25)
+- [x] Traced booking chain, fixed payment form start-up, added Admin "Viator Diagnostic Export"
+- [ ] Affiliate booking in sandbox — blocked: Viator must issue an Affiliate Full Access + Booking sandbox key
+
 ## TripJack
 - [x] Read-only audit of Cabs + TripSafe integration vs uploaded docs (no code changes)
 

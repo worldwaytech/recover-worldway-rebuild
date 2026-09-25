@@ -45,6 +45,7 @@ const NAV = [
   { to: "/admin/ratehawk", label: "RateHawk", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/bokun", label: "Bókun Marketplace", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/viator-merchant", label: "Viator Merchant (Sandbox)", icon: <PlugZap className="h-4 w-4" /> },
+  { to: "/admin/viator-diagnostics", label: "Viator Diagnostic Export", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/tripjack", label: "TripJack certification", icon: <PlugZap className="h-4 w-4" /> },
   { to: "/admin/users", label: "Users", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/agents", label: "Agents", icon: <Briefcase className="h-4 w-4" /> },

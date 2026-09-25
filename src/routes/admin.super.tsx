@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getIntegrationCenter } from "@/lib/integrations/integrations.functions";
 import { portal, type PortalUser } from "@/lib/portal-store";
 import { admin } from "@/lib/admin-store";
 import { Button } from "@/components/ui/button";
@@ -172,6 +174,33 @@ function SuperAdmin() {
           </ul>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SupplierHealth() {
+  const load = useServerFn(getIntegrationCenter);
+  const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    load({ data: {} as never })
+      .then((r) => setRows(((r as unknown as { providers?: Record<string, unknown>[] }).providers ?? [])))
+      .catch((e) => setErr(e instanceof Error ? e.message : "Could not load supplier health"));
+  }, [load]);
+  if (err) return <p className="text-sm text-destructive">{err}</p>;
+  if (!rows) return <p className="text-sm text-muted-foreground">Loading supplier health…</p>;
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {rows.map((p) => {
+        const name = String(p["display_name"] ?? p["name"] ?? p["provider_key"] ?? "");
+        const state = String(p["connection_state"] ?? p["connectionState"] ?? p["status"] ?? "unknown");
+        return (
+          <div key={String(p["provider_key"] ?? name)} className="rounded-lg border border-border/60 bg-card p-3">
+            <p className="text-sm text-foreground">{name}</p>
+            <p className="text-xs text-muted-foreground">{state}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -2843,6 +2843,66 @@ export type Database = {
         }
         Relationships: []
       }
+      viator_diagnostic_traces: {
+        Row: {
+          cart_ref: string | null
+          correlation: Json
+          created_at: string
+          duration_ms: number | null
+          environment: string | null
+          error: string | null
+          http_status: number | null
+          id: string
+          method: string | null
+          ok: boolean | null
+          partner_cart_ref: string | null
+          path: string | null
+          request: Json | null
+          response: Json | null
+          source: string
+          step: string
+          tracking_id: string | null
+        }
+        Insert: {
+          cart_ref?: string | null
+          correlation?: Json
+          created_at?: string
+          duration_ms?: number | null
+          environment?: string | null
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          method?: string | null
+          ok?: boolean | null
+          partner_cart_ref?: string | null
+          path?: string | null
+          request?: Json | null
+          response?: Json | null
+          source: string
+          step: string
+          tracking_id?: string | null
+        }
+        Update: {
+          cart_ref?: string | null
+          correlation?: Json
+          created_at?: string
+          duration_ms?: number | null
+          environment?: string | null
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          method?: string | null
+          ok?: boolean | null
+          partner_cart_ref?: string | null
+          path?: string | null
+          request?: Json | null
+          response?: Json | null
+          source?: string
+          step?: string
+          tracking_id?: string | null
+        }
+        Relationships: []
+      }
       viator_merchant_bookings: {
         Row: {
           audit: Json | null
