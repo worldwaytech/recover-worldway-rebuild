@@ -283,7 +283,9 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
     process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
     process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
     process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
+    process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"] = "true";
     await expect(bookingCall({ operation: "retrieve" })).rejects.toThrow(/bookingId/);
+    delete process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"];
   });
 
   it("performs no supplier read while the rail is disabled", async () => {
