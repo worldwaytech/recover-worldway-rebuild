@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { formatPrice, type Journey, formatJourneyTitle } from "@/lib/data";
 import { journeys } from "@/lib/all-journeys-content";
+import { getSyncedJourney } from "@/lib/catalogue-sync/sync.functions";
+import { mergeJourney } from "@/lib/catalogue-sync/merge";
 import { Button } from "@/components/ui/button";
 import { AvailabilityBadge, JourneyCard, SectionHeading, Breadcrumbs } from "@/components/site";
 import { Clock, MapPin, Calendar } from "lucide-react";
@@ -13,9 +15,15 @@ import { FullPackageInformation } from "@/components/FullPackageInformation";
 const SITE = "https://worldwaytravelsgroup.com";
 
 export const Route = createFileRoute("/all-journeys/$slug")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    // 0) Synced A&K catalogue (active records merged over Worldway content; removed journeys hidden)
+    const synced = await getSyncedJourney({ data: { slug: params.slug } }).catch(() => null);
+    const staticJourney = journeys.find((j) => j.slug === params.slug);
+    if (synced && !synced.active) throw notFound();
     // 1) Primary marketing catalogue
-    const journey = journeys.find((j) => j.slug === params.slug);
+    const journey = synced
+      ? mergeJourney(staticJourney, synced.journey as Journey)
+      : staticJourney;
     if (journey) {
       const related = journeys
         .filter(

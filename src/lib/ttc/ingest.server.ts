@@ -414,3 +414,139 @@ export async function ttcCatalogueStats() {
     }),
   };
 }
+
+// ------------------------------------------------------- full sync (chunked)
+
+export interface TtcFullSyncChunk {
+  brand: TtcBrand;
+  done: boolean;
+  cursor: string | null;
+  discovered: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  deactivated: number;
+  failed: number;
+  error: string | null;
+}
+
+/**
+ * One bounded step of a full TTC brand sync: discover every tour page on the
+ * brand site, re-extract the next `limit` tours after `cursor` (create/update/
+ * unchanged by content hash), and once the whole brand has been walked mark
+ * stored tours that are no longer published as inactive.
+ */
+export async function ttcFullSyncStep(options: {
+  brand: TtcBrand;
+  cursor?: string | null;
+  limit?: number;
+}): Promise<TtcFullSyncChunk> {
+  const db = adminDb();
+  const brand = options.brand;
+  const out: TtcFullSyncChunk = {
+    brand,
+    done: false,
+    cursor: options.cursor ?? null,
+    discovered: 0,
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    deactivated: 0,
+    failed: 0,
+    error: null,
+  };
+  const startedAt = new Date().toISOString();
+  try {
+    const discovered = [...(await discoverTtcTourUrls(brand))].sort((a, b) =>
+      a.slug.localeCompare(b.slug),
+    );
+    out.discovered = discovered.length;
+    const cursor = options.cursor ?? null;
+    const remaining = cursor ? discovered.filter((s) => s.slug.localeCompare(cursor) > 0) : discovered;
+    const pending = remaining.slice(0, Math.max(1, options.limit ?? TTC_CONTENT.batchSize));
+
+    for (let i = 0; i < pending.length; i += TTC_CONTENT.batchSize) {
+      const batch = pending.slice(i, i + TTC_CONTENT.batchSize);
+      let rows = new Map<string, TtcTourRow>();
+      try {
+        rows = await extractBatch(batch);
+      } catch {
+        rows = new Map();
+      }
+      for (const source of batch) {
+        if (rows.has(source.url)) continue;
+        try {
+          const row = await extractOne(source);
+          if (row) rows.set(source.url, row);
+          else out.failed += 1;
+        } catch {
+          out.failed += 1;
+        }
+      }
+      const now = new Date().toISOString();
+      const withFlags = [...rows.values()].map(
+        (row) => ({ ...row, is_active: true, deactivated_at: null, last_seen_at: now }) as TtcTourRow,
+      );
+      const result = await persistRows(db, withFlags);
+      out.created += result.imported;
+      out.updated += result.updated;
+      out.unchanged += result.unchanged;
+      out.failed += result.failures.length;
+    }
+
+    const last = pending[pending.length - 1];
+    if (last) out.cursor = last.slug;
+    out.done = remaining.length <= pending.length;
+
+    if (out.done && discovered.length > 0) {
+      const seen = new Set(discovered.map((s) => s.slug));
+      const now = new Date().toISOString();
+      const { data: stored } = await db
+        .from("ttc_tours")
+        .select("tour_slug, is_active")
+        .eq("brand", brand);
+      const gone = (stored ?? [])
+        .filter((r) => (r as { is_active: boolean }).is_active && !seen.has(r.tour_slug as string))
+        .map((r) => r.tour_slug as string);
+      const back = (stored ?? [])
+        .filter((r) => !(r as { is_active: boolean }).is_active && seen.has(r.tour_slug as string))
+        .map((r) => r.tour_slug as string);
+      for (let i = 0; i < gone.length; i += 100) {
+        const { error } = await db
+          .from("ttc_tours")
+          .update({ is_active: false, deactivated_at: now } as never)
+          .eq("brand", brand)
+          .in("tour_slug", gone.slice(i, i + 100));
+        if (!error) out.deactivated += gone.slice(i, i + 100).length;
+      }
+      for (let i = 0; i < back.length; i += 100) {
+        await db
+          .from("ttc_tours")
+          .update({ is_active: true, deactivated_at: null, last_seen_at: now } as never)
+          .eq("brand", brand)
+          .in("tour_slug", back.slice(i, i + 100));
+      }
+    }
+  } catch (error) {
+    out.error = error instanceof Error ? error.message : "TTC sync step failed";
+    out.done = true;
+  }
+
+  await db.from("ttc_sync_runs").insert({
+    brand,
+    source: "website",
+    resource: "tours-full",
+    status: out.error ? "failed" : out.done ? "completed" : "partial",
+    started_at: startedAt,
+    finished_at: new Date().toISOString(),
+    discovered: out.discovered,
+    imported: out.created,
+    updated: out.updated,
+    unchanged: out.unchanged,
+    failed: out.failed,
+    deactivated: out.deactivated,
+    cursor: out.cursor,
+    error: out.error,
+  } as never);
+  return out;
+}

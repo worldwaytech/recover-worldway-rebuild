@@ -29,6 +29,7 @@ import {
   Trees,
   Search,
   BarChart3,
+  RefreshCw,
 } from "lucide-react";
 import type { JSX } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -78,6 +79,7 @@ const NAV: Nav[] = [
     ["/admin/viator-diagnostics", "Viator Diagnostic Export", Compass],
     ["/admin/tours", "Tours connector", Compass],
     ["/admin/ttc", "TTC tours", Compass],
+    ["/admin/catalogue-sync", "AKTG & TTC Sync", RefreshCw],
     ["/admin/bokun", "Bókun Marketplace", Compass],
   ]),
   ...G("Transfers & Insurance", [

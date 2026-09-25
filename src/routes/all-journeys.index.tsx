@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { journeys } from "@/lib/all-journeys-content";
+import { journeys as staticJourneys } from "@/lib/all-journeys-content";
+import { getSyncedJourneyCards } from "@/lib/catalogue-sync/sync.functions";
+import { mergeCatalogue } from "@/lib/catalogue-sync/merge";
 import {
   categories,
   regions,
@@ -24,6 +26,13 @@ export const Route = createFileRoute("/all-journeys/")({
     duration: (s.duration as string) || undefined,
     q: (s.q as string) || undefined,
   }),
+  loader: async () => {
+    try {
+      return await getSyncedJourneyCards();
+    } catch {
+      return { cards: [], inactive: [] };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Luxury Journeys & Tours | Worldway Travels Group" },
@@ -47,6 +56,8 @@ export const Route = createFileRoute("/all-journeys/")({
 
 function Journeys() {
   const search = Route.useSearch();
+  const synced = Route.useLoaderData();
+  const journeys = useMemo(() => mergeCatalogue(staticJourneys, synced), [synced]);
   const navigate = useNavigate();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -87,7 +98,7 @@ function Journeys() {
           return false;
         return true;
       }),
-    [search],
+    [search, journeys],
   );
 
   const expandedJourney = filtered.find((j) => j.slug === expandedSlug) ?? null;
