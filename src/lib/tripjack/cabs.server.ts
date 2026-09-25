@@ -26,6 +26,13 @@ import {
 } from "./cabs-contract";
 
 type Client = SupabaseClient<Database>;
+
+// Customers have no direct write access to bookings (RLS hardening, 18 Sep);
+// rows are written server-side after ownership has been verified.
+async function writer(): Promise<Client> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as unknown as Client;
+}
 type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 const json = (v: unknown): Json => JSON.parse(JSON.stringify(v ?? {})) as Json;
@@ -219,7 +226,7 @@ export async function bookCab(
   }
 
   const gross = Number(input.request.pricingInfo.grossAmount);
-  const { data: row, error } = await client
+  const { data: row, error } = await (await writer())
     .from("bookings")
     .insert({
       user_id: userId,
@@ -264,7 +271,7 @@ export async function bookCab(
 
   if (!r.ok || !supplier?.id) {
     const message = r.ok ? "Supplier did not return a booking id." : r.error.message;
-    await client
+    await (await writer())
       .from("bookings")
       .update({ status: "failed", supplier_status: "failed", details: json({ ...(row.details as object), failure: message }) })
       .eq("id", row.id);
@@ -276,7 +283,7 @@ export async function bookCab(
   }
 
   const status = mapCabStatus(supplier.status);
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status,
@@ -364,7 +371,7 @@ export async function payCabBooking(
   // the authoritative status/paymentStatus is read back from Booking Details.
   const synced = await fetchCabBookingDetails(row.supplier_reference);
   if (!synced.ok) {
-    await client
+    await (await writer())
       .from("bookings")
       .update({ details: json({ ...details, correlationIds: { ...(details.correlationIds as object), payment: r.correlationId } }) })
       .eq("id", row.id);
@@ -374,7 +381,7 @@ export async function payCabBooking(
     };
   }
   const paid = (synced.data.paymentStatus ?? "").toUpperCase() === "SUCCESS" || mapCabStatus(synced.data.status) === "confirmed";
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status: mapCabStatus(synced.data.status),
@@ -407,7 +414,7 @@ export async function syncCabBooking(
   const r = await fetchCabBookingDetails(row.supplier_reference);
   if (!r.ok) return { booking: toCabRecord(row), message: r.message };
   const paid = (r.data.paymentStatus ?? "").toUpperCase() === "SUCCESS";
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status: mapCabStatus(r.data.status),
@@ -441,7 +448,7 @@ export async function cancelCabBooking(
   const row = await loadOwned(client, bookingId);
   if (row.status === "cancelled") return { booking: toCabRecord(row), message: "Already cancelled." };
   if (!row.supplier_reference) {
-    await client
+    await (await writer())
       .from("bookings")
       .update({ status: "cancelled", supplier_status: "cancelled", cancellation_reason: reason })
       .eq("id", row.id);
@@ -468,7 +475,7 @@ export async function cancelCabBooking(
     await event(client, row.id, "supplier-error", msg, { correlationId: r.correlationId });
     return { booking: toCabRecord(row), amendment, message: msg };
   }
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status: "cancelled",

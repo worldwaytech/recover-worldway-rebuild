@@ -40,6 +40,13 @@ import {
 import type { ServiceResult } from "./cabs.server";
 
 type Client = SupabaseClient<Database>;
+
+// Customers have no direct write access to bookings (RLS hardening, 18 Sep);
+// rows are written server-side after ownership has been verified.
+async function writer(): Promise<Client> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as unknown as Client;
+}
 type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
 
 const json = (v: unknown): Json => JSON.parse(JSON.stringify(v ?? {})) as Json;
@@ -186,7 +193,7 @@ export async function bookTripsafe(
   const { bid, totalFare: amount } = review.data;
   const sel = { ...input.selection, iti: input.selection.iti.map((t, i) => ({ ...t, id: t.id ?? i + 1 })) };
 
-  const { data: row, error } = await client
+  const { data: row, error } = await (await writer())
     .from("bookings")
     .insert({
       user_id: userId,
@@ -226,7 +233,7 @@ export async function bookTripsafe(
   const supplierErr = supplierErrors(supplier);
   if (!r.ok || supplierErr || !tripsafeBookSucceeded(supplier)) {
     const message = !r.ok ? r.error.message : supplierErr ?? "TripSafe did not confirm the booking.";
-    await client
+    await (await writer())
       .from("bookings")
       .update({ status: "failed", supplier_status: "failed", details: json({ ...(row.details as object), failure: message }) })
       .eq("id", row.id);
@@ -235,7 +242,7 @@ export async function bookTripsafe(
   }
 
   const supplierBid = supplier?.bid ?? supplier?.bookingId ?? bid;
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status: "pending",
@@ -278,7 +285,7 @@ export async function syncTripsafeBooking(
   const details = (row.details ?? {}) as Record<string, unknown>;
   const status = supplierStatus ? mapInsuranceStatus(supplierStatus) : row.status;
   const paid = status === "confirmed";
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status,
@@ -332,7 +339,7 @@ export async function cancelTripsafeBooking(
   const row = await loadOwned(client, bookingId);
   if (row.status === "cancelled") return { booking: toInsuranceRecord(row), message: "Already cancelled." };
   if (!row.supplier_reference) {
-    await client
+    await (await writer())
       .from("bookings")
       .update({ status: "cancelled", supplier_status: "cancelled", cancellation_reason: reason })
       .eq("id", row.id);
@@ -399,7 +406,7 @@ export async function cancelTripsafeBooking(
     return { booking: toInsuranceRecord(row), message: `Cancellation status: ${confirmed?.status}.` };
   }
   const partial = ids.length < allIds.length;
-  await client
+  await (await writer())
     .from("bookings")
     .update({
       status: partial ? row.status : "cancelled",
