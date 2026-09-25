@@ -212,6 +212,13 @@ export function fareTotal(f: Pick<AirIqFare, "price" | "infantPrice">, p: AirIqP
   return f.price * (p.adult + p.child) + f.infantPrice * p.infant;
 }
 
+/** Worldway B2C markup, applied server-side only (never from the browser). */
+export const WORLDWAY_MARKUP_PERCENT = 5;
+/** Customer price in INR: supplier fare + 5% markup, rounded up to the rupee. */
+export function customerTotal(f: Pick<AirIqFare, "price" | "infantPrice">, p: AirIqPax) {
+  return Math.ceil(fareTotal(f, p) * (1 + WORLDWAY_MARKUP_PERCENT / 100));
+}
+
 export type AirIqPassenger = {
   title: string;
   first_name: string;
