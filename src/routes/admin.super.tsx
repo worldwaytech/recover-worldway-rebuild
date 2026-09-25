@@ -184,7 +184,7 @@ function SupplierHealth() {
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
     load({ data: {} as never })
-      .then((r) => setRows(((r as { providers?: Record<string, unknown>[] }).providers ?? [])))
+      .then((r) => setRows(((r as unknown as { providers?: Record<string, unknown>[] }).providers ?? [])))
       .catch((e) => setErr(e instanceof Error ? e.message : "Could not load supplier health"));
   }, [load]);
   if (err) return <p className="text-sm text-destructive">{err}</p>;
