@@ -19,7 +19,7 @@ import {
 import { hydrateLicensedVoyages, voyageByCode } from "@/lib/crystal/inventory";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { firstPenaltyDay, policyWindows } from "@/lib/crystal/cancellation-policy";
+import { firstPenaltyDay, firstPercentPenaltyDay, policyWindows } from "@/lib/crystal/cancellation-policy";
 import {
   STATUS_LABELS,
   type CrystalAvailableSuite,
@@ -636,12 +636,18 @@ function CancellationTerms({
   const bands = booking.cancellationPolicy ?? [];
   const windows = policyWindows(bands, booking.travelDate, booking.currency);
   const firstFee = firstPenaltyDay(bands);
+  const firstPct = firstPercentPenaltyDay(bands);
   return (
     <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
       <p className="font-medium">Cancellation terms for this voyage and fare</p>
       {firstFee !== null ? (
         <p className="mt-1 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive">
-          Cancellation fees apply from {firstFee} days before departure.
+          {firstFee >= 999
+            ? "A cancellation fee applies from the moment this booking is confirmed."
+            : `Cancellation fees apply from ${firstFee} days before departure.`}
+          {firstPct !== null && firstPct !== firstFee
+            ? ` Percentage-of-fare penalties start ${firstPct} days before departure.`
+            : ""}
         </p>
       ) : null}
       {windows.length ? (
