@@ -47,8 +47,8 @@ export function airiqConfig() {
     password,
     missing,
     configured: missing.length === 0,
-    // Ticketing deducts real agency balance — it stays off until explicitly authorised.
-    bookingEnabled: (process.env["AIRIQ_BOOKING_ENABLED"] ?? "").trim().toLowerCase() === "true",
+    // Live customer ticketing is on. Setting AIRIQ_BOOKING_ENABLED=false is an emergency stop only.
+    bookingEnabled: (process.env["AIRIQ_BOOKING_ENABLED"] ?? "").trim().toLowerCase() !== "false",
   };
 }
 
@@ -240,7 +240,7 @@ export async function airiqBook(input: {
   infants: AirIqPassenger[];
 }) {
   if (!airiqConfig().bookingEnabled) {
-    throw new AirIqError("Ticketing is not authorised (AIRIQ_BOOKING_ENABLED is off).", null, false);
+    throw new AirIqError("Ticketing is not authorised (emergency stop is on).", null, false);
   }
   const j = await call("/book", {
     method: "POST",
