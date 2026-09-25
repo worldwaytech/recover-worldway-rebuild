@@ -39,7 +39,12 @@ export const getCrystalVoyages = createServerFn({ method: "GET" })
     // World Cruises are merged in from the official catalogue (enquiry only).
     const codes = new Set(feed.voyages.map((v) => v.code));
     const worldCruises = crystalWorldCruises().filter((v) => !codes.has(v.code));
+    const { summariseCrystalInventory } = await import("./inventory-status");
+    const { bookingCapability } = await import("./aktg-booking.server");
+    const inventory = summariseCrystalInventory([...feed.voyages, ...worldCruises]);
     return {
+      inventory,
+      liveBookingOpen: bookingCapability().live,
       voyages: [...feed.voyages, ...worldCruises].sort((a, b) =>
         a.departureDate.localeCompare(b.departureDate),
       ),

@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { classifyCrystalVoyage, customerBookabilityLabel } from "@/lib/crystal/inventory-status";
 import {
   Crumbs,
   AwaitingInventory,
@@ -119,6 +120,9 @@ function VoyagePage() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <span className="font-serif text-2xl">{formatFare(voyage)}</span>
             <Badge variant="secondary">{voyage.availability}</Badge>
+            <Badge variant={classifyCrystalVoyage(voyage) === "api_live" ? "default" : "outline"}>
+              {customerBookabilityLabel(voyage, feed.liveBookingOpen)}
+            </Badge>
             {voyage.bookingMode === "enquiry" ? (
               <Button asChild>
                 <Link to="/crystal-cruises/quote" search={{ voyage: voyage.code }}>
