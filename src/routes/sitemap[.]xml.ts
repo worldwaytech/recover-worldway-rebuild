@@ -29,7 +29,6 @@ const STATIC_PATHS = [
   "/private-jets",
   "/activities",
   "/buses",
-  "/fd-flights",
   "/pre-purchased-flights",
   "/aircraft",
   "/products",

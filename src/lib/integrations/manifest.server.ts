@@ -86,7 +86,18 @@ export const MANIFEST_ADAPTERS: SupplierAdapter[] = [
   credentialOnly("tripjack-cabs", "TripJack Cabs (UAT)", ["TRIPJACK_UAT_API_KEY"], "UAT only; verify via certification page."),
   credentialOnly("tripjack-tripsafe", "TripJack TripSafe (UAT)", ["TRIPJACK_UAT_API_KEY"], "UAT only; verify via certification page."),
   credentialOnly("bokun", "Bókun / OCTO marketplace", ["BOKUN_ACCESS_KEY", "BOKUN_SECRET_KEY"], "Use the Bókun admin page for environment probe and sync."),
-  credentialOnly("airiq", "AIRIQ", ["AIRIQ_API_KEY"], "No AIRIQ documentation has been provided; integration is not built."),
+  {
+    id: "airiq",
+    label: "AIR iQ pre-purchased flights",
+    async probe() {
+      const { airiqHealth } = await import("@/lib/airiq/client.server");
+      const h = await airiqHealth();
+      return { ok: h.ok, status: h.ok ? 200 : null, detail: h.detail };
+    },
+    async fetchAll() {
+      return { records: [], live: false, warnings: ["AIR iQ is a live-search supplier; no static catalogue is synchronised."] };
+    },
+  },
 ];
 
 export const MANIFEST_SEEDS: Row[] = [
@@ -97,5 +108,5 @@ export const MANIFEST_SEEDS: Row[] = [
   { provider_key: "bokun", name: "Bókun Marketplace", category: "experiences", summary: "Bókun REST + OCTO marketplace (booking gated).", base_url: "https://api.bokun.io", auth_kind: "signed-session", secret_names: ["BOKUN_ACCESS_KEY", "BOKUN_SECRET_KEY"], endpoints: {}, capabilities: ["catalog", "availability"], collections: ["marketplace"], sync_strategy: "full", contract_status: "signed", adapter: "bokun" },
   { provider_key: "razorpay", name: "Razorpay", category: "payments", summary: "Customer payment gateway and webhooks.", base_url: "https://api.razorpay.com", auth_kind: "basic", secret_names: ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"], endpoints: {}, capabilities: ["payments"], collections: [], sync_strategy: "full", contract_status: "signed", adapter: "razorpay", webhook_secret_name: "RAZORPAY_WEBHOOK_SECRET" },
   { provider_key: "firecrawl", name: "Firecrawl Web Intelligence", category: "web-intelligence", summary: "Content crawling for tour catalogue enrichment.", base_url: "https://api.firecrawl.dev", auth_kind: "bearer-token", secret_names: ["FIRECRAWL_API_KEY"], endpoints: {}, capabilities: ["content"], collections: ["ttc"], sync_strategy: "full", contract_status: "signed", adapter: "firecrawl" },
-  { provider_key: "airiq", name: "AIRIQ", category: "flights", summary: "Not built — awaiting API documentation and credentials.", base_url: "", auth_kind: "none", secret_names: ["AIRIQ_API_KEY"], endpoints: {}, capabilities: [], collections: [], sync_strategy: "full", contract_status: "prospective", adapter: "airiq", enabled: false },
+  { provider_key: "airiq", name: "AIR iQ", category: "flights", summary: "Pre-purchased (series) fares: sectors, availability, search, book/ticket, ticket details.", base_url: "", auth_kind: "api-key-header", auth_header: "api-key", secret_names: ["AIRIQ_BASE_URL", "AIRIQ_API_KEY", "AIRIQ_USERNAME", "AIRIQ_PASSWORD"], endpoints: {}, capabilities: ["availability", "pricing", "booking"], collections: ["prepurchased-flights"], sync_strategy: "full", contract_status: "signed", adapter: "airiq" },
 ];

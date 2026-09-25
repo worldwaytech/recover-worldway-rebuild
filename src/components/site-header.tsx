@@ -13,7 +13,6 @@ const NAV: NavItem[] = [
     children: [
       { to: "/flights", label: "Flight Search" },
       { to: "/pre-purchased-flights", label: "Pre-Purchased" },
-      { to: "/fd-flights", label: "FD Flights" },
     ],
   },
   { to: "/hotels", label: "Hotels" },
