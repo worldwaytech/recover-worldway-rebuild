@@ -85,28 +85,7 @@ function SuperAdmin() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">
             <Activity className="h-4 w-4 text-primary" /> API health
           </div>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Partner API</span>
-              <span className="text-primary">Operational</span>
-            </li>
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Concierge model</span>
-              <span className="text-primary">Nominal</span>
-            </li>
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Wallet gateway</span>
-              <span className="text-primary">Operational</span>
-            </li>
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Webhooks</span>
-              <span className="text-primary">All delivering</span>
-            </li>
-            <li className="flex justify-between">
-              <span className="text-muted-foreground">Region</span>
-              <span>eu-west-1</span>
-            </li>
-          </ul>
+          <SupplierHealth />
         </div>
         <div
           className="rounded-2xl border border-border/60 bg-card/60 p-6"

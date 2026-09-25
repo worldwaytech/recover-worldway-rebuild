@@ -9,6 +9,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
+import { MANIFEST_ADAPTERS } from "./manifest.server";
 export type Admin = SupabaseClient<Database>;
 
 export interface SupplierRecord {
@@ -473,6 +474,7 @@ const ADAPTERS: SupplierAdapter[] = [
   allJourneysAdapter,
   gAdventuresAdapter,
   viatorAdapter,
+  ...MANIFEST_ADAPTERS,
 ];
 
 export function getAdapter(id: string | null | undefined): SupplierAdapter | null {

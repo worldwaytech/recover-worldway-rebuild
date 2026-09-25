@@ -297,7 +297,10 @@ export async function ensureProvidersSeeded(): Promise<void> {
   const { data } = await db.from("integration_providers").select("provider_key");
   const known = new Set((data ?? []).map((r) => (r as Row)["provider_key"] as string));
 
-  const inserts: Row[] = ADAPTER_SEEDS.filter((s) => !known.has(s["provider_key"] as string));
+  const { MANIFEST_SEEDS } = await import("./manifest.server");
+  const inserts: Row[] = [...ADAPTER_SEEDS, ...MANIFEST_SEEDS].filter(
+    (s) => !known.has(s["provider_key"] as string),
+  );
 
   // Registry-configured suppliers that have no bespoke client yet: the generic
   // HTTP engine drives them from their documented configuration.
