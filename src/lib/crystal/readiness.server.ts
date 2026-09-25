@@ -20,7 +20,59 @@ import {
   configuredOperations,
   egressConfirmed,
   probeBookingConnectivity,
+  prodBookingTestAuthorized,
 } from "./aktg-booking.server";
+
+type ProbeResult = Awaited<ReturnType<typeof probeBookingConnectivity>>;
+const VERIFICATION_OP = "prod_readonly_verification";
+const VERIFICATION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** Persist a real probe outcome (no credentials, URLs or channel values). */
+async function recordVerification(r: ProbeResult): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("integration_logs").insert({
+      provider_key: "crystal-cruises",
+      operation: VERIFICATION_OP,
+      level: r.ok ? "info" : "error",
+      status: r.ok ? "ok" : "failed",
+      http_status: r.status ?? null,
+      message: r.detail,
+      detail: { reachable: r.reachable, authenticated: r.authenticated, ok: r.ok },
+    });
+  } catch {
+    /* recording is best-effort; the live result is still returned */
+  }
+}
+
+/** Latest real verification within 24h, so the panel shows verified state, not UNKNOWN. */
+async function lastVerification(): Promise<(ProbeResult & { at: string }) | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("integration_logs")
+      .select("created_at,http_status,message,detail")
+      .eq("provider_key", "crystal-cruises")
+      .eq("operation", VERIFICATION_OP)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data) return null;
+    if (Date.now() - new Date(data.created_at).getTime() > VERIFICATION_MAX_AGE_MS) return null;
+    const d = (data.detail ?? {}) as { reachable?: boolean; authenticated?: boolean; ok?: boolean };
+    return {
+      attempted: true,
+      reachable: Boolean(d.reachable),
+      authenticated: Boolean(d.authenticated),
+      ok: Boolean(d.ok),
+      status: data.http_status ?? undefined,
+      detail: `${data.message ?? ""} (verified ${data.created_at})`,
+      at: data.created_at,
+    } as ProbeResult & { at: string };
+  } catch {
+    return null;
+  }
+}
 
 function gate(
   id: CrystalReadinessGate["id"],
@@ -43,7 +95,13 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
   const keyPresent = bookingCredentialConfigured();
   const missingOps = CRYSTAL_REQUIRED_OPERATIONS.filter((op) => !ops.includes(op));
 
-  const result = probe ? await probeBookingConnectivity() : null;
+  let result: ProbeResult | null = null;
+  if (probe) {
+    result = await probeBookingConnectivity();
+    await recordVerification(result);
+  } else if (keyPresent) {
+    result = await lastVerification();
+  }
   const gates: CrystalReadinessGate[] = [];
 
   // 1. Booking API connectivity
@@ -225,7 +283,14 @@ export async function crystalProdReadiness(probe: boolean): Promise<CrystalProdR
   // 9. Final activation gate
   gates.push(
     readyForLive
-      ? bookingEnabledFlag()
+      ? bookingEnabledFlag() && !prodBookingTestAuthorized()
+        ? gate(
+            "activation",
+            "LIVE activation",
+            "amber",
+            "Production verified and all gates green. Live booking stays fail-closed until a real production booking test is explicitly authorised.",
+          )
+        : bookingEnabledFlag()
         ? gate(
             "activation",
             "LIVE activation",
