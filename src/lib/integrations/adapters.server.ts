@@ -473,6 +473,7 @@ const ADAPTERS: SupplierAdapter[] = [
   allJourneysAdapter,
   gAdventuresAdapter,
   viatorAdapter,
+  ...MANIFEST_ADAPTERS,
 ];
 
 export function getAdapter(id: string | null | undefined): SupplierAdapter | null {
