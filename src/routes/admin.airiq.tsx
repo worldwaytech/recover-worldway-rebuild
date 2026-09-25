@@ -81,7 +81,7 @@ function AirIqAdmin() {
         <CardContent className="space-y-2">
           <div className="flex gap-2">
             <Input placeholder="AIR iQ booking ID" value={ref} onChange={(e) => setRef(e.target.value)} />
-            <Button onClick={async () => { const r = await retrieve({ data: { supplierReference: ref } }); setTicket(JSON.stringify(r.ok ? r.ticket : r.error, null, 2)); }}>Retrieve</Button>
+            <Button onClick={async () => { const r = await retrieve({ data: { supplierReference: ref } }); setTicket(r.ok ? JSON.stringify(JSON.parse(r.ticket), null, 2) : r.error); }}>Retrieve</Button>
           </div>
           {ticket ? <pre className="max-h-96 overflow-auto rounded bg-muted p-3 text-xs">{ticket}</pre> : null}
           <p className="text-xs text-muted-foreground">AIR iQ documents no cancellation or refund endpoint — cancellations are raised with AIR iQ offline.</p>

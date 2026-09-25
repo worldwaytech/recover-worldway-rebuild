@@ -258,7 +258,7 @@ export const airiqAdminRetrieve = createServerFn({ method: "POST" })
     await assertStaff(context.supabase, context.userId);
     const { airiqTicket } = await import("./client.server");
     try {
-      return { ok: true as const, ticket: JSON.parse(JSON.stringify(await airiqTicket(data.supplierReference))) as Record<string, unknown> };
+      return { ok: true as const, ticket: JSON.stringify(await airiqTicket(data.supplierReference)) };
     } catch (e) {
       return { ok: false as const, error: e instanceof Error ? e.message : "Retrieve failed" };
     }
