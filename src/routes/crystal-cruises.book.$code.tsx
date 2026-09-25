@@ -18,6 +18,8 @@ import {
 } from "@/lib/crystal/crystal-booking.functions";
 import { hydrateLicensedVoyages, voyageByCode } from "@/lib/crystal/inventory";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { firstPenaltyDay, policyWindows } from "@/lib/crystal/cancellation-policy";
 import {
   STATUS_LABELS,
   type CrystalAvailableSuite,
@@ -121,6 +123,7 @@ function BookPage() {
   const [message, setMessage] = useState<string>("");
   const [idemKey] = useState(newKey);
   const [cancelReason, setCancelReason] = useState("");
+  const [policyAck, setPolicyAck] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => setSignedIn(Boolean(data.user)));
@@ -286,10 +289,17 @@ function BookPage() {
 
   async function onConfirm() {
     if (!booking) return;
+    if (!policyAck) return toast.error("Please review and accept the cancellation terms first.");
     setBusy(true);
     try {
       const res = await confirmFn({
-        data: { bookingId: booking.id, idempotencyKey: `${idemKey}_confirm`, acceptedTerms: true },
+        data: {
+          bookingId: booking.id,
+          idempotencyKey: `${idemKey}_confirm`,
+          acceptedTerms: true,
+          acceptedCancellationPolicy: true,
+          policyVersion: booking.policyVersion ?? "",
+        },
       });
       setBooking(res.booking);
       setMessage(res.message);
@@ -365,9 +375,21 @@ function BookPage() {
                 <p>{booking.supplierReference ?? "Pending"}</p>
               </div>
             </div>
+            {booking.status !== "confirmed" &&
+            booking.status !== "cancelled" &&
+            booking.status !== "cancellation_requested" ? (
+              <CancellationTerms
+                booking={booking}
+                accepted={policyAck}
+                onAcceptedChange={setPolicyAck}
+              />
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {booking.status !== "cancelled" && booking.status !== "cancellation_requested" ? (
-                <Button onClick={onConfirm} disabled={busy || booking.status === "confirmed"}>
+                <Button
+                  onClick={onConfirm}
+                  disabled={busy || booking.status === "confirmed" || !policyAck}
+                >
                   {booking.status === "confirmed" ? "Confirmed" : "Confirm reservation"}
                 </Button>
               ) : null}
@@ -598,6 +620,75 @@ function BookPage() {
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+function CancellationTerms({
+  booking,
+  accepted,
+  onAcceptedChange,
+}: {
+  booking: CrystalBookingRecord;
+  accepted: boolean;
+  onAcceptedChange: (v: boolean) => void;
+}) {
+  const bands = booking.cancellationPolicy ?? [];
+  const windows = policyWindows(bands, booking.travelDate, booking.currency);
+  const firstFee = firstPenaltyDay(bands);
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+      <p className="font-medium">Cancellation terms for this voyage and fare</p>
+      {firstFee !== null ? (
+        <p className="mt-1 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive">
+          Cancellation fees apply from {firstFee} days before departure.
+        </p>
+      ) : null}
+      {windows.length ? (
+        <table className="mt-3 w-full text-left text-xs">
+          <thead className="text-muted-foreground">
+            <tr>
+              <th className="py-1">Days before departure</th>
+              <th className="py-1">Dates</th>
+              <th className="py-1">Fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            {windows.map((w) => (
+              <tr
+                key={`${w.daysFrom}-${w.daysTo}`}
+                className={w.hasPenalty ? "font-medium text-destructive" : ""}
+              >
+                <td className="py-1">
+                  {w.daysFrom >= 999 ? `More than ${w.daysTo}` : `${w.daysFrom}–${w.daysTo}`}
+                </td>
+                <td className="py-1">
+                  {w.startDate && w.endDate && w.daysFrom < 999
+                    ? `${w.startDate} to ${w.endDate}`
+                    : w.endDate
+                      ? `Until ${w.endDate}`
+                      : "—"}
+                </td>
+                <td className="py-1">{w.penaltyLabel}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="mt-2 text-muted-foreground">
+          The cruise line has not published fee windows for this fare. Standard cruise line
+          cancellation terms apply and our cruise desk will confirm them in writing.
+        </p>
+      )}
+      <label className="mt-3 flex items-start gap-2">
+        <Checkbox
+          checked={accepted}
+          onCheckedChange={(v) => onAcceptedChange(v === true)}
+          aria-label="Accept cancellation terms"
+        />
+        <span>I have read and accept these cancellation terms for this booking.</span>
+      </label>
+      <p className="mt-1 text-[11px] text-muted-foreground">Terms version {booking.policyVersion}</p>
     </div>
   );
 }

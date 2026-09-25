@@ -1,3 +1,4 @@
+import { CRYSTAL_POLICY_FORMAT, policyVersion } from "./cancellation-policy";
 // Crystal Cruises booking orchestration — server only.
 // Persists into the existing WorldwayLuxe booking architecture (bookings,
 // booking_events, booking_requests) using the caller's RLS-scoped client, so
@@ -118,6 +119,19 @@ export function toRecord(row: BookingRow): CrystalBookingRecord {
     updatedAt: row.updated_at,
     supplierPending: d.supplierPending === true,
     cancellationReason: row.cancellation_reason ?? undefined,
+    cancellationPolicy: Array.isArray(d.cancellationPolicy)
+      ? (d.cancellationPolicy as CrystalBookingRecord["cancellationPolicy"])
+      : [],
+    fareCode: d.fareCode ? String(d.fareCode) : undefined,
+    policyVersion: policyVersion(
+      String(d.voyageNumber ?? ""),
+      d.fareCode ? String(d.fareCode) : null,
+      Array.isArray(d.cancellationPolicy) ? (d.cancellationPolicy as never) : [],
+    ),
+    policyAcceptedAt:
+      d.cancellationPolicyAcceptance && typeof d.cancellationPolicyAcceptance === "object"
+        ? String((d.cancellationPolicyAcceptance as { acceptedAt?: string }).acceptedAt ?? "")
+        : undefined,
   };
 }
 
@@ -389,6 +403,42 @@ export interface ConfirmOutcome {
 }
 
 /** HOLD → BOOKING → CONFIRMATION. */
+/**
+ * Records the customer's acknowledgement of the exact cancellation terms on the
+ * booking before confirmation. Rejects if the terms changed since display.
+ */
+export async function recordCancellationPolicyAcceptance(
+  client: Client,
+  bookingId: string,
+  acceptedVersion: string,
+): Promise<void> {
+  const row = await ownedBooking(client, bookingId);
+  if (row.status === "confirmed") return;
+  const d = details(row);
+  const bands = Array.isArray(d.cancellationPolicy) ? (d.cancellationPolicy as never) : [];
+  const current = policyVersion(String(d.voyageNumber ?? ""), d.fareCode ? String(d.fareCode) : null, bands);
+  if (current !== acceptedVersion) {
+    throw new Error(
+      "The cancellation terms for this fare have changed. Please review the updated terms and accept them again.",
+    );
+  }
+  const acceptedAt = new Date().toISOString();
+  const { error } = await client
+    .from("bookings")
+    .update({
+      details: json({
+        ...d,
+        cancellationPolicyAcceptance: { version: current, bands, acceptedAt, format: CRYSTAL_POLICY_FORMAT },
+      }),
+    })
+    .eq("id", row.id);
+  if (error) throw new Error("We couldn't record your acceptance of the cancellation terms.");
+  await event(client, row.id, "policy-acceptance", "Customer accepted the cancellation policy.", {
+    version: current,
+    acceptedAt,
+  });
+}
+
 export async function confirmCrystalBooking(
   client: Client,
   bookingId: string,
