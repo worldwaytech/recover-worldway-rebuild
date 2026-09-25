@@ -336,10 +336,15 @@ export async function ensureProvidersSeeded(): Promise<void> {
   }
 
   if (inserts.length === 0) return;
-  await db
+  const { error } = await db
     .from("integration_providers")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(inserts as any, { onConflict: "provider_key", ignoreDuplicates: true });
+    .upsert(inserts as any, {
+      onConflict: "provider_key",
+      ignoreDuplicates: true,
+      defaultToNull: false,
+    });
+  if (error) console.error("[integrations] provider seeding failed:", error.message);
 }
 
 // ----------------------------------------------------------------- logging

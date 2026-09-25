@@ -127,7 +127,11 @@ describe("booking rail is fail-closed", () => {
     process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
     expect(bookingCapability().reason).toBe("not_certified");
     process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
+    // Still fail-closed until a real PROD booking test is explicitly authorised.
+    expect(bookingCapability().reason).toBe("prod_booking_test_not_authorized");
+    process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"] = "true";
     expect(bookingCapability().live).toBe(true);
+    delete process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"];
   });
 });
 
@@ -279,7 +283,9 @@ describe("documented PROD operation mapping (AKTG Booking API spec)", () => {
     process.env["CRYSTAL_BOOKING_OFFICE_ID"] = "office";
     process.env["CRYSTAL_BOOKING_EGRESS_CONFIRMED"] = "true";
     process.env["CRYSTAL_BOOKING_CERTIFIED"] = "true";
+    process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"] = "true";
     await expect(bookingCall({ operation: "retrieve" })).rejects.toThrow(/bookingId/);
+    delete process.env["CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED"];
   });
 
   it("performs no supplier read while the rail is disabled", async () => {

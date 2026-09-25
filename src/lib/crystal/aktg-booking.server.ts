@@ -212,7 +212,25 @@ export function bookingCapability(): CrystalBookingCapability {
       detail: "AKTG Booking API certification sign-off has not been recorded for this account.",
     };
   }
+  // Final fail-closed gate: no live supplier booking until a real production
+  // booking test has been explicitly authorised by the business.
+  if (!prodBookingTestAuthorized()) {
+    return {
+      ...base,
+      channel,
+      live: false,
+      operations: ops,
+      reason: "prod_booking_test_not_authorized",
+      detail:
+        "Live Crystal booking stays closed until a real production booking test is explicitly authorised (CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED=true).",
+    };
+  }
   return { ...base, channel, live: true, operations: ops, detail: "AKTG Booking API armed." };
+}
+
+/** Set to "true" only after the business explicitly authorises a real PROD booking test. */
+export function prodBookingTestAuthorized(): boolean {
+  return env("CRYSTAL_PROD_BOOKING_TEST_AUTHORIZED").toLowerCase() === "true";
 }
 
 /** Set to "true" only after AKTG confirms our outbound IP is allowlisted. */
