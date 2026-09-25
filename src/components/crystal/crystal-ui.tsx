@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { classifyCrystalVoyage } from "@/lib/crystal/inventory-status";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CRYSTAL_LICENCE_NOTICE } from "@/lib/crystal/content";
@@ -92,6 +93,9 @@ export function VoyageCard({ voyage }: { voyage: CrystalVoyage }) {
             {voyage.destinationName} · {voyage.nights} nights · {voyage.shipName}
           </p>
           <h3 className="font-serif text-lg leading-snug">{voyage.title}</h3>
+          <Badge variant={classifyCrystalVoyage(voyage) === "api_live" ? "default" : "outline"}>
+            {classifyCrystalVoyage(voyage) === "api_live" ? "Live availability" : "Enquiry only"}
+          </Badge>
           <p className="line-clamp-2 text-sm text-muted-foreground">{voyage.subtitle}</p>
           <div className="flex items-end justify-between pt-1">
             <span className="text-sm">
