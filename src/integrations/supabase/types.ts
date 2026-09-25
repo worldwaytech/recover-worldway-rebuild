@@ -2594,6 +2594,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ttc_config: {
+        Row: {
+          created_at: string
+          id: string
+          tap_id: string | null
+          tap_id_updated_at: string | null
+          tap_id_updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tap_id?: string | null
+          tap_id_updated_at?: string | null
+          tap_id_updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tap_id?: string | null
+          tap_id_updated_at?: string | null
+          tap_id_updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ttc_sync_runs: {
         Row: {
           brand: string
