@@ -17,3 +17,11 @@
 
 ## TripJack
 - [x] Read-only audit of Cabs + TripSafe integration vs uploaded docs (no code changes)
+
+## Admin Control Center upgrade (2026-09-25)
+- [x] Supplier manifest: UP17, TripJack Cabs/TripSafe, Viator Merchant, Bókun, Razorpay, Firecrawl, AIRIQ (disabled) auto-register in Sync Center/health
+- [x] Super Admin API health reads real supplier states
+- [ ] Real API Management page (replace browser demo keys/webhooks), usage limits + kill switch tables
+- [ ] Backend feature flags/audit on Super Admin; real overview tiles; generated admin menu
+- [ ] Firecrawl usage panel
+- [ ] AIRIQ — blocked on API docs + credentials
