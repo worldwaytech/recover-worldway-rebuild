@@ -6,7 +6,7 @@ import { inputClass } from "@/components/search-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTtcCatalogueFacets, searchTtcTours } from "@/lib/ttc/ttc.functions";
-import { TTC_SORT_OPTIONS, ttcTourPath } from "@/lib/ttc/config";
+import { TTC_BRANDS, TTC_BRAND_ORDER, TTC_SORT_OPTIONS, ttcTourPath } from "@/lib/ttc/config";
 import type { TtcCatalogueResult, TtcFacets } from "@/lib/ttc/types";
 
 export const Route = createFileRoute("/ttc/")({
@@ -99,6 +99,12 @@ function TtcCataloguePage() {
   );
 
   const [pendingSort, setPendingSort] = useState<string | null>(null);
+  const visibleBrands = [
+    ...facets.brands,
+    ...TTC_BRAND_ORDER.filter((brand) => !facets.brands.some((entry) => entry.brand === brand)).map(
+      (brand) => ({ brand, label: TTC_BRANDS[brand].label, count: 0 }),
+    ),
+  ];
   useEffect(() => {
     if (pendingSort === null) return;
     void run(1, { sort: pendingSort });
@@ -126,21 +132,22 @@ function TtcCataloguePage() {
         image="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=2000&q=80"
       />
 
-      <div className="flex flex-wrap gap-2">
-        {facets.brands.map((brand) => (
-          <button
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-wrap gap-2 px-6 pb-20 pt-4">
+        {visibleBrands.map((brand) => (
+          <Button
             key={brand.brand}
             type="button"
+            variant="outline"
             onClick={() => toggleBrand(brand.brand)}
-            className={`rounded-full border px-5 py-2 text-[0.7rem] uppercase tracking-[0.25em] transition-colors ${
+            className={`h-auto min-h-9 max-w-full whitespace-normal rounded-full px-5 py-2 text-center text-[0.7rem] uppercase tracking-[0.25em] transition-colors ${
               brands.includes(brand.brand)
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-border text-muted-foreground hover:text-primary"
             }`}
           >
-            {brand.label}
+            {brand.brand === "costsaver" ? "CostSaver" : brand.label}
             <span className="ml-2 text-[0.6rem] opacity-70">{brand.count}</span>
-          </button>
+          </Button>
         ))}
       </div>
 
