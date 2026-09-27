@@ -161,6 +161,21 @@ export interface CrystalConnectorStatus {
 
 let lastSyncAt: string | null = null;
 
+/** Last successful sync recorded by the API & Sync Center (survives worker restarts). */
+async function persistedLastSync(): Promise<string | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("integration_providers")
+      .select("last_sync_at")
+      .eq("provider_key", CRYSTAL_SUPPLIER_ID)
+      .maybeSingle();
+    return data?.last_sync_at ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function crystalStatus(includeHealth: boolean): Promise<CrystalConnectorStatus> {
   const { getConnector } = await import("@/lib/partners/registry");
   const { missingSecrets, resolveMode, checkHealth } =
@@ -206,7 +221,7 @@ export async function crystalStatus(includeHealth: boolean): Promise<CrystalConn
     inventoryCount: aktg
       ? (await fetchAktgVoyages("USD")).voyages.length
       : licensedVoyages().length,
-    lastSyncAt,
+    lastSyncAt: lastSyncAt ?? (await persistedLastSync()),
     health,
     audit: crystalAudit(),
   };

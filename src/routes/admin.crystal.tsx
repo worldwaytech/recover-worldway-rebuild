@@ -83,7 +83,9 @@ function ReadinessPanel({
           <p className="text-muted-foreground">Remaining blockers before LIVE activation</p>
           {readiness.blockers.length === 0 ? (
             <p>
-              None. Every gate is green — CRYSTAL_BOOKING_ENABLED=true may now be set to go LIVE.
+              {readiness.bookingEnabledFlag && readiness.railArmed
+                ? "None. Every gate is green and live booking is ON — Crystal is LIVE & BOOKABLE."
+                : "None. Every gate is green — CRYSTAL_BOOKING_ENABLED=true may now be set to go LIVE."}
             </p>
           ) : (
             <ol className="mt-1 list-decimal space-y-1 pl-5">
