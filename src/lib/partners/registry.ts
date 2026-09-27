@@ -128,7 +128,7 @@ export const PARTNER_CONNECTORS: PartnerConnectorConfig[] = [
     maxRetries: 3,
     timeoutMs: 12000,
     syncStrategy: "updated-since",
-    contractStatus: "in-negotiation",
+    contractStatus: "signed",
     templates: ["ocean-cruises", "expedition-cruises", "river-cruises", "polar"],
     feed: {
       format: "json",
