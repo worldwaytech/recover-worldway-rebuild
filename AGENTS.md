@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Journey engine core lives in src/lib/engine as pure, supplier-agnostic modules; suppliers plug in only via adapters normalising to engine/types.ts — keeps supplier logic out of the core.
