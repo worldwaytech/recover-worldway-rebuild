@@ -29,3 +29,11 @@
 - [ ] Backend feature flags/audit on Super Admin; real overview tiles; generated admin menu
 - [ ] Firecrawl usage panel
 - [ ] AIRIQ — blocked on API docs + credentials
+
+## Travel Commerce Engine (2026-09-28)
+- [x] Audit (plan archived) + stage 1/3/4/5 pure core: types, chronology/trip graph, pricing steps, explainable ranking, auditor, readiness gate (src/lib/engine, 8 tests)
+- [ ] Stage 2: adapters wrapping existing supplier clients (timeouts, retry, circuit breaker, cache) + capability registry from integration_providers
+- [ ] Stage 6: trip_requests / packages / versions / items / audit / pricing_rules tables + edit→reprice→revalidate
+- [ ] Stage 7: orchestrator with idempotent booking (no auto-retry; real bookings need owner approval)
+- [ ] Stage 8: AI requirements + explanations (never prices/availability)
+- [ ] Stage 9: admin engine console, customer proposal page, cruise+land and aviation packaging
