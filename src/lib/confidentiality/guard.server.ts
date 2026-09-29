@@ -111,7 +111,7 @@ export async function sanitizeOutbound<T>(value: T, opt: SanitizeOptions = {}): 
 export async function restoreInbound<T>(value: T): Promise<T> {
   const walk = async (v: unknown): Promise<unknown> => {
     if (isSealed(v)) {
-      const r = await unseal(v);
+      const r = await unseal(v as string);
       return r === undefined ? v : r;
     }
     if (Array.isArray(v)) return Promise.all(v.map(walk));

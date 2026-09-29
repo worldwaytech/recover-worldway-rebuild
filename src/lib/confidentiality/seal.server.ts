@@ -48,13 +48,13 @@ function unb64u(s: string): Uint8Array {
 
 const cache = new Map<string, string>();
 
-export function isSealed(v: unknown): v is string {
+export function isSealed(v: unknown): boolean {
   return typeof v === "string" && v.startsWith(PREFIX) && v.length > 30;
 }
 
 /** Seal any JSON value into an opaque Worldway reference. */
 export async function seal(value: unknown): Promise<string> {
-  if (isSealed(value)) return value;
+  if (isSealed(value)) return value as string;
   const plain = JSON.stringify(value);
   const hit = cache.get(plain);
   if (hit) return hit;
