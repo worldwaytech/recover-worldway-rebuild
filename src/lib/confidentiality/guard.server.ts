@@ -4,7 +4,10 @@
 // - Third-party image URLs -> /media/s.<ref>; other third-party links -> /go/<ref>
 // Inbound: sealed references are restored before handlers run, so existing
 // supplier, pricing and booking logic is unchanged.
-import { redactNames } from "./redact";
+import { redactNames, registerSupplierTerms } from "./redact";
+import { RAIL_OPERATOR_TERMS } from "@/lib/rail/rail-operators.server";
+
+registerSupplierTerms(RAIL_OPERATOR_TERMS);
 import { isSealed, seal, unseal } from "./seal.server";
 
 /** Fields that identify a supplier, its routing or its internal ids. */
