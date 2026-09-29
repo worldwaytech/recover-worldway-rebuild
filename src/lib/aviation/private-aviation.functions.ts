@@ -294,7 +294,7 @@ export const enquireEmptyLeg = createServerFn({ method: "POST" })
     }
     const db = await admin();
     const reference = newReference();
-    const { tracking, ...legPublic } = { tracking: leg.trackingLink, ...leg, trackingLink: undefined };
+    const { trackingLink: tracking, ...legPublic } = leg;
     const { data: row, error } = await db
       .from("private_aviation_requests")
       .insert({
