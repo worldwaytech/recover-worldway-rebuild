@@ -25,3 +25,4 @@
 - Live package assembly: src/lib/engine/suppliers/live-search.server.ts maps existing adapters to CanonicalOffer (airport time zones from airport-tz.data.server.ts, flight supplier via server-only flightOfferSupplier map) and assembly.server.ts builds proposals from actual arrival dates; unscheduled/unavailable items are saved as on_request, never invented.
 
 - Offers are revalidated live (src/lib/engine/suppliers/revalidate.server.ts) after ranking and before pricing/readiness; components are classified LIVE/AVAILABLE/ON_REQUEST/UNAVAILABLE/BOOKABLE only by src/lib/engine/classify.ts — keeps stale fares and uncertified suppliers out of booking.
+- Package FX comes only from Open Exchange Rates (src/lib/engine/suppliers/fx.server.ts, OPEN_EXCHANGE_RATES_APP_ID, 1h cache, >6h stale fails); Worldway markups live in commercial.server.ts with price basis — keeps pricing auditable and never AI/0%-derived.
