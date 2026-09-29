@@ -30,11 +30,14 @@ describe("browser payload privacy guard", () => {
       const json = JSON.stringify(safe);
       // Only the contractual review attribution may remain.
       const leaks = findSupplierLeaks(JSON.parse(json.replace(/"provider":"TRIPADVISOR"/g, '"provider":"x"')))
-        .filter((p) => !SEAL_KEY.test(p.split(".").pop() ?? ""));
+        .filter((p) => !SEAL_KEY.test(p.split(".").pop() ?? ""))
+        // Documented exception: brand slugs that are part of existing page addresses (/ttc/<brand>/<slug>).
+        .filter((p) => !p.endsWith(".brand"));
       expect(leaks, product).toEqual([]);
+      const text = JSON.stringify(safe, (k, v) => (k === "brand" ? undefined : v));
       for (const t of supplierTerms()) {
         if (t.length < 4 || /^(tripadvisor)$/i.test(t)) continue;
-        expect(new RegExp(`(?<![\\w-])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-])`, "i").test(json), `${product}:${t}`).toBe(false);
+        expect(new RegExp(`(?<![\\w-])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-])`, "i").test(text), `${product}:${t}`).toBe(false);
       }
       expect(json, product).not.toMatch(/hotelbeds\.com|viator\.com|abercrombiekent\.com|villiers\.ai/i);
       expect(json).not.toContain('"raw"');
