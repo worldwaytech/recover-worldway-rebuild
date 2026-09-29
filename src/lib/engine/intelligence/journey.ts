@@ -2,6 +2,7 @@
 // Dependencies follow real chronology: arrival → transfer → hotel → activities → next journey.
 import { sortChronologically } from "../chronology";
 import type { NormalizedComponent } from "../types";
+import type { CanonicalOffer } from "../normalize";
 
 export type JourneyState = "draft" | "proposed" | "approved" | "booked" | "in_progress" | "disrupted" | "completed" | "cancelled";
 
@@ -25,7 +26,8 @@ export interface JourneyContext {
   journeyId: string;
   version: number;
   state: JourneyState;
-  components: NormalizedComponent[];
+  /** Supplier-sourced offers — the only authoritative inventory. */
+  offers: CanonicalOffer[];
 }
 
 export interface Dependency { from: string; to: string; reason: string }
