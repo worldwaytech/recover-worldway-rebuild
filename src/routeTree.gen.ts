@@ -144,6 +144,7 @@ import { Route as B2bTeamRouteImport } from './routes/b2b.team'
 import { Route as B2bReportsRouteImport } from './routes/b2b.reports'
 import { Route as B2bPoliciesRouteImport } from './routes/b2b.policies'
 import { Route as AllJourneysSlugRouteImport } from './routes/all-journeys.$slug'
+import { Route as AircraftSlugRouteImport } from './routes/aircraft_.$slug'
 import { Route as AgentTrainingRouteImport } from './routes/agent.training'
 import { Route as AgentSignupRouteImport } from './routes/agent.signup'
 import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
@@ -197,6 +198,7 @@ import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as TransfersVoucherReferenceRouteImport } from './routes/transfers.voucher.$reference'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
+import { Route as PrivateJetsRoutesSlugRouteImport } from './routes/private-jets_.routes.$slug'
 import { Route as PrivateAviationQuoteReferenceRouteImport } from './routes/private-aviation.quote.$reference'
 import { Route as MerchantBookingRefRouteImport } from './routes/merchant.booking.$ref'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
@@ -910,6 +912,11 @@ const AllJourneysSlugRoute = AllJourneysSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AllJourneysRoute,
 } as any)
+const AircraftSlugRoute = AircraftSlugRouteImport.update({
+  id: '/aircraft_/$slug',
+  path: '/aircraft/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgentTrainingRoute = AgentTrainingRouteImport.update({
   id: '/training',
   path: '/training',
@@ -1179,6 +1186,11 @@ const ToursBrowseHubRoute = ToursBrowseHubRouteImport.update({
   id: '/browse/$hub',
   path: '/browse/$hub',
   getParentRoute: () => ToursRoute,
+} as any)
+const PrivateJetsRoutesSlugRoute = PrivateJetsRoutesSlugRouteImport.update({
+  id: '/private-jets_/routes/$slug',
+  path: '/private-jets/routes/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PrivateAviationQuoteReferenceRoute =
   PrivateAviationQuoteReferenceRouteImport.update({
@@ -1478,6 +1490,7 @@ export interface FileRoutesByFullPath {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/aircraft/$slug': typeof AircraftSlugRoute
   '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
@@ -1579,6 +1592,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/private-aviation/quote/$reference': typeof PrivateAviationQuoteReferenceRoute
+  '/private-jets/routes/$slug': typeof PrivateJetsRoutesSlugRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1676,6 +1690,7 @@ export interface FileRoutesByTo {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/aircraft/$slug': typeof AircraftSlugRoute
   '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
@@ -1775,6 +1790,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/private-aviation/quote/$reference': typeof PrivateAviationQuoteReferenceRoute
+  '/private-jets/routes/$slug': typeof PrivateJetsRoutesSlugRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1901,6 +1917,7 @@ export interface FileRoutesById {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/signup': typeof AgentSignupRoute
   '/agent/training': typeof AgentTrainingRoute
+  '/aircraft_/$slug': typeof AircraftSlugRoute
   '/all-journeys/$slug': typeof AllJourneysSlugRoute
   '/b2b/policies': typeof B2bPoliciesRoute
   '/b2b/reports': typeof B2bReportsRoute
@@ -2002,6 +2019,7 @@ export interface FileRoutesById {
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/merchant/booking/$ref': typeof MerchantBookingRefRoute
   '/private-aviation/quote/$reference': typeof PrivateAviationQuoteReferenceRoute
+  '/private-jets_/routes/$slug': typeof PrivateJetsRoutesSlugRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -2129,6 +2147,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/aircraft/$slug'
     | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
@@ -2230,6 +2249,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/merchant/booking/$ref'
     | '/private-aviation/quote/$reference'
+    | '/private-jets/routes/$slug'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2327,6 +2347,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/aircraft/$slug'
     | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
@@ -2426,6 +2447,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/voyages/$code'
     | '/merchant/booking/$ref'
     | '/private-aviation/quote/$reference'
+    | '/private-jets/routes/$slug'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2551,6 +2573,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/signup'
     | '/agent/training'
+    | '/aircraft_/$slug'
     | '/all-journeys/$slug'
     | '/b2b/policies'
     | '/b2b/reports'
@@ -2652,6 +2675,7 @@ export interface FileRouteTypes {
     | '/destinations/$region/$country'
     | '/merchant/booking/$ref'
     | '/private-aviation/quote/$reference'
+    | '/private-jets_/routes/$slug'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2738,6 +2762,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
+  AircraftSlugRoute: typeof AircraftSlugRoute
   BlogSlugRoute: typeof BlogSlugRoute
   GoTokenRoute: typeof GoTokenRoute
   MarketplaceIdRoute: typeof MarketplaceIdRoute
@@ -2762,6 +2787,7 @@ export interface RootRouteChildren {
   BookKindSlugRoute: typeof BookKindSlugRoute
   MerchantBookingRefRoute: typeof MerchantBookingRefRoute
   PrivateAviationQuoteReferenceRoute: typeof PrivateAviationQuoteReferenceRoute
+  PrivateJetsRoutesSlugRoute: typeof PrivateJetsRoutesSlugRoute
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   VoyagesCruiseaBookingsRoute: typeof VoyagesCruiseaBookingsRoute
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
@@ -3725,6 +3751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AllJourneysSlugRouteImport
       parentRoute: typeof AllJourneysRoute
     }
+    '/aircraft_/$slug': {
+      id: '/aircraft_/$slug'
+      path: '/aircraft/$slug'
+      fullPath: '/aircraft/$slug'
+      preLoaderRoute: typeof AircraftSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agent/training': {
       id: '/agent/training'
       path: '/training'
@@ -4095,6 +4128,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tours/browse/$hub'
       preLoaderRoute: typeof ToursBrowseHubRouteImport
       parentRoute: typeof ToursRoute
+    }
+    '/private-jets_/routes/$slug': {
+      id: '/private-jets_/routes/$slug'
+      path: '/private-jets/routes/$slug'
+      fullPath: '/private-jets/routes/$slug'
+      preLoaderRoute: typeof PrivateJetsRoutesSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/private-aviation/quote/$reference': {
       id: '/private-aviation/quote/$reference'
@@ -4955,6 +4995,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ActivitiesCodeRoute: ActivitiesCodeRoute,
+  AircraftSlugRoute: AircraftSlugRoute,
   BlogSlugRoute: BlogSlugRoute,
   GoTokenRoute: GoTokenRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
@@ -4979,6 +5020,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookKindSlugRoute: BookKindSlugRoute,
   MerchantBookingRefRoute: MerchantBookingRefRoute,
   PrivateAviationQuoteReferenceRoute: PrivateAviationQuoteReferenceRoute,
+  PrivateJetsRoutesSlugRoute: PrivateJetsRoutesSlugRoute,
   TtcBrandSlugRoute: TtcBrandSlugRoute,
   VoyagesCruiseaBookingsRoute: VoyagesCruiseaBookingsRoute,
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,
