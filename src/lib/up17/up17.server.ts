@@ -438,18 +438,6 @@ function rankOffers(offers: Up17FlightOffer[]): Up17FlightOffer[] {
   return scored.map((s, i) => ({ ...s.o, recommendedRank: i + 1 }));
 }
 
-/** Standard checked-baggage add-ons shown when the airline exposes no SSR list. */
-export function defaultBaggageLadder(currency = "INR"): Up17BaggageOption[] {
-  return [15, 23].map((weightKg, i) => ({
-    tier: i + 1,
-    code: `XBAG${weightKg}`,
-    label: `Extra checked baggage — ${weightKg} KG`,
-    weightKg,
-    price: null,
-    currency,
-  }));
-}
-
 function normalizeBaggage(data: unknown, currency: string): Up17BaggageOption[] {
   const found: Up17BaggageOption[] = [];
   const walk = (value: unknown, depth = 0) => {
