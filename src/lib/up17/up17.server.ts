@@ -438,18 +438,6 @@ function rankOffers(offers: Up17FlightOffer[]): Up17FlightOffer[] {
   return scored.map((s, i) => ({ ...s.o, recommendedRank: i + 1 }));
 }
 
-/** Standard checked-baggage add-ons shown when the airline exposes no SSR list. */
-export function defaultBaggageLadder(currency = "INR"): Up17BaggageOption[] {
-  return [15, 23].map((weightKg, i) => ({
-    tier: i + 1,
-    code: `XBAG${weightKg}`,
-    label: `Extra checked baggage — ${weightKg} KG`,
-    weightKg,
-    price: null,
-    currency,
-  }));
-}
-
 function normalizeBaggage(data: unknown, currency: string): Up17BaggageOption[] {
   const found: Up17BaggageOption[] = [];
   const walk = (value: unknown, depth = 0) => {
@@ -484,7 +472,7 @@ function normalizeBaggage(data: unknown, currency: string): Up17BaggageOption[] 
     .sort((a, b) => (a.weightKg ?? 0) - (b.weightKg ?? 0) || (a.price ?? 0) - (b.price ?? 0))
     .slice(0, 8)
     .map((o, i) => ({ ...o, tier: i + 1 }));
-  return list.length ? list : defaultBaggageLadder(currency);
+  return list;
 }
 
 export type Up17SearchInput = {
@@ -587,13 +575,7 @@ export async function up17BaggageOptions(args: {
     ResultIndex: args.resultIndex,
     SearchTokenId: args.searchTokenId,
   });
-  if (!res.ok) {
-    return {
-      ok: true,
-      status: res.status,
-      data: { options: defaultBaggageLadder(args.currency ?? "INR") },
-    };
-  }
+  if (!res.ok) return { ok: false, status: res.status, error: res.error, data: { options: [] } };
   return {
     ok: true,
     status: res.status,
@@ -1143,6 +1125,8 @@ export type Up17Passenger = {
   pan?: string;
   baggage_codes?: string[];
   meal_codes?: string[];
+  /** Resolved server-side from the live SSR response (never from the browser). */
+  ssr?: { baggage: unknown[]; meal: unknown[]; seat: unknown[] };
 };
 
 export type Up17FlightBooking = {
@@ -1158,7 +1142,7 @@ export type Up17FlightBooking = {
 const isoDateTime = (value?: string): string | undefined =>
   value ? `${value.slice(0, 10)}T00:00:00` : undefined;
 
-function toBookPassenger(p: Up17Passenger, ssr: { baggage: unknown[]; meal: unknown[] }) {
+function toBookPassenger(p: Up17Passenger, ssr: { baggage: unknown[]; meal: unknown[]; seat?: unknown[] }) {
   return {
     Title: p.title,
     FirstName: p.first_name,
@@ -1183,6 +1167,7 @@ function toBookPassenger(p: Up17Passenger, ssr: { baggage: unknown[]; meal: unkn
     FFNumber: "",
     Baggage: ssr.baggage,
     Meal: ssr.meal,
+    ...(ssr.seat && ssr.seat.length ? { Seat: ssr.seat } : {}),
     GSTCompanyAddress: "",
     GSTCompanyContactNumber: "",
     GSTCompanyName: "",
@@ -1231,10 +1216,13 @@ export async function up17BookFlight(args: {
     SearchTokenId: args.searchTokenId,
     ResultIndex: args.resultIndex,
     Passengers: args.passengers.map((p) =>
-      toBookPassenger(p, {
-        baggage: (p.baggage_codes ?? []).map((code) => ({ Code: code })),
-        meal: (p.meal_codes ?? []).map((code) => ({ Code: code })),
-      }),
+      toBookPassenger(
+        p,
+        p.ssr ?? {
+          baggage: (p.baggage_codes ?? []).map((code) => ({ Code: code })),
+          meal: (p.meal_codes ?? []).map((code) => ({ Code: code })),
+        },
+      ),
     ),
   });
   if (!res.ok) return { ok: false, status: res.status, error: res.error };
@@ -1306,4 +1294,119 @@ export async function up17CancelFlight(args: {
     ...(args.paxIds?.length ? { PaxId: args.paxIds } : {}),
     Remark: args.remark ?? "Cancel Ticket",
   });
+}
+
+// ---------------------------------------------------------- flight extras (SSR)
+
+export type FlightExtraKind = "baggage" | "meal" | "seat";
+export type FlightExtra = {
+  key: string;
+  kind: FlightExtraKind;
+  label: string;
+  sector: string;
+  price: number;
+  currency: string;
+};
+export type FlightExtraSelection = { baggage?: string[]; meal?: string[]; seat?: string[] };
+
+type RawExtras = { raw: Map<string, Rec>; list: FlightExtra[] };
+
+function collectExtras(data: unknown, fallbackCurrency: string): RawExtras {
+  const result = asRec(pick(asRec(data), ["Result", "result"]));
+  const raw = new Map<string, Rec>();
+  const list: FlightExtra[] = [];
+  const add = (kind: FlightExtraKind, rec: Rec) => {
+    const key = str(pick(rec, ["Key"]));
+    const code = str(pick(rec, ["Code"]));
+    if (!key || !code || /^No(Baggage|Meal|Seat)$/i.test(code) || raw.has(key)) return;
+    if (kind === "seat") {
+      const cls = str(pick(rec, ["SeatClass"]));
+      if (num(pick(rec, ["AvailablityType"])) !== 1 || /booked/i.test(cls)) return;
+    }
+    const sector = [str(pick(rec, ["Origin"])), str(pick(rec, ["Destination"]))].filter(Boolean).join("-");
+    const desc = str(pick(rec, ["AirlineDescription"]));
+    const label =
+      kind === "seat"
+        ? `Seat ${code}${/gallery/i.test(str(pick(rec, ["SeatClass"]))) ? " (near galley)" : ""}`
+        : desc || code;
+    raw.set(key, rec);
+    list.push({
+      key,
+      kind,
+      label,
+      sector,
+      price: num(pick(rec, ["Price"])) ?? 0,
+      currency: str(pick(rec, ["Currency"])) || fallbackCurrency,
+    });
+  };
+  const walk = (kind: FlightExtraKind, v: unknown, depth = 0) => {
+    if (depth > 6 || !v || typeof v !== "object") return;
+    if (Array.isArray(v)) return v.forEach((x) => walk(kind, x, depth + 1));
+    const rec = v as Rec;
+    if (pick(rec, ["Key"]) !== undefined && pick(rec, ["Code"]) !== undefined) return add(kind, rec);
+    Object.values(rec).forEach((x) => walk(kind, x, depth + 1));
+  };
+  walk("baggage", pick(result, ["Baggage"]));
+  walk("meal", pick(result, ["Meal", "MealDynamic"]));
+  walk("seat", pick(result, ["Seats", "SeatDynamic"]));
+  return { raw, list };
+}
+
+/** Live extras for a fare. The fare must be confirmed first for the SSR session to be valid. */
+async function fetchExtras(args: { resultIndex: string; searchTokenId: string }): Promise<Up17Result<RawExtras & { currency: string }>> {
+  const fare = await up17ConfirmFare(args);
+  if (!fare.ok || !fare.data) return { ok: false, status: fare.status, error: fare.error ?? "Fare could not be confirmed." };
+  const res = await callUp17<unknown>("/airservice/rest/ssr", {
+    ResultIndex: args.resultIndex,
+    SearchTokenId: args.searchTokenId,
+  });
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  return { ok: true, status: res.status, data: { ...collectExtras(res.data, fare.data.currency), currency: fare.data.currency } };
+}
+
+export async function flightExtras(args: { resultIndex: string; searchTokenId: string }) {
+  const res = await fetchExtras(args);
+  if (!res.ok || !res.data) return { ok: false as const, error: res.error ?? "Extras unavailable", extras: [] as FlightExtra[] };
+  return { ok: true as const, error: null, extras: res.data.list };
+}
+
+/**
+ * Resolves per-traveller selections against the live SSR list, returning the
+ * authoritative extras total and the exact supplier objects to book. Unknown
+ * or unavailable keys fail closed; a seat may be chosen by one traveller only.
+ */
+export async function resolveFlightExtras(args: {
+  resultIndex: string;
+  searchTokenId: string;
+  selections: FlightExtraSelection[];
+}): Promise<{ ok: true; total: number; perPax: { baggage: unknown[]; meal: unknown[]; seat: unknown[] }[] } | { ok: false; error: string }> {
+  const any = args.selections.some((s) => (s.baggage?.length ?? 0) + (s.meal?.length ?? 0) + (s.seat?.length ?? 0) > 0);
+  if (!any) return { ok: true, total: 0, perPax: args.selections.map(() => ({ baggage: [], meal: [], seat: [] })) };
+  const res = await fetchExtras(args);
+  if (!res.ok || !res.data) return { ok: false, error: "Selected extras could not be verified with the airline." };
+  const { raw, list } = res.data;
+  const byKey = new Map(list.map((e) => [e.key, e]));
+  const seatsTaken = new Set<string>();
+  let total = 0;
+  const perPax: { baggage: unknown[]; meal: unknown[]; seat: unknown[] }[] = [];
+  for (const sel of args.selections) {
+    const out = { baggage: [] as unknown[], meal: [] as unknown[], seat: [] as unknown[] };
+    for (const kind of ["baggage", "meal", "seat"] as const) {
+      const sectors = new Set<string>();
+      for (const key of sel[kind] ?? []) {
+        const e = byKey.get(key);
+        if (!e || e.kind !== kind) return { ok: false, error: "A selected extra is no longer available. Please reselect." };
+        if (sectors.has(e.sector)) return { ok: false, error: "Only one option per flight sector can be selected." };
+        sectors.add(e.sector);
+        if (kind === "seat") {
+          if (seatsTaken.has(key)) return { ok: false, error: "Each seat can be assigned to one traveller only." };
+          seatsTaken.add(key);
+        }
+        total += e.price;
+        out[kind].push(raw.get(key));
+      }
+    }
+    perPax.push(out);
+  }
+  return { ok: true, total: Math.round(total * 100) / 100, perPax };
 }

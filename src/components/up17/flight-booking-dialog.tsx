@@ -1,9 +1,14 @@
 import { useMemo, useState } from "react";
+
+type Extra = { key: string; kind: "baggage" | "meal" | "seat"; label: string; sector: string; price: number; currency: string };
+type Sel = { baggage: Record<string, string>; meal: Record<string, string>; seat: Record<string, string> };
+const blankSel = (): Sel => ({ baggage: {}, meal: {}, seat: {} });
 import { useServerFn } from "@tanstack/react-start";
 import {
   up17ConfirmFlightFare,
   up17BookFlightTicket,
   up17FlightBookingLookup,
+  up17FlightExtrasLookup,
 } from "@/lib/up17/up17.functions";
 import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
 
@@ -72,7 +77,6 @@ export function FlightBookingDialog({
   total,
   summary,
   passengerCount,
-  baggageCode,
 }: {
   open: boolean;
   onClose: () => void;
@@ -82,11 +86,14 @@ export function FlightBookingDialog({
   total: number | null;
   summary: string;
   passengerCount: number;
-  baggageCode?: string;
 }) {
   const confirmFare = useServerFn(up17ConfirmFlightFare);
   const bookTicket = useServerFn(up17BookFlightTicket);
   const lookupBooking = useServerFn(up17FlightBookingLookup);
+  const lookupExtras = useServerFn(up17FlightExtrasLookup);
+  const [extras, setExtras] = useState<Extra[] | null>(null);
+  const [extrasNote, setExtrasNote] = useState<string | null>(null);
+  const [sel, setSel] = useState<Sel[]>([]);
   const { pay, busy: paying, error: payError, setError: setPayError } = useRazorpayCheckout();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -101,10 +108,48 @@ export function FlightBookingDialog({
     Array.from({ length: Math.max(1, passengerCount) }, (_, i) => blankPax(i === 0)),
   );
 
-  const confirmedTotal = useMemo(() => {
+  const fareTotal = useMemo(() => {
     const c = confirmation as { total?: number | null; fare?: { total?: number | null } } | null;
     return c?.total ?? c?.fare?.total ?? total;
   }, [confirmation, total]);
+  const extrasTotal = useMemo(() => {
+    const price = new Map((extras ?? []).map((e) => [e.key, e.price]));
+    return sel.reduce(
+      (sum, s) => sum + [s.baggage, s.meal, s.seat].flatMap((m) => Object.values(m)).reduce((a, k) => a + (price.get(k) ?? 0), 0),
+      0,
+    );
+  }, [extras, sel]);
+  const confirmedTotal = fareTotal === null || fareTotal === undefined ? fareTotal : fareTotal + extrasTotal;
+  const selections = pax.map((_, i) => {
+    const s = sel[i] ?? blankSel();
+    return { baggage: Object.values(s.baggage), meal: Object.values(s.meal), seat: Object.values(s.seat) };
+  });
+  const sectors = useMemo(() => Array.from(new Set((extras ?? []).map((e) => e.sector))), [extras]);
+  const takenSeats = new Set(sel.flatMap((s) => Object.values(s.seat)));
+
+  function pick(i: number, kind: keyof Sel, sector: string, key: string) {
+    setSel((prev) => {
+      const next = pax.map((_, idx) => prev[idx] ?? blankSel());
+      const cur = { ...next[i]![kind] };
+      if (key) cur[sector] = key;
+      else delete cur[sector];
+      next[i] = { ...next[i]!, [kind]: cur };
+      return next;
+    });
+  }
+
+  async function loadExtras() {
+    if (!searchTokenId) return;
+    try {
+      const res = await lookupExtras({ data: { resultIndex, searchTokenId } });
+      setExtras(res.extras as Extra[]);
+      if (!res.ok) setExtrasNote("Seats, meals and extra baggage aren't available online for this fare.");
+      else if (!res.extras.length) setExtrasNote("The airline offers no paid extras for this fare.");
+    } catch {
+      setExtras([]);
+      setExtrasNote("Seats, meals and extra baggage aren't available online for this fare.");
+    }
+  }
 
   function patch(i: number, p: Partial<PaxForm>) {
     setPax((prev) => prev.map((x, idx) => (idx === i ? { ...x, ...p } : x)));
@@ -120,6 +165,7 @@ export function FlightBookingDialog({
       else {
         setConfirmation((res.confirmation ?? {}) as Record<string, unknown>);
         setStep(2);
+        void loadExtras();
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fare confirmation failed");
@@ -152,7 +198,7 @@ export function FlightBookingDialog({
       amount: confirmedTotal,
       currency: currency || "INR",
       description: `Flight · ${summary}`,
-      flightFare: { resultIndex, searchTokenId },
+      flightFare: { resultIndex, searchTokenId, ...(extrasTotal > 0 || selections.some((s) => s.seat.length) ? { extras: selections } : {}) },
       ...(lead ? { name: `${lead.first_name} ${lead.last_name}`.trim() } : {}),
       ...(lead?.email ? { email: lead.email.trim() } : {}),
       ...(lead?.contact_no ? { phone: lead.contact_no.trim() } : {}),
@@ -183,13 +229,12 @@ export function FlightBookingDialog({
         country_code: p.country_code.trim().toUpperCase(),
         ...(p.passport_no?.trim() ? { passport_no: p.passport_no.trim() } : {}),
         ...(p.passport_expiry ? { passport_expiry: p.passport_expiry } : {}),
-        ...(baggageCode ? { baggage_codes: [baggageCode] } : {}),
       }));
       const res = (await bookTicket({
         data: {
           resultIndex,
           searchTokenId,
-          passengers: payload,
+          passengers: payload.map((p, i) => ({ ...p, extras: selections[i] ?? {} })),
           orderId: paid.orderId,
           paymentId: paid.paymentId,
         },
@@ -437,6 +482,52 @@ export function FlightBookingDialog({
               </div>
             ))}
 
+            <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+              <div className={labelCls}>Seats, meals &amp; extra baggage</div>
+              {extras === null ? (
+                <p className="mt-2 text-xs text-muted-foreground">Loading live options from the airline…</p>
+              ) : extrasNote ? (
+                <p className="mt-2 text-xs text-muted-foreground">{extrasNote}</p>
+              ) : (
+                <div className="mt-3 space-y-4">
+                  {pax.map((p, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="text-xs text-foreground">
+                        Traveller {i + 1}{p.first_name ? ` · ${p.first_name} ${p.last_name}` : ""}
+                      </div>
+                      {sectors.map((sector) => (
+                        <div key={sector} className="grid gap-2 sm:grid-cols-3">
+                          {(["seat", "meal", "baggage"] as const).map((kind) => {
+                            const opts = (extras ?? []).filter((e) => e.kind === kind && e.sector === sector);
+                            if (!opts.length) return null;
+                            const value = sel[i]?.[kind][sector] ?? "";
+                            return (
+                              <label key={kind}>
+                                <span className={labelCls}>{kind === "baggage" ? "Extra bag" : kind} · {sector}</span>
+                                <select value={value} onChange={(e) => pick(i, kind, sector, e.target.value)} className={inputCls}>
+                                  <option value="">{kind === "seat" ? "Auto-assigned at check-in" : "None"}</option>
+                                  {opts
+                                    .filter((o) => kind !== "seat" || o.key === value || !takenSeats.has(o.key))
+                                    .map((o) => (
+                                      <option key={o.key} value={o.key}>
+                                        {o.label} — {o.price > 0 ? money(o.price, o.currency) : "Free"}
+                                      </option>
+                                    ))}
+                                </select>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  {extrasTotal > 0 ? (
+                    <div className="text-xs text-muted-foreground">Extras total: {money(extrasTotal, currency)} · re-verified with the airline at payment</div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap justify-between gap-3">
               <button
                 type="button"
@@ -468,7 +559,7 @@ export function FlightBookingDialog({
           <div className="mt-6 space-y-5">
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Amount payable</span>
+                <span className="text-muted-foreground">Amount payable{extrasTotal > 0 ? ` (fare ${money(fareTotal, currency)} + extras ${money(extrasTotal, currency)})` : ""}</span>
                 <span className="font-serif text-xl">{money(confirmedTotal, currency)}</span>
               </div>
               <div className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">

@@ -41,7 +41,7 @@ export type OrderInput = {
  * server-side fare confirmation. Client-supplied amounts are never charged.
  */
 export async function resolvePaymentAmount(
-  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string }; prePurchasedBookingId?: string; aviationReference?: string },
+  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string; extras?: { baggage?: string[]; meal?: string[]; seat?: string[] }[] }; prePurchasedBookingId?: string; aviationReference?: string },
 ): Promise<{
   amountMinor: number;
   currency: string;
@@ -72,8 +72,16 @@ export async function resolvePaymentAmount(
   if (input.purpose === "flight") {
     if (!input.flightFare) throw new Error("The flight fare reference is required.");
     const { up17ConfirmFare } = await import("@/lib/up17/up17.server");
-    const fare = await up17ConfirmFare(input.flightFare);
-    const total = fare.data?.total;
+    const { resultIndex, searchTokenId, extras: selections } = input.flightFare;
+    const fare = await up17ConfirmFare({ resultIndex, searchTokenId });
+    let extrasTotal = 0;
+    if (selections?.length) {
+      const { resolveFlightExtras } = await import("@/lib/up17/up17.server");
+      const r = await resolveFlightExtras({ resultIndex, searchTokenId, selections });
+      if (!r.ok) throw new Error(r.error);
+      extrasTotal = r.total;
+    }
+    const total = fare.data?.total === null || fare.data?.total === undefined ? fare.data?.total : fare.data.total + extrasTotal;
     const currency = fare.data?.currency?.trim().toUpperCase();
     if (!fare.ok || total === null || total === undefined || !currency) {
       throw new Error("The live fare could not be verified. Please search again.");

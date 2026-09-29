@@ -6,7 +6,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { mediaUrl } from "@/lib/media";
 
 /**
- * Fare rules arrive as raw HTML from the UP17 partner API. Strip all scripting,
+ * Fare rules arrive as raw HTML from the fare source. Strip all scripting,
  * event handlers and embedded content before it ever reaches the DOM.
  */
 function sanitizeFareRuleHtml(html: string): string {
@@ -567,26 +567,11 @@ function OfferCard({
       ) : null}
 
       <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-border/50 pt-4">
-        <label className="min-w-[240px] flex-1">
-          <span className="block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            Extra checked baggage
-            {fare?.checkInBaggage ? ` · ${fare.checkInBaggage} included` : ""}
-          </span>
-          <select
-            value={selected}
-            onFocus={refreshBaggage}
-            onChange={(e) => setSelected(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-xs"
-          >
-            <option value="">Included allowance only</option>
-            {options.map((o) => (
-              <option key={o.code} value={o.code}>
-                {o.label}
-                {o.price ? ` — ${money(o.price, o.currency)}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="min-w-[240px] flex-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          {fare?.checkInBaggage ? `Checked baggage ${fare.checkInBaggage} included` : "Baggage per fare rules"}
+          {fare?.cabinBaggage ? ` · Cabin ${fare.cabinBaggage}` : ""}
+          <div className="mt-1 normal-case tracking-normal">Seats, meals and extra bags can be added after the fare is confirmed.</div>
+        </div>
         <button
           type="button"
           onClick={() => setDetailsOpen((v) => !v)}
@@ -620,7 +605,6 @@ function OfferCard({
         total={fare?.fare.total ?? offer.fare.total}
         summary={`${offer.origin} → ${offer.destination} · ${offer.airline || offer.airlineCode} ${offer.flightNumbers.join(" ")}`}
         passengerCount={passengerCount}
-        {...(selected ? { baggageCode: selected } : {})}
       />
 
       {loading ? (
