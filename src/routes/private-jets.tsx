@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageShell, PageHero } from "@/components/search-shell";
-import { LocationAutocomplete } from "@/components/location-autocomplete";
+import { AirportAutocomplete, airportCode } from "@/components/aviation/airport-autocomplete";
+import type { AirportOption } from "@/lib/aviation/private-aviation.functions";
 import {
   getJetEstimate,
   requestJetConfirmation,
@@ -43,8 +44,8 @@ function JetsPage() {
   const confirmFn = useServerFn(requestJetConfirmation);
   const auth = useSignedInEmail();
 
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
+  const [origin, setOrigin] = useState<AirportOption | null>(null);
+  const [destination, setDestination] = useState<AirportOption | null>(null);
   const [pax, setPax] = useState(4);
   const [roundTrip, setRoundTrip] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,11 +62,16 @@ function JetsPage() {
 
   async function onEstimate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const o = String(f.get("origin") || origin).trim();
-    const d = String(f.get("destination") || destination).trim();
-    setOrigin(o);
-    setDestination(d);
+    if (!origin || !destination) {
+      setError("Please choose both airports from the list.");
+      return;
+    }
+    if (airportCode(origin) === airportCode(destination)) {
+      setError("Departure and arrival airports must be different.");
+      return;
+    }
+    const o = airportCode(origin);
+    const d = airportCode(destination);
     setError(null);
     setEst(null);
     setDone(null);
@@ -127,8 +133,8 @@ function JetsPage() {
         <form onSubmit={onEstimate} className="rounded-2xl border border-border/60 bg-card/80 p-6 shadow-2xl backdrop-blur-xl md:p-8">
           <div className="mb-4 text-xs uppercase tracking-[0.3em] text-primary">Step 1 · Instant estimate</div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <AvLabel label="From"><LocationAutocomplete name="origin" kind="airports" required placeholder="London, LTN…" /></AvLabel>
-            <AvLabel label="To"><LocationAutocomplete name="destination" kind="airports" required placeholder="Nice, NCE…" /></AvLabel>
+            <AvLabel label="From"><AirportAutocomplete ariaLabel="From airport" value={origin} onSelect={setOrigin} required placeholder="City, airport or code — London, LTN…" /></AvLabel>
+            <AvLabel label="To"><AirportAutocomplete ariaLabel="To airport" value={destination} onSelect={setDestination} required placeholder="Nice, NCE…" /></AvLabel>
             <AvLabel label="Passengers">
               <input type="number" min={1} max={40} value={pax} onChange={(e) => setPax(Math.max(1, Number(e.target.value) || 1))} className={avField} />
             </AvLabel>
@@ -157,7 +163,7 @@ function JetsPage() {
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
               Our Private Aviation desk is now sourcing vetted operators for real aircraft and confirmed pricing. We'll contact you by email and phone with your confirmed options and a secure booking and payment link.
             </p>
-            <Link to="/account" className="mt-6 inline-block text-xs uppercase tracking-[0.3em] text-primary hover:underline">View in my account →</Link>
+            <Link to="/private-aviation/quote/$reference" params={{ reference: done.reference }} className="mt-6 inline-block text-xs uppercase tracking-[0.3em] text-primary hover:underline">Track this request →</Link>
           </div>
         ) : est ? (
           <>
