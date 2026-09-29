@@ -71,6 +71,10 @@ function isReviewAttribution(obj: Record<string, unknown>, k: string, v: unknown
     ("rating" in obj || "text" in obj || "reviewText" in obj);
 }
 
+/** Generic category values are not supplier identity and stay readable. */
+const NEUTRAL_VALUE =
+  /^(all|none|hotels?|flights?|activit(y|ies)|transfers?|cruises?|tours?|bus(es)?|rail|trains?|cars?|cabs?|villas?|yachts?|packages?|insurance|travel_protection|visa|private_aviation|empty_legs?|wallet|web|app|manual|razorpay|worldway|live|demo|mock|internal|b2b|b2c|admin)$/i;
+
 export async function sanitizeOutbound<T>(value: T, opt: SanitizeOptions = {}): Promise<T> {
   const walk = async (v: unknown, key: string): Promise<unknown> => {
     if (typeof v === "string") return cleanString(v, key, opt);
@@ -79,7 +83,7 @@ export async function sanitizeOutbound<T>(value: T, opt: SanitizeOptions = {}): 
       const obj = v as Record<string, unknown>;
       const out: Record<string, unknown> = {};
       for (const [k, val] of Object.entries(obj)) {
-        if (val !== null && val !== undefined && val !== "" && SEAL_KEY.test(k) && !isReviewAttribution(obj, k, val)) {
+        if (val !== null && val !== undefined && val !== "" && SEAL_KEY.test(k) && !(typeof val === "string" && NEUTRAL_VALUE.test(val)) && typeof val !== "boolean" && !isReviewAttribution(obj, k, val)) {
           out[k] = await seal(val);
         } else {
           out[k] = await walk(val, k);

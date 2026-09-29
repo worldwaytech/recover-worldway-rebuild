@@ -361,7 +361,7 @@ export function Up17FlightResults({
             <FilterGroup title="Fare source">
               {facets.sources.map((s) => (
                 <button key={s} type="button" onClick={() => toggle(sources, s, setSources)} className={chip(sources.includes(s))}>
-                  {s}
+                  {`Fare option ${facets.sources.indexOf(s) + 1}`}
                 </button>
               ))}
             </FilterGroup>

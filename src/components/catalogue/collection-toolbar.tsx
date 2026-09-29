@@ -156,12 +156,6 @@ export function CollectionToolbar({
             options={facets.departureMonths}
             onChange={(v) => set({ departureMonth: v })}
           />
-          <FacetSelect
-            label="Supplier"
-            value={filters.supplier}
-            options={facets.suppliers}
-            onChange={(v) => set({ supplier: v })}
-          />
 
           <div className="space-y-2 sm:col-span-2">
             <Label className="text-[0.65rem] uppercase tracking-widest text-muted-foreground">
