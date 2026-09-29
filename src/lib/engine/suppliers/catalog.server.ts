@@ -25,7 +25,10 @@ export const SUPPLIER_CATALOG: SupplierRegistration[] = [
     ...g("production", false, "Booking enabled; no certified production booking; balance/activation external", "book", "voucher"),
   ]),
   entry("viator-merchant", ["activity"], "sandbox", 0.8, g("sandbox", true, "Sandbox lifecycle passed", "search", "availability", "price", "prebook", "book", "cancel", "voucher")),
-  entry("viator-affiliate", ["activity"], "uat", 0.7, g("uat", false, "Key provisioned for merchant, not affiliate booking access", "search", "availability", "price")),
+  entry("viator-affiliate", ["activity"], "production", 0.8, [
+    ...g("production", true, "Production API environment configured; live customer activity search", "search", "availability", "price"),
+    ...g("production", false, "Key lacks affiliate booking access — booking not certified", "book"),
+  ]),
   entry("gadventures", ["activity"], "uat", 0.7, g("uat", false, "Certification evidence gaps", "search", "availability", "price", "book")),
   entry("ttc", ["activity"], "uat", 0.6, g("production", false, "Catalogue synced from website; no booking API credentials", "search")),
   entry("hbx-hotels", ["stay"], "uat", 0.8, g("uat", false, "Certification audit open; mTLS certificate missing", "search", "availability", "price", "prebook", "book", "cancel")),
@@ -40,6 +43,14 @@ export const SUPPLIER_CATALOG: SupplierRegistration[] = [
   // Future supplier: interfaces ready, deliberately inactive — no credentials, no inventory.
   entry("amadeus", ["flight"], "disabled", 0, []),
 ];
+
+/** LIVE = production supplier; PARTIALLY_LIVE = only non-production capabilities; OFF = disabled/blocked. Derived, never promoted. */
+export type SupplierLiveStatus = "LIVE" | "PARTIALLY_LIVE" | "OFF";
+export function liveStatus(r: SupplierRegistration): SupplierLiveStatus {
+  if (r.readiness === "production") return "LIVE";
+  if (r.readiness === "disabled" || r.readiness === "blocked" || !(r.grants ?? []).length) return "OFF";
+  return "PARTIALLY_LIVE";
+}
 
 export function supplierRegistry(): Map<string, SupplierRegistration> {
   return new Map(SUPPLIER_CATALOG.map((r) => [r.supplierKey, r]));
