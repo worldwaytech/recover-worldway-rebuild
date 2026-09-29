@@ -46,7 +46,7 @@ function normaliseEstimates(structured: any): JetEstimateOption[] {
       high: Number(e.price_high),
       confidence: typeof e.confidence === "number" ? e.confidence : null,
     }))
-    .filter((e: JetEstimateOption) => Number.isFinite(e.estimate) && e.estimate > 0);
+    .filter((e: JetEstimateOption) => e.estimate !== null && Number.isFinite(e.estimate) && e.estimate > 0);
 }
 
 // ---------- Private Jets: step 1 — indicative estimate ----------
