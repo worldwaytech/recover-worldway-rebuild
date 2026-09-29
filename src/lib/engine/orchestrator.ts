@@ -1,5 +1,6 @@
 // Supplier-agnostic adapter selection + fan-out with failover.
 // Pure: no supplier knowledge. Adapters register capabilities and a health probe.
+import { supports } from "./capabilities";
 import type { ComponentKind, SupplierCapability, SupplierRegistration } from "./types";
 
 export interface AdapterHealth {
@@ -32,7 +33,7 @@ export function selectAdapters<A extends { registration: SupplierRegistration }>
 ): A[] {
   return adapters
     .filter((a) => a.registration.kinds.includes(kind))
-    .filter((a) => a.registration.capabilities.includes(capability))
+    .filter((a) => supports(a.registration, capability))
     .filter((a) => READINESS_RANK[a.registration.readiness] < 9)
     .sort(
       (a, b) =>
