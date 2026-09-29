@@ -31,13 +31,17 @@ export function supplierTerms(): string[] {
 }
 function re() {
   if (!termRe) termRe = new RegExp(`(?<![\\w-])(${supplierTerms().map(escape).join("|")})(?![\\w-])`, "gi");
+  termRe.lastIndex = 0;
   return termRe;
+}
+function has(s: string) {
+  return new RegExp(re().source, "i").test(s);
 }
 
 /** Replace supplier names/hosts in free text with Worldway branding. */
 export function redactText(s: string): string {
   return s
-    .replace(/https?:\/\/[^\s"']+/gi, (u) => (re().test(u) ? ((re().lastIndex = 0), "[worldway]") : u))
+    .replace(/https?:\/\/[^\s"']+/gi, (u) => (has(u) ? "[worldway]" : u))
     .replace(re(), "Worldway")
     .replace(/Worldway(\s+Worldway)+/g, "Worldway");
 }
@@ -63,8 +67,7 @@ export function redactForExternal<T>(value: T): T {
 /** Find leaks (for tests / monitoring). Returns offending paths. */
 export function findSupplierLeaks(value: unknown, path = "$"): string[] {
   if (typeof value === "string") {
-    re().lastIndex = 0;
-    return re().test(value) ? [path] : [];
+    return has(value) ? [path] : [];
   }
   if (Array.isArray(value)) return value.flatMap((v, i) => findSupplierLeaks(v, `${path}[${i}]`));
   if (value && typeof value === "object")
