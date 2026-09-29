@@ -19,7 +19,7 @@
       {
         "name": "search_flights",
         "title": "Search flights",
-        "description": "Search live flight inventory across suppliers via the Worldway partner network. Returns fares, cabin classes, and booking references.",
+        "description": "Search live Worldway flight inventory. Routed by the Worldway engine to healthy flight suppliers by capability; returns fares, cabins and offer IDs.",
         "annotations": {
           "readOnlyHint": true,
           "openWorldHint": true
@@ -30,11 +30,11 @@
           "properties": {
             "origin": {
               "type": "string",
-              "description": "Origin IATA code or city, e.g. LHR or London."
+              "description": "Origin IATA code or city, e.g. DEL or Delhi."
             },
             "destination": {
               "type": "string",
-              "description": "Destination IATA code or city, e.g. DXB or Dubai."
+              "description": "Destination IATA code or city, e.g. BOM or Mumbai."
             },
             "depart_date": {
               "type": "string",
@@ -47,8 +47,8 @@
             "passengers": {
               "default": 1,
               "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "minimum": 1,
+              "maximum": 9
             },
             "cabin": {
               "default": "economy",
