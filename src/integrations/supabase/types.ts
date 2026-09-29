@@ -2538,6 +2538,84 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_health_events: {
+        Row: {
+          capability: string
+          created_at: string
+          detail: string | null
+          id: string
+          latency_ms: number
+          outcome: string
+          result_count: number
+          supplier_key: string
+        }
+        Insert: {
+          capability: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          latency_ms?: number
+          outcome: string
+          result_count?: number
+          supplier_key: string
+        }
+        Update: {
+          capability?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          latency_ms?: number
+          outcome?: string
+          result_count?: number
+          supplier_key?: string
+        }
+        Relationships: []
+      }
+      supplier_health_status: {
+        Row: {
+          booking_eligible: boolean
+          calls: number
+          error_rate: number
+          failures: number
+          last_checked_at: string | null
+          last_error: string | null
+          p50_ms: number | null
+          readiness: string
+          reliability: number
+          status: string
+          supplier_key: string
+          updated_at: string
+        }
+        Insert: {
+          booking_eligible?: boolean
+          calls?: number
+          error_rate?: number
+          failures?: number
+          last_checked_at?: string | null
+          last_error?: string | null
+          p50_ms?: number | null
+          readiness?: string
+          reliability?: number
+          status?: string
+          supplier_key: string
+          updated_at?: string
+        }
+        Update: {
+          booking_eligible?: boolean
+          calls?: number
+          error_rate?: number
+          failures?: number
+          last_checked_at?: string | null
+          last_error?: string | null
+          p50_ms?: number | null
+          readiness?: string
+          reliability?: number
+          status?: string
+          supplier_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       travellers: {
         Row: {
           created_at: string

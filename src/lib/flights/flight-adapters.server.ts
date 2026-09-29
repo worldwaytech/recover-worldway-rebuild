@@ -1,3 +1,4 @@
+import { persistOutcomes } from "@/lib/engine/suppliers/health-store.server";
 import { registrationFor } from "@/lib/engine/suppliers/catalog.server";
 // Flight adapters for the engine orchestrator. Each wraps an EXISTING supplier
 // client unchanged and normalises to a Worldway-branded offer shape.
@@ -129,6 +130,7 @@ export async function searchFlightsViaEngine(input: FlightQuery) {
   const { results, outcomes } = await orchestrate(FLIGHT_ADAPTERS, "flight", "search", q);
   // Server-side routing trace (supplier keys stay out of the tool response).
   console.info("[search_flights] routing", JSON.stringify(outcomes));
+  await persistOutcomes("search", outcomes);
   results.sort((a, b) => a.total_price - b.total_price);
   const offers = results.slice(0, 25);
   const anyAttempted = outcomes.some((o) => o.status !== "skipped");
