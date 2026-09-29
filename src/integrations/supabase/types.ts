@@ -2294,15 +2294,19 @@ export type Database = {
           created_at: string
           created_by: string | null
           dependencies: Json
+          explanation: string | null
           graph: Json
           id: string
           issues: Json
           journey_id: string
           offers: Json
+          on_request: Json
           parent_version: number | null
           pricing: Json | null
+          readiness: Json
           reason: string
           simulation_id: string | null
+          sources: Json
           version: number
         }
         Insert: {
@@ -2310,15 +2314,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dependencies?: Json
+          explanation?: string | null
           graph: Json
           id?: string
           issues?: Json
           journey_id: string
           offers: Json
+          on_request?: Json
           parent_version?: number | null
           pricing?: Json | null
+          readiness?: Json
           reason: string
           simulation_id?: string | null
+          sources?: Json
           version: number
         }
         Update: {
@@ -2326,15 +2334,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           dependencies?: Json
+          explanation?: string | null
           graph?: Json
           id?: string
           issues?: Json
           journey_id?: string
           offers?: Json
+          on_request?: Json
           parent_version?: number | null
           pricing?: Json | null
+          readiness?: Json
           reason?: string
           simulation_id?: string | null
+          sources?: Json
           version?: number
         }
         Relationships: [
