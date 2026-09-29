@@ -2295,14 +2295,28 @@ export type Database = {
           customer_phone: string | null
           departure_date: string | null
           destination: string
+          email_log: Json
           empty_leg: Json | null
           estimate: Json | null
           id: string
           kind: string
           last_error: string | null
           origin: string
+          paid_amount: number | null
+          paid_at: string | null
+          paid_currency: string | null
           passengers: number
+          payment_id: string | null
+          payment_order_id: string | null
           preferences: Json | null
+          quote_amount: number | null
+          quote_currency: string | null
+          quote_details: Json | null
+          quote_expires_at: string | null
+          quote_version: number
+          quoted_at: string | null
+          quoted_by: string | null
+          receipt_number: string | null
           reference: string
           return_date: string | null
           round_trip: boolean
@@ -2325,14 +2339,28 @@ export type Database = {
           customer_phone?: string | null
           departure_date?: string | null
           destination: string
+          email_log?: Json
           empty_leg?: Json | null
           estimate?: Json | null
           id?: string
           kind: string
           last_error?: string | null
           origin: string
+          paid_amount?: number | null
+          paid_at?: string | null
+          paid_currency?: string | null
           passengers?: number
+          payment_id?: string | null
+          payment_order_id?: string | null
           preferences?: Json | null
+          quote_amount?: number | null
+          quote_currency?: string | null
+          quote_details?: Json | null
+          quote_expires_at?: string | null
+          quote_version?: number
+          quoted_at?: string | null
+          quoted_by?: string | null
+          receipt_number?: string | null
           reference: string
           return_date?: string | null
           round_trip?: boolean
@@ -2355,14 +2383,28 @@ export type Database = {
           customer_phone?: string | null
           departure_date?: string | null
           destination?: string
+          email_log?: Json
           empty_leg?: Json | null
           estimate?: Json | null
           id?: string
           kind?: string
           last_error?: string | null
           origin?: string
+          paid_amount?: number | null
+          paid_at?: string | null
+          paid_currency?: string | null
           passengers?: number
+          payment_id?: string | null
+          payment_order_id?: string | null
           preferences?: Json | null
+          quote_amount?: number | null
+          quote_currency?: string | null
+          quote_details?: Json | null
+          quote_expires_at?: string | null
+          quote_version?: number
+          quoted_at?: string | null
+          quoted_by?: string | null
+          receipt_number?: string | null
           reference?: string
           return_date?: string | null
           round_trip?: boolean
