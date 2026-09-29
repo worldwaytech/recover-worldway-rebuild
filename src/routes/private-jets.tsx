@@ -165,7 +165,7 @@ function JetsPage() {
       <PageHero
         eyebrow="Worldway Private Aviation · Private Jets"
         title="Wheels up, on your schedule."
-        subtitle="Instant charter estimates for any route — then confirmed live pricing with real aircraft availability."
+        subtitle="Live partner pricing for any route — then a confirmed quote with real aircraft availability."
         image={HERO}
       />
 
