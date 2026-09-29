@@ -17,6 +17,17 @@ export type FlightQuery = {
   cabin: "economy" | "premium_economy" | "business" | "first";
 };
 
+/** Server-only offer → supplier map (never serialised into responses). */
+const OFFER_SUPPLIER = new Map<string, string>();
+function tagSupplier(key: string, id: string) {
+  if (OFFER_SUPPLIER.size > 20_000) OFFER_SUPPLIER.clear();
+  OFFER_SUPPLIER.set(id, key);
+  return id;
+}
+export function flightOfferSupplier(offerId: string): string | null {
+  return OFFER_SUPPLIER.get(offerId) ?? null;
+}
+
 export type WorldwayFlightOffer = {
   offer_id: string;
   airline: string;
@@ -53,7 +64,7 @@ const up17Adapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
     return (res.data?.offers ?? [])
       .filter((o) => (o.fare.published ?? o.fare.total) != null)
       .map((o) => ({
-        offer_id: worldwayOfferId(`a:${o.resultIndex}`),
+        offer_id: tagSupplier("up17", worldwayOfferId(`a:${o.resultIndex}`)),
         airline: o.airline,
         flight_numbers: o.flightNumbers,
         origin: o.origin,
@@ -86,7 +97,7 @@ const airiqAdapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
     return fares
       .filter((f) => f.seats >= q.passengers)
       .map((f) => ({
-        offer_id: worldwayOfferId(`b:${f.ticketId}`),
+        offer_id: tagSupplier("airiq", worldwayOfferId(`b:${f.ticketId}`)),
         airline: f.airline,
         flight_numbers: [f.flightNumber],
         origin: f.origin,

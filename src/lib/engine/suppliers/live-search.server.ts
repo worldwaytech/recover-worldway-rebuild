@@ -39,12 +39,10 @@ export function localDateIn(instant: string, tz: string) {
 }
 
 // ---------------------------------------------------------------- flights
-import type { WorldwayFlightOffer } from "@/lib/flights/flight-adapters.server";
+import { flightOfferSupplier, type WorldwayFlightOffer } from "@/lib/flights/flight-adapters.server";
 
 function flightSupplier(offerId: string): string | null {
-  if (offerId.startsWith("WWF-A-")) return "up17";
-  if (offerId.startsWith("WWF-B-")) return "airiq";
-  return null;
+  return flightOfferSupplier(offerId);
 }
 
 export function flightToCanonical(o: WorldwayFlightOffer): CanonicalOffer | null {

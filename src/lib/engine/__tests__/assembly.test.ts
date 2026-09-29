@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { combine } from "../suppliers/assembly.server";
 import { airportTz, flightToCanonical, localToInstant, localDateIn } from "../suppliers/live-search.server";
 import type { CanonicalOffer } from "../normalize";
+import { vi } from "vitest";
+vi.mock("@/lib/flights/flight-adapters.server", () => ({ flightOfferSupplier: (id: string) => (id === "WWF-TEST1" ? "airiq" : null) }));
 
 const req = { origin: "BOM", destinations: ["CDG"], departFrom: "2026-12-12", returnBy: "2026-12-19", adults: 2, children: 0, luxuryLevel: 4 as const, interests: [] };
 
@@ -9,7 +11,7 @@ describe("live assembly", () => {
   it("converts local supplier times using real airport time zones", () => {
     expect(["Asia/Kolkata", "Asia/Calcutta"]).toContain(airportTz("BOM")!.tz);
     expect(localToInstant("2026-12-12 23:30", "Asia/Kolkata")).toBe("2026-12-12T18:00:00.000Z");
-    const f = flightToCanonical({ offer_id: "WWF-B-1", airline: "AI", flight_numbers: ["AI143"], origin: "BOM", destination: "CDG", departure: "2026-12-12 23:30", arrival: "2026-12-13 06:10",
+    const f = flightToCanonical({ offer_id: "WWF-TEST1", airline: "AI", flight_numbers: ["AI143"], origin: "BOM", destination: "CDG", departure: "2026-12-12 23:30", arrival: "2026-12-13 06:10",
       stops: 0, duration_min: 610, cabin: "economy", refundable: true, seats_available: 4, total_price: 60000, currency: "INR", trip: "one_way" })!;
     expect(f.supplierKey).toBe("airiq");
     expect(f.end.timezone).toBe("Europe/Paris");
