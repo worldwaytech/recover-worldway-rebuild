@@ -86,6 +86,7 @@ export async function sanitizeOutbound<T>(value: T, opt: SanitizeOptions = {}): 
       const obj = v as Record<string, unknown>;
       const out: Record<string, unknown> = {};
       for (const [k, val] of Object.entries(obj)) {
+        if (/^raw([A-Z_].*)?$/.test(k) || /^raw$/i.test(k)) continue; // raw supplier payloads never leave
         if (typeof val === "string" && SEAL_KEY.test(k) && URL_ONLY.test(val)) {
           out[k] = isThirdParty(val) ? await neutralUrl(val, k, opt) : val;
         } else if (val !== null && val !== undefined && val !== "" && SEAL_KEY.test(k) && !KEEP_KEY.test(k) && !(typeof val === "string" && NEUTRAL_VALUE.test(val)) && typeof val !== "boolean" && !isReviewAttribution(obj, k, val)) {
