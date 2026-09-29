@@ -25,16 +25,17 @@ const Req = z.object({
 type Db = { from: (t: string) => any };
 
 async function service() {
-  const [{ JourneyService }, { supabaseJourneyRepo }, { supplierRegistry }] = await Promise.all([
-    import("./store"), import("./store.server"), import("../suppliers/catalog.server"),
+  const [{ JourneyService }, { supabaseJourneyRepo }, { supplierRegistry }, { commercialRuleFor }] = await Promise.all([
+    import("./store"), import("./store.server"), import("../suppliers/catalog.server"), import("../suppliers/commercial.server"),
   ]);
   return new JourneyService(supabaseJourneyRepo, (j) => ({
     requirements: j.requirements as any,
     registry: supplierRegistry(),
     currency: j.currency,
-    // Only same-currency pricing until a live FX source is connected — never guessed rates.
+    // Approved FX source only (identity until one is connected) — never guessed rates.
     fx: { [j.currency]: 1 },
-    ruleFor: () => ({ markupPercent: 0, commissionPercent: 0, serviceFee: 0 }),
+    // Real Worldway commercial rules; suppliers without one block pricing (never 0%).
+    ruleFor: commercialRuleFor,
   }));
 }
 

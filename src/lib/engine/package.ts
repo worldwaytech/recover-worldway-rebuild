@@ -18,7 +18,7 @@ export interface PipelineInput {
   registry: Map<string, SupplierRegistration>;
   currency: string;
   fx: FxTable;
-  ruleFor: (c: NormalizedComponent) => PricingRule;
+  ruleFor: (c: NormalizedComponent) => PricingRule | null;
 }
 
 export interface PipelinePackage extends RankedPackage {

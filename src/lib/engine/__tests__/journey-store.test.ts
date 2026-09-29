@@ -93,3 +93,24 @@ describe("persistent journey intelligence", () => {
     expect(healthAdvisories(ctx, [])).toEqual([]);
   });
 });
+
+import { SUPPLIER_CATALOG, liveStatus } from "../suppliers/catalog.server";
+import { bookingBlockers } from "../capabilities";
+import { commercialRuleFor } from "../suppliers/commercial.server";
+import { runPackagePipeline } from "../package";
+describe("commercial rules + live status", () => {
+  it("LIVE suppliers are Crystal, UP17, AIR iQ, Viator (+ aviation); only Crystal is bookable; Amadeus off", () => {
+    const live = SUPPLIER_CATALOG.filter((s) => liveStatus(s) === "LIVE").map((s) => s.supplierKey).sort();
+    expect(live).toEqual(["airiq", "crystal", "private-aviation", "up17", "viator-affiliate"]);
+    expect(SUPPLIER_CATALOG.filter((s) => !bookingBlockers(s).length).map((s) => s.supplierKey)).toEqual(["crystal"]);
+    expect(liveStatus(SUPPLIER_CATALOG.find((s) => s.supplierKey === "amadeus")!)).toBe("OFF");
+  });
+  it("uses real Worldway rules and blocks pricing when a supplier has no rule (never 0%)", () => {
+    expect(commercialRuleFor({ supplierKey: "airiq" })!.markupPercent).toBe(5);
+    expect(commercialRuleFor({ supplierKey: "crystal" })).toBeNull();
+    const [p] = runPackagePipeline({ requirements: req, registry, currency: "USD", fx: { USD: 1 }, ruleFor: commercialRuleFor, candidates: [{ id: "x", offers }] });
+    expect(p!.pricing).toBeNull();
+    expect(p!.bookable).toBe(false);
+    expect(p!.issues.some((i) => /commercial rule/.test(i.message))).toBe(true);
+  });
+});
