@@ -6,14 +6,7 @@ import { Panel, Rows, Row, EmptyState, fmtDate } from "@/components/account/acco
 import { useServerFn } from "@tanstack/react-start";
 import { listMyAviationRequests } from "@/lib/aviation/private-aviation.functions";
 
-const AV_STATUS: Record<string, string> = {
-  submitted: "Received",
-  sourcing: "Sourcing aircraft",
-  options_sent: "Options ready",
-  booked: "Booked",
-  closed: "Closed",
-  failed: "Desk follow-up",
-};
+import { STATUS_LABEL as AV_STATUS } from "@/lib/aviation/quote";
 
 export const Route = createFileRoute("/account/")({
   head: () => ({
@@ -100,7 +93,7 @@ function Overview() {
             {(aviation.data?.items ?? []).slice(0, 10).map((r) => (
               <Row
                 key={r.id}
-                title={`${r.origin} → ${r.destination}`}
+                title={<Link to="/private-aviation/quote/$reference" params={{ reference: r.reference }} className="hover:text-primary">{`${r.origin} → ${r.destination}`}</Link>}
                 meta={`${r.kind === "empty_leg" ? "Empty leg" : "Private jet charter"} · ${r.reference} · ${fmtDate(r.departure_date)} · ${r.passengers} pax`}
                 right={
                   <span className="text-xs uppercase tracking-widest text-muted-foreground">
