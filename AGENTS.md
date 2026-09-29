@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 
 - Journey engine core lives in src/lib/engine as pure, supplier-agnostic modules; suppliers plug in only via adapters normalising to engine/types.ts — keeps supplier logic out of the core.
+- Private aviation supplier (Villiers MCP + RSS) lives in src/lib/aviation/ (villiers.server.ts client, private-aviation.functions.ts); requests persist in private_aviation_requests with supplier columns never returned to customers — keeps partner identity/credentials server-side.
+- Villiers request_jet_confirmation is sent with the Worldway aviation desk email (not the customer's) so partner emails never reach customers; never auto-retried except after an explicit "estimate required" rejection.

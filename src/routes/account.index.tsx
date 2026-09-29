@@ -3,6 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { accountApi } from "@/lib/account-data";
 import { StatTile } from "@/components/portal-shell";
 import { Panel, Rows, Row, EmptyState, fmtDate } from "@/components/account/account-ui";
+import { useServerFn } from "@tanstack/react-start";
+import { listMyAviationRequests } from "@/lib/aviation/private-aviation.functions";
+
+const AV_STATUS: Record<string, string> = {
+  submitted: "Received",
+  sourcing: "Sourcing aircraft",
+  options_sent: "Options ready",
+  booked: "Booked",
+  closed: "Closed",
+  failed: "Desk follow-up",
+};
 
 export const Route = createFileRoute("/account/")({
   head: () => ({
@@ -25,6 +36,8 @@ function Overview() {
   const trips = useQuery({ queryKey: ["account", "trips"], queryFn: accountApi.trips });
   const bookings = useQuery({ queryKey: ["account", "bookings"], queryFn: accountApi.bookings });
   const saved = useQuery({ queryKey: ["account", "saved"], queryFn: accountApi.saved });
+  const aviationFn = useServerFn(listMyAviationRequests);
+  const aviation = useQuery({ queryKey: ["account", "aviation"], queryFn: () => aviationFn(), retry: false });
 
   const upcoming = (bookings.data ?? []).filter(
     (b) => b.travel_date && new Date(b.travel_date).getTime() >= Date.now(),
@@ -71,6 +84,27 @@ function Overview() {
                 right={
                   <span className="text-xs uppercase tracking-widest text-muted-foreground">
                     {b.status}
+                  </span>
+                }
+              />
+            ))}
+          </Rows>
+        )}
+      </Panel>
+
+      <Panel title="Private aviation requests" description="Charter and empty-leg requests with Worldway Private Aviation.">
+        {(aviation.data?.items ?? []).length === 0 ? (
+          <EmptyState title="No private aviation requests" hint="Charter and empty-leg requests you send will appear here." />
+        ) : (
+          <Rows>
+            {(aviation.data?.items ?? []).slice(0, 10).map((r) => (
+              <Row
+                key={r.id}
+                title={`${r.origin} → ${r.destination}`}
+                meta={`${r.kind === "empty_leg" ? "Empty leg" : "Private jet charter"} · ${r.reference} · ${fmtDate(r.departure_date)} · ${r.passengers} pax`}
+                right={
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    {AV_STATUS[r.status] ?? r.status}
                   </span>
                 }
               />

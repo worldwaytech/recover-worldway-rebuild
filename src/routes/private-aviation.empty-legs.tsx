@@ -1,431 +1,156 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { PageShell, PageHero } from "@/components/search-shell";
-import { EmptyLegInquiry } from "@/components/empty-leg-inquiry";
 import {
-  CATEGORIES,
-  REGIONS,
-  getAircraft,
-  AIRCRAFT_IMAGE_FALLBACK,
-  type Aircraft,
-  type EmptyLeg,
-  type EmptyLegStatus,
-} from "@/lib/empty-legs-data";
-import { activeProvider } from "@/lib/aviation-provider";
+  enquireEmptyLeg,
+  listLiveEmptyLegs,
+  type PublicEmptyLeg,
+} from "@/lib/aviation/private-aviation.functions";
+import {
+  AvLabel,
+  avField,
+  ContactFields,
+  money,
+  SignInPrompt,
+  useSignedInEmail,
+  type ContactValues,
+} from "@/components/aviation/contact-fields";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const HERO = "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=2000&q=80";
 
 export const Route = createFileRoute("/private-aviation/empty-legs")({
   head: () => ({
     meta: [
-      { title: "Empty Legs Marketplace — Worldway Private Aviation" },
-      {
-        name: "description",
-        content:
-          "Discover indicative empty-leg opportunities across Europe, the Americas, the Middle East and Asia. Verified and quoted by the Worldway Private Aviation Concierge.",
-      },
-      { property: "og:title", content: "Empty Legs Marketplace — Worldway Private Aviation" },
-      {
-        property: "og:description",
-        content:
-          "Curated empty-leg opportunities on Gulfstream, Bombardier, Dassault, Embraer, Cessna and more.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=1600&q=80",
-      },
+      { title: "Live Empty Legs — Worldway Private Aviation" },
+      { name: "description", content: "Live empty-leg private jet flights at up to 75% off full charter — aircraft, route, date, seats and price, updated continuously." },
+      { property: "og:title", content: "Live Empty Legs — Worldway Private Aviation" },
+      { property: "og:description", content: "Discounted one-way private jet repositioning flights, live from our operator network." },
+      { property: "og:type", content: "website" },
+      { property: "og:image", content: HERO },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: HERO },
     ],
   }),
   component: EmptyLegsPage,
 });
 
-type Intent = "book" | "quote" | "callback";
-
 function EmptyLegsPage() {
+  const listFn = useServerFn(listLiveEmptyLegs);
+  const q = useQuery({ queryKey: ["live-empty-legs"], queryFn: () => listFn(), staleTime: 5 * 60_000 });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
-  const [region, setRegion] = useState<(typeof REGIONS)[number]>("All Regions");
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All Aircraft");
-  const [pax, setPax] = useState<number>(1);
-  const [statusOnly, setStatusOnly] = useState(true);
-  const [selected, setSelected] = useState<EmptyLeg | null>(null);
-  const [intent, setIntent] = useState<Intent>("quote");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [allLegs, setAllLegs] = useState<EmptyLeg[]>([]);
-  const [featuredAircraft, setFeaturedAircraft] = useState<Aircraft[]>([]);
+  const [pax, setPax] = useState(1);
+  const [maxPrice, setMaxPrice] = useState("");
+  const [selected, setSelected] = useState<PublicEmptyLeg | null>(null);
+  const [visible, setVisible] = useState(24);
 
-  // Data comes through the aviation provider abstraction so a future live
-  // partner API can be swapped in without changing the UI.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const [legs, ac] = await Promise.all([
-        activeProvider.listEmptyLegs({ includeSold: true }),
-        activeProvider.listAircraft(),
-      ]);
-      if (cancelled) return;
-      setAllLegs(legs);
-      setFeaturedAircraft(ac.slice(0, 4));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+  const legs = q.data?.legs ?? [];
   const results = useMemo(() => {
-    return allLegs.filter((l) => {
-      const ac = getAircraft(l.aircraftSlug);
-      if (from && !`${l.fromCity} ${l.fromIata}`.toLowerCase().includes(from.toLowerCase()))
-        return false;
-      if (to && !`${l.toCity} ${l.toIata}`.toLowerCase().includes(to.toLowerCase())) return false;
-      if (region !== "All Regions" && l.region !== region) return false;
-      if (category !== "All Aircraft" && ac?.category !== category) return false;
-      if (pax > l.seats) return false;
-      if (date) {
-        const d = new Date(date).toISOString().slice(0, 10);
-        const start = l.departWindowStart.slice(0, 10);
-        const end = l.departWindowEnd.slice(0, 10);
-        if (d < start || d > end) return false;
-      }
-      if (statusOnly && (l.status === "Sold" || l.status === "Expired")) return false;
-      return true;
-    });
-  }, [allLegs, from, to, date, region, category, pax, statusOnly]);
-
-  function openInquiry(leg: EmptyLeg, next: Intent) {
-    setSelected(leg);
-    setIntent(next);
-    setDialogOpen(true);
-  }
+    const f = from.trim().toLowerCase();
+    const t = to.trim().toLowerCase();
+    const mp = Number(maxPrice);
+    return legs
+      .filter((l) => {
+        if (f && !`${l.originCode} ${l.originName}`.toLowerCase().includes(f)) return false;
+        if (t && !`${l.destinationCode} ${l.destinationName}`.toLowerCase().includes(t)) return false;
+        if (date && l.departureDate !== date) return false;
+        if (l.seats != null && pax > l.seats) return false;
+        if (mp > 0 && l.price != null && l.price > mp) return false;
+        return true;
+      })
+      .sort((a, b) => a.departureDate.localeCompare(b.departureDate));
+  }, [legs, from, to, date, pax, maxPrice]);
 
   return (
     <PageShell>
       <PageHero
-        eyebrow="Private Aviation · Empty Legs"
-        title="Empty legs. Curated. Quiet luxury, at up to 70% off."
-        subtitle="Indicative one-way opportunities on the world's finest business jets — verified and quoted by our Private Aviation Concierge."
-        image="https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=2000&q=80"
+        eyebrow="Worldway Private Aviation · Empty Legs"
+        title="Empty legs. Live. Up to 75% off."
+        subtitle="One-way private jet repositioning flights from our vetted operator network — updated continuously."
+        image={HERO}
       />
 
-      {/* Search */}
       <section className="mx-auto -mt-16 max-w-6xl px-6">
         <div className="rounded-2xl border border-border/60 bg-card/80 p-6 shadow-2xl backdrop-blur-xl md:p-8">
-          <div className="mb-4 text-xs uppercase tracking-[0.3em] text-primary">
-            Search the Fleet
+          <div className="mb-4 text-xs uppercase tracking-[0.3em] text-primary">Search live empty legs</div>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+            <AvLabel label="From (city, airport or code)"><input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="London, EGGW…" className={avField} /></AvLabel>
+            <AvLabel label="To"><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="Nice, LFMN…" className={avField} /></AvLabel>
+            <AvLabel label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={avField} /></AvLabel>
+            <AvLabel label="Passengers"><input type="number" min={1} max={40} value={pax} onChange={(e) => setPax(Math.max(1, Number(e.target.value) || 1))} className={avField} /></AvLabel>
+            <AvLabel label="Max price"><input type="number" min={0} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Any" className={avField} /></AvLabel>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Field label="From (city or airport)">
-              <input
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                placeholder="London, LTN…"
-                className={fieldClass}
-              />
-            </Field>
-            <Field label="To (city or airport)">
-              <input
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder="Nice, NCE…"
-                className={fieldClass}
-              />
-            </Field>
-            <Field label="Date">
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={fieldClass}
-              />
-            </Field>
-            <Field label="Passengers">
-              <input
-                type="number"
-                min={1}
-                max={25}
-                value={pax}
-                onChange={(e) => setPax(Number(e.target.value) || 1)}
-                className={fieldClass}
-              />
-            </Field>
-            <Field label="Region">
-              <select
-                value={region}
-                onChange={(e) => setRegion(e.target.value as typeof region)}
-                className={fieldClass}
-              >
-                {REGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Aircraft Category">
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as typeof category)}
-                className={fieldClass}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <label className="flex items-end gap-2 pb-1 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={statusOnly}
-                onChange={(e) => setStatusOnly(e.target.checked)}
-                className="h-4 w-4"
-              />
-              Hide sold / expired
-            </label>
-            <div className="flex items-end justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setFrom("");
-                  setTo("");
-                  setDate("");
-                  setRegion("All Regions");
-                  setCategory("All Aircraft");
-                  setPax(1);
-                }}
-                className="rounded-full border border-border px-5 py-2.5 text-xs uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-          <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            Availability is indicative only and subject to confirmation by our Private Aviation
-            Team.
-          </p>
         </div>
       </section>
 
-      {/* Results */}
-      <section className="mx-auto mt-14 max-w-7xl px-6">
-        <div className="mb-6 rounded-xl border border-primary/40 bg-primary/10 p-4 text-xs leading-relaxed text-foreground md:text-sm">
-          <span className="mr-2 inline-block rounded-full bg-primary px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] text-primary-foreground">
-            Indicative
-          </span>
-          Availability shown is <strong>indicative only</strong> and subject to confirmation by our
-          Private Aviation Team. Empty Leg flights may change or become unavailable without notice.
-          Final pricing and availability are confirmed at the time of booking. Source:{" "}
-          {activeProvider.label}.
-        </div>
-        <div className="mb-6 flex items-baseline justify-between">
+      <section className="mx-auto mt-14 max-w-7xl px-6 pb-24">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="font-serif text-3xl">
-            {results.length} opportunit{results.length === 1 ? "y" : "ies"}
+            {q.isLoading ? "Loading live flights…" : `${results.length} live empty leg${results.length === 1 ? "" : "s"}`}
           </h2>
-          <Link
-            to="/aircraft"
-            className="text-xs uppercase tracking-[0.3em] text-primary hover:underline"
-          >
-            Browse Aircraft Catalogue →
-          </Link>
+          <Link to="/private-jets" className="text-xs uppercase tracking-[0.3em] text-primary hover:underline">Need a full charter? Get an estimate →</Link>
         </div>
 
-        {results.length === 0 ? (
+        {q.data && !q.data.ok && (
+          <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4 text-sm">{q.data.error} Please try again shortly.</div>
+        )}
+
+        {!q.isLoading && q.data?.ok && results.length === 0 && (
           <div className="rounded-2xl border border-border/60 bg-card/60 p-10 text-center text-sm text-muted-foreground">
-            No matches. Adjust filters or request a bespoke charter via the concierge.
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {results.map((leg) => (
-              <LegCard key={leg.id} leg={leg} onInquire={openInquiry} />
-            ))}
+            No empty legs match. Widen your search or <Link to="/private-jets" className="text-primary underline">request a charter estimate</Link>.
           </div>
         )}
-      </section>
 
-      {/* Workflow */}
-      <section className="mx-auto mt-24 max-w-6xl px-6">
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-8">
-          <div className="text-xs uppercase tracking-[0.3em] text-primary">
-            The Worldway Workflow
-          </div>
-          <h3 className="mt-3 font-serif text-3xl">From request to wheels-up.</h3>
-          <ol className="mt-6 grid gap-4 text-sm text-muted-foreground md:grid-cols-3 lg:grid-cols-6">
-            {[
-              "Request Booking",
-              "Aviation Concierge",
-              "Availability Verification",
-              "Partner Confirmation",
-              "Final Quote",
-              "Secure Payment",
-            ].map((step, i) => (
-              <li key={step} className="rounded-lg border border-border/50 bg-background/40 p-4">
-                <div className="text-[10px] uppercase tracking-[0.3em] text-primary">
-                  Step {i + 1}
-                </div>
-                <div className="mt-1 text-foreground">{step}</div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Featured aircraft strip */}
-      <section className="mx-auto mt-24 max-w-7xl px-6 pb-24">
-        <div className="mb-6 flex items-baseline justify-between">
-          <h3 className="font-serif text-3xl">Featured aircraft</h3>
-          <Link
-            to="/aircraft"
-            className="text-xs uppercase tracking-[0.3em] text-primary hover:underline"
-          >
-            View all →
-          </Link>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {featuredAircraft.map((a) => (
-            <div
-              key={a.slug}
-              className="group overflow-hidden rounded-2xl border border-border/60 bg-card/60"
-            >
-              <div className="aspect-[4/3] overflow-hidden">
-                <img
-                  src={a.image}
-                  alt={a.name}
-                  loading="lazy"
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    if (img.src !== AIRCRAFT_IMAGE_FALLBACK) img.src = AIRCRAFT_IMAGE_FALLBACK;
-                  }}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {results.slice(0, visible).map((l) => (
+            <article key={l.id} className="flex flex-col rounded-2xl border border-border/60 bg-card/70 p-5 transition-colors hover:border-primary/40">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-[0.3em] text-primary">{l.aircraft}</span>
+                <span className="rounded-full border border-primary/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-primary">Live</span>
               </div>
-              <div className="p-4">
-                <div className="text-[10px] uppercase tracking-[0.3em] text-primary">
-                  {a.category}
-                </div>
-                <div className="mt-1 font-serif text-lg">{a.name}</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {a.seats} seats · {a.rangeNm.toLocaleString()} nm · Mach{" "}
-                  {(a.cruiseKt / 660).toFixed(2)}
-                </div>
+              <div className="mt-3 font-serif text-xl leading-tight">
+                {l.originName} <span className="text-muted-foreground">({l.originCode})</span>
+                <span className="mx-2 text-primary">→</span>
+                {l.destinationName} <span className="text-muted-foreground">({l.destinationCode})</span>
               </div>
-            </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                <Info label="Date" value={l.departureDate ? new Date(l.departureDate + "T00:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"} />
+                <Info label="Time" value={`${l.departureTime ?? "—"}${l.arrivalTime ? ` → ${l.arrivalTime}` : ""}`} />
+                <Info label="Duration" value={l.duration ?? "—"} />
+                <Info label="Seats" value={l.seats != null ? String(l.seats) : "—"} />
+              </div>
+              <div className="mt-4 flex items-end justify-between">
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Whole aircraft</div>
+                  <div className="font-serif text-2xl">{money(l.price, l.currency)}</div>
+                </div>
+                <button type="button" onClick={() => setSelected(l)} className="rounded-full bg-primary px-5 py-2 text-[11px] uppercase tracking-[0.25em] text-primary-foreground">
+                  Enquire
+                </button>
+              </div>
+            </article>
           ))}
         </div>
+        {results.length > visible && (
+          <div className="mt-8 text-center">
+            <button onClick={() => setVisible((v) => v + 24)} className="rounded-full border border-border px-6 py-2.5 text-xs uppercase tracking-[0.3em] text-muted-foreground hover:text-primary">Show more</button>
+          </div>
+        )}
+        <p className="mt-8 text-[11px] text-muted-foreground">
+          Empty legs are one-off flights and can sell or change at short notice. Times are local. The price shown is for the whole aircraft; it is confirmed by our aviation desk before booking.
+        </p>
       </section>
 
-      <EmptyLegInquiry
-        leg={selected}
-        open={dialogOpen}
-        intent={intent}
-        onOpenChange={setDialogOpen}
-      />
+      <EnquiryDialog leg={selected} pax={pax} onClose={() => setSelected(null)} />
     </PageShell>
   );
 }
 
-function LegCard({
-  leg,
-  onInquire,
-}: {
-  leg: EmptyLeg;
-  onInquire: (l: EmptyLeg, i: Intent) => void;
-}) {
-  const ac = getAircraft(leg.aircraftSlug);
-  const start = new Date(leg.departWindowStart);
-  const end = new Date(leg.departWindowEnd);
-  const dateLabel = start.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-  const windowLabel = `${start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} – ${end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  const disabled = leg.status === "Sold" || leg.status === "Expired";
-
-  return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/70 transition-all hover:border-primary/40 hover:shadow-[0_20px_60px_-30px_theme(colors.amber.400/40%)]">
-      <div className="relative aspect-[16/10] overflow-hidden">
-        {ac ? (
-          <img
-            src={ac.image}
-            alt={ac.name}
-            loading="lazy"
-            onError={(e) => {
-              const img = e.currentTarget;
-              if (img.src !== AIRCRAFT_IMAGE_FALLBACK) img.src = AIRCRAFT_IMAGE_FALLBACK;
-            }}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : null}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-background/90 to-transparent p-3">
-          <StatusPill status={leg.status} />
-          <span className="rounded-full bg-primary/90 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-primary-foreground">
-            Save up to {leg.savingsPct}%
-          </span>
-        </div>
-      </div>
-      <div className="flex flex-1 flex-col p-5">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-primary">{ac?.category}</div>
-        <div className="mt-2 flex items-baseline justify-between gap-3">
-          <div className="font-serif text-xl leading-tight">
-            {leg.fromCity} <span className="text-muted-foreground">({leg.fromIata})</span>
-            <span className="mx-2 text-primary">→</span>
-            {leg.toCity} <span className="text-muted-foreground">({leg.toIata})</span>
-          </div>
-        </div>
-        <div className="mt-2 text-xs text-muted-foreground">
-          {ac?.name} · {leg.seats} seats · {leg.durationHours.toFixed(1)}h est.
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <InfoRow label="Date" value={dateLabel} />
-          <InfoRow label="Window" value={windowLabel} />
-          <InfoRow label="From (indicative)" value={`$${leg.indicativeFromUsd.toLocaleString()}`} />
-          <InfoRow label="Region" value={leg.region} />
-        </div>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onInquire(leg, "book")}
-            className="flex-1 rounded-full bg-primary px-4 py-2 text-[11px] uppercase tracking-[0.25em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-          >
-            Request Booking
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onInquire(leg, "quote")}
-            className="flex-1 rounded-full border border-primary/50 px-4 py-2 text-[11px] uppercase tracking-[0.25em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-40"
-          >
-            Request Quote
-          </button>
-          <button
-            type="button"
-            onClick={() => onInquire(leg, "callback")}
-            className="w-full rounded-full border border-border px-4 py-2 text-[11px] uppercase tracking-[0.25em] text-muted-foreground transition-colors hover:text-primary"
-          >
-            Concierge Callback
-          </button>
-          <button
-            type="button"
-            onClick={() => onInquire(leg, "callback")}
-            className="flex-1 rounded-full border border-border px-4 py-2 text-center text-[11px] uppercase tracking-[0.25em] text-muted-foreground transition-colors hover:text-primary"
-          >
-            WhatsApp Concierge
-          </button>
-          <a
-            href={`mailto:aviation@worldwaytravelsgroup.com?subject=${encodeURIComponent(`Empty leg enquiry ${leg.id}`)}&body=${encodeURIComponent(`Route: ${leg.fromCity} (${leg.fromIata}) → ${leg.toCity} (${leg.toIata})\nDate: ${dateLabel}\nAircraft: ${ac?.name}`)}`}
-            className="flex-1 rounded-full border border-border px-4 py-2 text-center text-[11px] uppercase tracking-[0.25em] text-muted-foreground transition-colors hover:text-primary"
-          >
-            Email
-          </a>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
+function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-[9px] uppercase tracking-[0.25em] text-muted-foreground">{label}</div>
@@ -434,32 +159,82 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusPill({ status }: { status: EmptyLegStatus }) {
-  const tone: Record<EmptyLegStatus, string> = {
-    Available: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    "On Request": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    Sold: "bg-muted text-muted-foreground border-border",
-    Expired: "bg-muted text-muted-foreground border-border",
-  };
+function EnquiryDialog({ leg, pax, onClose }: { leg: PublicEmptyLeg | null; pax: number; onClose: () => void }) {
+  const enquireFn = useServerFn(enquireEmptyLeg);
+  const auth = useSignedInEmail();
+  const [passengers, setPassengers] = useState(pax);
+  const [contact, setContact] = useState<ContactValues>({ firstName: "", lastName: "", email: "", phone: "", specialRequests: "" });
+  const [optIn, setOptIn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ref, setRef] = useState<string | null>(null);
+
+  function close() {
+    setRef(null);
+    setError(null);
+    setOptIn(false);
+    onClose();
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!leg) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await enquireFn({
+        data: { legId: leg.id, passengers, ...contact, email: contact.email || auth.email || "", specialRequests: contact.specialRequests || undefined, optIn: true },
+      });
+      if (!r.ok) setError(r.error);
+      else setRef(r.reference);
+    } catch (err) {
+      setError(err instanceof Response && err.status === 401 ? "Please sign in to continue." : "We couldn't send your enquiry. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <span
-      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.25em] ${tone[status]}`}
-    >
-      {status}
-    </span>
+    <Dialog open={!!leg} onOpenChange={(o) => !o && close()}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-2xl">
+            {leg ? `${leg.originCode} → ${leg.destinationCode} · ${leg.aircraft}` : ""}
+          </DialogTitle>
+        </DialogHeader>
+        {ref ? (
+          <div className="space-y-3 text-sm">
+            <div className="text-xs uppercase tracking-[0.3em] text-primary">Enquiry received</div>
+            <p className="font-serif text-2xl">Worldway reference: {ref}</p>
+            <p className="text-muted-foreground">Our Private Aviation desk is confirming this flight with the operator and will contact you with confirmed availability and a secure booking and payment link.</p>
+            <Link to="/account" className="text-xs uppercase tracking-[0.3em] text-primary hover:underline">View in my account →</Link>
+          </div>
+        ) : !auth.ready ? null : !auth.email ? (
+          <SignInPrompt what="enquire about this empty leg" />
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            {leg && (
+              <p className="text-sm text-muted-foreground">
+                {leg.departureDate} {leg.departureTime ?? ""} · {leg.seats ?? "?"} seats · {money(leg.price, leg.currency)}
+              </p>
+            )}
+            <AvLabel label="Passengers">
+              <input type="number" min={1} max={leg?.seats ?? 40} value={passengers} onChange={(e) => setPassengers(Math.max(1, Number(e.target.value) || 1))} className={avField} />
+            </AvLabel>
+            <ContactFields value={contact} onChange={setContact} />
+            <label className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
+              <input type="checkbox" className="mt-1" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
+              <span>Please confirm availability and final price for this flight with the operator.</span>
+            </label>
+            {error && <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm">{error}</div>}
+            <div className="flex justify-end">
+              <button disabled={!optIn || busy} className="rounded-full bg-primary px-6 py-2.5 text-xs uppercase tracking-[0.3em] text-primary-foreground disabled:opacity-40">
+                {busy ? "Sending…" : "Send enquiry"}
+              </button>
+            </div>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-const fieldClass =
-  "w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none";

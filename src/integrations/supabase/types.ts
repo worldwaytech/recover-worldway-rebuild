@@ -2286,6 +2286,99 @@ export type Database = {
         }
         Relationships: []
       }
+      private_aviation_requests: {
+        Row: {
+          aircraft_category: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          departure_date: string | null
+          destination: string
+          empty_leg: Json | null
+          estimate: Json | null
+          id: string
+          kind: string
+          last_error: string | null
+          origin: string
+          passengers: number
+          preferences: Json | null
+          reference: string
+          return_date: string | null
+          round_trip: boolean
+          special_requests: string | null
+          status: string
+          submitted_at: string | null
+          supplier_response: Json | null
+          supplier_session: string | null
+          supplier_status: string | null
+          supplier_tracking_link: string | null
+          supplier_trip_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          aircraft_category?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          departure_date?: string | null
+          destination: string
+          empty_leg?: Json | null
+          estimate?: Json | null
+          id?: string
+          kind: string
+          last_error?: string | null
+          origin: string
+          passengers?: number
+          preferences?: Json | null
+          reference: string
+          return_date?: string | null
+          round_trip?: boolean
+          special_requests?: string | null
+          status?: string
+          submitted_at?: string | null
+          supplier_response?: Json | null
+          supplier_session?: string | null
+          supplier_status?: string | null
+          supplier_tracking_link?: string | null
+          supplier_trip_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          aircraft_category?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          departure_date?: string | null
+          destination?: string
+          empty_leg?: Json | null
+          estimate?: Json | null
+          id?: string
+          kind?: string
+          last_error?: string | null
+          origin?: string
+          passengers?: number
+          preferences?: Json | null
+          reference?: string
+          return_date?: string | null
+          round_trip?: boolean
+          special_requests?: string | null
+          status?: string
+          submitted_at?: string | null
+          supplier_response?: Json | null
+          supplier_session?: string | null
+          supplier_status?: string | null
+          supplier_tracking_link?: string | null
+          supplier_trip_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
