@@ -14,7 +14,7 @@ const KNOWN_SUPPLIER_TERMS = [
   "AKTG", "TTC", "The Travel Corporation", "TourRadar", "Sabre", "Amadeus", "Travelport",
   "WorldwayLuxe", "Worldway Luxe Partner API", "worldwayluxe.com",
   "Abercrombie", "Contiki", "Insight Vacations", "Luxury Gold", "CostSaver", "AAT Kings",
-  "Brendan Vacations", "Uniworld", "Hotelbeds Group", "GIATA",
+  "Brendan Vacations", "Uniworld", "Hotelbeds Group",
 ];
 
 /** Keys that carry supplier identity, routing or credentials — never external. */
