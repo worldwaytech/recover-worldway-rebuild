@@ -30,6 +30,8 @@ const createOrderSchema = z
       .optional(),
     /** Pending pre-purchased flight booking; amount comes from the server-side record. */
     prePurchasedBookingId: z.string().uuid().optional(),
+    /** Worldway private aviation reference; amount comes from the confirmed quote on the server. */
+    aviationReference: z.string().regex(/^WWPA-\d{6}-[0-9A-F]{6}$/).optional(),
   })
   .strict();
 
@@ -47,9 +49,10 @@ export const createPaymentOrder = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { resolvePaymentAmount, openOrder } = await import("./checkout.server");
     try {
-      const { flightFare: _ff, prePurchasedBookingId, ...rest } = data;
+      const { flightFare: _ff, prePurchasedBookingId, aviationReference, ...rest } = data;
       const amount = await resolvePaymentAmount(data);
       if (prePurchasedBookingId) rest.reference = { ...(rest.reference ?? {}), booking_id: prePurchasedBookingId };
+      if (aviationReference) rest.reference = { ...(rest.reference ?? {}), aviation_reference: aviationReference };
       return await openOrder({ ...rest, ...amount });
     } catch (e) {
       return {

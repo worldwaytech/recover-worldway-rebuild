@@ -31,6 +31,7 @@ export const PAYMENT_PURPOSES: PaymentPurpose[] = [
   "membership",
   "wallet_topup",
   "deposit",
+  "private_aviation",
 ];
 
 export type MembershipPlanId = "travel_plus" | "elite" | "elite_plus";

@@ -55,6 +55,7 @@ export type PayRequest = {
   reference?: Record<string, string | number | boolean>;
   flightFare?: { resultIndex: string; searchTokenId: string };
   prePurchasedBookingId?: string;
+  aviationReference?: string;
 };
 
 /**
@@ -87,6 +88,7 @@ export function useRazorpayCheckout() {
             ...(req.reference ? { reference: req.reference } : {}),
             ...(req.flightFare ? { flightFare: req.flightFare } : {}),
             ...(req.prePurchasedBookingId ? { prePurchasedBookingId: req.prePurchasedBookingId } : {}),
+            ...(req.aviationReference ? { aviationReference: req.aviationReference } : {}),
           },
         });
 
