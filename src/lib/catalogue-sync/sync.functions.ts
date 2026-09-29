@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Journey } from "@/lib/data";
 
@@ -14,20 +13,6 @@ async function admin() {
   return supabaseAdmin;
 }
 
-function publicClient() {
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  return createClient(process.env["SUPABASE_URL"]!, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
-}
 
 const COUNT_KEYS = ["discovered", "created", "updated", "unchanged", "deactivated", "failed"] as const;
 type Counts = Record<(typeof COUNT_KEYS)[number], number>;
@@ -190,7 +175,7 @@ type Overrides = Partial<Journey>;
 
 export const getSyncedJourneyCards = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const db = publicClient();
+    const db = await admin();
     const { data, error } = await db
       .from("aktg_journeys")
       .select("slug, is_active, card, worldway_overrides")
@@ -200,7 +185,7 @@ export const getSyncedJourneyCards = createServerFn({ method: "GET" }).handler(a
     const inactive: string[] = [];
     for (const row of data ?? []) {
       if (!row.is_active) inactive.push(row.slug as string);
-      else cards.push({ ...(row.card as Journey), ...((row.worldway_overrides as Overrides) ?? {}) });
+      else cards.push({ ...(row.card as unknown as Journey), ...((row.worldway_overrides as unknown as Overrides) ?? {}) });
     }
     return { cards, inactive };
   } catch {
@@ -212,7 +197,7 @@ export const getSyncedJourney = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) => ({ slug: String(input.slug).slice(0, 200) }))
   .handler(async ({ data }) => {
     try {
-      const db = publicClient();
+      const db = await admin();
       const { data: row } = await db
         .from("aktg_journeys")
         .select("is_active, data, worldway_overrides")
@@ -221,7 +206,7 @@ export const getSyncedJourney = createServerFn({ method: "GET" })
       if (!row) return null;
       return {
         active: Boolean(row.is_active),
-        journey: { ...(row.data as Journey), ...((row.worldway_overrides as Overrides) ?? {}) },
+        journey: { ...(row.data as unknown as Journey), ...((row.worldway_overrides as unknown as Overrides) ?? {}) },
       };
     } catch {
       return null;
