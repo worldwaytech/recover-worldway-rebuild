@@ -23,7 +23,7 @@ export const Route = createFileRoute("/ttc/")({
       {
         property: "og:description",
         content:
-          "Every TTC brand in one place: day-by-day itineraries, inclusions, accommodation, transport and lead-in pricing.",
+          "Worldway guided journeys in one place: day-by-day itineraries, inclusions, accommodation, transport and lead-in pricing.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -127,14 +127,14 @@ function TtcCataloguePage() {
   return (
     <PageShell>
       <PageHero
-        eyebrow="The Travel Corporation"
-        title="Guided journeys from every TTC brand, curated by Worldway."
-        subtitle="Trafalgar, Insight Vacations, Luxury Gold, Costsaver, Contiki, AAT Kings and Brendan Vacations — full itineraries, inclusions, accommodation and lead-in pricing in one searchable collection."
+        eyebrow="Worldway Guided Journeys"
+        title="Guided journeys, curated by Worldway."
+        subtitle="Classic, premium, luxury, value and youth guided journeys — full itineraries, inclusions, accommodation and lead-in pricing in one searchable collection."
         image="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=2000&q=80"
       />
 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-wrap gap-2 px-6 pb-20 pt-4">
-        {visibleBrands.map((brand) => (
+        {([] as typeof visibleBrands).map((brand) => (
           <Button
             key={brand.brand}
             type="button"
@@ -152,7 +152,7 @@ function TtcCataloguePage() {
         ))}
       </div>
 
-      <SearchCard title="Search the TTC collection">
+      <SearchCard title="Search guided journeys">
         <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <div className="md:col-span-2">
             <Field label="Journey or destination">
@@ -266,13 +266,13 @@ function TtcCataloguePage() {
               {tour.heroImage ? (
                 <img
                   src={mediaUrl(tour.heroImage)}
-                  alt={`${tour.name} — ${tour.brandLabel ?? "TTC"} guided journey`}
+                  alt={`${tour.name} — Worldway guided journey`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               ) : null}
               <Badge className="absolute left-3 top-3 bg-background/90 text-foreground">
-                {tour.brandLabel ?? tour.brand}
+                Worldway Guided Journey
               </Badge>
             </div>
             <div className="flex flex-1 flex-col gap-2 p-5">
@@ -328,17 +328,6 @@ function TtcCataloguePage() {
           </Button>
         </div>
       ) : null}
-
-      <p className="text-xs text-muted-foreground">
-        Content sourced from the official TTC brand publications. Live availability, revalidated
-        pricing and instant booking activate automatically once TTC grants API access to our account
-        — see <Link to="/contact" className="underline">contact</Link> for tailored quotes meanwhile.
-        Direct source:{" "}
-        <a href={result.items[0]?.sourceUrl ?? "https://www.ttc.com"} className="underline">
-          TTC brand site
-        </a>
-        . Deep-link path format: {ttcTourPath(":brand", ":slug")}
-      </p>
     </PageShell>
   );
 }
