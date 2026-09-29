@@ -26,11 +26,18 @@ function escape(s: string) {
 }
 
 let termRe: RegExp | null = null;
+const registeredTerms = new Set<string>();
+/** Server-only modules register extra supplier/operator terms (e.g. rail operators). */
+export function registerSupplierTerms(terms: readonly string[]) {
+  for (const t of terms) if (t) registeredTerms.add(t);
+  termRe = null;
+}
+
 export function supplierTerms(): string[] {
   const fromRegistry = PARTNER_CONNECTORS.flatMap((c) => [c.name, c.id]).filter(
     (t) => t && !/^worldway$/i.test(t),
   );
-  return [...new Set([...KNOWN_SUPPLIER_TERMS, ...fromRegistry])].sort((a, b) => b.length - a.length);
+  return [...new Set([...KNOWN_SUPPLIER_TERMS, ...fromRegistry, ...registeredTerms])].sort((a, b) => b.length - a.length);
 }
 function re() {
   if (!termRe) termRe = new RegExp(`(?<![\\w])(${supplierTerms().map(escape).join("|")})(?![\\w])`, "gi");
