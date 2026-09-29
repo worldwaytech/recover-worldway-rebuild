@@ -6,6 +6,11 @@
 // Nothing here is returned raw to browsers — callers normalise first.
 
 const MCP_URL = "https://api.skyaccess.com/mcp";
+
+/** UNAPPROVED / TEST ONLY. Keep false until official supplier approval and genuine
+ *  live-data validation. While false, nothing from this adapter (estimates, empty legs,
+ *  booking requests, booking links) may reach any customer surface. */
+export const SKYACCESS_CUSTOMER_APPROVED = false as const;
 const TIMEOUT_MS = 20_000;
 
 async function parseRpc(res: Response): Promise<any> {

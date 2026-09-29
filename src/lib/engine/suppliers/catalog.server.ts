@@ -41,7 +41,7 @@ export const SUPPLIER_CATALOG: SupplierRegistration[] = [
   entry("tripjack-cabs", ["transfer"], "blocked", 0.2, g("uat", false, "UAT location search returns 503", "search", "price", "book")),
   entry("private-aviation", ["aviation"], "production", 0.8, g("production", true, "Live estimates and confirmation requests (no booking/payment API)", "search", "price")),
   entry("skyaccess", ["aviation"], "uat", 0.5, [
-    ...g("production", false, "Official public MCP (api.skyaccess.com/mcp) answered 29 Sep 2026; charter estimates used only as live-price failover", "price"),
+    ...g("production", false, "UNAPPROVED / TEST ONLY — official public MCP answered 29 Sep 2026; backend testing only, no customer pricing until supplier approval + live-data validation", "price"),
     ...g("production", false, "Empty-leg search answered but every departure time equalled the request time — not shown to customers until verified", "search", "availability"),
   ]),
   // Future supplier: interfaces ready, deliberately inactive — no credentials, no inventory.
