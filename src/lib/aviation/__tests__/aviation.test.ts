@@ -80,7 +80,7 @@ describe("booking status", () => {
     expect(mapStage("received")).toBe("sourcing");
     expect(mapStage("options sent")).toBe("options_sent");
     expect(mapStage("booked")).toBe("booked");
-    expect(mapStage("closed with no booking")).toBe("booked".length ? "closed" : "");
+    expect(mapStage("closed with no booking")).toBe("closed");
     expect(STATUS_LABEL["quoted"]).toBe("Confirmed quote ready");
     expect(STATUS_LABEL["paid"]).toBe("Paid");
   });
