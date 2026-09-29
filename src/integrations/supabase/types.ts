@@ -2616,6 +2616,30 @@ export type Database = {
         }
         Relationships: []
       }
+      travel_dna: {
+        Row: {
+          consent_history: boolean
+          consent_preferences: boolean
+          preferences: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consent_history?: boolean
+          consent_preferences?: boolean
+          preferences?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consent_history?: boolean
+          consent_preferences?: boolean
+          preferences?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       travellers: {
         Row: {
           created_at: string
