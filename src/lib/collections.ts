@@ -967,7 +967,7 @@ export const collectionItems: Record<CollectionKind, CollectionItem[]> = {
     },
     {
       slug: "uniworld-douro",
-      title: "Uniworld Douro Splendour",
+      title: "Douro Splendour River Cruise",
       subtitle: "Porto round-trip, 7 nights",
       location: "Portugal",
       region: "europe",
@@ -975,7 +975,7 @@ export const collectionItems: Record<CollectionKind, CollectionItem[]> = {
       priceFrom: 5200,
       duration: "7 nights",
       capacity: "120 guests",
-      operator: "Uniworld",
+      operator: "Worldway River Cruises",
       highlights: ["Port wine estates", "UNESCO Douro Valley", "All-inclusive"],
     },
     {
@@ -1161,7 +1161,7 @@ export const collectionItems: Record<CollectionKind, CollectionItem[]> = {
       priceFrom: 92000,
       duration: "14 days",
       capacity: "48 guests",
-      operator: "A&K Private Jet",
+      operator: "Worldway Private Jet Journeys",
       highlights: [
         "Serengeti, Okavango, Cape Town",
         "Chartered turboprops between camps",
@@ -1206,7 +1206,7 @@ export const collectionItems: Record<CollectionKind, CollectionItem[]> = {
       priceFrom: 14800,
       duration: "10 days",
       capacity: "16 guests",
-      operator: "Abercrombie & Kent",
+      operator: "Worldway Journeys",
       highlights: ["Serengeti & Ngorongoro", "Master guides", "Sanctuary Retreats"],
       featured: true,
     },

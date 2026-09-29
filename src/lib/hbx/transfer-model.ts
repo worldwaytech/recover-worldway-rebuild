@@ -529,7 +529,7 @@ export function buildTransferVoucher(
   issuedAt = new Date().toISOString(),
 ): TransferVoucher | null {
   if (booking.status !== "CONFIRMED") return null;
-  const supplier = booking.supplierName ?? "Hotelbeds";
+  const supplier = booking.supplierName ?? "our local transfer partner";
   return {
     worldwayReference,
     supplierReference: booking.reference,
