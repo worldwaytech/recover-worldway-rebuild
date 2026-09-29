@@ -26,6 +26,7 @@ import {
   type ActivityCheckoutMode,
 } from "@/components/activities/viator-activity-checkout";
 import { trackCatalogueEvent } from "@/lib/catalogue-client";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/activities/$code")({
   head: ({ params }) => {
@@ -460,7 +461,7 @@ function ActivityDetailPage() {
             {images.length ? (
               <div>
                 <img
-                  src={images[gallery]}
+                  src={mediaUrl(images[gallery])}
                   alt={product.title}
                   className="aspect-[16/9] w-full rounded-2xl object-cover"
                 />
@@ -477,7 +478,7 @@ function ActivityDetailPage() {
                         }`}
                       >
                         <img
-                          src={src}
+                          src={mediaUrl(src)}
                           alt=""
                           loading="lazy"
                           className="h-full w-full object-cover"
@@ -675,7 +676,7 @@ function ActivityDetailPage() {
                       >
                         {r.image ? (
                           <img
-                            src={r.image}
+                            src={mediaUrl(r.image)}
                             alt={r.title}
                             loading="lazy"
                             className="aspect-[4/3] w-full object-cover"

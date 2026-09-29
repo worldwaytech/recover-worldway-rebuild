@@ -11,6 +11,7 @@ import {
   getContentRegistries,
 } from "@/components/train-tours/glrep/journey/JourneyExperience";
 import { FullPackageInformation } from "@/components/FullPackageInformation";
+import { mediaUrl } from "@/lib/media";
 
 const SITE = "https://worldwaytravelsgroup.com";
 
@@ -213,7 +214,7 @@ function JourneyPage() {
     <main className="pt-20">
       <section className="relative flex h-[65vh] items-end overflow-hidden">
         <img
-          src={j.image}
+          src={mediaUrl(j.image)}
           alt={journeyTitle}
           width={1920}
           height={1080}

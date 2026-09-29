@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTtcTourDetail } from "@/lib/ttc/ttc.functions";
 import type { TtcAccommodation, TtcDeparture, TtcItineraryDay, TtcTourDetail } from "@/lib/ttc/types";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/ttc/$brand/$slug")({
   loader: async ({ params }) => {
@@ -153,7 +154,7 @@ function TtcTourPage() {
         <aside className="space-y-4 rounded-2xl border border-border bg-card p-6">
           {tour.heroImage ? (
             <img
-              src={tour.heroImage}
+              src={mediaUrl(tour.heroImage)}
               alt={`${tour.name} guided journey`}
               className="aspect-[4/3] w-full rounded-xl object-cover"
             />
@@ -278,7 +279,7 @@ function TtcTourPage() {
             {tour.images.slice(1, 10).map((image) => (
               <img
                 key={image}
-                src={image}
+                src={mediaUrl(image)}
                 alt={`${tour.name} photography`}
                 loading="lazy"
                 className="aspect-[4/3] w-full rounded-xl object-cover"

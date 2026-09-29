@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CRYSTAL_SHIPS } from "@/lib/crystal/content";
 import { Crumbs, Section, breadcrumbSchema } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/ships";
 const TITLE = "Crystal Cruises Ships — Suites, Dining & Wellness | Worldway";
@@ -53,7 +54,7 @@ function ShipsIndex() {
               className="group overflow-hidden rounded-xl border border-border/60"
             >
               <img
-                src={s.hero}
+                src={mediaUrl(s.hero)}
                 alt={s.name}
                 loading="lazy"
                 className="h-52 w-full object-cover transition-transform duration-700 group-hover:scale-105"

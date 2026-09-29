@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { blogPosts } from "@/lib/data";
 import { Button } from "@/components/ui/button";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: ({ params }) => {
@@ -36,7 +37,7 @@ function BlogPost() {
   return (
     <main>
       <section className="relative h-[60vh] min-h-[420px] overflow-hidden">
-        <img src={post.image} alt={post.title} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={mediaUrl(post.image)} alt={post.title} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-ink/40 to-ink/80" />
         <div className="container-lux relative z-10 flex h-full flex-col items-start justify-end pb-16 text-primary-foreground">
           <p className="eyebrow mb-4 text-gold">{post.read}</p>

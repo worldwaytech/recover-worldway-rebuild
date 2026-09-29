@@ -13,6 +13,7 @@ import {
   breadcrumbSchema,
   faqSchema,
 } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/crystal-cruises/destinations/$slug")({
   loader: async ({ params }) => {
@@ -81,7 +82,7 @@ function DestinationPage() {
     <>
       <section className="relative overflow-hidden border-b border-border/60">
         <img
-          src={d.hero}
+          src={mediaUrl(d.hero)}
           alt={`${d.name} cruise region`}
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />

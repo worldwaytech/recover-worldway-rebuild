@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CollectionLanding } from "@/components/CollectionTemplate";
 import { getCollection } from "@/lib/collections";
 import { crystalWorldCruisesByYear } from "@/lib/crystal/world-cruises";
+import { mediaUrl } from "@/lib/media";
 
 const KIND = "cruises-world" as const;
 
@@ -48,7 +49,7 @@ function CrystalWorldCruises() {
             >
               {v.media.hero ? (
                 <img
-                  src={v.media.hero}
+                  src={mediaUrl(v.media.hero)}
                   alt={`${v.shipName} on Crystal's ${v.departureDate.slice(0, 4)} world cruise`}
                   loading="lazy"
                   className="h-44 w-full object-cover"

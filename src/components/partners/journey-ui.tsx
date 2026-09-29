@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatJourneyPrice, nextDeparture, type Journey } from "@/lib/journeys";
+import { mediaUrl } from "@/lib/media";
 
 export function DemoNotice({ className = "" }: { className?: string }) {
   return (
@@ -23,7 +24,7 @@ export function JourneyCard({ journey }: { journey: Journey }) {
       <Link to="/journeys/$code" params={{ code: journey.code }} className="block">
         <div className="relative h-52 overflow-hidden">
           <img
-            src={journey.media.hero}
+            src={mediaUrl(journey.media.hero)}
             alt={`${journey.title} — ${journey.country}`}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

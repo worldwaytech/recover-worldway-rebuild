@@ -35,6 +35,7 @@ import {
   UtensilsCrossed,
   FileText,
 } from "lucide-react";
+import { mediaUrl } from "@/lib/media";
 
 function specValue(j: Journey, key: string): { label: string; value: string; icon: ReactNode } {
   switch (key) {
@@ -136,7 +137,7 @@ function GallerySection({ j }: { j: Journey }) {
         {images.slice(0, 9).map((src, i) => (
           <img
             key={src}
-            src={src}
+            src={mediaUrl(src)}
             loading="lazy"
             alt={`${j.title} — image ${i + 1}`}
             className="h-40 w-full rounded-lg object-cover"
@@ -299,7 +300,7 @@ export function JourneyTemplate({ journey: j, related }: { journey: Journey; rel
     <article className="pb-20">
       <header className="relative h-[52vh] min-h-[380px] w-full overflow-hidden">
         <img
-          src={j.media.hero}
+          src={mediaUrl(j.media.hero)}
           alt={`${j.title} in ${j.country}`}
           className="h-full w-full object-cover"
         />

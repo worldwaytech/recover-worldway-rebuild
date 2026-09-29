@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell, PageHero } from "@/components/search-shell";
 import { AIRCRAFT, AIRCRAFT_IMAGE_FALLBACK, CATEGORIES } from "@/lib/empty-legs-data";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/aircraft")({
   head: () => ({
@@ -70,7 +71,7 @@ function AircraftCatalogue() {
             >
               <div className="aspect-[16/10] overflow-hidden">
                 <img
-                  src={a.image}
+                  src={mediaUrl(a.image)}
                   alt={a.name}
                   loading="lazy"
                   onError={(e) => {

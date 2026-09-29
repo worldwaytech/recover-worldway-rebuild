@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CRYSTAL_DESTINATIONS } from "@/lib/crystal/content";
 import { Crumbs, Section, breadcrumbSchema } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/destinations";
 const TITLE = "Crystal Cruise Destinations — Regions & Ports | Worldway";
@@ -58,7 +59,7 @@ function DestinationsIndex() {
             >
               <div className="h-40 overflow-hidden">
                 <img
-                  src={d.hero}
+                  src={mediaUrl(d.hero)}
                   alt={`${d.name} cruise region`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

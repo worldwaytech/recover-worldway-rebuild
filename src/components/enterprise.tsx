@@ -7,6 +7,7 @@ import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Check, ShieldCheck, Award, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { mediaUrl } from "@/lib/media";
 
 // -------- FAQ (accessible disclosure) --------
 export function FAQGroup({
@@ -57,7 +58,7 @@ export function Gallery({ images, alt = "Gallery image" }: { images: string[]; a
           className={`overflow-hidden rounded-sm ${i % 5 === 0 ? "lg:col-span-2 lg:row-span-2" : ""}`}
         >
           <img
-            src={src}
+            src={mediaUrl(src)}
             alt={alt}
             loading="lazy"
             decoding="async"

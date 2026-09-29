@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { blogPosts } from "@/lib/data";
 import { SectionHeading } from "@/components/site";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
@@ -24,7 +25,7 @@ function BlogIndex() {
           {blogPosts.map((p) => (
             <Link key={p.slug} to="/blog/$slug" params={{ slug: p.slug }} className="group block">
               <div className="aspect-[4/3] overflow-hidden rounded-sm">
-                <img src={p.image} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={mediaUrl(p.image)} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
               <p className="mt-4 text-xs uppercase tracking-widest text-gold">{p.read}</p>
               <h3 className="mt-2 font-serif text-2xl group-hover:text-gold">{p.title}</h3>

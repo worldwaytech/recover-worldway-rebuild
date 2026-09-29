@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { searchMarketplaceTours } from "@/lib/bokun/bokun.functions";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/marketplace/")({
   head: () => ({
@@ -65,7 +66,7 @@ function MarketplacePage() {
             className="overflow-hidden rounded-xl border border-border bg-card transition hover:shadow-lg"
           >
             {p.coverPhoto ? (
-              <img src={p.coverPhoto} alt={p.title} className="h-44 w-full object-cover" loading="lazy" />
+              <img src={mediaUrl(p.coverPhoto)} alt={p.title} className="h-44 w-full object-cover" loading="lazy" />
             ) : (
               <div className="h-44 w-full bg-muted" />
             )}

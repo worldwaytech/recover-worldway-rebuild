@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { getTtcCatalogueFacets, searchTtcTours } from "@/lib/ttc/ttc.functions";
 import { TTC_BRANDS, TTC_BRAND_ORDER, TTC_SORT_OPTIONS, ttcTourPath } from "@/lib/ttc/config";
 import type { TtcCatalogueResult, TtcFacets } from "@/lib/ttc/types";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/ttc/")({
   head: () => ({
@@ -264,7 +265,7 @@ function TtcCataloguePage() {
             <div className="relative aspect-[4/3] overflow-hidden bg-muted">
               {tour.heroImage ? (
                 <img
-                  src={tour.heroImage}
+                  src={mediaUrl(tour.heroImage)}
                   alt={`${tour.name} — ${tour.brandLabel ?? "TTC"} guided journey`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

@@ -21,6 +21,7 @@ import {
   breadcrumbSchema,
   faqSchema,
 } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises";
 const TITLE = "Crystal Cruises — Luxury Voyages | Worldway Travels Group";
@@ -70,7 +71,7 @@ function CrystalHub() {
     <>
       <section className="relative overflow-hidden border-b border-border/60">
         <img
-          src={CRYSTAL_HERO_IMAGE}
+          src={mediaUrl(CRYSTAL_HERO_IMAGE)}
           alt="Luxury cruise ship at sea"
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
@@ -126,7 +127,7 @@ function CrystalHub() {
             >
               <div className="h-36 overflow-hidden">
                 <img
-                  src={d.hero}
+                  src={mediaUrl(d.hero)}
                   alt={`${d.name} cruising region`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -147,7 +148,7 @@ function CrystalHub() {
             <Card key={s.slug} className="overflow-hidden border-border/60">
               <Link to="/crystal-cruises/ships/$slug" params={{ slug: s.slug }}>
                 <img
-                  src={s.hero}
+                  src={mediaUrl(s.hero)}
                   alt={s.name}
                   loading="lazy"
                   className="h-48 w-full object-cover"

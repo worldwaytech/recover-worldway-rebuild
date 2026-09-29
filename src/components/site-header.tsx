@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { useSyncExternalStore, useState, useRef, useEffect } from "react";
 import logoAsset from "@/assets/worldway-logo.jpeg.asset.json";
 import { portal } from "@/lib/portal-store";
+import { mediaUrl } from "@/lib/media";
 
 type NavChild = { to: string; label: string } | { label: string; children: { to: string; label: string }[] };
 type NavItem = { to: string; label: string } | { label: string; children: NavChild[] };
@@ -178,7 +179,7 @@ export function SiteHeader() {
           className="mr-auto flex shrink-0 items-center gap-3 font-serif text-primary lg:mr-8"
         >
           <img
-            src={logoAsset.url}
+            src={mediaUrl(logoAsset.url)}
             alt="Worldway Travels Group logo"
             className="h-10 w-10 rounded-full object-cover ring-1 ring-primary/40 shadow-[0_0_18px_-6px_oklch(0.82_0.13_85/0.55)]"
           />

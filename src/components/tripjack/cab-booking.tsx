@@ -21,6 +21,7 @@ import {
   resolveCabLocation,
   searchCabLocations,
 } from "@/lib/tripjack/tripjack.functions";
+import { mediaUrl } from "@/lib/media";
 
 const JOURNEYS: Array<{ journeyType: CabJourneyType; tripType: CabTripType; label: string }> = [
   { journeyType: "airport_transfer", tripType: "oneway", label: "Airport transfer" },
@@ -310,7 +311,7 @@ export function CabBooking({ enabled }: { enabled: boolean }) {
                   }`}
                 >
                   {g.vehicleImages?.[0] && (
-                    <img src={g.vehicleImages[0]} alt={g.label ?? g.vehicleType ?? "Vehicle"} loading="lazy" className="h-20 w-32 rounded-md object-cover" />
+                    <img src={mediaUrl(g.vehicleImages[0])} alt={g.label ?? g.vehicleType ?? "Vehicle"} loading="lazy" className="h-20 w-32 rounded-md object-cover" />
                   )}
                   <div className="flex-1">
                     <h3 className="text-lg font-medium">{g.label ?? g.vehicleType}</h3>

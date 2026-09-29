@@ -8,6 +8,7 @@ import {
   formatPrice,
   formatJourneyTitle,
 } from "@/lib/data";
+import { mediaUrl } from "@/lib/media";
 
 export function AvailabilityBadge({ status }: { status: Availability }) {
   return (
@@ -57,7 +58,7 @@ export function JourneyCard({
       <div className="relative aspect-[4/3] overflow-hidden">
         <Link to="/all-journeys/$slug" params={{ slug: journey.slug }} className="block h-full">
           <img
-            src={journey.image}
+            src={mediaUrl(journey.image)}
             alt={journeyTitle}
             width={800}
             height={600}

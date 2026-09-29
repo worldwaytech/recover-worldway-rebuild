@@ -12,6 +12,7 @@ import { DestinationIntelPanel } from "@/components/destinations/destination-int
 import type { Journey } from "@/lib/journeys";
 import type { CatalogueProduct } from "@/lib/catalogue-types";
 import { Button } from "@/components/ui/button";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/destinations/$region/$country/")({
   loader: ({ params }) => {
@@ -134,7 +135,7 @@ function CountryPage() {
     <div>
       <header className="relative h-[42vh] min-h-[300px] overflow-hidden">
         <img
-          src={country.heroImage}
+          src={mediaUrl(country.heroImage)}
           alt={`${country.name} luxury travel`}
           className="h-full w-full object-cover"
         />

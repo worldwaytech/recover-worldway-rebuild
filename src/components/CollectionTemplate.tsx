@@ -29,6 +29,7 @@ import { saveToWishlist, trackCatalogueEvent } from "@/lib/catalogue-client";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { mediaUrl } from "@/lib/media";
 
 export function SectionHeading({
   eyebrow,
@@ -83,7 +84,7 @@ export function CollectionItemCard({
     <article className="group flex flex-col overflow-hidden rounded-sm border border-border bg-card shadow-soft transition-shadow hover:shadow-elegant">
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
-          src={item.image}
+          src={mediaUrl(item.image)}
           alt={item.title}
           loading="lazy"
           decoding="async"
@@ -179,7 +180,7 @@ export function CollectionLanding({
       <main>
         <section className="relative h-[60vh] min-h-[420px] overflow-hidden">
           <img
-            src={meta.heroImage}
+            src={mediaUrl(meta.heroImage)}
             alt={meta.title}
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -450,7 +451,7 @@ function CollectionDetailInner({ kind, item }: { kind: CollectionKind; item: Cat
       <main>
         <section className="relative h-[65vh] min-h-[460px] overflow-hidden">
           <img
-            src={item.image}
+            src={mediaUrl(item.image)}
             alt={item.title}
             className="absolute inset-0 h-full w-full object-cover"
           />

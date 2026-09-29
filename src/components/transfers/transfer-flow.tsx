@@ -6,6 +6,7 @@ import { inputClass } from "@/components/search-form";
 import { bookTransfer, searchTransferAvailability, searchTransferPoints } from "@/lib/hbx/transfers.functions";
 import type { TransferAvailability, TransferOption } from "@/lib/hbx/transfer-model";
 import { portal } from "@/lib/portal-store";
+import { mediaUrl } from "@/lib/media";
 
 type Point = { type: string; code: string; name: string; city?: string | null; country?: string | null };
 
@@ -101,7 +102,7 @@ function OptionCard({ o, selected, onSelect }: { o: TransferOption; selected: bo
   return (
     <div className={`rounded-xl border p-4 ${selected ? "border-primary ring-1 ring-primary" : "border-border/60"} bg-card`}>
       <div className="flex gap-4">
-        {img ? <img src={img.url} alt={`${o.vehicle.name} vehicle`} className="h-24 w-32 rounded-md object-cover" loading="lazy" /> : null}
+        {img ? <img src={mediaUrl(img.url)} alt={`${o.vehicle.name} vehicle`} className="h-24 w-32 rounded-md object-cover" loading="lazy" /> : null}
         <div className="flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
             <span className="rounded-full bg-muted px-2 py-0.5">{o.transferType === "PRIVATE" ? "Private" : o.transferType === "SHARED" ? "Shared" : o.transferType}</span>

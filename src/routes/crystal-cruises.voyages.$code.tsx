@@ -16,6 +16,7 @@ import { formatFare, relatedVoyages, voyageByCode } from "@/lib/crystal/inventor
 import { crystalPrefs } from "@/lib/crystal/personalisation";
 import { SUITE_CATEGORIES } from "@/lib/crystal/inventory";
 import { LiveAvailabilityPanel } from "@/components/crystal/live-availability";
+import { mediaUrl } from "@/lib/media";
 
 const NO_CODES: string[] = [];
 
@@ -99,7 +100,7 @@ function VoyagePage() {
       <section className="relative overflow-hidden border-b border-border/60">
         {voyage.media.hero ? (
           <img
-            src={voyage.media.hero}
+            src={mediaUrl(voyage.media.hero)}
             alt={voyage.title}
             className="absolute inset-0 h-full w-full object-cover opacity-30"
           />
@@ -180,7 +181,7 @@ function VoyagePage() {
       <Section eyebrow="Itinerary" title="Day by day">
         {voyage.media.mapSvg || voyage.media.mapPng ? (
           <img
-            src={voyage.media.mapSvg ?? voyage.media.mapPng}
+            src={mediaUrl(voyage.media.mapSvg ?? voyage.media.mapPng)}
             alt={`Route map for ${voyage.title}`}
             loading="lazy"
             className="mb-6 w-full rounded-xl border border-border/60 bg-card p-4"

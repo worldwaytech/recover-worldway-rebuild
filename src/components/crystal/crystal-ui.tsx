@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CRYSTAL_LICENCE_NOTICE } from "@/lib/crystal/content";
 import { formatFare } from "@/lib/crystal/inventory";
 import type { CrystalVoyage } from "@/lib/crystal/types";
+import { mediaUrl } from "@/lib/media";
 
 export function LicenceNotice({ className = "" }: { className?: string }) {
   return (
@@ -81,7 +82,7 @@ export function VoyageCard({ voyage }: { voyage: CrystalVoyage }) {
         {voyage.media.hero ? (
           <div className="h-48 overflow-hidden">
             <img
-              src={voyage.media.hero}
+              src={mediaUrl(voyage.media.hero)}
               alt={`${voyage.title} — ${voyage.destinationName}`}
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

@@ -3,6 +3,7 @@ import { getRegion, countRegion, journeysForRegion, type RegionNode } from "@/li
 import { JourneyGrid, DemoNotice } from "@/components/partners/journey-ui";
 import type { Journey } from "@/lib/journeys";
 import { Button } from "@/components/ui/button";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/destinations/$region/")({
   loader: ({ params }) => {
@@ -57,7 +58,7 @@ function RegionPage() {
   return (
     <div>
       <header className="relative h-[42vh] min-h-[300px] overflow-hidden">
-        <img src={r.heroImage} alt={`${r.name} travel`} className="h-full w-full object-cover" />
+        <img src={mediaUrl(r.heroImage)} alt={`${r.name} travel`} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-6xl px-4 pb-8">
           <nav className="text-xs text-muted-foreground">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
+import { mediaUrl } from "@/lib/media";
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -27,7 +28,7 @@ export function PageHero({
     <section className="relative overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${image})` }}
+        style={{ backgroundImage: `url(${mediaUrl(image)})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
       <div className="relative mx-auto max-w-7xl px-6 py-24 md:py-32">
