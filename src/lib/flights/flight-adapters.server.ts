@@ -107,7 +107,7 @@ export const FLIGHT_ADAPTERS = [up17Adapter, airiqAdapter];
 function resolveIata(value: string): string {
   const raw = value.trim();
   if (/^[a-z]{3}$/i.test(raw)) return raw.toUpperCase();
-  return (searchAirports(raw, 1)[0]?.code ?? raw).toUpperCase();
+  return (searchAirports(raw, 1)[0]?.iata ?? raw).toUpperCase();
 }
 
 export async function searchFlightsViaEngine(input: FlightQuery) {
