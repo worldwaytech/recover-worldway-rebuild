@@ -16,8 +16,8 @@ export const SUPPLIER_CATALOG: SupplierRegistration[] = [
     ...g("production", true, "Live 169-voyage feed; real production booking 475465 created and cancelled", "search", "availability", "price", "prebook", "book", "cancel"),
     ...g("production", false, "Not exercised in production", "modify", "refund", "voucher"),
   ]),
-  entry("up17", ["flight"], "production", 0.9, [
-    ...g("production", true, "Live search DEL→BOM returned 122 fares", "search", "availability", "price"),
+  entry("up17", ["flight", "stay"], "production", 0.9, [
+    ...g("production", true, "Live search DEL→BOM returned 122 fares; live hotel search Mumbai 15–18 Oct 2026 returned 546 priced hotels (29 Sep 2026)", "search", "availability", "price"),
     ...g("production", false, "Booking path live but no certified production booking", "book"),
   ]),
   entry("airiq", ["flight"], "production", 0.8, [

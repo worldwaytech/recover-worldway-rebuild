@@ -3,7 +3,7 @@ import { combine } from "../suppliers/assembly.server";
 import { airportTz, flightToCanonical, localToInstant, localDateIn } from "../suppliers/live-search.server";
 import type { CanonicalOffer } from "../normalize";
 import { vi } from "vitest";
-vi.mock("@/lib/flights/flight-adapters.server", () => ({ flightOfferSupplier: (id: string) => (id === "WWF-TEST1" ? "airiq" : null) }));
+vi.mock("@/lib/flights/flight-adapters.server", () => ({ flightOfferSupplier: (id: string) => (id === "WWF-TEST1" ? "airiq" : null), flightOfferHandle: (id: string) => (id === "WWF-TEST1" ? { supplier: "airiq", ticketId: "T", query: {}, net: 57000, currency: "INR" } : null) }));
 
 const req = { origin: "BOM", destinations: ["CDG"], departFrom: "2026-12-12", returnBy: "2026-12-19", adults: 2, children: 0, luxuryLevel: 4 as const, interests: [] };
 

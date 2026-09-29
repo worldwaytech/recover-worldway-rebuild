@@ -34,7 +34,7 @@ export async function assembleAndSave(userId: string, requirements: z.infer<type
     proposals.push({
       journeyId, score: p.result.score, bookable: p.readiness.bookable, blockers: p.readiness.blockers,
       total: p.result.pricing?.total ?? null, currency: report.currency, explanation,
-      components: p.result.graph.map((c) => ({ kind: c.kind, title: c.title, start: c.start, end: c.end })),
+      components: p.result.graph.map((c) => ({ kind: c.kind, title: c.title, start: c.start, end: c.end, status: p.readiness.perComponent.find((x) => x.externalId === c.externalId)?.status ?? "LIVE" })),
       onRequest: p.onRequest, factors: p.result.factors,
     });
   }
