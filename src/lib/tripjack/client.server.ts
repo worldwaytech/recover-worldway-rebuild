@@ -12,7 +12,7 @@
 import {
   TRIPJACK_API_KEY_SECRET,
   TRIPJACK_TIMEOUT_MS,
-  TRIPJACK_UAT_BASE_URL,
+  tripjackBaseUrl,
   tripjackCapability,
   type TripjackSuite,
 } from "./config";
@@ -208,7 +208,7 @@ export async function tripjackCall<T = unknown>(
   }
 
   const search = query ? new URLSearchParams(query).toString() : "";
-  const url = `${TRIPJACK_UAT_BASE_URL}${cap.path}${search ? `?${search}` : ""}`;
+  const url = `${tripjackBaseUrl(suite)}${cap.path}${search ? `?${search}` : ""}`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TRIPJACK_TIMEOUT_MS);
@@ -227,6 +227,10 @@ export async function tripjackCall<T = unknown>(
     });
 
     const text = await response.text();
+    if (suite === "cabs" && capability === "location-search") {
+      // UAT diagnostics: full URL, masked headers, status and body (no key value).
+      console.info("[tripjack] cabs location-search", JSON.stringify({ url, method: cap.method, headers: { apikey: `****${apiKey.slice(-4)}`, "Content-Type": "application/json", "X-Correlation-Id": correlationId }, status: response.status, body: text.slice(0, 2000) }));
+    }
     let parsed: unknown = null;
     const requestBody = cap.method === "POST" ? (body ?? {}) : undefined;
     if (text) {

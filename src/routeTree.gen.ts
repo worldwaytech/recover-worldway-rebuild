@@ -208,6 +208,7 @@ import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
 import { Route as ApiPublicSupplierImageRouteImport } from './routes/api/public/supplier-image'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
+import { Route as ApiPublicEgressIpRouteImport } from './routes/api/public/egress-ip'
 import { Route as ApiAdminFoundryOauthClientRouteImport } from './routes/api/admin/foundry-oauth-client'
 import { Route as AdminOpsYachtsRouteImport } from './routes/admin.ops.yachts'
 import { Route as AdminOpsVillasRouteImport } from './routes/admin.ops.villas'
@@ -1239,6 +1240,11 @@ const ApiPublicRazorpayWebhookRoute =
     path: '/api/public/razorpay-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEgressIpRoute = ApiPublicEgressIpRouteImport.update({
+  id: '/api/public/egress-ip',
+  path: '/api/public/egress-ip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminFoundryOauthClientRoute =
   ApiAdminFoundryOauthClientRouteImport.update({
     id: '/api/admin/foundry-oauth-client',
@@ -1561,6 +1567,7 @@ export interface FileRoutesByFullPath {
   '/admin/ops/villas': typeof AdminOpsVillasRoute
   '/admin/ops/yachts': typeof AdminOpsYachtsRoute
   '/api/admin/foundry-oauth-client': typeof ApiAdminFoundryOauthClientRoute
+  '/api/public/egress-ip': typeof ApiPublicEgressIpRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1757,6 +1764,7 @@ export interface FileRoutesByTo {
   '/admin/ops/villas': typeof AdminOpsVillasRoute
   '/admin/ops/yachts': typeof AdminOpsYachtsRoute
   '/api/admin/foundry-oauth-client': typeof ApiAdminFoundryOauthClientRoute
+  '/api/public/egress-ip': typeof ApiPublicEgressIpRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1982,6 +1990,7 @@ export interface FileRoutesById {
   '/admin/ops/villas': typeof AdminOpsVillasRoute
   '/admin/ops/yachts': typeof AdminOpsYachtsRoute
   '/api/admin/foundry-oauth-client': typeof ApiAdminFoundryOauthClientRoute
+  '/api/public/egress-ip': typeof ApiPublicEgressIpRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -2209,6 +2218,7 @@ export interface FileRouteTypes {
     | '/admin/ops/villas'
     | '/admin/ops/yachts'
     | '/api/admin/foundry-oauth-client'
+    | '/api/public/egress-ip'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2405,6 +2415,7 @@ export interface FileRouteTypes {
     | '/admin/ops/villas'
     | '/admin/ops/yachts'
     | '/api/admin/foundry-oauth-client'
+    | '/api/public/egress-ip'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2629,6 +2640,7 @@ export interface FileRouteTypes {
     | '/admin/ops/villas'
     | '/admin/ops/yachts'
     | '/api/admin/foundry-oauth-client'
+    | '/api/public/egress-ip'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2743,6 +2755,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiAdminFoundryOauthClientRoute: typeof ApiAdminFoundryOauthClientRoute
+  ApiPublicEgressIpRoute: typeof ApiPublicEgressIpRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
@@ -4160,6 +4173,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/egress-ip': {
+      id: '/api/public/egress-ip'
+      path: '/api/public/egress-ip'
+      fullPath: '/api/public/egress-ip'
+      preLoaderRoute: typeof ApiPublicEgressIpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/foundry-oauth-client': {
       id: '/api/admin/foundry-oauth-client'
       path: '/api/admin/foundry-oauth-client'
@@ -4952,6 +4972,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiAdminFoundryOauthClientRoute: ApiAdminFoundryOauthClientRoute,
+  ApiPublicEgressIpRoute: ApiPublicEgressIpRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,

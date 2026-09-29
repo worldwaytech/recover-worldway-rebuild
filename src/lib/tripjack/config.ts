@@ -11,6 +11,11 @@
 //   * TripJack TripSafe API Documentation v5.1 (13-02-2026), section 2 & 3
 
 export const TRIPJACK_UAT_BASE_URL = "https://apitest.tripjack.com";
+/** Cabs UAT is served from its own host (per TripJack). */
+export const TRIPJACK_CABS_UAT_BASE_URL = "https://apitest-cabs.tripjack.com";
+export function tripjackBaseUrl(suite: "cabs" | "tripsafe"): string {
+  return suite === "cabs" ? TRIPJACK_CABS_UAT_BASE_URL : TRIPJACK_UAT_BASE_URL;
+}
 
 /** Name of the shared server-side secret. Never the value. */
 export const TRIPJACK_API_KEY_SECRET = "TRIPJACK_UAT_API_KEY";

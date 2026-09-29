@@ -22,11 +22,13 @@ import {
   validateTripsafeSelection,
   type TripsafeSelection,
 } from "../tripsafe-contract";
-import { TRIPJACK_CABS_CAPABILITIES, TRIPJACK_CERTIFICATION_CASES, TRIPJACK_TRIPSAFE_CAPABILITIES, TRIPJACK_UAT_BASE_URL, tripjackCapability } from "../config";
+import { TRIPJACK_CABS_CAPABILITIES, TRIPJACK_CERTIFICATION_CASES, TRIPJACK_TRIPSAFE_CAPABILITIES, TRIPJACK_UAT_BASE_URL, tripjackBaseUrl, tripjackCapability } from "../config";
 
 describe("TripJack config (UAT only, documented endpoints)", () => {
   it("targets the UAT host only", () => {
     expect(TRIPJACK_UAT_BASE_URL).toBe("https://apitest.tripjack.com");
+    expect(tripjackBaseUrl("cabs")).toBe("https://apitest-cabs.tripjack.com");
+    expect(tripjackBaseUrl("tripsafe")).toBe("https://apitest.tripjack.com");
   });
   it("maps the documented Cabs v2 endpoints", () => {
     const paths = Object.fromEntries(TRIPJACK_CABS_CAPABILITIES.map((c) => [c.key, `${c.method} ${c.path}`]));
