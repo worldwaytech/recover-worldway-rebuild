@@ -7,7 +7,7 @@ const req = { origin: "BOM", destinations: ["CDG"], departFrom: "2026-12-12", re
 
 describe("live assembly", () => {
   it("converts local supplier times using real airport time zones", () => {
-    expect(airportTz("BOM")!.tz).toBe("Asia/Kolkata");
+    expect(["Asia/Kolkata", "Asia/Calcutta"]).toContain(airportTz("BOM")!.tz);
     expect(localToInstant("2026-12-12 23:30", "Asia/Kolkata")).toBe("2026-12-12T18:00:00.000Z");
     const f = flightToCanonical({ offer_id: "WWF-B-1", airline: "AI", flight_numbers: ["AI143"], origin: "BOM", destination: "CDG", departure: "2026-12-12 23:30", arrival: "2026-12-13 06:10",
       stops: 0, duration_min: 610, cabin: "economy", refundable: true, seats_available: 4, total_price: 60000, currency: "INR", trip: "one_way" })!;
