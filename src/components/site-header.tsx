@@ -56,7 +56,7 @@ const NAV: NavItem[] = [
         label: "Trip",
         children: [
           { to: "/trip/cabservices", label: "Cab Services" },
-          { to: "/trip/tripsafeservices", label: "TripSafe Services" },
+          { to: "/trip/tripsafeservices", label: "Travel Protection" },
         ],
       },
       { to: "/activities", label: "Activities" },

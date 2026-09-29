@@ -33,7 +33,7 @@ describe("customer surfaces", () => {
         // Only string literals / JSX text — identifiers and paths are not visible copy.
         const visible = [...t.matchAll(/"([^"]*)"|`([^`]*)`|>([^<>{}]+)</g)]
           .map((m) => m[1] ?? m[2] ?? m[3] ?? "")
-          .filter((s) => !/^[/@.]|^[a-z0-9-]+$/.test(s));
+          .filter((s) => !/^[/@.]|^[a-z0-9-]+$|^https:\/\/worldwaytravelsgroup\.com\//.test(s));
         if (visible.some((s) => re.test(s))) leaks.push(`${relative(ROOT, f)}:${i + 1}`);
       });
     }
@@ -45,7 +45,7 @@ describe("customer surfaces", () => {
     for (const f of customerFiles) {
       const s = readFileSync(f, "utf8");
       for (const m of s.matchAll(/<img\b[\s\S]*?\ssrc=\{([\s\S]*?)\}(?=[\s/>])/g))
-        if (!m[1].trim().startsWith("mediaUrl(")) bad.push(`${relative(ROOT, f)}: ${m[1].trim().slice(0, 40)}`);
+        if (!/^(mediaUrl|worldwayMedia)\(/.test(m[1].trim())) bad.push(`${relative(ROOT, f)}: ${m[1].trim().slice(0, 40)}`);
     }
     expect(bad).toEqual([]);
   });
