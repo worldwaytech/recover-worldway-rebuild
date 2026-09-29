@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getTourTaxonomy, getTourDealsList } from "@/lib/tours.functions";
+import { mediaUrl } from "@/lib/media";
 
 export type TaxonomyEntry = { id: string; name: string; count: number | null; description?: string };
 export type Taxonomy = {
@@ -175,7 +176,7 @@ export function DealsSection() {
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/30">
               {d.image ? (
                 <img
-                  src={d.image}
+                  src={mediaUrl(d.image)}
                   alt={d.tourName ?? d.name}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

@@ -5,6 +5,7 @@ import { ToursCatalogue, type ToursSearchState } from "@/components/tours-catalo
 import { BROWSE_HUBS, HUB_GROUPS, hubBySlug, type BrowseHub } from "@/lib/browse-hubs";
 import { useSavedSearches } from "@/lib/tour-shortlist";
 import { track } from "@/lib/analytics";
+import { mediaUrl } from "@/lib/media";
 
 export function Breadcrumbs({ trail }: { trail: { label: string; to?: string }[] }) {
   return (
@@ -61,7 +62,7 @@ export function HubGrid({ slugs, exclude }: { slugs: string[]; exclude?: string 
         >
           <div className="aspect-[16/10] w-full overflow-hidden bg-muted/30">
             <img
-              src={h.image}
+              src={mediaUrl(h.image)}
               alt=""
               loading="lazy"
               decoding="async"

@@ -21,11 +21,12 @@ import {
   breadcrumbSchema,
   faqSchema,
 } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises";
-const TITLE = "Crystal Cruises — Luxury Voyages | Worldway Travels Group";
+const TITLE = "Luxury Cruises — All-Suite Voyages | Worldway Travels Group";
 const DESCRIPTION =
-  "Plan a Crystal Cruises voyage with Worldway: all-suite ocean and expedition sailings, destination guidance, ship profiles and specialist booking support.";
+  "Plan a Worldway Luxury Cruises voyage with Worldway: all-suite ocean and expedition sailings, destination guidance, ship profiles and specialist booking support.";
 
 export const Route = createFileRoute("/crystal-cruises/")({
   head: () => ({
@@ -51,7 +52,7 @@ export const Route = createFileRoute("/crystal-cruises/")({
         children: JSON.stringify(
           breadcrumbSchema([
             { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-            { name: "Crystal Cruises", url: URL },
+            { name: "Worldway Luxury Cruises", url: URL },
           ]),
         ),
       },
@@ -70,12 +71,12 @@ function CrystalHub() {
     <>
       <section className="relative overflow-hidden border-b border-border/60">
         <img
-          src={CRYSTAL_HERO_IMAGE}
+          src={mediaUrl(CRYSTAL_HERO_IMAGE)}
           alt="Luxury cruise ship at sea"
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
         <div className="relative mx-auto max-w-7xl px-6 py-24 md:py-32">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+          <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Worldway Luxury Cruises</p>
           <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">
             All-suite ocean and expedition voyages, arranged end to end
           </h1>
@@ -126,7 +127,7 @@ function CrystalHub() {
             >
               <div className="h-36 overflow-hidden">
                 <img
-                  src={d.hero}
+                  src={mediaUrl(d.hero)}
                   alt={`${d.name} cruising region`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -147,7 +148,7 @@ function CrystalHub() {
             <Card key={s.slug} className="overflow-hidden border-border/60">
               <Link to="/crystal-cruises/ships/$slug" params={{ slug: s.slug }}>
                 <img
-                  src={s.hero}
+                  src={mediaUrl(s.hero)}
                   alt={s.name}
                   loading="lazy"
                   className="h-48 w-full object-cover"
@@ -203,7 +204,7 @@ function CrystalHub() {
         </div>
       </Section>
 
-      <Section eyebrow="Questions" title="Crystal Cruises FAQs">
+      <Section eyebrow="Questions" title="Worldway Luxury Cruises FAQs">
         <FaqList faqs={CRYSTAL_FAQS} />
       </Section>
     </>

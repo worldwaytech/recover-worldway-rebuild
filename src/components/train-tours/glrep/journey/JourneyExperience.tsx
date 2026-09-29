@@ -23,6 +23,7 @@ import {
   type JourneyRecord,
   assembleRegistries,
 } from "@/lib/train-tours/glrep/content";
+import { mediaUrl as worldwayMedia } from "@/lib/media";
 
 /** Shared registries instance (built once). */
 let cached: ContentRegistries | null = null;
@@ -64,7 +65,7 @@ function ProgressiveImage({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
       <img
-        src={src}
+        src={worldwayMedia(src)}
         alt={alt}
         loading="lazy"
         onLoad={() => setLoaded(true)}
@@ -187,7 +188,7 @@ export function JourneyExperience({ journey }: { journey: JourneyRecord }) {
       {/* Hero */}
       <header className="relative flex min-h-[70vh] items-end overflow-hidden">
         <img
-          src={mediaUrl(r, j.hero.media.assetId)}
+          src={worldwayMedia(mediaUrl(r, j.hero.media.assetId))}
           alt={j.hero.media.alt}
           className="absolute inset-0 size-full object-cover"
         />
@@ -497,7 +498,7 @@ export function JourneyExperience({ journey }: { journey: JourneyRecord }) {
                       </DialogTrigger>
                       <DialogContent className="max-w-5xl">
                         <img
-                          src={url}
+                          src={worldwayMedia(url)}
                           alt={`${j.name} gallery image`}
                           className="w-full rounded-lg"
                         />

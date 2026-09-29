@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useSavedTours, type TourStub } from "@/lib/tour-shortlist";
+import { mediaUrl } from "@/lib/media";
 
 export function money(price: number | null, currency: string) {
   if (price == null) return "On request";
@@ -62,7 +63,7 @@ export function TourCard({ tour }: { tour: TourCardData }) {
         <div className="aspect-[4/3] w-full overflow-hidden bg-muted/30">
           {tour.image ? (
             <img
-              src={tour.image}
+              src={mediaUrl(tour.image)}
               alt={tour.name}
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -119,7 +120,7 @@ export function TourStubRow({ title, items }: { title: string; items: TourStub[]
             <div className="h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-muted/30">
               {t.image ? (
                 <img
-                  src={t.image}
+                  src={mediaUrl(t.image)}
                   alt={t.name}
                   loading="lazy"
                   className="h-full w-full object-cover"

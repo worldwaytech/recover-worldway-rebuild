@@ -5,6 +5,7 @@
 // Future suppliers are covered automatically: names/ids come from the partner
 // registry plus this list, and supplier-metadata keys are stripped by pattern.
 import { PARTNER_CONNECTORS } from "@/lib/partners/registry";
+import { isThirdPartyUrl, mediaUrl } from "@/lib/media";
 
 const KNOWN_SUPPLIER_TERMS = [
   "HBX", "Hotelbeds", "RateHawk", "Emerging Travel Group", "ETG", "Viator", "TripAdvisor",
@@ -41,7 +42,11 @@ function has(s: string) {
 /** Replace supplier names/hosts in free text with Worldway branding. */
 export function redactText(s: string): string {
   return s
-    .replace(/https?:\/\/[^\s"']+/gi, (u) => (has(u) ? "[worldway]" : u))
+    .replace(/https?:\/\/[^\s"'<>]+/gi, (u) =>
+      /\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(u) || /image|img|photo|media|cdn/i.test(u)
+        ? mediaUrl(u, true)
+        : isThirdPartyUrl(u) ? "[worldway]" : u,
+    )
     .replace(re(), "Worldway")
     .replace(/Worldway(\s+Worldway)+/g, "Worldway");
 }

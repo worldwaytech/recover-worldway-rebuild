@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CRYSTAL_DESTINATIONS } from "@/lib/crystal/content";
 import { Crumbs, Section, breadcrumbSchema } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/destinations";
 const TITLE = "Crystal Cruise Destinations — Regions & Ports | Worldway";
 const DESCRIPTION =
-  "Explore Crystal Cruises destinations: Mediterranean, Northern Europe, Alaska, Japan, the Caribbean, Antarctica and world cruise regions, with seasons and ports.";
+  "Explore Worldway Luxury Cruises destinations: Mediterranean, Northern Europe, Alaska, Japan, the Caribbean, Antarctica and world cruise regions, with seasons and ports.";
 
 export const Route = createFileRoute("/crystal-cruises/destinations/")({
   head: () => ({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/crystal-cruises/destinations/")({
         children: JSON.stringify(
           breadcrumbSchema([
             { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-            { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+            { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
             { name: "Destinations", url: URL },
           ]),
         ),
@@ -40,7 +41,7 @@ function DestinationsIndex() {
     <>
       <div className="mx-auto max-w-7xl px-6 pt-10">
         <Crumbs
-          items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: "Destinations" }]}
+          items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: "Destinations" }]}
         />
       </div>
       <Section
@@ -58,7 +59,7 @@ function DestinationsIndex() {
             >
               <div className="h-40 overflow-hidden">
                 <img
-                  src={d.hero}
+                  src={mediaUrl(d.hero)}
                   alt={`${d.name} cruise region`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

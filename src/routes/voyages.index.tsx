@@ -15,7 +15,7 @@ const VOYAGE_PRODUCTS = [
   },
   { to: "/river-cruises", label: "River Cruises", blurb: "Europe, Nile and Mekong river journeys." },
   { to: "/world-cruises", label: "World Cruises", blurb: "Grand voyages and full world circuits." },
-  { to: "/crystal-cruises", label: "Crystal Cruises", blurb: "Live Crystal inventory and suites." },
+  { to: "/crystal-cruises", label: "Worldway Luxury Cruises", blurb: "Live luxury cruise inventory and suites." },
   { to: "/rail", label: "Luxury Rail", blurb: "Iconic rail journeys across continents." },
   { to: "/yachts", label: "Yacht Charters", blurb: "Private yacht and gulet charters." },
 ] as const;

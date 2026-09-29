@@ -202,7 +202,7 @@ function BookPage() {
   if (voyage.bookingMode === "enquiry") {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16">
-        <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+        <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Worldway Luxury Cruises</p>
         <h1 className="mt-3 font-serif text-3xl">{voyage.title}</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} to {voyage.disembarkPort}{" "}
@@ -329,7 +329,7 @@ function BookPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
-      <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+      <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Worldway Luxury Cruises</p>
       <h1 className="mt-3 font-serif text-3xl">{voyage.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {voyage.shipName} · {voyage.nights} nights · {voyage.embarkPort} → {voyage.disembarkPort} ·

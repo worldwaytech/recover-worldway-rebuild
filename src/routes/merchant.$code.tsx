@@ -8,6 +8,7 @@ import {
   holdMerchantExperience,
 } from "@/lib/viator-merchant/merchant.functions";
 import { isValidInternationalPhone } from "@/lib/viator/checkout-contract";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/merchant/$code")({
   head: () => ({
@@ -159,7 +160,7 @@ function MerchantDetailPage() {
           <h1 className="mt-2 text-3xl font-semibold text-foreground">{product.title}</h1>
           {product.images[0] && (
             <img
-              src={product.images[0]}
+              src={mediaUrl(product.images[0])}
               alt={product.title}
               className="mt-4 h-72 w-full rounded-xl object-cover"
               onError={(e) => {

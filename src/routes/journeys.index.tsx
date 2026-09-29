@@ -62,12 +62,12 @@ function JourneysIndex() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-14">
       <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-        Partner journeys
+        Worldway journeys
       </p>
-      <h1 className="mt-2 font-serif text-4xl">Journeys from the world's finest operators</h1>
+      <h1 className="mt-2 font-serif text-4xl">Journeys curated by Worldway</h1>
       <p className="mt-3 max-w-3xl text-muted-foreground">
-        {allJourneys().length} curated itineraries across {regions.length} regions, each arranged
-        with a vetted luxury partner and supported end to end by a Worldway specialist.
+        {allJourneys().length} curated itineraries across {regions.length} regions, each
+         supported end to end by a Worldway specialist.
       </p>
       <DemoNotice className="mt-5 max-w-3xl" />
 
@@ -80,14 +80,7 @@ function JourneysIndex() {
           aria-label="Search journeys"
         />
         <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={partner ? "outline" : "secondary"}
-            onClick={() => setPartner("")}
-          >
-            All partners
-          </Button>
-          {partners.map((p) => (
+          {([] as typeof partners).map((p) => (
             <Button
               key={p.id}
               size="sm"

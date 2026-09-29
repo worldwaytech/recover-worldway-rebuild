@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getCountryIntel } from "@/lib/destination-intel.functions";
+import { mediaUrl } from "@/lib/media";
 
 type Bucket = { label: string; count: number };
 type Tour = {
@@ -162,7 +163,7 @@ export function DestinationIntelPanel({ country }: { country: string }) {
                 {t.image ? (
                   <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                     <img
-                      src={t.image}
+                      src={mediaUrl(t.image)}
                       alt=""
                       loading="lazy"
                       decoding="async"

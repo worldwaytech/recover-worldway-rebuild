@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { searchMerchantExperiences } from "@/lib/viator-merchant/merchant.functions";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/merchant/")({
   head: () => ({
@@ -67,7 +68,7 @@ function MerchantPage() {
           >
             {p.image ? (
               <img
-                src={p.image}
+                src={mediaUrl(p.image)}
                 alt={p.title}
                 className="h-44 w-full object-cover"
                 loading="lazy"

@@ -15,6 +15,7 @@ import { JourneyCard, Breadcrumbs } from "@/components/site";
 import { AvailabilityBadge } from "@/components/site";
 import { Button } from "@/components/ui/button";
 import { Check, MapPin, Calendar, Clock, X } from "lucide-react";
+import { mediaUrl } from "@/lib/media";
 
 type Search = { category?: string; region?: string; style?: string; duration?: string; q?: string };
 
@@ -111,7 +112,7 @@ function Journeys() {
     <main className="pt-20">
       <section className="relative flex h-[45vh] items-center overflow-hidden">
         <img
-          src={cat.image}
+          src={mediaUrl(cat.image)}
           alt={cat.name}
           className="absolute inset-0 h-full w-full object-cover"
         />

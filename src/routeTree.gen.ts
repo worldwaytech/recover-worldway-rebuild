@@ -125,6 +125,7 @@ import { Route as PortalNotificationsRouteImport } from './routes/portal.notific
 import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PolarExpeditionsSlugRouteImport } from './routes/polar-expeditions.$slug'
 import { Route as MerchantCodeRouteImport } from './routes/merchant.$code'
+import { Route as MediaTokenRouteImport } from './routes/media.$token'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
@@ -812,6 +813,11 @@ const MerchantCodeRoute = MerchantCodeRouteImport.update({
   path: '/merchant/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MediaTokenRoute = MediaTokenRouteImport.update({
+  id: '/media/$token',
+  path: '/media/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
   id: '/marketplace/$id',
   path: '/marketplace/$id',
@@ -1477,6 +1483,7 @@ export interface FileRoutesByFullPath {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/media/$token': typeof MediaTokenRoute
   '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
@@ -1671,6 +1678,7 @@ export interface FileRoutesByTo {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/media/$token': typeof MediaTokenRoute
   '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
@@ -1894,6 +1902,7 @@ export interface FileRoutesById {
   '/insurance/$slug': typeof InsuranceSlugRoute
   '/journeys/$code': typeof JourneysCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/media/$token': typeof MediaTokenRoute
   '/merchant/$code': typeof MerchantCodeRoute
   '/polar-expeditions/$slug': typeof PolarExpeditionsSlugRoute
   '/portal/documents': typeof PortalDocumentsRoute
@@ -2119,6 +2128,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/media/$token'
     | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
@@ -2313,6 +2323,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/media/$token'
     | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
@@ -2535,6 +2546,7 @@ export interface FileRouteTypes {
     | '/insurance/$slug'
     | '/journeys/$code'
     | '/marketplace/$id'
+    | '/media/$token'
     | '/merchant/$code'
     | '/polar-expeditions/$slug'
     | '/portal/documents'
@@ -2704,6 +2716,7 @@ export interface RootRouteChildren {
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
   BlogSlugRoute: typeof BlogSlugRoute
   MarketplaceIdRoute: typeof MarketplaceIdRoute
+  MediaTokenRoute: typeof MediaTokenRoute
   MerchantCodeRoute: typeof MerchantCodeRoute
   PrivateAviationEmptyLegsRoute: typeof PrivateAviationEmptyLegsRoute
   TripCabservicesRoute: typeof TripCabservicesRoute
@@ -3551,6 +3564,13 @@ declare module '@tanstack/react-router' {
       path: '/merchant/$code'
       fullPath: '/merchant/$code'
       preLoaderRoute: typeof MerchantCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/media/$token': {
+      id: '/media/$token'
+      path: '/media/$token'
+      fullPath: '/media/$token'
+      preLoaderRoute: typeof MediaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace/$id': {
@@ -4897,6 +4917,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivitiesCodeRoute: ActivitiesCodeRoute,
   BlogSlugRoute: BlogSlugRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
+  MediaTokenRoute: MediaTokenRoute,
   MerchantCodeRoute: MerchantCodeRoute,
   PrivateAviationEmptyLegsRoute: PrivateAviationEmptyLegsRoute,
   TripCabservicesRoute: TripCabservicesRoute,

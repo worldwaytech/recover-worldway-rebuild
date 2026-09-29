@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { allRegions, countRegion } from "@/lib/destinations";
 import { DemoNotice } from "@/components/partners/journey-ui";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/destinations/")({
   head: () => {
@@ -49,7 +50,7 @@ function DestinationsIndex() {
               className="group relative block overflow-hidden rounded-lg border border-border/60"
             >
               <img
-                src={r.heroImage}
+                src={mediaUrl(r.heroImage)}
                 alt={`${r.name} luxury travel`}
                 loading="lazy"
                 className="h-64 w-full object-cover transition-transform duration-700 group-hover:scale-105"

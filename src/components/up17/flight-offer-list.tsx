@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { up17BaggageLookup, up17FareRuleLookup } from "@/lib/up17/up17.functions";
 import { FlightBookingDialog } from "@/components/up17/flight-booking-dialog";
 import DOMPurify from "isomorphic-dompurify";
+import { mediaUrl } from "@/lib/media";
 
 /**
  * Fare rules arrive as raw HTML from the UP17 partner API. Strip all scripting,
@@ -161,7 +162,7 @@ function AirlineLogo({ offer, size = 40 }: { offer: Offer; size?: number }) {
   }
   return (
     <img
-      src={offer.airlineLogo}
+      src={mediaUrl(offer.airlineLogo)}
       alt={`${offer.airline || offer.airlineCode} logo`}
       width={size}
       height={size}

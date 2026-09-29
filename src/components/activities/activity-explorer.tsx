@@ -30,6 +30,7 @@ import {
   type SavedSearch,
 } from "@/lib/activities-client";
 import { trackCatalogueEvent } from "@/lib/catalogue-client";
+import { mediaUrl } from "@/lib/media";
 
 type Product = {
   productCode: string;
@@ -875,7 +876,7 @@ export function ActivityCard({
       >
         {p.image ? (
           <img
-            src={p.image}
+            src={mediaUrl(p.image)}
             alt={p.title}
             loading="lazy"
             decoding="async"

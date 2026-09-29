@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { mediaUrl } from "@/lib/media";
 
 type Room = {
   price?: number;
@@ -109,7 +110,7 @@ export function HotelResults({
                   {img ? (
                     <div
                       className="aspect-[16/9] w-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${img})` }}
+                      style={{ backgroundImage: `url(${mediaUrl(img)})` }}
                     />
                   ) : null}
                   <div className="p-4">

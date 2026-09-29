@@ -6,7 +6,7 @@ import { CruiseFinder, type FinderSearch } from "@/components/crystal/cruise-fin
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/search";
 const TITLE = "Crystal Cruise Finder — Search Luxury Voyages | Worldway";
 const DESCRIPTION =
-  "Search Crystal Cruises voyages by destination, ship, departure month, voyage length, suite grade and cruise style, with natural-language search.";
+  "Search Worldway Luxury Cruises voyages by destination, ship, departure month, voyage length, suite grade and cruise style, with natural-language search.";
 
 export const Route = createFileRoute("/crystal-cruises/search")({
   validateSearch: (raw: Record<string, unknown>): FinderSearch => {
@@ -52,7 +52,7 @@ function SearchPage() {
     <>
       <div className="border-b border-border/60 bg-gradient-to-b from-primary/5 to-background">
         <div className="mx-auto max-w-7xl px-6 py-14">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+          <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Worldway Luxury Cruises</p>
           <h1 className="mt-3 font-serif text-3xl md:text-4xl">Cruise finder</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
             Faceted and natural-language search across destination, ship, month, length, suite grade

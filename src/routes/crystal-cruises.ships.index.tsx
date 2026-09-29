@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CRYSTAL_SHIPS } from "@/lib/crystal/content";
 import { Crumbs, Section, breadcrumbSchema } from "@/components/crystal/crystal-ui";
+import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/ships";
-const TITLE = "Crystal Cruises Ships — Suites, Dining & Wellness | Worldway";
+const TITLE = "Luxury Cruise Ships — Suites, Dining & Wellness | Worldway";
 const DESCRIPTION =
-  "Compare Crystal Cruises ships: all-suite accommodation grades, dining venues, lounges, wellness, enrichment, accessibility and sustainability.";
+  "Compare Worldway Luxury Cruises ships: all-suite accommodation grades, dining venues, lounges, wellness, enrichment, accessibility and sustainability.";
 
 export const Route = createFileRoute("/crystal-cruises/ships/")({
   head: () => ({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/crystal-cruises/ships/")({
         children: JSON.stringify(
           breadcrumbSchema([
             { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-            { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+            { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
             { name: "Ships", url: URL },
           ]),
         ),
@@ -40,7 +41,7 @@ function ShipsIndex() {
     <>
       <div className="mx-auto max-w-7xl px-6 pt-10">
         <Crumbs
-          items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: "Ships" }]}
+          items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: "Ships" }]}
         />
       </div>
       <Section eyebrow="Fleet" title="Crystal ships">
@@ -53,7 +54,7 @@ function ShipsIndex() {
               className="group overflow-hidden rounded-xl border border-border/60"
             >
               <img
-                src={s.hero}
+                src={mediaUrl(s.hero)}
                 alt={s.name}
                 loading="lazy"
                 className="h-52 w-full object-cover transition-transform duration-700 group-hover:scale-105"

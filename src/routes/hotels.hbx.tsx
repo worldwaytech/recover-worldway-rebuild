@@ -5,6 +5,7 @@ import { PageShell, PageHero, SearchCard, Field } from "@/components/search-shel
 import { inputClass } from "@/components/search-form";
 import { searchHbxCatalogue } from "@/lib/hbx/hbx.functions";
 import type { HbxCatalogueResult } from "@/lib/hbx/catalogue.server";
+import { mediaUrl } from "@/lib/media";
 
 type Suite = "hotels" | "activities" | "transfers";
 
@@ -207,7 +208,7 @@ function HbxPage() {
                 >
                   {item.image ? (
                     <img
-                      src={item.image}
+                      src={mediaUrl(item.image)}
                       alt={item.title}
                       loading="lazy"
                       className="h-48 w-full object-cover"

@@ -13,6 +13,7 @@ import {
 import { money, TourCard, type TourCardData } from "@/components/tours/tour-card";
 import { Field, inputClass } from "@/components/search-form";
 import { recordTourView, useSavedTours } from "@/lib/tour-shortlist";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/tours/journey/$id")({
   head: () => ({
@@ -273,7 +274,7 @@ function TourDetailPage() {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `url(${tour?.image ?? "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=2000&q=80"})`,
+            backgroundImage: `url(${mediaUrl(tour?.image ?? "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=2000&q=80")})`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/75 to-background" />
@@ -625,7 +626,7 @@ function TourDetailPage() {
 
           {tour?.map ? (
             <img
-              src={tour.map}
+              src={mediaUrl(tour.map)}
               alt={`${tour.name} route map`}
               loading="lazy"
               className="w-full rounded-2xl border border-border/60"

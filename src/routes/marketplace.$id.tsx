@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getMarketplaceAvailability, getMarketplaceProduct } from "@/lib/bokun/bokun.functions";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/marketplace/$id")({
   head: () => ({
@@ -42,7 +43,7 @@ function MarketplaceDetailPage() {
   const s = product.summary;
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
-      {s.coverPhoto && <img src={s.coverPhoto} alt={s.title} className="h-72 w-full rounded-xl object-cover" />}
+      {s.coverPhoto && <img src={mediaUrl(s.coverPhoto)} alt={s.title} className="h-72 w-full rounded-xl object-cover" />}
       <h1 className="mt-6 text-3xl font-semibold text-foreground">{s.title}</h1>
       <p className="mt-1 text-muted-foreground">
         {[s.city, s.country].filter(Boolean).join(", ")}

@@ -8,21 +8,22 @@ import { Button } from "@/components/ui/button";
 import { getTtcCatalogueFacets, searchTtcTours } from "@/lib/ttc/ttc.functions";
 import { TTC_BRANDS, TTC_BRAND_ORDER, TTC_SORT_OPTIONS, ttcTourPath } from "@/lib/ttc/config";
 import type { TtcCatalogueResult, TtcFacets } from "@/lib/ttc/types";
+import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/ttc/")({
   head: () => ({
     meta: [
-      { title: "TTC Guided Journeys — Trafalgar, Luxury Gold, Insight & Contiki | Worldway" },
+      { title: "Guided Journeys | Worldway Travels Group" },
       {
         name: "description",
         content:
-          "Browse The Travel Corporation collection with Worldway: Trafalgar, Insight Vacations, Luxury Gold, Costsaver, Contiki, AAT Kings and Brendan Vacations guided journeys with full itineraries, inclusions and pricing.",
+          "Browse Worldway guided journeys with full itineraries, inclusions and pricing.",
       },
-      { property: "og:title", content: "TTC Guided Journeys — Worldway Travels Group" },
+      { property: "og:title", content: "Guided Journeys — Worldway Travels Group" },
       {
         property: "og:description",
         content:
-          "Every TTC brand in one place: day-by-day itineraries, inclusions, accommodation, transport and lead-in pricing.",
+          "Worldway guided journeys in one place: day-by-day itineraries, inclusions, accommodation, transport and lead-in pricing.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -90,7 +91,7 @@ function TtcCataloguePage() {
         })) as TtcCatalogueResult;
         setResult(res);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "The TTC catalogue could not be loaded.");
+        setError(e instanceof Error ? e.message : "The guided journeys could not be loaded.");
       } finally {
         setLoading(false);
       }
@@ -126,14 +127,14 @@ function TtcCataloguePage() {
   return (
     <PageShell>
       <PageHero
-        eyebrow="The Travel Corporation"
-        title="Guided journeys from every TTC brand, curated by Worldway."
-        subtitle="Trafalgar, Insight Vacations, Luxury Gold, Costsaver, Contiki, AAT Kings and Brendan Vacations — full itineraries, inclusions, accommodation and lead-in pricing in one searchable collection."
+        eyebrow="Worldway Guided Journeys"
+        title="Guided journeys, curated by Worldway."
+        subtitle="Classic, premium, luxury, value and youth guided journeys — full itineraries, inclusions, accommodation and lead-in pricing in one searchable collection."
         image="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=2000&q=80"
       />
 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-wrap gap-2 px-6 pb-20 pt-4">
-        {visibleBrands.map((brand) => (
+        {([] as typeof visibleBrands).map((brand) => (
           <Button
             key={brand.brand}
             type="button"
@@ -145,13 +146,13 @@ function TtcCataloguePage() {
                 : "border-border text-muted-foreground hover:text-primary"
             }`}
           >
-            {brand.brand === "costsaver" ? "CostSaver" : brand.label}
+            {brand.label}
             <span className="ml-2 text-[0.6rem] opacity-70">{brand.count}</span>
           </Button>
         ))}
       </div>
 
-      <SearchCard title="Search the TTC collection">
+      <SearchCard title="Search guided journeys">
         <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <div className="md:col-span-2">
             <Field label="Journey or destination">
@@ -246,7 +247,7 @@ function TtcCataloguePage() {
 
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">
-          {result.total.toLocaleString()} TTC journeys
+          {result.total.toLocaleString()} guided journeys
         </h2>
         <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
           Page {result.page} of {result.pageCount}
@@ -264,14 +265,14 @@ function TtcCataloguePage() {
             <div className="relative aspect-[4/3] overflow-hidden bg-muted">
               {tour.heroImage ? (
                 <img
-                  src={tour.heroImage}
-                  alt={`${tour.name} — ${tour.brandLabel ?? "TTC"} guided journey`}
+                  src={mediaUrl(tour.heroImage)}
+                  alt={`${tour.name} — Worldway guided journey`}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               ) : null}
               <Badge className="absolute left-3 top-3 bg-background/90 text-foreground">
-                {tour.brandLabel ?? tour.brand}
+                Worldway Guided Journey
               </Badge>
             </div>
             <div className="flex flex-1 flex-col gap-2 p-5">
@@ -305,7 +306,7 @@ function TtcCataloguePage() {
 
       {result.items.length === 0 && !loading ? (
         <p className="rounded-lg border border-border p-6 text-sm text-muted-foreground">
-          No TTC journeys match these filters yet.
+          No guided journeys match these filters yet.
         </p>
       ) : null}
 
@@ -327,17 +328,6 @@ function TtcCataloguePage() {
           </Button>
         </div>
       ) : null}
-
-      <p className="text-xs text-muted-foreground">
-        Content sourced from the official TTC brand publications. Live availability, revalidated
-        pricing and instant booking activate automatically once TTC grants API access to our account
-        — see <Link to="/contact" className="underline">contact</Link> for tailored quotes meanwhile.
-        Direct source:{" "}
-        <a href={result.items[0]?.sourceUrl ?? "https://www.ttc.com"} className="underline">
-          TTC brand site
-        </a>
-        . Deep-link path format: {ttcTourPath(":brand", ":slug")}
-      </p>
     </PageShell>
   );
 }

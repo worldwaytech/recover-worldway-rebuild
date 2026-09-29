@@ -16,6 +16,7 @@ import { formatFare, relatedVoyages, voyageByCode } from "@/lib/crystal/inventor
 import { crystalPrefs } from "@/lib/crystal/personalisation";
 import { SUITE_CATEGORIES } from "@/lib/crystal/inventory";
 import { LiveAvailabilityPanel } from "@/components/crystal/live-availability";
+import { mediaUrl } from "@/lib/media";
 
 const NO_CODES: string[] = [];
 
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
     const url = `https://worldwaytravelsgroup.com/crystal-cruises/voyages/${params.code}`;
     const title = `Crystal voyage ${params.code} — Itinerary & Fares | Worldway`;
     const description =
-      "Voyage itinerary, suite fares, inclusions and booking options, published from licensed Crystal Cruises inventory.";
+      "Voyage itinerary, suite fares, inclusions and booking options, published from licensed Worldway Luxury Cruises inventory.";
     return {
       meta: [
         { title },
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
           children: JSON.stringify(
             breadcrumbSchema([
               { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-              { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+              { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
               { name: params.code, url },
             ]),
           ),
@@ -80,7 +81,7 @@ function VoyagePage() {
   if (!voyage) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-20">
-        <Crumbs items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: code }]} />
+        <Crumbs items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: code }]} />
         <h1 className="mt-4 font-serif text-3xl">Voyage {code}</h1>
         <div className="mt-6">
           <AwaitingInventory
@@ -99,7 +100,7 @@ function VoyagePage() {
       <section className="relative overflow-hidden border-b border-border/60">
         {voyage.media.hero ? (
           <img
-            src={voyage.media.hero}
+            src={mediaUrl(voyage.media.hero)}
             alt={voyage.title}
             className="absolute inset-0 h-full w-full object-cover opacity-30"
           />
@@ -107,7 +108,7 @@ function VoyagePage() {
         <div className="relative mx-auto max-w-7xl px-6 py-16">
           <Crumbs
             items={[
-              { label: "Crystal Cruises", to: "/crystal-cruises" },
+              { label: "Worldway Luxury Cruises", to: "/crystal-cruises" },
               { label: voyage.destinationName },
               { label: voyage.code },
             ]}
@@ -180,7 +181,7 @@ function VoyagePage() {
       <Section eyebrow="Itinerary" title="Day by day">
         {voyage.media.mapSvg || voyage.media.mapPng ? (
           <img
-            src={voyage.media.mapSvg ?? voyage.media.mapPng}
+            src={mediaUrl(voyage.media.mapSvg ?? voyage.media.mapPng)}
             alt={`Route map for ${voyage.title}`}
             loading="lazy"
             className="mb-6 w-full rounded-xl border border-border/60 bg-card p-4"
