@@ -13,6 +13,7 @@ import { tripjackCall, tripjackCredentialStatus } from "./client.server";
 import {
   TRIPJACK_CERTIFICATION_CASES,
   TRIPJACK_UAT_BASE_URL,
+  tripjackBaseUrl,
   type TripjackCertificationStatus,
   type TripjackSuite,
 } from "./config";
@@ -246,7 +247,7 @@ function toFiles(rows: LogRow[], folder: string): EvidenceFile[] {
   rows.forEach((row, i) => {
     const n = String(i + 1).padStart(2, "0");
     const base = `${folder}/${n}_${safe(row.suite)}_${safe(row.capability)}`;
-    const url = `${TRIPJACK_UAT_BASE_URL}${row.path}${
+    const url = `${tripjackBaseUrl(row.suite as "cabs" | "tripsafe")}${row.path}${
       row.request_query && typeof row.request_query === "object" && Object.keys(row.request_query as object).length
         ? `?${new URLSearchParams(row.request_query as Record<string, string>).toString()}`
         : ""
@@ -404,7 +405,7 @@ export async function exportCertificationPackage(client: Client) {
     for (const r of mine) {
       n++;
       const tag = `${String(n).padStart(3, "0")}_${s.id}_${safe(r.correlation_id)}`;
-      const endpoint = `${TRIPJACK_UAT_BASE_URL}${r.path}`;
+      const endpoint = `${tripjackBaseUrl(r.suite as "cabs" | "tripsafe")}${r.path}`;
       const reqFile = `requests/request_${tag}.json`;
       const resFile = `responses/response_${tag}.json`;
       files.push({ name: reqFile, content: JSON.stringify({ caseId: s.id, correlationId: r.correlation_id, timestamp: r.created_at, method: r.method, url: endpoint, query: r.request_query, headers: { "Content-Type": "application/json", apikey: "[removed — never stored]" }, body: stripCredentials(r.request_body) ?? null }, null, 2) });
