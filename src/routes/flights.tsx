@@ -6,6 +6,7 @@ import { inputClass } from "@/components/search-form";
 import { AirportAutocomplete } from "@/components/up17/airport-autocomplete";
 import { Up17FlightResults, type Offer } from "@/components/up17/flight-offer-list";
 import { TopRoutes } from "@/components/up17/top-routes";
+import { FareCalendar } from "@/components/up17/fare-calendar";
 import { up17FlightSearch } from "@/lib/up17/up17.functions";
 import { portal } from "@/lib/portal-store";
 import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog";
@@ -301,6 +302,9 @@ function FlightsPage() {
               </div>
             </div>
           )}
+          {trip !== "multi_city" ? (
+            <FareCalendar origin={origin} destination={destination} date={depart} cabin={cabin} onPick={setDepart} />
+          ) : null}
 
           <div className="flex justify-end">
             <button
