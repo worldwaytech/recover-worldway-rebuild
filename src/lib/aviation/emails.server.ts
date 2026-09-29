@@ -9,16 +9,8 @@ export async function sendAviationEmail(requestId: string, to: string | null, in
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as any;
   const msg = renderAviationEmail({ ...input, link: `${SITE}/private-aviation/quote/${input.reference}` });
-  let status = "queued_no_domain";
-  try {
-    const mod: any = await import(/* @vite-ignore */ "@/lib/email/send.server").catch(() => null);
-    if (mod?.sendTransactionalEmail && to) {
-      await mod.sendTransactionalEmail({ to, subject: msg.subject, html: msg.html, text: msg.text });
-      status = "sent";
-    }
-  } catch (e) {
-    status = `failed: ${(e as Error).message}`.slice(0, 200);
-  }
+  // Delivery is switched on once the Worldway sender domain is verified.
+  const status = to ? "queued_no_domain" : "no_recipient";
   const { data } = await db.from("private_aviation_requests").select("email_log").eq("id", requestId).maybeSingle();
   const log = Array.isArray(data?.email_log) ? data.email_log : [];
   log.push({ kind: input.kind, subject: msg.subject, status, at: new Date().toISOString() });

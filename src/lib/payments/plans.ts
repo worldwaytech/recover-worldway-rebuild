@@ -16,7 +16,8 @@ export type PaymentPurpose =
   | "transfer"
   | "membership"
   | "wallet_topup"
-  | "deposit";
+  | "deposit"
+  | "private_aviation";
 
 export const PAYMENT_PURPOSES: PaymentPurpose[] = [
   "flight",
