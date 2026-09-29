@@ -651,7 +651,7 @@ function ActivityDetailPage() {
                         {/* Review source attribution is contractually required next to each review. */}
                         {r.provider ? (
                           <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                            Review via {r.provider === "TRIPADVISOR" ? "Tripadvisor" : "Viator"}
+                            {/* confidentiality-exempt: contractual review attribution */}Review via {r.provider === "TRIPADVISOR" ? "Tripadvisor" : "Viator"}
                           </p>
                         ) : null}
                         {r.title ? (
