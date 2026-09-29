@@ -41,3 +41,20 @@ export function replan(ctx: JourneyContext, d: Disruption, alternatives: Canonic
   const options = rankAlternatives(ctx, ext, alternatives, input);
   return { disruption: d, options, recommended: options.find((o) => o.bookableAfter) ?? null, requiresApproval: true as const };
 }
+
+/** Real supplier health rows (supplier_health_status). */
+export interface HealthRow { supplier_key: string; status: string; last_error?: string | null; last_checked_at?: string | null }
+
+export interface HealthAdvisory { componentId: string; supplierKey: string; status: string; action: "revalidate" | "prepare_alternatives"; since?: string | null }
+
+/**
+ * Link stored supplier health to journey components. This is an advisory, not a
+ * schedule event: nothing is marked cancelled or delayed unless the supplier says so.
+ */
+export function healthAdvisories(ctx: JourneyContext, health: HealthRow[]): HealthAdvisory[] {
+  const bad = new Map(health.filter((h) => h.status === "down" || h.status === "degraded").map((h) => [h.supplier_key, h]));
+  return normalizeOffers(ctx.offers).components.flatMap((c) => {
+    const h = bad.get(c.supplierKey);
+    return h ? [{ componentId: c.id, supplierKey: c.supplierKey, status: h.status, action: h.status === "down" ? "prepare_alternatives" as const : "revalidate" as const, since: h.last_checked_at }] : [];
+  });
+}
