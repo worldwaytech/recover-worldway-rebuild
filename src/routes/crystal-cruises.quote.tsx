@@ -15,7 +15,7 @@ import { LiveAvailabilityPanel } from "@/components/crystal/live-availability";
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/quote";
 const TITLE = "Request a Crystal Cruise Quote — Worldway Travels Group";
 const DESCRIPTION =
-  "Tell a Worldway cruise specialist what you have in mind and receive a Crystal Cruises voyage quote, with flights, transfers and hotels on one booking record.";
+  "Tell a Worldway cruise specialist what you have in mind and receive a Worldway Luxury Cruises voyage quote, with flights, transfers and hotels on one booking record.";
 
 export const Route = createFileRoute("/crystal-cruises/quote")({
   validateSearch: (raw: Record<string, unknown>): { voyage?: string } =>
@@ -60,7 +60,7 @@ function QuotePage() {
         user_id: auth.user?.id ?? null,
         product_kind: "crystal-cruise",
         product_slug: voyageCode ?? "general-enquiry",
-        product_title: voyage?.title ?? "Crystal Cruises enquiry",
+        product_title: voyage?.title ?? "Worldway Luxury Cruises enquiry",
         full_name,
         email,
         phone: String(fd.get("phone") ?? "").trim() || undefined,
@@ -83,7 +83,7 @@ function QuotePage() {
     <>
       <div className="mx-auto max-w-3xl px-6 pt-10">
         <Crumbs
-          items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: "Quote request" }]}
+          items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: "Quote request" }]}
         />
       </div>
       <Section
@@ -104,7 +104,7 @@ function QuotePage() {
                   <Link to="/account">Go to my account</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/crystal-cruises">Back to Crystal Cruises</Link>
+                  <Link to="/crystal-cruises">Back to Worldway Luxury Cruises</Link>
                 </Button>
               </div>
             </div>
@@ -167,7 +167,7 @@ function QuotePage() {
               <Button asChild variant="outline" size="sm" className="mt-4">
                 <Link
                   to="/concierge"
-                  search={{ prompt: "Help me choose a Crystal Cruises voyage." }}
+                  search={{ prompt: "Help me choose a Worldway Luxury Cruises voyage." }}
                 >
                   Open the concierge
                 </Link>

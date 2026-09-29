@@ -66,7 +66,7 @@ export function AwaitingInventory({ label, hint }: { label: string; hint?: strin
           <Link to="/crystal-cruises/quote">Request a voyage quote</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to="/concierge" search={{ prompt: "Help me plan a Crystal Cruises voyage." }}>
+          <Link to="/concierge" search={{ prompt: "Help me plan a Worldway Luxury Cruises voyage." }}>
             Ask the AI Cruise Concierge
           </Link>
         </Button>

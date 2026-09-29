@@ -56,7 +56,7 @@ export const Route = createFileRoute("/crystal-cruises/ships/$slug")({
           children: JSON.stringify(
             breadcrumbSchema([
               { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-              { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+              { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
               { name: "Ships", url: "https://worldwaytravelsgroup.com/crystal-cruises/ships" },
               { name: s.name, url },
             ]),
@@ -98,7 +98,7 @@ function ShipPage() {
         <div className="relative mx-auto max-w-7xl px-6 py-20">
           <Crumbs
             items={[
-              { label: "Crystal Cruises", to: "/crystal-cruises" },
+              { label: "Worldway Luxury Cruises", to: "/crystal-cruises" },
               { label: "Ships", to: "/crystal-cruises/ships" },
               { label: s.name },
             ]}

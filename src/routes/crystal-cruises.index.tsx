@@ -24,9 +24,9 @@ import {
 import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises";
-const TITLE = "Crystal Cruises — Luxury Voyages | Worldway Travels Group";
+const TITLE = "Luxury Cruises — All-Suite Voyages | Worldway Travels Group";
 const DESCRIPTION =
-  "Plan a Crystal Cruises voyage with Worldway: all-suite ocean and expedition sailings, destination guidance, ship profiles and specialist booking support.";
+  "Plan a Worldway Luxury Cruises voyage with Worldway: all-suite ocean and expedition sailings, destination guidance, ship profiles and specialist booking support.";
 
 export const Route = createFileRoute("/crystal-cruises/")({
   head: () => ({
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/crystal-cruises/")({
         children: JSON.stringify(
           breadcrumbSchema([
             { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-            { name: "Crystal Cruises", url: URL },
+            { name: "Worldway Luxury Cruises", url: URL },
           ]),
         ),
       },
@@ -76,7 +76,7 @@ function CrystalHub() {
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
         <div className="relative mx-auto max-w-7xl px-6 py-24 md:py-32">
-          <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+          <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Worldway Luxury Cruises</p>
           <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">
             All-suite ocean and expedition voyages, arranged end to end
           </h1>
@@ -204,7 +204,7 @@ function CrystalHub() {
         </div>
       </Section>
 
-      <Section eyebrow="Questions" title="Crystal Cruises FAQs">
+      <Section eyebrow="Questions" title="Worldway Luxury Cruises FAQs">
         <FaqList faqs={CRYSTAL_FAQS} />
       </Section>
     </>

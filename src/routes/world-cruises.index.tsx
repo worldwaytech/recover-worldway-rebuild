@@ -35,7 +35,7 @@ function CrystalWorldCruises() {
   return (
     <section className="border-b border-border/60 bg-muted/20">
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Crystal Cruises</p>
+        <p className="text-[11px] uppercase tracking-[0.4em] text-primary">Worldway Luxury Cruises</p>
         <h2 className="mt-3 font-serif text-3xl">World cruises 2027, 2028 &amp; 2029</h2>
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
           Crystal&rsquo;s full world voyages, with the complete day-by-day itinerary, every port and

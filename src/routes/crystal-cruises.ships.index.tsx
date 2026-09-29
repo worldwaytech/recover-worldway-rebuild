@@ -4,9 +4,9 @@ import { Crumbs, Section, breadcrumbSchema } from "@/components/crystal/crystal-
 import { mediaUrl } from "@/lib/media";
 
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/ships";
-const TITLE = "Crystal Cruises Ships — Suites, Dining & Wellness | Worldway";
+const TITLE = "Luxury Cruise Ships — Suites, Dining & Wellness | Worldway";
 const DESCRIPTION =
-  "Compare Crystal Cruises ships: all-suite accommodation grades, dining venues, lounges, wellness, enrichment, accessibility and sustainability.";
+  "Compare Worldway Luxury Cruises ships: all-suite accommodation grades, dining venues, lounges, wellness, enrichment, accessibility and sustainability.";
 
 export const Route = createFileRoute("/crystal-cruises/ships/")({
   head: () => ({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/crystal-cruises/ships/")({
         children: JSON.stringify(
           breadcrumbSchema([
             { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-            { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+            { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
             { name: "Ships", url: URL },
           ]),
         ),
@@ -41,7 +41,7 @@ function ShipsIndex() {
     <>
       <div className="mx-auto max-w-7xl px-6 pt-10">
         <Crumbs
-          items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: "Ships" }]}
+          items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: "Ships" }]}
         />
       </div>
       <Section eyebrow="Fleet" title="Crystal ships">

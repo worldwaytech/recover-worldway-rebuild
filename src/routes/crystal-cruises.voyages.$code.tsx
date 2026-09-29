@@ -33,7 +33,7 @@ export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
     const url = `https://worldwaytravelsgroup.com/crystal-cruises/voyages/${params.code}`;
     const title = `Crystal voyage ${params.code} — Itinerary & Fares | Worldway`;
     const description =
-      "Voyage itinerary, suite fares, inclusions and booking options, published from licensed Crystal Cruises inventory.";
+      "Voyage itinerary, suite fares, inclusions and booking options, published from licensed Worldway Luxury Cruises inventory.";
     return {
       meta: [
         { title },
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/crystal-cruises/voyages/$code")({
           children: JSON.stringify(
             breadcrumbSchema([
               { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-              { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+              { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
               { name: params.code, url },
             ]),
           ),
@@ -81,7 +81,7 @@ function VoyagePage() {
   if (!voyage) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-20">
-        <Crumbs items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: code }]} />
+        <Crumbs items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: code }]} />
         <h1 className="mt-4 font-serif text-3xl">Voyage {code}</h1>
         <div className="mt-6">
           <AwaitingInventory
@@ -108,7 +108,7 @@ function VoyagePage() {
         <div className="relative mx-auto max-w-7xl px-6 py-16">
           <Crumbs
             items={[
-              { label: "Crystal Cruises", to: "/crystal-cruises" },
+              { label: "Worldway Luxury Cruises", to: "/crystal-cruises" },
               { label: voyage.destinationName },
               { label: voyage.code },
             ]}

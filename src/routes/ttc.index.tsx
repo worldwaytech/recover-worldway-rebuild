@@ -146,7 +146,7 @@ function TtcCataloguePage() {
                 : "border-border text-muted-foreground hover:text-primary"
             }`}
           >
-            {brand.brand === "costsaver" ? "CostSaver" : brand.label}
+            {brand.label}
             <span className="ml-2 text-[0.6rem] opacity-70">{brand.count}</span>
           </Button>
         ))}

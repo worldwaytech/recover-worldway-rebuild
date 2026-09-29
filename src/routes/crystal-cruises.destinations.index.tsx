@@ -6,7 +6,7 @@ import { mediaUrl } from "@/lib/media";
 const URL = "https://worldwaytravelsgroup.com/crystal-cruises/destinations";
 const TITLE = "Crystal Cruise Destinations — Regions & Ports | Worldway";
 const DESCRIPTION =
-  "Explore Crystal Cruises destinations: Mediterranean, Northern Europe, Alaska, Japan, the Caribbean, Antarctica and world cruise regions, with seasons and ports.";
+  "Explore Worldway Luxury Cruises destinations: Mediterranean, Northern Europe, Alaska, Japan, the Caribbean, Antarctica and world cruise regions, with seasons and ports.";
 
 export const Route = createFileRoute("/crystal-cruises/destinations/")({
   head: () => ({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/crystal-cruises/destinations/")({
         children: JSON.stringify(
           breadcrumbSchema([
             { name: "Home", url: "https://worldwaytravelsgroup.com/" },
-            { name: "Crystal Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
+            { name: "Worldway Luxury Cruises", url: "https://worldwaytravelsgroup.com/crystal-cruises" },
             { name: "Destinations", url: URL },
           ]),
         ),
@@ -41,7 +41,7 @@ function DestinationsIndex() {
     <>
       <div className="mx-auto max-w-7xl px-6 pt-10">
         <Crumbs
-          items={[{ label: "Crystal Cruises", to: "/crystal-cruises" }, { label: "Destinations" }]}
+          items={[{ label: "Worldway Luxury Cruises", to: "/crystal-cruises" }, { label: "Destinations" }]}
         />
       </div>
       <Section

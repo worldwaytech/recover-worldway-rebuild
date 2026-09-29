@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
       { to: "/expedition-cruises", label: "Expedition Cruises" },
       { to: "/river-cruises", label: "River Cruises" },
       { to: "/world-cruises", label: "World Cruises" },
-      { to: "/crystal-cruises", label: "Crystal Cruises" },
+      { to: "/crystal-cruises", label: "Worldway Luxury Cruises" },
       { to: "/rail", label: "Luxury Rail" },
       { to: "/yachts", label: "Yacht Charters" },
     ],
@@ -50,7 +50,7 @@ const NAV: NavItem[] = [
     label: "Experiences",
     children: [
       { to: "/tours", label: "Tours" },
-      { to: "/ttc", label: "TTC Guided Journeys" },
+      { to: "/ttc", label: "Guided Journeys" },
       { to: "/tours/browse", label: "Browse Collections" },
       {
         label: "Trip",
