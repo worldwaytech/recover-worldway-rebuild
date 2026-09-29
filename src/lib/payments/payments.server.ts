@@ -89,7 +89,7 @@ export async function insertPaymentRecord(row: {
 export async function getPaymentByOrderId(orderId: string): Promise<PaymentRow | null> {
   const table = await paymentsTable();
   const { data, error } = await table
-    .select("id, user_id, purpose, plan_id, order_id, payment_id, amount_minor, currency, status, verified_at, fulfilled_at, fulfilment_reference")
+    .select("id, user_id, purpose, plan_id, order_id, payment_id, amount_minor, currency, status, verified_at, fulfilled_at, fulfilment_reference, reference")
     .eq("order_id", orderId)
     .maybeSingle();
   if (error) {
