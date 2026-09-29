@@ -12,7 +12,7 @@ export const Route = createFileRoute("/journeys/")({
   head: () => {
     const title = "Luxury Journeys — Worldway Travels Group";
     const description =
-      "Curated journeys from the world's finest travel partners — Abercrombie & Kent, Crystal Cruises and more — searchable by destination, partner and interest.";
+      "Curated journeys from the world's finest travel partners, searchable by destination, partner and interest.";
     const url = "https://worldwaytravelsgroup.com/journeys";
     return {
       meta: [

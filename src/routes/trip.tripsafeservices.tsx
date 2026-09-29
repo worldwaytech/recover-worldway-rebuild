@@ -12,7 +12,7 @@ export const Route = createFileRoute("/trip/tripsafeservices")({
       {
         name: "description",
         content:
-          "TripSafe travel protection: search, review and book cover including student and AMT plans through our TripJack supplier connection.",
+          "TripSafe travel protection: search, review and book cover including student and AMT plans through Worldway's secure travel-protection service.",
       },
       { property: "og:title", content: "TripSafe Services — Worldway Travels Group" },
       {
@@ -40,7 +40,7 @@ function TripSafeServicesPage() {
       <TripsafeBooking enabled={status.live} />
       <TripjackServiceStatus
         status={status}
-        intro="TripSafe Services connects Worldway to our TripJack travel-protection supplier over the same secure server-side UAT channel. Search, review, booking, policy retrieval, amendment and cancellation — including student and AMT products — are wired into the Worldway booking and order system."
+        intro="TripSafe Services connects Worldway to our travel-protection partner over the same secure server-side UAT channel. Search, review, booking, policy retrieval, amendment and cancellation — including student and AMT products — are wired into the Worldway booking and order system."
       />
     </PageShell>
   );

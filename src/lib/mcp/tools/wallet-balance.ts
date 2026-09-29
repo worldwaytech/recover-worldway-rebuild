@@ -16,10 +16,7 @@ export default defineTool({
     }
     const { callPartner } = await import("@/lib/wwl.server");
     const res = await callPartner("walletBalance", { clientEmail: email });
-    return {
-      content: [{ type: "text", text: JSON.stringify(res) }],
-      structuredContent: res as unknown as Record<string, unknown>,
-      isError: !res.ok,
-    };
+    const { externalToolResult } = await import("@/lib/confidentiality/redact");
+    return externalToolResult(res, !res.ok);
   },
 });

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/trip/cabservices")({
       {
         name: "description",
         content:
-          "Chauffeured cab services: airport transfers, round trips, outstation and local journeys powered by our TripJack supplier connection.",
+          "Chauffeured cab services: airport transfers, round trips, outstation and local journeys powered by Worldway.",
       },
       { property: "og:title", content: "Cab Services — Worldway Travels Group" },
       {
@@ -40,7 +40,7 @@ function CabServicesPage() {
       <CabBooking enabled={status.live} />
       <TripjackServiceStatus
         status={status}
-        intro="Cab Services connects Worldway to our TripJack ground-transport supplier over a secure server-side UAT channel. Location search, airport transfer, round-trip, outstation and local quoting, booking, payment, tracking, amendment and cancellation are all wired into the Worldway booking and order system."
+        intro="Cab Services connects Worldway to our ground-transport partner over a secure server-side UAT channel. Location search, airport transfer, round-trip, outstation and local quoting, booking, payment, tracking, amendment and cancellation are all wired into the Worldway booking and order system."
       />
     </PageShell>
   );

@@ -680,7 +680,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
               className="min-h-[220px] rounded-lg border border-border/60 bg-background/40 p-2"
             />
             <p className="text-[11px] text-muted-foreground">
-              Card details are captured directly by Viator's PCI-compliant payment form.
+              Card details are captured directly by a secure PCI-compliant payment form.
             </p>
 
             <button

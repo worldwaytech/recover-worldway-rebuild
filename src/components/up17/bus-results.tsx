@@ -181,7 +181,7 @@ function BusCard({ bus }: { bus: Bus }) {
           <span />
         )}
         <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          Source · UP17 Live
+          Worldway Live
         </span>
       </div>
 

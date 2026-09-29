@@ -23,7 +23,7 @@ export function TripjackServiceStatus({
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{intro}</p>
 
       <dl className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Stat label="Environment" value="TripJack UAT" />
+        <Stat label="Environment" value="Worldway UAT" />
         <Stat
           label="Supplier credential"
           value={status.credentialConfigured ? "Configured (server-side)" : "Not configured"}
@@ -60,8 +60,8 @@ export function TripjackServiceStatus({
 
       {!status.live ? (
         <p className="mt-8 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-          The secure TripJack UAT backend client, correlation-ID logging and redaction are in place.
-          Each operation above is switched on as soon as its documented TripJack endpoint contract is
+          The secure Worldway UAT backend client, correlation-ID logging and redaction are in place.
+          Each operation above is switched on as soon as its documented supplier endpoint contract is
           confirmed — we never call an unverified supplier URL or display simulated availability,
           pricing or bookings.
         </p>

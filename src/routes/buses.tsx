@@ -66,7 +66,7 @@ function BusesPage() {
         subtitle="Executive coaches, minibuses, and private group fleets."
         image="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=2000&q=80"
       />
-      <SearchCard title="Bus Search — UP17 Live">
+      <SearchCard title="Bus Search — Worldway Live">
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Field label="From">
