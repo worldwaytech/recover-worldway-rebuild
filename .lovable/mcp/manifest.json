@@ -19,7 +19,7 @@
       {
         "name": "search_flights",
         "title": "Search flights",
-        "description": "Search live Worldway flight inventory. Routed by the Worldway engine to healthy flight suppliers by capability; returns fares, cabins and offer IDs.",
+        "description": "Search live Worldway flight inventory. Returns fares, cabins and offer IDs.",
         "annotations": {
           "readOnlyHint": true,
           "openWorldHint": true
@@ -72,7 +72,7 @@
       {
         "name": "search_hotels",
         "title": "Search hotels",
-        "description": "Search live hotel availability and rates via the Worldway partner network.",
+        "description": "Search live hotel availability and rates from Worldway.",
         "annotations": {
           "readOnlyHint": true,
           "openWorldHint": true
