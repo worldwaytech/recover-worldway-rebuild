@@ -9,7 +9,7 @@ import { isThirdPartyUrl, mediaUrl } from "@/lib/media";
 
 const KNOWN_SUPPLIER_TERMS = [
   "HBX", "Hotelbeds", "RateHawk", "Emerging Travel Group", "ETG", "Viator", "TripAdvisor",
-  "UP17", "TBO", "TBO Holidays", "TripJack", "TripSafe", "AIR iQ", "AirIQ", "Villiers",
+  "UP17", "TBO", "TBO Holidays", "TripJack", "TripSafe", "AIR iQ", "AirIQ", "Villiers", "SkyAccess", "skyaccess.com",
   "G Adventures", "Bokun", "Bókun", "OCTO", "Crystal Cruises", "Abercrombie & Kent", "A&K",
   "AKTG", "TTC", "The Travel Corporation", "TourRadar", "Sabre", "Amadeus", "Travelport",
   "WorldwayLuxe", "Worldway Luxe Partner API", "worldwayluxe.com",

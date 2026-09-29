@@ -4,6 +4,8 @@ import { allJourneys } from "@/lib/journeys";
 import { collectionItems, collectionsMeta } from "@/lib/collections";
 import { BROWSE_HUBS } from "@/lib/browse-hubs";
 import { CRYSTAL_DESTINATIONS, CRYSTAL_SHIPS } from "@/lib/crystal/content";
+import { JET_ROUTES } from "@/lib/aviation/jet-routes.data";
+import { AIRCRAFT_CATALOGUE } from "@/lib/aviation/aircraft-catalogue.data";
 
 const ORIGIN = "https://worldwaytravelsgroup.com";
 
@@ -50,6 +52,8 @@ function urls(): { loc: string; priority: string }[] {
   for (const s of CRYSTAL_SHIPS) {
     out.push({ loc: `${ORIGIN}/crystal-cruises/ships/${s.slug}`, priority: "0.7" });
   }
+  for (const r of JET_ROUTES) out.push({ loc: `${ORIGIN}/private-jets/routes/${r.slug}`, priority: "0.7" });
+  for (const a of AIRCRAFT_CATALOGUE) out.push({ loc: `${ORIGIN}/aircraft/${a.slug}`, priority: "0.6" });
   for (const h of BROWSE_HUBS) {
     out.push({ loc: `${ORIGIN}/tours/browse/${h.slug}`, priority: "0.8" });
   }
