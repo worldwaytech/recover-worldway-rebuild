@@ -46,7 +46,9 @@ export const Route = createFileRoute('/api/admin/foundry-oauth-client')({
           redirect_uris: ['https://worldwaytravelsgroup.com/.lovable/oauth/foundry-callback-pending'],
         });
         if (error || !data) {
-          return Response.json({ error: error?.message ?? 'create_failed' }, { status: 500 });
+          // Provider validation problems (e.g. missing/invalid redirect URI)
+          // are client-fixable, not server faults — return 400, never crash.
+          return Response.json({ error: error?.message ?? 'create_failed' }, { status: 400 });
         }
 
         return Response.json({
