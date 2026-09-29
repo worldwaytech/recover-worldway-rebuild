@@ -1,0 +1,52 @@
+// Supplier capability catalogue — SERVER-ONLY (supplier identities never reach browsers).
+// Grants reflect recorded evidence only. Adding a supplier = Adapter → entry here
+// (capabilities) → normaliser to CanonicalOffer → certification evidence. The core
+// package engine never changes.
+import type { CapabilityGrant, ComponentKind, SupplierCapability, SupplierReadiness, SupplierRegistration } from "../types";
+
+const g = (env: CapabilityGrant["environment"], certified: boolean, evidence: string, ...caps: SupplierCapability[]): CapabilityGrant[] =>
+  caps.map((capability) => ({ capability, environment: env, certified, evidence }));
+
+function entry(supplierKey: string, kinds: ComponentKind[], readiness: SupplierReadiness, reliability: number, grants: CapabilityGrant[]): SupplierRegistration {
+  return { supplierKey, kinds, readiness, reliability, grants, capabilities: [...new Set(grants.map((x) => x.capability))] };
+}
+
+export const SUPPLIER_CATALOG: SupplierRegistration[] = [
+  entry("crystal", ["cruise"], "production", 0.95, [
+    ...g("production", true, "Live 169-voyage feed; real production booking 475465 created and cancelled", "search", "availability", "price", "prebook", "book", "cancel"),
+    ...g("production", false, "Not exercised in production", "modify", "refund", "voucher"),
+  ]),
+  entry("up17", ["flight"], "production", 0.9, [
+    ...g("production", true, "Live search DEL→BOM returned 122 fares", "search", "availability", "price"),
+    ...g("production", false, "Booking path live but no certified production booking", "book"),
+  ]),
+  entry("airiq", ["flight"], "production", 0.8, [
+    ...g("production", true, "Live login + search answered", "search", "availability", "price"),
+    ...g("production", false, "Booking enabled; no certified production booking; balance/activation external", "book", "voucher"),
+  ]),
+  entry("viator-merchant", ["activity"], "sandbox", 0.8, g("sandbox", true, "Sandbox lifecycle passed", "search", "availability", "price", "prebook", "book", "cancel", "voucher")),
+  entry("viator-affiliate", ["activity"], "uat", 0.7, g("uat", false, "Key provisioned for merchant, not affiliate booking access", "search", "availability", "price")),
+  entry("gadventures", ["activity"], "uat", 0.7, g("uat", false, "Certification evidence gaps", "search", "availability", "price", "book")),
+  entry("ttc", ["activity"], "uat", 0.6, g("production", false, "Catalogue synced from website; no booking API credentials", "search")),
+  entry("hbx-hotels", ["stay"], "uat", 0.8, g("uat", false, "Certification audit open; mTLS certificate missing", "search", "availability", "price", "prebook", "book", "cancel")),
+  entry("hbx-transfers", ["transfer"], "uat", 0.7, g("uat", false, "Certification evidence gaps", "search", "availability", "price", "book", "cancel")),
+  entry("ratehawk", ["stay"], "uat", 0.7, g("uat", false, "Certification not completed", "search", "availability", "price", "prebook", "book", "cancel")),
+  entry("tripsafe", ["insurance"], "uat", 0.6, [
+    ...g("uat", true, "UAT search PASS", "search"),
+    ...g("uat", false, "Review/book evidence missing", "price", "book"),
+  ]),
+  entry("tripjack-cabs", ["transfer"], "blocked", 0.2, g("uat", false, "UAT location search returns 503", "search", "price", "book")),
+  entry("private-aviation", ["aviation"], "production", 0.8, g("production", true, "Live estimates and confirmation requests (no booking/payment API)", "search", "price")),
+  // Future supplier: interfaces ready, deliberately inactive — no credentials, no inventory.
+  entry("amadeus", ["flight"], "disabled", 0, []),
+];
+
+export function supplierRegistry(): Map<string, SupplierRegistration> {
+  return new Map(SUPPLIER_CATALOG.map((r) => [r.supplierKey, r]));
+}
+
+export function registrationFor(key: string): SupplierRegistration {
+  const r = SUPPLIER_CATALOG.find((x) => x.supplierKey === key);
+  if (!r) throw new Error(`Unregistered supplier ${key}`);
+  return r;
+}
