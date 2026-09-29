@@ -13,7 +13,21 @@ export type ComponentKind =
 
 export type SupplierReadiness = "production" | "uat" | "sandbox" | "blocked" | "disabled";
 
-export type SupplierCapability = "search" | "revalidate" | "hold" | "book" | "ticket" | "status" | "cancel";
+/** Canonical capabilities (legacy aliases kept: revalidate≈availability/price, hold≈prebook, ticket≈voucher). */
+export type SupplierCapability =
+  | "search" | "availability" | "price" | "prebook" | "book" | "cancel" | "modify" | "refund" | "voucher"
+  | "revalidate" | "hold" | "ticket" | "status";
+
+export type CapabilityEnvironment = "production" | "uat" | "sandbox";
+
+/** Evidence-backed state of one capability. SEARCH ≠ BOOKABLE; UAT/SANDBOX ≠ PRODUCTION. */
+export interface CapabilityGrant {
+  capability: SupplierCapability;
+  environment: CapabilityEnvironment;
+  /** True only when real evidence exists in that environment. */
+  certified: boolean;
+  evidence?: string;
+}
 
 export interface SupplierRegistration {
   supplierKey: string;
@@ -22,6 +36,8 @@ export interface SupplierRegistration {
   readiness: SupplierReadiness;
   /** 0..1 observed reliability from health probes. */
   reliability: number;
+  /** Per-capability certification. When present it is authoritative for booking readiness. */
+  grants?: CapabilityGrant[];
 }
 
 export interface Money {
@@ -88,7 +104,9 @@ export interface AuditIssue {
     | "impossible-travel"
     | "timezone-missing"
     | "not-revalidated"
-    | "supplier-not-bookable";
+    | "supplier-not-bookable"
+    | "price-unavailable"
+    | "substitution-requires-approval";
   severity: IssueSeverity;
   componentIds: string[];
   message: string;

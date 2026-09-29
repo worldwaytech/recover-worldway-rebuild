@@ -1,5 +1,6 @@
 // Explainable ranking of complete packages + booking-readiness gate.
 import { checkChronology } from "./chronology";
+import { bookingBlockers } from "./capabilities";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
 
 export interface ScoreFactor {
@@ -24,8 +25,9 @@ export function auditPackage(
   const issues = checkChronology(items);
   for (const c of items) {
     const reg = registry.get(c.supplierKey);
-    if (!reg || reg.readiness !== "production" || !reg.capabilities.includes("book")) {
-      issues.push({ code: "supplier-not-bookable", severity: "warning", componentIds: [c.id], message: `${c.title} is enquiry-only (supplier not production-approved).` });
+    const blockers = bookingBlockers(reg);
+    if (blockers.length) {
+      issues.push({ code: "supplier-not-bookable", severity: "warning", componentIds: [c.id], message: `${c.title} is enquiry-only (not production-certified: ${blockers.join(", ")}).` });
     }
     if (!c.revalidatedAt) {
       issues.push({ code: "not-revalidated", severity: "warning", componentIds: [c.id], message: `${c.title} has not been revalidated live.` });

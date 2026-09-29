@@ -1,3 +1,4 @@
+import { registrationFor } from "@/lib/engine/suppliers/catalog.server";
 // Flight adapters for the engine orchestrator. Each wraps an EXISTING supplier
 // client unchanged and normalises to a Worldway-branded offer shape.
 import { createHash } from "crypto";
@@ -34,7 +35,7 @@ export type WorldwayFlightOffer = {
 };
 
 const up17Adapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
-  registration: { supplierKey: "up17", kinds: ["flight"], capabilities: ["search", "revalidate", "book"], readiness: "production", reliability: 0.9 },
+  registration: registrationFor("up17"),
   health: async () => ({ configured: up17Configured(), healthy: up17Configured(), detail: up17Configured() ? undefined : "not configured" }),
   run: async (q) => {
     const res = await up17SearchFlights({
@@ -72,7 +73,7 @@ const up17Adapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
 
 const airiqAdapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
   // Series fares: one-way economy only.
-  registration: { supplierKey: "airiq", kinds: ["flight"], capabilities: ["search", "revalidate", "book", "ticket"], readiness: "production", reliability: 0.8 },
+  registration: registrationFor("airiq"),
   health: async () => {
     const c = airiqConfig();
     return { configured: c.configured, healthy: c.configured, detail: c.configured ? undefined : "not configured" };
@@ -108,7 +109,14 @@ function worldwayOfferId(internal: string) {
   return `WWF-${createHash("sha256").update(internal).digest("hex").slice(0, 16).toUpperCase()}`;
 }
 
-export const FLIGHT_ADAPTERS = [up17Adapter, airiqAdapter];
+/** Amadeus: interface-ready, inactive. Registered as disabled so it is never selected. */
+const amadeusAdapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
+  registration: registrationFor("amadeus"),
+  health: async () => ({ configured: false, healthy: false, detail: "NOT_CONFIGURED" }),
+  run: async () => [],
+};
+
+export const FLIGHT_ADAPTERS = [up17Adapter, airiqAdapter, amadeusAdapter];
 
 function resolveIata(value: string): string {
   const raw = value.trim();
