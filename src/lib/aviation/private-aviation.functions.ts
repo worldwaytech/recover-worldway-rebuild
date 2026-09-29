@@ -28,7 +28,8 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export type JetEstimateOption = {
   category: string;
   currency: string;
-  estimate: number;
+  /** Partner point estimate; null when the partner returns a range only. */
+  estimate: number | null;
   low: number;
   high: number;
   confidence: number | null;
@@ -61,22 +62,44 @@ export const getJetEstimate = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { callTool } = await import("./villiers.server");
+    // Live partner pricing with failover: primary aviation partner first, then the
+    // next connected partner. Which partner answered stays server-side.
+    let options: JetEstimateOption[] = [];
+    let session: string | null = null;
+    let partnerRoute: string | null = null;
+    let source: string | null = null;
     try {
+      const { callTool } = await import("./villiers.server");
       const r = await callTool(
         "get_jet_estimate",
-        {
-          origin: data.origin,
-          destination: data.destination,
-          passengers: data.passengers,
-          round_trip: data.roundTrip,
-        },
+        { origin: data.origin, destination: data.destination, passengers: data.passengers, round_trip: data.roundTrip },
         { retry: true },
       );
-      const options = normaliseEstimates(r.structured);
-      if (r.isError || !options.length) {
-        return { ok: false as const, error: "We couldn't price this route instantly. Please check the airports, or ask our aviation desk for a bespoke quote." };
+      if (!r.isError) {
+        options = normaliseEstimates(r.structured);
+        session = r.session;
+        partnerRoute = r.structured?.route ? String(r.structured.route) : null;
+        if (options.length) source = "villiers";
       }
+    } catch (e) {
+      console.error("[private-aviation] primary estimate failed", (e as Error).message);
+    }
+    if (!options.length && !data.roundTrip) {
+      // Secondary partner prices one-way legs only; round trips never get a one-way figure.
+      try {
+        const { skyCharterEstimate } = await import("./skyaccess.server");
+        const sky = await skyCharterEstimate({ origin: data.origin, destination: data.destination, passengers: data.passengers });
+        options = sky.map((s) => ({ category: s.category, currency: s.currency, estimate: null, low: s.low, high: s.high, confidence: null }));
+        if (options.length) source = "skyaccess";
+      } catch (e) {
+        console.error("[private-aviation] secondary estimate failed", (e as Error).message);
+      }
+    }
+    if (!options.length) {
+      return { ok: false as const, error: "We couldn't price this route live right now. Our aviation desk can still source aircraft — request a bespoke quote." };
+    }
+    try {
+      const pricedAt = new Date().toISOString();
       const reference = newReference();
       const db = await admin();
       const { data: row, error } = await db
@@ -89,8 +112,8 @@ export const getJetEstimate = createServerFn({ method: "POST" })
           destination: data.destination,
           passengers: data.passengers,
           round_trip: data.roundTrip,
-          estimate: { options, route: r.structured?.route ?? null },
-          supplier_session: r.session,
+          estimate: { options, route: partnerRoute, source, pricedAt },
+          supplier_session: session,
         })
         .select("id")
         .single();
@@ -99,11 +122,12 @@ export const getJetEstimate = createServerFn({ method: "POST" })
         ok: true as const,
         estimateId: row.id as string,
         reference,
-        route: String(r.structured?.route ?? `${data.origin} → ${data.destination}`),
+        route: `${data.origin} → ${data.destination}`,
         options,
+        pricedAt,
       };
     } catch (e) {
-      console.error("[private-aviation] estimate failed", (e as Error).message);
+      console.error("[private-aviation] estimate persist failed", (e as Error).message);
       return { ok: false as const, error: "Our private aviation pricing is temporarily unavailable. Please try again shortly." };
     }
   });
@@ -476,6 +500,20 @@ export const searchAirportMaster = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { searchAirports } = await import("./airports.server");
     return { items: searchAirports(data.q, 12).map(({ size: _s, ...a }) => a) as AirportOption[] };
+  });
+
+export const lookupAirportCodes = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({ codes: z.array(z.string().trim().min(3).max(4)).max(4) }).parse(d))
+  .handler(async ({ data }) => {
+    const { findAirportByCode } = await import("./airports.server");
+    return {
+      items: data.codes.map((c) => {
+        const a = findAirportByCode(c);
+        if (!a) return null;
+        const { size: _s, ...rest } = a;
+        return rest as AirportOption;
+      }),
+    };
   });
 
 // ---------- Confirmed quotes (desk → customer) ----------
