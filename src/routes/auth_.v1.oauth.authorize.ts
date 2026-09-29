@@ -9,7 +9,14 @@ export const Route = createFileRoute("/auth_/v1/oauth/authorize")({
       GET: async ({ request }) => {
         const ref = process.env["SUPABASE_URL"] ?? `https://${process.env["VITE_SUPABASE_PROJECT_ID"]}.supabase.co`;
         const target = new URL("/auth/v1/oauth/authorize", ref);
-        target.search = new URL(request.url).search;
+        const incoming = new URL(request.url);
+        target.search = incoming.search;
+        // Diagnostic: record which client/redirect URI OAuth clients actually send (no secrets in these params).
+        console.log(
+          "[oauth-authorize] client_id=%s redirect_uri=%s",
+          incoming.searchParams.get("client_id"),
+          incoming.searchParams.get("redirect_uri"),
+        );
         return new Response(null, { status: 302, headers: { Location: target.toString(), "Cache-Control": "no-store" } });
       },
     },
