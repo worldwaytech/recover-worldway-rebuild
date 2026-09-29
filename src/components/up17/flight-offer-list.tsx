@@ -521,7 +521,7 @@ function OfferCard({
               {fare?.seatsAvailable !== null && fare?.seatsAvailable !== undefined && fare.seatsAvailable <= 5 ? (
                 <Tag tone="warn">{fare.seatsAvailable} seats left</Tag>
               ) : null}
-              {fare?.source ? <Tag>{fare.source}</Tag> : null}
+              
             </div>
           </div>
         </div>

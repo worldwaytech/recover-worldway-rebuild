@@ -163,7 +163,7 @@ export function HotelResults({
                     ) : null}
                     {h.source ? (
                       <div className="mt-3 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                        Source · {h.source}
+                        Worldway live rate
                       </div>
                     ) : null}
                   </div>

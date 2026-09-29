@@ -160,7 +160,7 @@ export function BusResults({
                 ) : null}
                 {b.source ? (
                   <div className="mt-3 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    Source · {b.source}
+                    Worldway live fare
                   </div>
                 ) : null}
               </article>

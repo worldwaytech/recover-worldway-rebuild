@@ -95,7 +95,7 @@ function BookingWorkspace() {
     <div className="space-y-6">
       <Panel
         title={b.title}
-        description={`${b.product_type} · ref ${b.reference} · travel ${fmtDate(b.travel_date)}${b.supplier ? ` · ${b.supplier}` : ""}`}
+        description={`${b.product_type} · ref ${b.reference} · travel ${fmtDate(b.travel_date)}`}
         actions={
           <Link
             to="/account/bookings"

@@ -578,9 +578,9 @@ function CollectionDetailInner({ kind, item }: { kind: CollectionKind; item: Cat
                 </p>
               </div>
 
-              <h3 className="mt-10 font-serif text-2xl">Supplier</h3>
+              <h3 className="mt-10 font-serif text-2xl">Availability</h3>
               <div className="mt-4 rounded-sm border border-border bg-card p-5 text-sm">
-                <p className="font-medium">{item.supplier}</p>
+                <p className="font-medium">Worldway</p>
                 <p className="mt-1 text-muted-foreground">
                   {item.supplierStatus === "live"
                     ? "Connected to live supplier availability — pricing confirmed at time of booking."

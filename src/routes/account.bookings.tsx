@@ -83,7 +83,7 @@ function Bookings() {
                   {b.title}
                 </Link>
               }
-              meta={`${b.product_type} · ref ${b.reference} · ${fmtDate(b.travel_date)}${b.supplier ? ` · ${b.supplier}` : ""}`}
+              meta={`${b.product_type} · ref ${b.reference} · ${fmtDate(b.travel_date)}`}
               right={
                 <div className="text-right">
                   <div className="text-sm text-primary">

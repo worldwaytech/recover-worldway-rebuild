@@ -124,7 +124,7 @@ export function FlightResults({
           </div>
           {f.source ? (
             <div className="mt-4 border-t border-border/30 pt-3 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-              Source · {f.source}
+              Worldway live fare
             </div>
           ) : null}
         </article>
