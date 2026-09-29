@@ -82,7 +82,7 @@ function EmptyLegsPage() {
             <AvLabel label="To"><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="Nice, LFMN…" className={avField} /></AvLabel>
             <AvLabel label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={avField} /></AvLabel>
             <AvLabel label="Passengers"><input type="number" min={1} max={40} value={pax} onChange={(e) => setPax(Math.max(1, Number(e.target.value) || 1))} className={avField} /></AvLabel>
-            <AvLabel label="Max price (USD)"><input type="number" min={0} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Any" className={avField} /></AvLabel>
+            <AvLabel label="Max price"><input type="number" min={0} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Any" className={avField} /></AvLabel>
           </div>
         </div>
       </section>

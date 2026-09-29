@@ -131,8 +131,10 @@ function tag(item: string, name: string): string | null {
 function decode(s: string) {
   return s
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    .replace(/&amp;/g, "&")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
 }
 function splitAirport(v: string | null) {
   if (!v) return { code: "", name: "" };
