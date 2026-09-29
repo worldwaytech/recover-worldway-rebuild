@@ -1,5 +1,6 @@
 // Flight adapters for the engine orchestrator. Each wraps an EXISTING supplier
 // client unchanged and normalises to a Worldway-branded offer shape.
+import { createHash } from "crypto";
 import type { EngineAdapter } from "@/lib/engine/orchestrator";
 import { orchestrate } from "@/lib/engine/orchestrator";
 import { up17Configured, up17SearchFlights, up17ServerIp, searchAirports } from "@/lib/up17/up17.server";
@@ -50,7 +51,7 @@ const up17Adapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
     return (res.data?.offers ?? [])
       .filter((o) => (o.fare.published ?? o.fare.total) != null)
       .map((o) => ({
-        offer_id: `WWF-A-${o.resultIndex}`,
+        offer_id: worldwayOfferId(`a:${o.resultIndex}`),
         airline: o.airline,
         flight_numbers: o.flightNumbers,
         origin: o.origin,
@@ -83,7 +84,7 @@ const airiqAdapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
     return fares
       .filter((f) => f.seats >= q.passengers)
       .map((f) => ({
-        offer_id: `WWF-B-${f.ticketId}`,
+        offer_id: worldwayOfferId(`b:${f.ticketId}`),
         airline: f.airline,
         flight_numbers: [f.flightNumber],
         origin: f.origin,
@@ -101,6 +102,11 @@ const airiqAdapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
       }));
   },
 };
+
+/** Opaque Worldway offer reference — reveals no supplier or routing. */
+function worldwayOfferId(internal: string) {
+  return `WWF-${createHash("sha256").update(internal).digest("hex").slice(0, 16).toUpperCase()}`;
+}
 
 export const FLIGHT_ADAPTERS = [up17Adapter, airiqAdapter];
 
@@ -125,7 +131,6 @@ export async function searchFlightsViaEngine(input: FlightQuery) {
     count: offers.length,
     total_found: results.length,
     offers,
-    sources_checked: outcomes.length,
     ...(allFailed ? { error: "Live flight inventory is temporarily unavailable. Please retry shortly." } : {}),
     outcomes,
   };

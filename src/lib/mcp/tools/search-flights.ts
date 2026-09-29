@@ -5,7 +5,7 @@ export default defineTool({
   name: "search_flights",
   title: "Search flights",
   description:
-    "Search live Worldway flight inventory. Routed by the Worldway engine to healthy flight suppliers by capability; returns fares, cabins and offer IDs.",
+    "Search live Worldway flight inventory. Returns fares, cabins and offer IDs.",
   inputSchema: {
     origin: z.string().describe("Origin IATA code or city, e.g. DEL or Delhi."),
     destination: z.string().describe("Destination IATA code or city, e.g. BOM or Mumbai."),
@@ -25,10 +25,7 @@ export default defineTool({
       passengers: input.passengers ?? 1,
       cabin: input.cabin ?? "economy",
     });
-    return {
-      content: [{ type: "text", text: JSON.stringify(res) }],
-      structuredContent: res as unknown as Record<string, unknown>,
-      isError: !res.ok,
-    };
+    const { externalToolResult } = await import("@/lib/confidentiality/redact");
+    return externalToolResult(res, !res.ok);
   },
 });

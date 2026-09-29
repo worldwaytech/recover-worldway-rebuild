@@ -4,7 +4,7 @@ import { z } from "zod";
 export default defineTool({
   name: "search_hotels",
   title: "Search hotels",
-  description: "Search live hotel availability and rates via the Worldway partner network.",
+  description: "Search live hotel availability and rates from Worldway.",
   inputSchema: {
     destination: z.string().describe("City or hotel name, e.g. Dubai or The Ritz-Carlton Paris."),
     check_in: z.string().describe("Check-in date, YYYY-MM-DD."),
@@ -16,10 +16,7 @@ export default defineTool({
   handler: async (input) => {
     const { callPartner, toPartnerHotelPayload } = await import("@/lib/wwl.server");
     const res = await callPartner("hotels", toPartnerHotelPayload(input));
-    return {
-      content: [{ type: "text", text: JSON.stringify(res) }],
-      structuredContent: res as unknown as Record<string, unknown>,
-      isError: !res.ok,
-    };
+    const { externalToolResult } = await import("@/lib/confidentiality/redact");
+    return externalToolResult(res, !res.ok);
   },
 });
