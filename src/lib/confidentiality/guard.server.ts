@@ -11,6 +11,9 @@ import { isSealed, seal, unseal } from "./seal.server";
 export const SEAL_KEY =
   /^(supplier.*|provider.*|vendor.*|adapter.*|upstream.*|routing|outcomes|failover.*|endpoint.*|source(_?system|_?key|_?url|_?name|_?id)?|partner_?(id|key|name|code|ref.*)|raw.*|credential.*|api_?key|secret.*|access_?token|search_?token_?id|trace_?id|result_?index|ticket_?id|fare_?id|rate_?key|affiliate.*|brand_?(label|name)|operator_?(id|code|name)|origin_?system|connector.*|integration.*)$/i;
 
+/** Operational supplier-named fields the UI renders; contents are still reworded. */
+const KEEP_KEY = /^supplier_?(times|status_?label)$/i;
+
 /** Identifier-like fields: never reworded (URLs/filters/booking depend on them). */
 const IDENT_KEY =
   /^(id|slug|code|brand|key|type|kind|status|currency|href|path|to|mode|purpose|category|reference|ref)$|(_id|Id|_code|Code|_key|Key|_type|Type|_ref|Ref|_slug|Slug)$/;
@@ -83,7 +86,9 @@ export async function sanitizeOutbound<T>(value: T, opt: SanitizeOptions = {}): 
       const obj = v as Record<string, unknown>;
       const out: Record<string, unknown> = {};
       for (const [k, val] of Object.entries(obj)) {
-        if (val !== null && val !== undefined && val !== "" && SEAL_KEY.test(k) && !(typeof val === "string" && NEUTRAL_VALUE.test(val)) && typeof val !== "boolean" && !isReviewAttribution(obj, k, val)) {
+        if (typeof val === "string" && SEAL_KEY.test(k) && URL_ONLY.test(val)) {
+          out[k] = isThirdParty(val) ? await neutralUrl(val, k, opt) : val;
+        } else if (val !== null && val !== undefined && val !== "" && SEAL_KEY.test(k) && !KEEP_KEY.test(k) && !(typeof val === "string" && NEUTRAL_VALUE.test(val)) && typeof val !== "boolean" && !isReviewAttribution(obj, k, val)) {
           out[k] = await seal(val);
         } else {
           out[k] = await walk(val, k);

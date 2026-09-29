@@ -243,9 +243,6 @@ function HbxPage() {
                         From {item.currency ?? ""} {item.priceFrom.toLocaleString()}
                       </p>
                     ) : null}
-                    <p className="pt-2 text-[0.6rem] uppercase tracking-[0.25em] text-muted-foreground">
-                      Worldway ref {item.supplierCode}
-                    </p>
                   </div>
                 </article>
               ))}

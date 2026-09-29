@@ -136,12 +136,6 @@ function TtcTourPage() {
                 <dd>Up to {tour.groupSizeMax} guests</dd>
               </div>
             ) : null}
-            {tour.supplierTourId ? (
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Journey code</dt>
-                <dd>{tour.supplierTourId}</dd>
-              </div>
-            ) : null}
             {tour.countries.length ? (
               <div className="sm:col-span-2">
                 <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Countries</dt>
