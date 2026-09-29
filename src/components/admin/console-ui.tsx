@@ -63,3 +63,15 @@ export function QueryState({ q, children }: { q: { isLoading: boolean; error: un
   if (q.error) return <p className="py-4 text-sm text-destructive">Could not load: {(q.error as Error).message}</p>;
   return <>{children}</>;
 }
+
+export const adminHead = (title: string, description: string) => () => ({
+  meta: [
+    { title: `${title} — Worldway Admin` },
+    { name: "description", content: description },
+    { name: "robots", content: "noindex, nofollow" },
+    { property: "og:title", content: `${title} — Worldway Admin` },
+    { property: "og:description", content: description },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ],
+});
