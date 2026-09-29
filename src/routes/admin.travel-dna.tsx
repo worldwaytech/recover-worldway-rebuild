@@ -18,7 +18,7 @@ function Inner() {
     <QueryState q={q}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Profiles" value={String(d?.rows.length ?? 0)} />
-        <StatTile label="Consented" value={String(d?.rows.filter((r) => r.consented).length ?? 0)} />
+        <StatTile label="Consented" value={String(d?.rows.filter((r: any) => r.consented).length ?? 0)} />
         <StatTile label="Journey versions (30d)" value={String(d?.ai.versions30d ?? 0)} hint={`${d?.ai.explained30d ?? 0} with AI explanation`} />
         <StatTile label="Simulations (30d)" value={String(d?.ai.simulations30d ?? 0)} />
       </div>
@@ -31,7 +31,7 @@ function Inner() {
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-muted-foreground"><tr><th>Reference</th><th>Consent</th><th>Consent changes</th><th>Preference fields</th><th>Updated</th></tr></thead>
           <tbody>
-            {(d?.rows ?? []).map((r) => (
+            {(d?.rows ?? []).map((r: any) => (
               <tr key={r.ref} className="border-t border-border/40"><td className="py-2">{r.ref}</td><td>{r.consented ? "Given" : "Not given"}</td><td>{r.consentChanges}</td><td>{r.preferenceFields}</td><td>{when(r.updatedAt)}</td></tr>
             ))}
           </tbody>

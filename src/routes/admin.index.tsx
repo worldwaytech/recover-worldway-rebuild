@@ -32,7 +32,7 @@ function AdminOverview() {
         </Panel>
         <Panel title="Recent signups" right={<span className="text-[0.6rem] uppercase tracking-[0.3em] text-muted-foreground">Last 8</span>}>
           <ul className="divide-y divide-border/40 text-sm">
-            {(d?.recent ?? []).map((u) => (
+            {(d?.recent ?? []).map((u: any) => (
               <li key={u.id} className="flex items-center justify-between py-3">
                 <div>
                   <div>{u.name || "—"}</div>

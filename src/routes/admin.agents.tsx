@@ -22,7 +22,7 @@ function AgentsPage() {
       </div>
       <QueryState q={q}>
         <div className="grid gap-4 sm:grid-cols-2">
-          {agents.map((a) => (
+          {agents.map((a: any) => (
             <div key={a.id} className="flex items-start gap-4 rounded-2xl border border-border/60 bg-card/60 p-5">
               <span className="grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary"><UserCircle2 className="h-6 w-6" /></span>
               <div className="min-w-0">

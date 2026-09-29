@@ -49,7 +49,7 @@ function AnalyticsPage() {
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground"><tr><th>Supplier</th><th>Status</th><th>Calls</th><th>Failures</th><th>Median ms</th><th>Bookable</th></tr></thead>
             <tbody>
-              {(d?.suppliers ?? []).map((s) => (
+              {(d?.suppliers ?? []).map((s: any) => (
                 <tr key={s.key} className="border-t border-border/40"><td className="py-2">{s.key}</td><td>{s.status}</td><td>{s.calls ?? "—"}</td><td>{s.failures ?? "—"}</td><td>{s.p50 ?? "—"}</td><td>{s.bookable ? "Yes" : "No"}</td></tr>
               ))}
             </tbody>
