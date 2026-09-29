@@ -67,7 +67,7 @@ export const understandTripRequest = createServerFn({ method: "POST" })
     const plans = intent.planEdits(extracted.edits, refs, version);
 
     // Approval-gated simulations for directly resolvable edits (persisted, never applied).
-    const simulations: unknown[] = [];
+    const simulations: Record<string, any>[] = [];
     if (data.journeyId) {
       const svc = await journeyService();
       for (const p of plans) if (p.kind === "simulate") {
@@ -77,11 +77,11 @@ export const understandTripRequest = createServerFn({ method: "POST" })
     }
 
     // Live inventory comes only from the existing engine.
-    let flights: unknown = null;
+    let flights: Record<string, any> | null = null;
     if (data.searchFlights && req.requirements) {
       const { searchFlightsViaEngine } = await import("@/lib/flights/flight-adapters.server");
       const r = req.requirements;
-      flights = await searchFlightsViaEngine({ origin: r.origin, destination: r.destinations[0]!, depart_date: r.departFrom, return_date: r.returnBy, passengers: r.adults + r.children, cabin: r.luxuryLevel >= 5 ? "business" : "economy" });
+      flights = (await searchFlightsViaEngine({ origin: r.origin, destination: r.destinations[0]!, depart_date: r.departFrom, return_date: r.returnBy, passengers: r.adults + r.children, cabin: r.luxuryLevel >= 5 ? "business" : "economy" })) as Record<string, any>;
     }
 
     return {

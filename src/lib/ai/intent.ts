@@ -57,7 +57,7 @@ export function toRequirements(x: ExtractedIntent, dna?: TravelDNA, today = new 
   if (!destinations.length) missing.push("destinations");
   const adults = clampInt(x.adults, 1, 20);
   if (adults == null) missing.push("adults");
-  const lux = clampInt(x.luxuryLevel, 1, 5) ?? (dna?.consent.preferences ? dna.luxuryLevel ?? null : null) ?? 3;
+  const lux = clampInt(x.luxuryLevel, 1, 5) ?? (dna?.consent.preferences && dna.luxuryLevel ? dna.luxuryLevel : 3);
   const interests = [...new Set([...x.interests, ...(dna?.consent.preferences ? dna.interests : [])].map((s) => s.trim().slice(0, 40)).filter(Boolean))].slice(0, 10);
   const budget = x.budgetAmount != null && x.budgetAmount > 0 && x.budgetCurrency && /^[A-Za-z]{3}$/.test(x.budgetCurrency)
     ? { amount: x.budgetAmount, currency: x.budgetCurrency.toUpperCase() } : undefined;
