@@ -15,6 +15,8 @@ export interface CanonicalOffer {
   refundable: boolean;
   freeCancelUntil?: string;
   quality?: number;
+  /** When the live search result was observed (search results expire; see revalidate). */
+  observedAt?: string;
   /** Set only when the supplier confirmed live availability + price. */
   revalidatedAt?: string;
 }

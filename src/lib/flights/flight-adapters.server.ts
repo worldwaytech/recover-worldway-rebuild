@@ -6,7 +6,7 @@ import { createHash } from "crypto";
 import type { EngineAdapter } from "@/lib/engine/orchestrator";
 import { orchestrate } from "@/lib/engine/orchestrator";
 import { up17Configured, up17SearchFlights, up17ServerIp, searchAirports } from "@/lib/up17/up17.server";
-import { airiqConfig, airiqSearch, customerTotal, type AirIqFare } from "@/lib/airiq/client.server";
+import { airiqConfig, airiqSearch, customerTotal, fareTotal, type AirIqFare } from "@/lib/airiq/client.server";
 
 export type FlightQuery = {
   origin: string;
@@ -26,6 +26,24 @@ function tagSupplier(key: string, id: string) {
 }
 export function flightOfferSupplier(offerId: string): string | null {
   return OFFER_SUPPLIER.get(offerId) ?? null;
+}
+
+/**
+ * Server-only revalidation handle per offer: what the supplier needs to
+ * re-confirm the fare, plus the supplier NET (before Worldway markup).
+ * Never serialised into responses.
+ */
+export type FlightOfferHandle =
+  | { supplier: "up17"; resultIndex: string; searchTokenId: string | null; query: FlightQuery; net: number; currency: string }
+  | { supplier: "airiq"; ticketId: string; query: FlightQuery; net: number; currency: string };
+const OFFER_HANDLE = new Map<string, FlightOfferHandle>();
+function tagHandle(id: string, h: FlightOfferHandle) {
+  if (OFFER_HANDLE.size > 20_000) OFFER_HANDLE.clear();
+  OFFER_HANDLE.set(id, h);
+  return id;
+}
+export function flightOfferHandle(offerId: string): FlightOfferHandle | null {
+  return OFFER_HANDLE.get(offerId) ?? null;
 }
 
 export type WorldwayFlightOffer = {
@@ -61,10 +79,14 @@ const up17Adapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
       user_ip: await up17ServerIp(),
     });
     if (!res.ok) throw new Error(res.error ?? `search failed (${res.status})`);
+    const token = res.data?.searchTokenId ?? null;
     return (res.data?.offers ?? [])
       .filter((o) => (o.fare.published ?? o.fare.total) != null)
       .map((o) => ({
-        offer_id: tagSupplier("up17", worldwayOfferId(`a:${o.resultIndex}`)),
+        offer_id: tagHandle(tagSupplier("up17", worldwayOfferId(`a:${token ?? `${q.origin}${q.destination}${q.depart_date}`}:${o.resultIndex}`)), {
+          supplier: "up17", resultIndex: o.resultIndex, searchTokenId: token, query: q,
+          net: Number(o.fare.published ?? o.fare.total), currency: o.fare.currency || "INR",
+        }),
         airline: o.airline,
         flight_numbers: o.flightNumbers,
         origin: o.origin,
@@ -97,7 +119,9 @@ const airiqAdapter: EngineAdapter<FlightQuery, WorldwayFlightOffer> = {
     return fares
       .filter((f) => f.seats >= q.passengers)
       .map((f) => ({
-        offer_id: tagSupplier("airiq", worldwayOfferId(`b:${f.ticketId}`)),
+        offer_id: tagHandle(tagSupplier("airiq", worldwayOfferId(`b:${f.ticketId}`)), {
+          supplier: "airiq", ticketId: f.ticketId, query: q, net: fareTotal(f, pax), currency: "INR",
+        }),
         airline: f.airline,
         flight_numbers: [f.flightNumber],
         origin: f.origin,

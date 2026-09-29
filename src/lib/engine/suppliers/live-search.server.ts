@@ -39,7 +39,7 @@ export function localDateIn(instant: string, tz: string) {
 }
 
 // ---------------------------------------------------------------- flights
-import { flightOfferSupplier, type WorldwayFlightOffer } from "@/lib/flights/flight-adapters.server";
+import { flightOfferHandle, flightOfferSupplier, type WorldwayFlightOffer } from "@/lib/flights/flight-adapters.server";
 
 function flightSupplier(offerId: string): string | null {
   return flightOfferSupplier(offerId);
@@ -57,7 +57,9 @@ export function flightToCanonical(o: WorldwayFlightOffer): CanonicalOffer | null
     title: `${o.airline} ${o.flight_numbers.join("/")} ${o.origin}→${o.destination}`.trim(),
     start: { at: start, timezone: a.tz, place: o.origin, lat: a.lat, lng: a.lng },
     end: { at: end, timezone: b.tz, place: o.destination, lat: b.lat, lng: b.lng },
-    net: { amount: o.total_price, currency: o.currency }, refundable: o.refundable === true,
+    // Supplier NET (before Worldway markup) — commercial rules add markup exactly once.
+    net: (() => { const h = flightOfferHandle?.(o.offer_id); return h ? { amount: h.net, currency: h.currency } : { amount: o.total_price, currency: o.currency }; })(),
+    refundable: o.refundable === true, observedAt: new Date().toISOString(),
   };
 }
 
@@ -69,7 +71,7 @@ export async function searchFlightsCanonical(origin: string, destination: string
 }
 
 // ---------------------------------------------------------------- hotels
-export async function searchHotelsCanonical(cityIata: string, checkin: string, checkout: string, adults: number, currency: string) {
+async function searchRatehawkCanonical(cityIata: string, checkin: string, checkout: string, adults: number, currency: string) {
   const reg = registrationFor("ratehawk");
   if (!supports(reg, "search")) return { offers: [], error: "Hotel search not registered" };
   const place = airportTz(cityIata);
@@ -94,10 +96,57 @@ export async function searchHotelsCanonical(cityIata: string, checkin: string, c
       title: `${rate.roomName} (hotel ${h.hotelId})`,
       start: { at: localToInstant(`${checkin} 00:00`, place.tz)!, timezone: place.tz, place: cityIata, lat: place.lat, lng: place.lng },
       end: { at: localToInstant(`${checkout} 00:00`, place.tz)!, timezone: place.tz, place: cityIata, lat: place.lat, lng: place.lng },
-      net: { amount: rate.price.amount!, currency: rate.price.currency! }, refundable: rate.refundable === true,
+      net: { amount: rate.price.amount!, currency: rate.price.currency! }, refundable: rate.refundable === true, observedAt: new Date().toISOString(),
     });
   }
   return { offers: offers.sort((a, b) => a.net.amount - b.net.amount).slice(0, 5), error: offers.length ? null : "No live hotel availability" };
+}
+
+/** Server-only hotel revalidation handles (never serialised). */
+export interface HotelHandle { supplier: "up17"; destination: string; checkin: string; checkout: string; guests: number; hotelCode: string }
+const HOTEL_HANDLE = new Map<string, HotelHandle>();
+export function hotelHandle(externalId: string) { return HOTEL_HANDLE.get(externalId) ?? null; }
+
+/** Map a UP17 hotel search result to canonical stays (pure — tested without network). */
+export function up17HotelsToCanonical(hotels: { hotelCode: string; name: string; starRating: number; totalPrice: number | null; currency: string; rooms: { refundable: boolean }[] }[],
+  cityIata: string, checkin: string, checkout: string, observedAt: string): CanonicalOffer[] {
+  const place = airportTz(cityIata);
+  if (!place) return [];
+  const s = localToInstant(`${checkin} 00:00`, place.tz), e = localToInstant(`${checkout} 00:00`, place.tz);
+  if (!s || !e) return [];
+  return hotels.filter((h) => h.hotelCode && (h.totalPrice ?? 0) > 0 && h.currency).map((h) => ({
+    supplierKey: "up17", kind: "stay" as const, externalId: `WWH-${h.hotelCode}:${checkin}:${checkout}`,
+    title: `${h.name}${h.starRating ? ` (${h.starRating}★)` : ""}`,
+    start: { at: s, timezone: place.tz, place: cityIata, lat: place.lat, lng: place.lng },
+    end: { at: e, timezone: place.tz, place: cityIata, lat: place.lat, lng: place.lng },
+    net: { amount: h.totalPrice!, currency: h.currency },
+    // Refundability only when the supplier states it for every room returned.
+    refundable: h.rooms.length > 0 && h.rooms.every((r) => r.refundable), observedAt,
+    quality: h.starRating ? Math.min(1, h.starRating / 5) : undefined,
+  }));
+}
+
+async function searchUp17HotelsCanonical(cityIata: string, checkin: string, checkout: string, adults: number) {
+  const reg = registrationFor("up17");
+  if (!reg.kinds.includes("stay") || !supports(reg, "search")) return { offers: [] as CanonicalOffer[], error: "Hotel search not registered" };
+  const { findAirportByCode } = await import("@/lib/aviation/airports.server");
+  const city = findAirportByCode(cityIata)?.city ?? cityIata;
+  const { up17SearchHotels, up17ServerIp } = await import("@/lib/up17/up17.server");
+  const res = await up17SearchHotels({ destination: city, check_in: checkin, check_out: checkout, guests: adults, rooms: 1, user_ip: await up17ServerIp() } as never);
+  if (!res.ok) return { offers: [], error: "Live hotel search unavailable" };
+  const offers = up17HotelsToCanonical(res.data?.hotels ?? [], cityIata, checkin, checkout, new Date().toISOString()).slice(0, 5);
+  for (const o of offers) HOTEL_HANDLE.set(o.externalId, { supplier: "up17", destination: city, checkin, checkout, guests: adults, hotelCode: o.externalId.slice(4).split(":")[0]! });
+  return { offers, error: offers.length ? null : "No live hotel availability" };
+}
+
+/** Live hotels (production adapters) first; sandbox/UAT hotel suppliers are kept but classified ON REQUEST. */
+export async function searchHotelsCanonical(cityIata: string, checkin: string, checkout: string, adults: number, currency: string) {
+  const [live, sandbox] = await Promise.all([
+    searchUp17HotelsCanonical(cityIata, checkin, checkout, adults).catch(() => ({ offers: [] as CanonicalOffer[], error: "Live hotel search unavailable" })),
+    searchRatehawkCanonical(cityIata, checkin, checkout, adults, currency).catch(() => ({ offers: [] as CanonicalOffer[], error: "Hotel search unavailable" })),
+  ]);
+  const offers = [...live.offers, ...sandbox.offers];
+  return { offers, liveCount: live.offers.length, error: live.offers.length ? null : (live.error ?? sandbox.error) };
 }
 
 // ---------------------------------------------------------------- activities (on request)
@@ -113,4 +162,41 @@ export async function searchActivitiesOnRequest(city: string, startDate: string,
     reason: "Time slot and availability must be confirmed live before it can be scheduled.",
     indicativeFrom: p.price != null ? { amount: p.price, currency: p.currency } : null,
   }));
+}
+
+// ---------------------------------------------------------------- cruises (production live feed)
+/**
+ * Live cruise voyages embarking at the destination within the trip window.
+ * Scheduled in the Trip Graph only when the supplier publishes the embark
+ * departure time and the embark port is the destination city (known time zone).
+ */
+export async function searchCruisesCanonical(destIata: string, from: string, to: string, currency: string) {
+  const reg = registrationFor("crystal");
+  if (!supports(reg, "search")) return { offers: [] as CanonicalOffer[], unscheduled: 0, error: "Cruise search not registered" };
+  const place = airportTz(destIata);
+  const { findAirportByCode } = await import("@/lib/aviation/airports.server");
+  const city = (findAirportByCode(destIata)?.city ?? "").toLowerCase();
+  const { fetchAktgVoyages } = await import("@/lib/crystal/aktg.server");
+  const feed = await fetchAktgVoyages(currency);
+  const inWindow = feed.voyages.filter((v) => v.dataSource === "licensed" && v.departureDate >= from && v.departureDate <= to && city && v.embarkPort.toLowerCase().includes(city));
+  const offers: CanonicalOffer[] = [];
+  let unscheduled = 0;
+  for (const v of inWindow) {
+    const first = v.itinerary[0], last = v.itinerary[v.itinerary.length - 1];
+    const fare = v.fares.filter((f) => f.price > 0).sort((a, b) => a.price - b.price)[0];
+    if (!place || !first?.depart || !fare) { unscheduled++; continue; }
+    const s = localToInstant(`${v.departureDate} ${first.depart}`, place.tz);
+    const endLocal = last?.arrive ? `${v.returnDate} ${last.arrive}` : null;
+    if (!s || !endLocal) { unscheduled++; continue; }
+    // Disembark port time zone is only known when it is the same city.
+    const e = v.disembarkPort === v.embarkPort ? localToInstant(endLocal, place.tz) : null;
+    if (!e) { unscheduled++; continue; }
+    offers.push({
+      supplierKey: "crystal", kind: "cruise", externalId: `${v.code}:${fare.gradeId ?? fare.suiteCategory}`,
+      title: `${v.nights}-night voyage from ${v.embarkPort}`,
+      start: { at: s, timezone: place.tz, place: destIata }, end: { at: e, timezone: place.tz, place: destIata },
+      net: { amount: fare.price, currency: v.currency }, refundable: false, observedAt: feed.fetchedAt,
+    });
+  }
+  return { offers, unscheduled, error: feed.error ?? null };
 }
