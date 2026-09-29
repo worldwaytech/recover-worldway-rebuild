@@ -38,7 +38,7 @@ async function journeyService() {
  */
 export const understandTripRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ inputs: z.array(Input).min(1).max(6), journeyId: z.string().uuid().optional(), searchFlights: z.boolean().optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ inputs: z.array(Input).min(1).max(6), journeyId: z.string().uuid().optional(), searchFlights: z.boolean().optional(), assemble: z.boolean().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Db;
     const [{ aiObject, AiUnavailableError }, { toMessages }, intent] = await Promise.all([import("./gateway.server"), import("./sources.server"), import("./intent")]);
@@ -84,8 +84,24 @@ export const understandTripRequest = createServerFn({ method: "POST" })
       flights = (await searchFlightsViaEngine({ origin: r.origin, destination: r.destinations[0]!, depart_date: r.departFrom, return_date: r.returnBy, passengers: r.adults + r.children, cabin: r.luxuryLevel >= 5 ? "business" : "economy" })) as Record<string, any>;
     }
 
+    // Live multi-supplier assembly from AI requirements (deterministic engines decide everything).
+    let proposals: Record<string, any> | null = null;
+    if (data.assemble && req.requirements) {
+      const { assembleAndSave } = await import("@/lib/engine/suppliers/proposals.functions");
+      proposals = (await assembleAndSave(context.userId, req.requirements as any, true)) as Record<string, any>;
+    }
+    // Replacement edits → live search + rebuild (approval-gated simulations).
+    const rebuilds: Record<string, any>[] = [];
+    if (data.journeyId) {
+      const { rebuild } = await import("@/lib/engine/suppliers/proposals.functions");
+      for (const p of plans) if (p.kind === "needs_inventory" && p.componentRef)
+        rebuilds.push({ componentRef: p.componentRef, ...(await rebuild(data.journeyId, p.componentRef, context.userId)) });
+    }
+
     return {
       ok: true as const,
+      proposals,
+      rebuilds,
       intent: extracted.intent,
       requirements: req.requirements,
       missing: req.missing,

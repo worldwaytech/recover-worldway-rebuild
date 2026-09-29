@@ -7,7 +7,7 @@ import { buildDependencies, transition, type JourneyContext, type JourneyState }
 import { simulate, type Change } from "./simulate";
 
 export interface JourneyRow { id: string; user_id: string; state: JourneyState; current_version: number; currency: string; requirements: unknown }
-export interface VersionRow { journey_id: string; version: number; parent_version: number | null; offers: CanonicalOffer[]; graph: unknown; dependencies: unknown; pricing: unknown; issues: unknown; bookable: boolean; reason: string; simulation_id: string | null; created_by: string | null }
+export interface VersionRow { journey_id: string; version: number; parent_version: number | null; offers: CanonicalOffer[]; graph: unknown; dependencies: unknown; pricing: unknown; issues: unknown; bookable: boolean; reason: string; simulation_id: string | null; created_by: string | null; explanation?: string | null; readiness?: unknown; on_request?: unknown; sources?: unknown }
 export interface SimulationRow { id: string; journey_id: string; base_version: number; change: StoredChange; impacted: string[]; material: string[]; price_delta: number | null; new_issues: string[]; after_pricing: unknown; after_issues: unknown; after_offers: CanonicalOffer[]; requires_approval: boolean; bookable_after: boolean; status: "pending" | "approved" | "rejected" | "applied" | "superseded"; created_by: string | null }
 export interface EventRow { journey_id: string; event_type: string; from_state?: string | null; to_state?: string | null; version?: number | null; actor?: string | null; detail?: unknown }
 export type StoredChange = Change | { type: "rollback"; toVersion: number };
@@ -35,10 +35,10 @@ function snapshot(offers: CanonicalOffer[], env: Env, label: string) {
 export class JourneyService {
   constructor(private repo: JourneyRepo, private env: (j: JourneyRow) => Env) {}
 
-  async create(userId: string, offers: CanonicalOffer[], currency: string, requirements: Env["requirements"]) {
+  async create(userId: string, offers: CanonicalOffer[], currency: string, requirements: Env["requirements"], extras: Pick<VersionRow, "explanation" | "readiness" | "on_request" | "sources"> = {}) {
     const j = await this.repo.insertJourney({ user_id: userId, state: "draft", current_version: 1, currency, requirements });
     const { p, deps } = snapshot(offers, this.env(j), `${j.id}@v1`);
-    await this.repo.insertVersion({ journey_id: j.id, version: 1, parent_version: null, offers, graph: p.graph, dependencies: deps, pricing: p.pricing, issues: p.issues, bookable: p.bookable, reason: "created", simulation_id: null, created_by: userId });
+    await this.repo.insertVersion({ journey_id: j.id, version: 1, parent_version: null, offers, graph: p.graph, dependencies: deps, pricing: p.pricing, issues: p.issues, bookable: p.bookable, reason: "created", simulation_id: null, created_by: userId, ...extras });
     await this.repo.insertEvent({ journey_id: j.id, event_type: "created", to_state: "draft", version: 1, actor: userId });
     return j;
   }
