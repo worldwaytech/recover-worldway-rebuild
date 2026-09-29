@@ -27,6 +27,8 @@ export interface AssembledProposal {
 }
 
 export interface AssemblyReport {
+  /** FX audit: provider, rate timestamp, rates used (null provider = identity only). */
+  fx: import("./fx.server").FxAudit;
   proposals: AssembledProposal[];
   sources: { step: string; count: number; error: string | null }[];
   /** Product coverage by capability (internal: supplier keys). */

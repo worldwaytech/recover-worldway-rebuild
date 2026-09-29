@@ -70,9 +70,9 @@ describe("live hotels", () => {
     expect(s).toHaveLength(1);
     expect(s[0]!.start.at).toBe("2026-10-14T18:30:00.000Z");
     expect(s[0]!.supplierKey).toBe("up17");
-    // No approved UP17 commercial rule → package is not priced (never 0%).
+    // Approved UP17 5% rule prices the package; booking stays uncertified.
     const [p] = combine(req, [fl("A", "2026-10-15T04:00:00Z", "2026-10-15T06:10:00Z", "DEL", "BOM")], new Map([["2026-10-15", s]]), [], "INR", []);
-    expect(p!.result.pricing).toBeNull();
+    expect(p!.result.pricing).not.toBeNull();
     expect(readinessOf(p!.offers, p!.result).bookable).toBe(false);
   });
 });

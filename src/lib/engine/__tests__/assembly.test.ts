@@ -42,6 +42,7 @@ describe("live assembly", () => {
     const [p] = combine(req, [out], new Map(), [], "INR", []);
     expect(p!.offers).toHaveLength(1);
     expect(p!.onRequest.map((o) => o.kind)).toEqual(expect.arrayContaining(["stay", "flight", "transfer"]));
-    expect(p!.result.pricing).toBeNull(); // UP17 has no Worldway commercial rule → never 0%
+    expect(p!.result.pricing!.total).toBe(52500); // approved UP17 5% Worldway markup, applied once
+    expect(p!.result.bookable).toBe(false); // priced ≠ bookable: UP17 booking uncertified
   });
 });

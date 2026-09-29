@@ -107,8 +107,10 @@ describe("commercial rules + live status", () => {
   });
   it("uses real Worldway rules and blocks pricing when a supplier has no rule (never 0%)", () => {
     expect(commercialRuleFor({ supplierKey: "airiq" })!.markupPercent).toBe(5);
-    expect(commercialRuleFor({ supplierKey: "crystal" })).toBeNull();
-    const [p] = runPackagePipeline({ requirements: req, registry, currency: "USD", fx: { USD: 1 }, ruleFor: commercialRuleFor, candidates: [{ id: "x", offers }] });
+    expect(commercialRuleFor({ supplierKey: "crystal" })!.markupPercent).toBe(10);
+    expect(commercialRuleFor({ supplierKey: "gadventures" })).toBeNull();
+    const noRule = offers.map((o) => ({ ...o, supplierKey: "gadventures" }));
+    const [p] = runPackagePipeline({ requirements: req, registry, currency: "USD", fx: { USD: 1 }, ruleFor: commercialRuleFor, candidates: [{ id: "x", offers: noRule }] });
     expect(p!.pricing).toBeNull();
     expect(p!.bookable).toBe(false);
     expect(p!.issues.some((i) => /commercial rule/.test(i.message))).toBe(true);
