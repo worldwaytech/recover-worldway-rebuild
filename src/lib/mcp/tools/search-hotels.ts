@@ -17,6 +17,6 @@ export default defineTool({
     const { callPartner, toPartnerHotelPayload } = await import("@/lib/wwl.server");
     const res = await callPartner("hotels", toPartnerHotelPayload(input));
     const { externalToolResult } = await import("@/lib/confidentiality/redact");
-    return externalToolResult(res, !res.ok);
+    return externalToolResult(await (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(res, { absolute: true }), !res.ok);
   },
 });
