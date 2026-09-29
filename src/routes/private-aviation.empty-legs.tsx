@@ -17,6 +17,9 @@ import {
   useSignedInEmail,
   type ContactValues,
 } from "@/components/aviation/contact-fields";
+import { AirportAutocomplete } from "@/components/aviation/airport-autocomplete";
+import type { AirportOption } from "@/lib/aviation/private-aviation.functions";
+import { matchesAirport } from "@/lib/aviation/airport-match";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const HERO = "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=2000&q=80";
@@ -42,6 +45,8 @@ function EmptyLegsPage() {
   const q = useQuery({ queryKey: ["live-empty-legs"], queryFn: () => listFn(), staleTime: 5 * 60_000 });
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [fromAp, setFromAp] = useState<AirportOption | null>(null);
+  const [toAp, setToAp] = useState<AirportOption | null>(null);
   const [date, setDate] = useState("");
   const [pax, setPax] = useState(1);
   const [maxPrice, setMaxPrice] = useState("");
@@ -55,15 +60,15 @@ function EmptyLegsPage() {
     const mp = Number(maxPrice);
     return legs
       .filter((l) => {
-        if (f && !`${l.originCode} ${l.originName}`.toLowerCase().includes(f)) return false;
-        if (t && !`${l.destinationCode} ${l.destinationName}`.toLowerCase().includes(t)) return false;
+        if (fromAp ? !matchesAirport(fromAp, l.originCode, l.originName) : f && !`${l.originCode} ${l.originName}`.toLowerCase().includes(f)) return false;
+        if (toAp ? !matchesAirport(toAp, l.destinationCode, l.destinationName) : t && !`${l.destinationCode} ${l.destinationName}`.toLowerCase().includes(t)) return false;
         if (date && l.departureDate !== date) return false;
         if (l.seats != null && pax > l.seats) return false;
         if (mp > 0 && l.price != null && l.price > mp) return false;
         return true;
       })
       .sort((a, b) => a.departureDate.localeCompare(b.departureDate));
-  }, [legs, from, to, date, pax, maxPrice]);
+  }, [legs, from, to, fromAp, toAp, date, pax, maxPrice]);
 
   return (
     <PageShell>
@@ -78,8 +83,8 @@ function EmptyLegsPage() {
         <div className="rounded-2xl border border-border/60 bg-card/80 p-6 shadow-2xl backdrop-blur-xl md:p-8">
           <div className="mb-4 text-xs uppercase tracking-[0.3em] text-primary">Search live empty legs</div>
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-            <AvLabel label="From (city, airport or code)"><input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="London, EGGW…" className={avField} /></AvLabel>
-            <AvLabel label="To"><input value={to} onChange={(e) => setTo(e.target.value)} placeholder="Nice, LFMN…" className={avField} /></AvLabel>
+            <AvLabel label="From (city, airport or code)"><AirportAutocomplete ariaLabel="From airport" value={fromAp} onSelect={setFromAp} onTextChange={setFrom} placeholder="London, LTN, EGGW…" /></AvLabel>
+            <AvLabel label="To"><AirportAutocomplete ariaLabel="To airport" value={toAp} onSelect={setToAp} onTextChange={setTo} placeholder="Nice, NCE, LFMN…" /></AvLabel>
             <AvLabel label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={avField} /></AvLabel>
             <AvLabel label="Passengers"><input type="number" min={1} max={40} value={pax} onChange={(e) => setPax(Math.max(1, Number(e.target.value) || 1))} className={avField} /></AvLabel>
             <AvLabel label="Max price"><input type="number" min={0} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Any" className={avField} /></AvLabel>
@@ -207,7 +212,7 @@ function EnquiryDialog({ leg, pax, onClose }: { leg: PublicEmptyLeg | null; pax:
             <div className="text-xs uppercase tracking-[0.3em] text-primary">Enquiry received</div>
             <p className="font-serif text-2xl">Worldway reference: {ref}</p>
             <p className="text-muted-foreground">Our Private Aviation desk is confirming this flight with the operator and will contact you with confirmed availability and a secure booking and payment link.</p>
-            <Link to="/account" className="text-xs uppercase tracking-[0.3em] text-primary hover:underline">View in my account →</Link>
+            <Link to="/private-aviation/quote/$reference" params={{ reference: ref }} className="text-xs uppercase tracking-[0.3em] text-primary hover:underline">Track this enquiry →</Link>
           </div>
         ) : !auth.ready ? null : !auth.email ? (
           <SignInPrompt what="enquire about this empty leg" />

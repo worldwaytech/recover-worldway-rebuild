@@ -214,8 +214,8 @@ export async function fetchFeedLegs(force = false): Promise<FeedLeg[]> {
 /** Map supplier trip stage text to Worldway status. */
 export function mapStage(stage: string | null | undefined): string {
   const s = (stage ?? "").toLowerCase();
+  if (s.includes("close") || s.includes("lost") || s.includes("no booking") || s.includes("cancel")) return "closed";
   if (s.includes("book")) return "booked";
   if (s.includes("sent") || s.includes("option")) return "options_sent";
-  if (s.includes("close") || s.includes("lost") || s.includes("no booking")) return "closed";
   return "sourcing";
 }

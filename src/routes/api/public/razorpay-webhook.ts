@@ -74,6 +74,13 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
           if (record?.purpose === "membership" && record.user_id && record.plan_id) {
             await applyVerifiedMembership(record.user_id, record.plan_id);
           }
+          const avRef = (record?.reference as Record<string, unknown> | undefined)?.["aviation_reference"];
+          if (record?.purpose === "private_aviation" && typeof avRef === "string" && entity?.id) {
+            const { finalizeAviationPayment } = await import("@/lib/aviation/payment.server");
+            await finalizeAviationPayment({ reference: avRef, orderId, paymentId: entity.id, userId: record.user_id ?? null }).catch((e) =>
+              console.error("[razorpay-webhook] aviation finalize failed", (e as Error).message),
+            );
+          }
         }
 
         return Response.json({ received: true });

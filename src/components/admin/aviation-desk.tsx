@@ -5,6 +5,7 @@ import {
   adminAviationHealth,
   adminListAviationRequests,
   adminRefreshAviationStatus,
+  adminSetConfirmedQuote,
 } from "@/lib/aviation/private-aviation.functions";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,8 @@ export function AviationDesk() {
   const healthFn = useServerFn(adminAviationHealth);
   const listFn = useServerFn(adminListAviationRequests);
   const refreshFn = useServerFn(adminRefreshAviationStatus);
+  const quoteFn = useServerFn(adminSetConfirmedQuote);
+  const [quoting, setQuoting] = useState<any | null>(null);
   const qc = useQueryClient();
   const [health, setHealth] = useState<Awaited<ReturnType<typeof adminAviationHealth>> | null>(null);
   const [checking, setChecking] = useState(false);
@@ -81,7 +84,13 @@ export function AviationDesk() {
                     <td className="p-2">{r.customer_name}<div className="text-muted-foreground">{r.customer_email} · {r.customer_phone}</div></td>
                     <td className="p-2">{r.status}{r.last_error ? <div className="text-destructive">{String(r.last_error).slice(0, 120)}</div> : null}</td>
                     <td className="p-2">{r.supplier_trip_id ?? "—"}{r.supplier_status ? <div className="text-muted-foreground">{r.supplier_status}</div> : null}{r.supplier_tracking_link ? <a href={r.supplier_tracking_link} target="_blank" rel="noreferrer" className="block text-primary underline">listing</a> : null}</td>
-                    <td className="p-2">{r.supplier_trip_id && <Button size="sm" variant="outline" onClick={() => refresh(r.id)}>Refresh</Button>}</td>
+                    <td className="space-y-1 p-2">
+                      {r.supplier_trip_id && <Button size="sm" variant="outline" onClick={() => refresh(r.id)}>Refresh</Button>}
+                      {!r.paid_at && <Button size="sm" onClick={() => setQuoting(r)}>{r.quote_version ? "Re-quote" : "Enter quote"}</Button>}
+                      {r.quote_amount ? <div className="text-muted-foreground">{r.quote_currency} {r.quote_amount} v{r.quote_version}</div> : null}
+                      {r.receipt_number ? <div className="text-primary">{r.receipt_number}</div> : null}
+                      {Array.isArray(r.email_log) && r.email_log.length ? <div className="text-muted-foreground">emails: {r.email_log.map((e: any) => `${e.kind}:${e.status}`).join(", ")}</div> : null}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -89,6 +98,46 @@ export function AviationDesk() {
           </div>
         )}
       </div>
+      {quoting && (
+        <QuoteForm
+          row={quoting}
+          onCancel={() => setQuoting(null)}
+          onSubmit={async (v) => {
+            const r = await quoteFn({ data: { id: quoting.id, ...v } });
+            setMsg(r.ok ? `Quote v${r.version} saved for ${quoting.reference} (email: ${r.emailStatus}).` : r.error);
+            if (r.ok) setQuoting(null);
+            qc.invalidateQueries({ queryKey: ["admin-aviation-requests"] });
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function QuoteForm({ row, onCancel, onSubmit }: { row: any; onCancel: () => void; onSubmit: (v: { amount: number; currency: "INR" | "USD" | "GBP" | "EUR" | "AED"; aircraft: string; inclusions?: string; expiresAt: string }) => Promise<void> }) {
+  const [amount, setAmount] = useState(String(row.quote_amount ?? ""));
+  const [currency, setCurrency] = useState<"INR" | "USD" | "GBP" | "EUR" | "AED">(row.quote_currency ?? "USD");
+  const [aircraft, setAircraft] = useState(row.quote_details?.aircraft ?? row.aircraft_category ?? "");
+  const [inclusions, setInclusions] = useState(row.quote_details?.inclusions ?? "");
+  const [hours, setHours] = useState("48");
+  const cls = "w-full rounded border border-border bg-background px-2 py-1.5 text-sm";
+  return (
+    <div className="rounded-xl border border-primary/50 bg-card p-5 text-sm">
+      <h3 className="font-serif text-lg">Confirmed quote for {row.reference}</h3>
+      <p className="text-xs text-muted-foreground">Enter the final Worldway customer price (including any Worldway margin) from the operator's confirmed options. The customer pays exactly this amount.</p>
+      <div className="mt-3 grid gap-3 md:grid-cols-4">
+        <input aria-label="Amount" type="number" min={1} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={cls} placeholder="Amount" />
+        <select aria-label="Currency" value={currency} onChange={(e) => setCurrency(e.target.value as any)} className={cls}>
+          {["USD", "GBP", "EUR", "AED", "INR"].map((c) => <option key={c}>{c}</option>)}
+        </select>
+        <input aria-label="Aircraft" value={aircraft} onChange={(e) => setAircraft(e.target.value)} className={cls} placeholder="Aircraft" />
+        <input aria-label="Valid for hours" type="number" min={1} max={720} value={hours} onChange={(e) => setHours(e.target.value)} className={cls} />
+        <textarea aria-label="Inclusions" rows={2} value={inclusions} onChange={(e) => setInclusions(e.target.value)} className={`${cls} md:col-span-4`} placeholder="Inclusions, taxes, catering, cancellation terms (customer-facing, no partner names)" />
+      </div>
+      <div className="mt-3 flex gap-2">
+        <Button size="sm" onClick={() => onSubmit({ amount: Number(amount), currency, aircraft, inclusions: inclusions || undefined, expiresAt: new Date(Date.now() + Number(hours) * 3600_000).toISOString() })}>Save & notify customer</Button>
+        <Button size="sm" variant="outline" onClick={onCancel}>Cancel</Button>
+      </div>
+    </div>
   );
 }

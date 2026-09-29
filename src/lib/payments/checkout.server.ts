@@ -41,7 +41,7 @@ export type OrderInput = {
  * server-side fare confirmation. Client-supplied amounts are never charged.
  */
 export async function resolvePaymentAmount(
-  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string }; prePurchasedBookingId?: string },
+  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string }; prePurchasedBookingId?: string; aviationReference?: string },
 ): Promise<{
   amountMinor: number;
   currency: string;
@@ -54,6 +54,13 @@ export async function resolvePaymentAmount(
     }
     const plan = MEMBERSHIP_PLANS[planId];
     return { amountMinor: plan.amountMinor, currency: plan.currency, planId };
+  }
+
+  if (input.purpose === "private_aviation") {
+    if (!input.aviationReference) throw new Error("The private aviation reference is required.");
+    const { aviationQuoteAmount } = await import("@/lib/aviation/payment.server");
+    const r = await aviationQuoteAmount(input.aviationReference, await optionalUserId());
+    return { ...r, planId: null };
   }
 
   if (input.purpose === "flight" && input.prePurchasedBookingId) {

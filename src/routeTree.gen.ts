@@ -195,6 +195,7 @@ import { Route as TtcBrandSlugRouteImport } from './routes/ttc.$brand.$slug'
 import { Route as TransfersVoucherReferenceRouteImport } from './routes/transfers.voucher.$reference'
 import { Route as ToursJourneyIdRouteImport } from './routes/tours.journey.$id'
 import { Route as ToursBrowseHubRouteImport } from './routes/tours.browse.$hub'
+import { Route as PrivateAviationQuoteReferenceRouteImport } from './routes/private-aviation.quote.$reference'
 import { Route as MerchantBookingRefRouteImport } from './routes/merchant.booking.$ref'
 import { Route as DestinationsRegionCountryRouteImport } from './routes/destinations.$region.$country'
 import { Route as CrystalCruisesVoyagesCodeRouteImport } from './routes/crystal-cruises.voyages.$code'
@@ -1164,6 +1165,12 @@ const ToursBrowseHubRoute = ToursBrowseHubRouteImport.update({
   path: '/browse/$hub',
   getParentRoute: () => ToursRoute,
 } as any)
+const PrivateAviationQuoteReferenceRoute =
+  PrivateAviationQuoteReferenceRouteImport.update({
+    id: '/private-aviation/quote/$reference',
+    path: '/private-aviation/quote/$reference',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MerchantBookingRefRoute = MerchantBookingRefRouteImport.update({
   id: '/merchant/booking/$ref',
   path: '/merchant/booking/$ref',
@@ -1538,6 +1545,7 @@ export interface FileRoutesByFullPath {
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/merchant/booking/$ref': typeof MerchantBookingRefRoute
+  '/private-aviation/quote/$reference': typeof PrivateAviationQuoteReferenceRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1728,6 +1736,7 @@ export interface FileRoutesByTo {
   '/crystal-cruises/ships/$slug': typeof CrystalCruisesShipsSlugRoute
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/merchant/booking/$ref': typeof MerchantBookingRefRoute
+  '/private-aviation/quote/$reference': typeof PrivateAviationQuoteReferenceRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -1949,6 +1958,7 @@ export interface FileRoutesById {
   '/crystal-cruises/voyages/$code': typeof CrystalCruisesVoyagesCodeRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryRouteWithChildren
   '/merchant/booking/$ref': typeof MerchantBookingRefRoute
+  '/private-aviation/quote/$reference': typeof PrivateAviationQuoteReferenceRoute
   '/tours/browse/$hub': typeof ToursBrowseHubRoute
   '/tours/journey/$id': typeof ToursJourneyIdRoute
   '/transfers/voucher/$reference': typeof TransfersVoucherReferenceRoute
@@ -2171,6 +2181,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/voyages/$code'
     | '/destinations/$region/$country'
     | '/merchant/booking/$ref'
+    | '/private-aviation/quote/$reference'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2361,6 +2372,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/ships/$slug'
     | '/crystal-cruises/voyages/$code'
     | '/merchant/booking/$ref'
+    | '/private-aviation/quote/$reference'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2581,6 +2593,7 @@ export interface FileRouteTypes {
     | '/crystal-cruises/voyages/$code'
     | '/destinations/$region/$country'
     | '/merchant/booking/$ref'
+    | '/private-aviation/quote/$reference'
     | '/tours/browse/$hub'
     | '/tours/journey/$id'
     | '/transfers/voucher/$reference'
@@ -2685,6 +2698,7 @@ export interface RootRouteChildren {
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
   MerchantBookingRefRoute: typeof MerchantBookingRefRoute
+  PrivateAviationQuoteReferenceRoute: typeof PrivateAviationQuoteReferenceRoute
   TtcBrandSlugRoute: typeof TtcBrandSlugRoute
   VoyagesCruiseaBookingsRoute: typeof VoyagesCruiseaBookingsRoute
   VoyagesCruiseaIndexRoute: typeof VoyagesCruiseaIndexRoute
@@ -4003,6 +4017,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToursBrowseHubRouteImport
       parentRoute: typeof ToursRoute
     }
+    '/private-aviation/quote/$reference': {
+      id: '/private-aviation/quote/$reference'
+      path: '/private-aviation/quote/$reference'
+      fullPath: '/private-aviation/quote/$reference'
+      preLoaderRoute: typeof PrivateAviationQuoteReferenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/merchant/booking/$ref': {
       id: '/merchant/booking/$ref'
       path: '/merchant/booking/$ref'
@@ -4854,6 +4875,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
   BookKindSlugRoute: BookKindSlugRoute,
   MerchantBookingRefRoute: MerchantBookingRefRoute,
+  PrivateAviationQuoteReferenceRoute: PrivateAviationQuoteReferenceRoute,
   TtcBrandSlugRoute: TtcBrandSlugRoute,
   VoyagesCruiseaBookingsRoute: VoyagesCruiseaBookingsRoute,
   VoyagesCruiseaIndexRoute: VoyagesCruiseaIndexRoute,

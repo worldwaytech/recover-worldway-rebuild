@@ -228,6 +228,12 @@ export const requestJetConfirmation = createServerFn({ method: "POST" })
         })
         .eq("id", row.id);
       if (!res.ok) return { ok: false as const, error: "We couldn't submit your request. Our aviation desk has been notified and will contact you.", reference: row.reference };
+      const { sendAviationEmail } = await import("./emails.server");
+      await sendAviationEmail(row.id, data.email, {
+        kind: "request_received", reference: row.reference, customerName: `${data.firstName} ${data.lastName}`,
+        route: `${row.origin} → ${row.destination}`, departureDate: data.departureDate, passengers: row.passengers,
+        aircraft: data.aircraftCategory ?? null,
+      }).catch(() => null);
       return { ok: true as const, reference: row.reference, status: "sourcing" };
     } catch (e) {
       // Outcome unknown — never resend; flag for the desk.
@@ -358,6 +364,12 @@ export const enquireEmptyLeg = createServerFn({ method: "POST" })
         })
         .eq("id", row.id);
       if (!res.ok) return { ok: false as const, reference, error: "We couldn't reach the operator. Our aviation desk will contact you." };
+      const { sendAviationEmail } = await import("./emails.server");
+      await sendAviationEmail(row.id, data.email, {
+        kind: "request_received", reference, customerName: `${data.firstName} ${data.lastName}`,
+        route: `${row.origin} → ${row.destination}`, departureDate: leg.departureDate, passengers: data.passengers,
+        aircraft: leg.aircraft,
+      }).catch(() => null);
       return { ok: true as const, reference };
     } catch (e) {
       await db
@@ -428,7 +440,7 @@ export const adminListAviationRequests = createServerFn({ method: "GET" })
     const db = await admin();
     const { data } = await db
       .from("private_aviation_requests")
-      .select(`${SAFE_COLS}, customer_name, customer_email, customer_phone, special_requests, supplier_trip_id, supplier_status, supplier_tracking_link, last_error`)
+      .select(`${SAFE_COLS}, customer_name, customer_email, customer_phone, special_requests, supplier_trip_id, supplier_status, supplier_tracking_link, last_error, quote_amount, quote_currency, quote_details, quote_expires_at, quote_version, paid_at, paid_amount, paid_currency, receipt_number, email_log`)
       .order("created_at", { ascending: false })
       .limit(200);
     return { items: (data ?? []) as any[] };
@@ -447,10 +459,103 @@ export const adminRefreshAviationStatus = createServerFn({ method: "POST" })
     if (r.isError) return { ok: false as const, error: r.text.slice(0, 300) };
     const s = r.structured ?? {};
     const stage = String(s.status ?? s.stage ?? s.outcome ?? "");
-    const status = mapStage(stage || r.text);
+    const mapped = mapStage(stage || r.text);
+    const status = ["quoted", "paid"].includes(row.status) && mapped !== "booked" ? row.status : mapped;
     await db
       .from("private_aviation_requests")
       .update({ supplier_status: stage || null, status, supplier_response: { structured: s, text: r.text.slice(0, 4000) } })
       .eq("id", row.id);
     return { ok: true as const, status, stage };
+  });
+
+// ---------- Worldwide airport master ----------
+export type AirportOption = { iata: string; icao: string; name: string; city: string; country: string };
+
+export const searchAirportMaster = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({ q: z.string().trim().min(2).max(80) }).parse(d))
+  .handler(async ({ data }) => {
+    const { searchAirports } = await import("./airports.server");
+    return { items: searchAirports(data.q, 12).map(({ size: _s, ...a }) => a) as AirportOption[] };
+  });
+
+// ---------- Confirmed quotes (desk → customer) ----------
+export const adminSetConfirmedQuote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        amount: z.number().positive().max(10_000_000),
+        currency: z.enum(["INR", "USD", "GBP", "EUR", "AED"]),
+        aircraft: z.string().trim().min(2).max(120),
+        inclusions: z.string().trim().max(2000).optional(),
+        expiresAt: z.string().datetime(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    const db = await admin();
+    const { data: row } = await db.from("private_aviation_requests").select("*").eq("id", data.id).maybeSingle();
+    if (!row) return { ok: false as const, error: "Request not found." };
+    if (row.paid_at) return { ok: false as const, error: "This request is already paid." };
+    if (!row.user_id) return { ok: false as const, error: "This request has no customer account." };
+    if (new Date(data.expiresAt).getTime() <= Date.now()) return { ok: false as const, error: "Expiry must be in the future." };
+    const version = (row.quote_version ?? 0) + 1;
+    const { error } = await db
+      .from("private_aviation_requests")
+      .update({
+        status: "quoted",
+        quote_amount: data.amount,
+        quote_currency: data.currency,
+        quote_details: { aircraft: data.aircraft, inclusions: data.inclusions ?? null },
+        quote_expires_at: data.expiresAt,
+        quoted_at: new Date().toISOString(),
+        quoted_by: context.userId,
+        quote_version: version,
+      })
+      .eq("id", row.id)
+      .is("paid_at", null);
+    if (error) return { ok: false as const, error: error.message };
+    const { sendAviationEmail } = await import("./emails.server");
+    const emailStatus = await sendAviationEmail(row.id, row.customer_email, {
+      kind: "quote_ready",
+      reference: row.reference,
+      customerName: row.customer_name ?? "Guest",
+      route: `${row.origin} → ${row.destination}`,
+      departureDate: row.departure_date,
+      passengers: row.passengers,
+      aircraft: data.aircraft,
+      amount: data.amount,
+      currency: data.currency,
+      expiresAt: data.expiresAt,
+    });
+    return { ok: true as const, version, emailStatus };
+  });
+
+const refSchema = z.object({ reference: z.string().regex(/^WWPA-\d{6}-[0-9A-F]{6}$/) });
+
+export const getMyAviationQuote = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => refSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const { data: row } = await db
+      .from("private_aviation_requests")
+      .select(`${SAFE_COLS}, user_id, customer_name, customer_email, customer_phone, quote_amount, quote_currency, quote_details, quote_expires_at, quote_version, paid_at, paid_amount, paid_currency, receipt_number, payment_id`)
+      .eq("reference", data.reference)
+      .maybeSingle();
+    if (!row || row.user_id !== context.userId) return { ok: false as const, error: "We couldn't find this request in your account." };
+    const { user_id: _u, ...safe } = row;
+    return { ok: true as const, request: safe as Record<string, any> };
+  });
+
+export const completeAviationPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    refSchema.extend({ orderId: z.string().min(6).max(80), paymentId: z.string().min(6).max(80) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { finalizeAviationPayment } = await import("./payment.server");
+    return finalizeAviationPayment({ ...data, userId: context.userId });
   });
