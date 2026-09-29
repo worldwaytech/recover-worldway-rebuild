@@ -59,3 +59,10 @@ describe("pricing separation", () => {
     expect(JSON.stringify(redactForExternal({ note: "via SkyAccess" }))).not.toMatch(/skyaccess/i);
   });
 });
+
+import { SKYACCESS_CUSTOMER_APPROVED } from "../skyaccess.server";
+describe("SkyAccess test-only gate", () => {
+  it("is not approved for customer pricing", () => {
+    expect(SKYACCESS_CUSTOMER_APPROVED).toBe(false);
+  });
+});

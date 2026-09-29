@@ -84,8 +84,11 @@ export const getJetEstimate = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[private-aviation] primary estimate failed", (e as Error).message);
     }
-    if (!options.length && !data.roundTrip) {
-      // Secondary partner prices one-way legs only; round trips never get a one-way figure.
+    // SkyAccess is UNAPPROVED / TEST ONLY: its adapter stays connected for backend
+    // testing, but no SkyAccess-derived price may reach customers until supplier
+    // approval and genuine live-data validation flip SKYACCESS_CUSTOMER_APPROVED.
+    const { SKYACCESS_CUSTOMER_APPROVED } = await import("./skyaccess.server");
+    if (SKYACCESS_CUSTOMER_APPROVED && !options.length && !data.roundTrip) {
       try {
         const { skyCharterEstimate } = await import("./skyaccess.server");
         const sky = await skyCharterEstimate({ origin: data.origin, destination: data.destination, passengers: data.passengers });
