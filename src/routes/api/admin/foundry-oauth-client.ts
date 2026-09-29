@@ -41,7 +41,9 @@ export const Route = createFileRoute('/api/admin/foundry-oauth-client')({
           client_type: 'confidential',
           grant_types: ['authorization_code', 'refresh_token'],
           scope: 'openid email profile offline_access',
-          redirect_uris: [],
+          // Placeholder — replaced with the exact Foundry redirect URI once
+          // Microsoft Foundry shows it during Custom OAuth configuration.
+          redirect_uris: ['https://worldwaytravelsgroup.com/.lovable/oauth/foundry-callback-pending'],
         });
         if (error || !data) {
           return Response.json({ error: error?.message ?? 'create_failed' }, { status: 500 });
