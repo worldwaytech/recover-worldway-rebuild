@@ -247,7 +247,7 @@ function ExecutivePage() {
       <section className="mt-14 rounded-2xl border border-border/60 bg-card p-8">
         <h2 className="font-serif text-2xl">Ready for onboarding</h2>
         <p className="mt-3 max-w-3xl text-muted-foreground">
-          To activate Abercrombie &amp; Kent, Crystal Cruises or any registered operator, provide
+          To activate any registered operator, provide
           the sandbox credentials listed in their connector record. The runtime handles
           authentication, retries, rate limiting, caching and normalisation automatically.
         </p>
