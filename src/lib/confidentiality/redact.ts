@@ -33,7 +33,7 @@ export function supplierTerms(): string[] {
   return [...new Set([...KNOWN_SUPPLIER_TERMS, ...fromRegistry])].sort((a, b) => b.length - a.length);
 }
 function re() {
-  if (!termRe) termRe = new RegExp(`(?<![\\w-])(${supplierTerms().map(escape).join("|")})(?![\\w-])`, "gi");
+  if (!termRe) termRe = new RegExp(`(?<![\\w])(${supplierTerms().map(escape).join("|")})(?![\\w])`, "gi");
   termRe.lastIndex = 0;
   return termRe;
 }
