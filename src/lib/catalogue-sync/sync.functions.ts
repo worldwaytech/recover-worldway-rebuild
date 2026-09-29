@@ -190,7 +190,7 @@ type Overrides = Partial<Journey>;
 
 export const getSyncedJourneyCards = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const db = publicClient();
+    const db = await admin();
     const { data, error } = await db
       .from("aktg_journeys")
       .select("slug, is_active, card, worldway_overrides")
@@ -212,7 +212,7 @@ export const getSyncedJourney = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) => ({ slug: String(input.slug).slice(0, 200) }))
   .handler(async ({ data }) => {
     try {
-      const db = publicClient();
+      const db = await admin();
       const { data: row } = await db
         .from("aktg_journeys")
         .select("is_active, data, worldway_overrides")
