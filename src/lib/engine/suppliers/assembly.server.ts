@@ -101,7 +101,7 @@ export async function revalidateProposals(req: TripRequirements, shortlist: Asse
       if (c && !c.offer) { rejectedItems.push({ kind: o.kind, title: o.title, reason: `Removed: ${c.result.reason}`, indicativeFrom: null, ref: o.externalId }); return []; }
       return [c?.offer ?? o];
     }),
-  })).filter((c) => c.offers.length);
+  })).filter((c, i, all) => c.offers.length && all.findIndex((x) => x.offers.map((o) => o.externalId).join() === c.offers.map((o) => o.externalId).join()) === i);
   const proposals = runCandidates(req, candidates, currency, onRequest, rv).map((p) => ({
     ...p,
     onRequest: [...p.onRequest, ...rejectedItems.filter((x) => shortlist.find((s) => s.id === p.id)?.offers.some((o) => o.externalId === x.ref)).map((x) => ({ ...x, status: "UNAVAILABLE" as const }))],
