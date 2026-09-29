@@ -25,11 +25,11 @@ export const Route = createFileRoute("/ttc/$brand/$slug")({
       };
     }
     const { tour } = loaderData as { tour: TtcTourDetail };
-    const title = `${tour.name} — ${tour.brandLabel ?? "TTC"} | Worldway`;
+    const title = `${tour.name} — Guided Journey | Worldway`;
     const description = (
       tour.summary ??
       tour.description ??
-      `${tour.name}: a ${tour.durationDays ?? ""}-day guided journey from ${tour.brandLabel ?? "TTC"}.`
+      `${tour.name}: a ${tour.durationDays ?? ""}-day guided journey curated by Worldway.`
     ).slice(0, 155);
     const image = tour.heroImage && tour.heroImage.startsWith("https://") ? tour.heroImage : null;
     return {
@@ -98,15 +98,15 @@ function TtcTourPage() {
     <PageShell>
       <nav className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
         <Link to="/ttc" className="hover:text-primary">
-          TTC Collection
+          Guided Journeys
         </Link>
         <span className="px-2">/</span>
-        <span>{tour.brandLabel ?? tour.brand}</span>
+        <span>{tour.name}</span>
       </nav>
 
       <header className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
-          <Badge variant="outline">{tour.brandLabel ?? tour.brand}</Badge>
+          <Badge variant="outline">Worldway Guided Journey</Badge>
           <h1 className="text-3xl font-semibold leading-tight md:text-4xl">{tour.name}</h1>
           {tour.subtitle ? <p className="text-sm text-muted-foreground">{tour.subtitle}</p> : null}
           {tour.summary ? <p className="text-lg text-muted-foreground">{tour.summary}</p> : null}
@@ -138,7 +138,7 @@ function TtcTourPage() {
             ) : null}
             {tour.supplierTourId ? (
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">TTC code</dt>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Journey code</dt>
                 <dd>{tour.supplierTourId}</dd>
               </div>
             ) : null}
@@ -165,23 +165,15 @@ function TtcTourPage() {
           </p>
           {tour.priceNote ? <p className="text-xs text-muted-foreground">{tour.priceNote}</p> : null}
           <p className="text-xs text-muted-foreground">
-            Lead-in price as published by {tour.brandLabel ?? "TTC"}. Live availability and revalidated
-            pricing activate once TTC API access is granted to our account; until then our team confirms
+            Worldway lead-in price. Live availability and revalidated
+            pricing activate automatically once connected; until then our team confirms
             every departure directly with the operator.
           </p>
           <Button asChild className="w-full">
-            <Link to="/contact" search={{ subject: `TTC — ${tour.name}` } as never}>
+            <Link to="/contact" search={{ subject: `Guided journey — ${tour.name}` } as never}>
               Request this journey
             </Link>
           </Button>
-          <a
-            href={tour.sourceUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-            className="block text-center text-xs text-muted-foreground underline"
-          >
-            View the operator page
-          </a>
         </aside>
       </header>
 
@@ -290,8 +282,7 @@ function TtcTourPage() {
       ) : null}
 
       <p className="text-xs text-muted-foreground">
-        Source: {tour.brandLabel ?? tour.brand} official publication ({tour.sourceUrl}). Last
-        synchronised {new Date(tour.syncedAt).toLocaleDateString()}.
+        Last synchronised {new Date(tour.syncedAt).toLocaleDateString()}.
       </p>
     </PageShell>
   );

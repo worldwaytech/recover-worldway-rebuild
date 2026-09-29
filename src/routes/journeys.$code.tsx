@@ -20,8 +20,8 @@ export const Route = createFileRoute("/journeys/$code")({
       };
     }
     const j = loaderData.journey;
-    const title = `${j.title} — ${j.partnerName} | Worldway Travels Group`;
-    const description = `${j.durationDays}-day ${j.collection.toLowerCase()} in ${j.country} with ${j.partnerName}. From ${j.currency} ${j.priceFrom.toLocaleString()} per person.`;
+    const title = `${j.title} | Worldway Travels Group`;
+    const description = `${j.durationDays}-day ${j.collection.toLowerCase()} in ${j.country} curated by Worldway. From ${j.currency} ${j.priceFrom.toLocaleString()} per person.`;
     const url = `https://worldwaytravelsgroup.com/journeys/${j.code}`;
     return {
       meta: [
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/journeys/$code")({
             name: j.title,
             description: j.subtitle,
             touristType: j.groupStyle,
-            provider: { "@type": "Organization", name: j.partnerName },
+            provider: { "@type": "Organization", name: "Worldway Travels Group" },
             offers: { "@type": "Offer", price: j.priceFrom, priceCurrency: j.currency },
             aggregateRating: j.reviewCount
               ? { "@type": "AggregateRating", ratingValue: j.rating, reviewCount: j.reviewCount }

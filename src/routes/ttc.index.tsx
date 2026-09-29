@@ -13,13 +13,13 @@ import { mediaUrl } from "@/lib/media";
 export const Route = createFileRoute("/ttc/")({
   head: () => ({
     meta: [
-      { title: "TTC Guided Journeys — Trafalgar, Luxury Gold, Insight & Contiki | Worldway" },
+      { title: "Guided Journeys | Worldway Travels Group" },
       {
         name: "description",
         content:
-          "Browse The Travel Corporation collection with Worldway: Trafalgar, Insight Vacations, Luxury Gold, Costsaver, Contiki, AAT Kings and Brendan Vacations guided journeys with full itineraries, inclusions and pricing.",
+          "Browse Worldway guided journeys with full itineraries, inclusions and pricing.",
       },
-      { property: "og:title", content: "TTC Guided Journeys — Worldway Travels Group" },
+      { property: "og:title", content: "Guided Journeys — Worldway Travels Group" },
       {
         property: "og:description",
         content:
@@ -91,7 +91,7 @@ function TtcCataloguePage() {
         })) as TtcCatalogueResult;
         setResult(res);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "The TTC catalogue could not be loaded.");
+        setError(e instanceof Error ? e.message : "The guided journeys could not be loaded.");
       } finally {
         setLoading(false);
       }
@@ -247,7 +247,7 @@ function TtcCataloguePage() {
 
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">
-          {result.total.toLocaleString()} TTC journeys
+          {result.total.toLocaleString()} guided journeys
         </h2>
         <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
           Page {result.page} of {result.pageCount}
@@ -306,7 +306,7 @@ function TtcCataloguePage() {
 
       {result.items.length === 0 && !loading ? (
         <p className="rounded-lg border border-border p-6 text-sm text-muted-foreground">
-          No TTC journeys match these filters yet.
+          No guided journeys match these filters yet.
         </p>
       ) : null}
 
