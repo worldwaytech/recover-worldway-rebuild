@@ -185,7 +185,7 @@ export const getSyncedJourneyCards = createServerFn({ method: "GET" }).handler(a
     const inactive: string[] = [];
     for (const row of data ?? []) {
       if (!row.is_active) inactive.push(row.slug as string);
-      else cards.push({ ...(row.card as Journey), ...((row.worldway_overrides as Overrides) ?? {}) });
+      else cards.push({ ...(row.card as unknown as Journey), ...((row.worldway_overrides as unknown as Overrides) ?? {}) });
     }
     return { cards, inactive };
   } catch {
@@ -206,7 +206,7 @@ export const getSyncedJourney = createServerFn({ method: "GET" })
       if (!row) return null;
       return {
         active: Boolean(row.is_active),
-        journey: { ...(row.data as Journey), ...((row.worldway_overrides as Overrides) ?? {}) },
+        journey: { ...(row.data as unknown as Journey), ...((row.worldway_overrides as unknown as Overrides) ?? {}) },
       };
     } catch {
       return null;
