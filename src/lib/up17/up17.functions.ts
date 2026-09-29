@@ -183,6 +183,9 @@ export const up17BusSearch = createServerFn({ method: "POST" })
     };
   });
 
+const extraKeys = z.array(z.string().trim().min(1).max(80)).max(12).optional();
+const extraSelectionSchema = z.object({ baggage: extraKeys, meal: extraKeys, seat: extraKeys }).strict();
+
 const paxSchema = z.object({
   title: z.enum(["Mr", "Mrs", "Ms", "Dr", "Mstr", "Miss"]),
   first_name: z.string().trim().min(1).max(60),
@@ -203,7 +206,22 @@ const paxSchema = z.object({
   pan: z.string().trim().max(12).optional(),
   baggage_codes: z.array(z.string().trim().max(24)).max(8).optional(),
   meal_codes: z.array(z.string().trim().max(24)).max(8).optional(),
+  extras: extraSelectionSchema.optional(),
 });
+
+export const up17FlightExtrasLookup = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        resultIndex: z.string().trim().min(1).max(200),
+        searchTokenId: z.string().trim().min(1).max(200),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { flightExtras } = await import("./up17.server");
+    return flightExtras(data);
+  });
 
 export const up17ConfirmFlightFare = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
@@ -245,7 +263,15 @@ export const up17BookFlightTicket = createServerFn({ method: "POST" })
       resultIndex: data.resultIndex,
       searchTokenId: data.searchTokenId,
     });
-    const total = confirmedFare.data?.total;
+    const { resolveFlightExtras } = await import("./up17.server");
+    const extras = await resolveFlightExtras({
+      resultIndex: data.resultIndex,
+      searchTokenId: data.searchTokenId,
+      selections: data.passengers.map((p) => p.extras ?? {}),
+    });
+    if (!extras.ok) return { ok: false as const, error: extras.error, booking: null };
+    const fareTotal = confirmedFare.data?.total;
+    const total = fareTotal === null || fareTotal === undefined ? fareTotal : fareTotal + extras.total;
     const currency = confirmedFare.data?.currency.trim().toUpperCase();
     if (!confirmedFare.ok || total === null || total === undefined || !currency) {
       return {
@@ -285,7 +311,11 @@ export const up17BookFlightTicket = createServerFn({ method: "POST" })
       res = await up17BookFlight({
         resultIndex: data.resultIndex,
         searchTokenId: data.searchTokenId,
-        passengers: data.passengers,
+        passengers: data.passengers.map((p, i) => {
+          const { extras: _sel, ...rest } = p;
+          const ssr = extras.perPax[i];
+          return ssr && (ssr.baggage.length || ssr.meal.length || ssr.seat.length) ? { ...rest, ssr } : rest;
+        }),
       });
     } catch (e) {
       await releaseFulfilmentClaim(data.orderId);

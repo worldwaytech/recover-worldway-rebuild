@@ -53,7 +53,11 @@ export type PayRequest = {
   email?: string;
   phone?: string;
   reference?: Record<string, string | number | boolean>;
-  flightFare?: { resultIndex: string; searchTokenId: string };
+  flightFare?: {
+    resultIndex: string;
+    searchTokenId: string;
+    extras?: { baggage?: string[]; meal?: string[]; seat?: string[] }[];
+  };
   prePurchasedBookingId?: string;
   aviationReference?: string;
 };

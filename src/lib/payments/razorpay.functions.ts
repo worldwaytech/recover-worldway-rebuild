@@ -25,6 +25,18 @@ const createOrderSchema = z
       .object({
         resultIndex: z.string().trim().min(1).max(200),
         searchTokenId: z.string().trim().min(1).max(200),
+        extras: z
+          .array(
+            z
+              .object({
+                baggage: z.array(z.string().trim().min(1).max(80)).max(12).optional(),
+                meal: z.array(z.string().trim().min(1).max(80)).max(12).optional(),
+                seat: z.array(z.string().trim().min(1).max(80)).max(12).optional(),
+              })
+              .strict(),
+          )
+          .max(9)
+          .optional(),
       })
       .strict()
       .optional(),
