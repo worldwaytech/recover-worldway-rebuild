@@ -1,3 +1,4 @@
+import type { FxTable } from "../pricing";
 // Live intelligent package assembly:
 // Search → Normalize → Trip Graph → Rank → Optimize → Revalidate → Audit →
 // Price → Booking Readiness. Real supplier data only; gaps are on-request.
@@ -63,7 +64,7 @@ function onRequestFor(offers: CanonicalOffer[], extra: OnRequestItem[]): Classif
 }
 
 /** Pure combination + pipeline step (tested without network). */
-export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays: Map<string, CanonicalOffer[]>, inbound: CanonicalOffer[], currency: string, onRequest: OnRequestItem[], cruises: CanonicalOffer[] = []) {
+export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays: Map<string, CanonicalOffer[]>, inbound: CanonicalOffer[], currency: string, onRequest: OnRequestItem[], cruises: CanonicalOffer[] = [], fx: FxTable = { [currency]: 1 }) {
   const candidates: { id: string; offers: CanonicalOffer[] }[] = [];
   for (const out of outbound.slice(0, 3)) {
     const checkIn = localDateIn(out.end.at, out.end.timezone);
@@ -76,11 +77,11 @@ export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays
       candidates.push({ id: `P${candidates.length + 1}`, offers });
     }
   }
-  return runCandidates(req, candidates, currency, onRequest, new Map());
+  return runCandidates(req, candidates, currency, onRequest, new Map(), fx);
 }
 
-function runCandidates(req: TripRequirements, candidates: { id: string; offers: CanonicalOffer[] }[], currency: string, onRequest: OnRequestItem[], revalidation: Map<string, RevalidationResult>) {
-  const results = runPackagePipeline({ requirements: req, candidates, registry: supplierRegistry(), currency, fx: { [currency]: 1 }, ruleFor: commercialRuleFor });
+function runCandidates(req: TripRequirements, candidates: { id: string; offers: CanonicalOffer[] }[], currency: string, onRequest: OnRequestItem[], revalidation: Map<string, RevalidationResult>, fx: FxTable = { [currency]: 1 }) {
+  const results = runPackagePipeline({ requirements: req, candidates, registry: supplierRegistry(), currency, fx, ruleFor: commercialRuleFor });
   return results.map((r) => {
     const offers = candidates.find((c) => c.id === r.id)!.offers;
     return { id: r.id, offers, result: r, readiness: readinessOf(offers, r, revalidation), onRequest: onRequestFor(offers, onRequest) } satisfies AssembledProposal;
@@ -88,7 +89,7 @@ function runCandidates(req: TripRequirements, candidates: { id: string; offers: 
 }
 
 /** Revalidate the optimised shortlist, then re-audit, re-price and re-check readiness. */
-export async function revalidateProposals(req: TripRequirements, shortlist: AssembledProposal[], currency: string, onRequest: OnRequestItem[], check: (o: CanonicalOffer[]) => Promise<{ offer: CanonicalOffer | null; result: RevalidationResult }[]>) {
+export async function revalidateProposals(req: TripRequirements, shortlist: AssembledProposal[], currency: string, onRequest: OnRequestItem[], check: (o: CanonicalOffer[]) => Promise<{ offer: CanonicalOffer | null; result: RevalidationResult }[]>, fx: FxTable = { [currency]: 1 }) {
   const unique = [...new Map(shortlist.flatMap((p) => p.offers).map((o) => [o.externalId, o])).values()];
   const checked = await check(unique);
   const byId = new Map(checked.map((c) => [c.result.externalId, c]));
@@ -102,7 +103,7 @@ export async function revalidateProposals(req: TripRequirements, shortlist: Asse
       return [c?.offer ?? o];
     }),
   })).filter((c, i, all) => c.offers.length && all.findIndex((x) => x.offers.map((o) => o.externalId).join() === c.offers.map((o) => o.externalId).join()) === i);
-  const proposals = runCandidates(req, candidates, currency, onRequest, rv).map((p) => ({
+  const proposals = runCandidates(req, candidates, currency, onRequest, rv, fx).map((p) => ({
     ...p,
     onRequest: [...p.onRequest, ...rejectedItems.filter((x) => shortlist.find((s) => s.id === p.id)?.offers.some((o) => o.externalId === x.ref)).map((x) => ({ ...x, status: "UNAVAILABLE" as const }))],
   }));
@@ -142,15 +143,20 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
     ...(cruise && cruise.unscheduled ? [{ kind: "cruise", title: `${cruise.unscheduled} live voyage(s) in your window`, reason: "Embark/disembark times not published for scheduling; confirmed on request.", indicativeFrom: null, ref: "cruise" }] : []),
     { kind: "activity", title: "Guided small-group tours", reason: "Tour suppliers are not production-certified; availability confirmed on request.", indicativeFrom: null, ref: "tours" },
   ];
-  const ranked = out.offers.length ? combine(req, out.offers, stays, back.offers, currency, extra, cruise?.offers ?? []) : [];
+  // Live FX (approved provider only) for any non-target currencies; failure leaves identity → mixed currencies fail safely.
+  const allOffers = [...out.offers, ...back.offers, ...[...stays.values()].flat(), ...(cruise?.offers ?? [])];
+  const { approvedFx } = await import("./fx.server");
+  const fxr = await approvedFx(currency, [...new Set(allOffers.map((o) => o.net.currency))]);
+  const ranked = out.offers.length ? combine(req, out.offers, stays, back.offers, currency, extra, cruise?.offers ?? [], fxr.table) : [];
   // Optimize: shortlist the best-ranked packages, then revalidate before pricing/readiness.
   const shortlist = ranked.slice(0, 3);
   const { revalidateOffers } = await import("./revalidate.server");
-  const final = shortlist.length ? await revalidateProposals(req, shortlist, currency, extra, revalidateOffers) : { proposals: [], revalidation: [] };
+  const final = shortlist.length ? await revalidateProposals(req, shortlist, currency, extra, revalidateOffers, fxr.table) : { proposals: [], revalidation: [] };
   const used = new Set(final.proposals.flatMap((p) => p.offers.map((o) => o.supplierKey)));
   const reg = supplierRegistry();
   return {
     currency,
+    fx: fxr.audit,
     proposals: final.proposals,
     coverage: SUPPLIER_CATALOG.map((s) => ({ supplierKey: s.supplierKey, kinds: s.kinds, live: liveStatus(s), usedInAssembly: used.has(s.supplierKey), bookable: bookingBlockers(reg.get(s.supplierKey)).length === 0 })),
     sources: [
