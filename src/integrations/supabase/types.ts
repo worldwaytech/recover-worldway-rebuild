@@ -2131,6 +2131,255 @@ export type Database = {
           },
         ]
       }
+      journey_approvals: {
+        Row: {
+          created_at: string
+          decided_by: string
+          decision: string
+          id: string
+          journey_id: string
+          note: string | null
+          simulation_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_by: string
+          decision: string
+          id?: string
+          journey_id: string
+          note?: string | null
+          simulation_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_by?: string
+          decision?: string
+          id?: string
+          journey_id?: string
+          note?: string | null
+          simulation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_approvals_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_approvals_simulation_id_fkey"
+            columns: ["simulation_id"]
+            isOneToOne: false
+            referencedRelation: "journey_simulations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_events: {
+        Row: {
+          actor: string | null
+          created_at: string
+          detail: Json
+          event_type: string
+          from_state: string | null
+          id: string
+          journey_id: string
+          to_state: string | null
+          version: number | null
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          event_type: string
+          from_state?: string | null
+          id?: string
+          journey_id: string
+          to_state?: string | null
+          version?: number | null
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          from_state?: string | null
+          id?: string
+          journey_id?: string
+          to_state?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_events_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_simulations: {
+        Row: {
+          after_issues: Json
+          after_offers: Json
+          after_pricing: Json | null
+          base_version: number
+          bookable_after: boolean
+          change: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          impacted: Json
+          journey_id: string
+          material: Json
+          new_issues: Json
+          price_delta: number | null
+          requires_approval: boolean
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          after_issues?: Json
+          after_offers: Json
+          after_pricing?: Json | null
+          base_version: number
+          bookable_after?: boolean
+          change: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          impacted?: Json
+          journey_id: string
+          material?: Json
+          new_issues?: Json
+          price_delta?: number | null
+          requires_approval?: boolean
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          after_issues?: Json
+          after_offers?: Json
+          after_pricing?: Json | null
+          base_version?: number
+          bookable_after?: boolean
+          change?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          impacted?: Json
+          journey_id?: string
+          material?: Json
+          new_issues?: Json
+          price_delta?: number | null
+          requires_approval?: boolean
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_simulations_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_versions: {
+        Row: {
+          bookable: boolean
+          created_at: string
+          created_by: string | null
+          dependencies: Json
+          graph: Json
+          id: string
+          issues: Json
+          journey_id: string
+          offers: Json
+          parent_version: number | null
+          pricing: Json | null
+          reason: string
+          simulation_id: string | null
+          version: number
+        }
+        Insert: {
+          bookable?: boolean
+          created_at?: string
+          created_by?: string | null
+          dependencies?: Json
+          graph: Json
+          id?: string
+          issues?: Json
+          journey_id: string
+          offers: Json
+          parent_version?: number | null
+          pricing?: Json | null
+          reason: string
+          simulation_id?: string | null
+          version: number
+        }
+        Update: {
+          bookable?: boolean
+          created_at?: string
+          created_by?: string | null
+          dependencies?: Json
+          graph?: Json
+          id?: string
+          issues?: Json
+          journey_id?: string
+          offers?: Json
+          parent_version?: number | null
+          pricing?: Json | null
+          reason?: string
+          simulation_id?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_versions_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journeys: {
+        Row: {
+          created_at: string
+          currency: string
+          current_version: number
+          id: string
+          requirements: Json
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          current_version?: number
+          id?: string
+          requirements?: Json
+          state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          current_version?: number
+          id?: string
+          requirements?: Json
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
