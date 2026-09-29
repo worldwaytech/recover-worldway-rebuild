@@ -205,6 +205,7 @@ import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
 import { Route as ApiPublicSupplierImageRouteImport } from './routes/api/public/supplier-image'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
+import { Route as ApiAdminFoundryOauthClientRouteImport } from './routes/api/admin/foundry-oauth-client'
 import { Route as AdminOpsYachtsRouteImport } from './routes/admin.ops.yachts'
 import { Route as AdminOpsVillasRouteImport } from './routes/admin.ops.villas'
 import { Route as AdminOpsTripServicesRouteImport } from './routes/admin.ops.trip-services'
@@ -1217,6 +1218,12 @@ const ApiPublicRazorpayWebhookRoute =
     path: '/api/public/razorpay-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAdminFoundryOauthClientRoute =
+  ApiAdminFoundryOauthClientRouteImport.update({
+    id: '/api/admin/foundry-oauth-client',
+    path: '/api/admin/foundry-oauth-client',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminOpsYachtsRoute = AdminOpsYachtsRouteImport.update({
   id: '/ops/yachts',
   path: '/ops/yachts',
@@ -1520,6 +1527,7 @@ export interface FileRoutesByFullPath {
   '/admin/ops/trip-services': typeof AdminOpsTripServicesRoute
   '/admin/ops/villas': typeof AdminOpsVillasRoute
   '/admin/ops/yachts': typeof AdminOpsYachtsRoute
+  '/api/admin/foundry-oauth-client': typeof ApiAdminFoundryOauthClientRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1710,6 +1718,7 @@ export interface FileRoutesByTo {
   '/admin/ops/trip-services': typeof AdminOpsTripServicesRoute
   '/admin/ops/villas': typeof AdminOpsVillasRoute
   '/admin/ops/yachts': typeof AdminOpsYachtsRoute
+  '/api/admin/foundry-oauth-client': typeof ApiAdminFoundryOauthClientRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -1929,6 +1938,7 @@ export interface FileRoutesById {
   '/admin/ops/trip-services': typeof AdminOpsTripServicesRoute
   '/admin/ops/villas': typeof AdminOpsVillasRoute
   '/admin/ops/yachts': typeof AdminOpsYachtsRoute
+  '/api/admin/foundry-oauth-client': typeof ApiAdminFoundryOauthClientRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
@@ -2150,6 +2160,7 @@ export interface FileRouteTypes {
     | '/admin/ops/trip-services'
     | '/admin/ops/villas'
     | '/admin/ops/yachts'
+    | '/api/admin/foundry-oauth-client'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2340,6 +2351,7 @@ export interface FileRouteTypes {
     | '/admin/ops/trip-services'
     | '/admin/ops/villas'
     | '/admin/ops/yachts'
+    | '/api/admin/foundry-oauth-client'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2558,6 +2570,7 @@ export interface FileRouteTypes {
     | '/admin/ops/trip-services'
     | '/admin/ops/villas'
     | '/admin/ops/yachts'
+    | '/api/admin/foundry-oauth-client'
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
@@ -2666,6 +2679,7 @@ export interface RootRouteChildren {
   VoyagesIndexRoute: typeof VoyagesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiAdminFoundryOauthClientRoute: typeof ApiAdminFoundryOauthClientRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
@@ -4059,6 +4073,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/foundry-oauth-client': {
+      id: '/api/admin/foundry-oauth-client'
+      path: '/api/admin/foundry-oauth-client'
+      fullPath: '/api/admin/foundry-oauth-client'
+      preLoaderRoute: typeof ApiAdminFoundryOauthClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/ops/yachts': {
       id: '/admin/ops/yachts'
       path: '/ops/yachts'
@@ -4827,6 +4848,7 @@ const rootRouteChildren: RootRouteChildren = {
   VoyagesIndexRoute: VoyagesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiAdminFoundryOauthClientRoute: ApiAdminFoundryOauthClientRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
