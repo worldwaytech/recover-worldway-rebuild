@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getIntegrationCenter } from "@/lib/integrations/integrations.functions";
 import { portal, type PortalUser } from "@/lib/portal-store";
-import { admin } from "@/lib/admin-store";
+import { getAdminOverview } from "@/lib/admin/console.functions";
+import { useConsole, NotConfigured } from "@/components/admin/console-ui";
+import { listAuditTrail } from "@/lib/admin/oversight.functions";
 import { Button } from "@/components/ui/button";
 import { useVerifiedRole } from "@/hooks/use-verified-role";
 import { Activity, ShieldAlert, Database, KeyRound, ScrollText, Network } from "lucide-react";
@@ -18,8 +20,6 @@ export const Route = createFileRoute("/admin/super")({
 function SuperAdmin() {
   const nav = useNavigate();
   const [me, setMe] = useState<PortalUser | null>(null);
-  const [users, setUsers] = useState<PortalUser[]>([]);
-  const [tick, setTick] = useState(0);
   const verified = useVerifiedRole(["super_admin"]);
   useEffect(() => {
     if (verified === "checking") return;
@@ -33,14 +33,16 @@ function SuperAdmin() {
       return;
     }
     setMe(s);
-    setUsers(portal.users());
   }, [nav, verified]);
   if (verified !== "allowed" || !me) return null;
-  void tick;
+  return <SuperBody />;
+}
 
-  const keys = admin.apiKeys();
-  const flags = admin.flags();
-  const audit = admin.audit();
+function SuperBody() {
+  const ov = useConsole<Awaited<ReturnType<typeof getAdminOverview>>>("overview", getAdminOverview);
+  const au = useConsole<any>("audit-super", listAuditTrail, { limit: 6 });
+  const auditRows: any[] = Array.isArray(au.data) ? au.data : (au.data?.rows ?? au.data?.entries ?? []);
+  const n = (v: number | null | undefined) => (v == null ? "—" : String(v));
 
   return (
     <div className="space-y-8">
@@ -53,16 +55,10 @@ function SuperAdmin() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Users" value={String(users.length)} />
-        <StatTile
-          label="Admins"
-          value={String(users.filter((u) => u.role === "admin" || u.role === "super_admin").length)}
-        />
-        <StatTile
-          label="Active keys"
-          value={String(keys.filter((k) => k.status === "active").length)}
-        />
-        <StatTile label="Audit events" value={String(audit.length)} />
+        <StatTile label="Users" value={n(ov.data?.users)} />
+        <StatTile label="Staff" value={n(ov.data?.admins)} />
+        <StatTile label="Active suppliers" value={n(ov.data?.providersOn)} />
+        <StatTile label="Agents" value={n(ov.data?.agents)} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-primary/30 bg-primary/5 p-5">
@@ -96,22 +92,7 @@ function SuperAdmin() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">
             <KeyRound className="h-4 w-4 text-primary" /> Feature flags
           </div>
-          <ul className="mt-4 space-y-2 text-sm">
-            {flags.map((f) => (
-              <li key={f.key} className="flex items-center justify-between">
-                <span className="text-muted-foreground">{f.label}</span>
-                <button
-                  onClick={() => {
-                    admin.toggleFlag(f.key);
-                    setTick((t) => t + 1);
-                  }}
-                  className={`rounded-full border px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.25em] ${f.enabled ? "border-primary/40 text-primary" : "border-border/60 text-muted-foreground"}`}
-                >
-                  {f.enabled ? "on" : "off"}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4"><NotConfigured what="No server-side feature flags yet" note="Supplier switches live in the API & Sync Center." /></div>
         </div>
       </div>
 
@@ -137,40 +118,18 @@ function SuperAdmin() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-destructive/40 bg-card/60 p-6">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-destructive">
-            <ShieldAlert className="h-4 w-4" /> Danger zone
-          </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Wipes all demo data (users, CRM, API keys, bookings, payments, audit) in this browser.
-            Irreversible.
-          </p>
-          <Button
-            variant="destructive"
-            className="mt-4"
-            onClick={() => {
-              Object.keys(localStorage)
-                .filter((k) => k.startsWith("wwtg:"))
-                .forEach((k) => localStorage.removeItem(k));
-              location.reload();
-            }}
-          >
-            Reset all data
-          </Button>
-        </div>
         <div className="rounded-2xl border border-border/60 bg-card/60 p-6">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">
             <Database className="h-4 w-4 text-primary" /> Recent audit
           </div>
           <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
-            {audit.slice(0, 6).map((a) => (
-              <li key={a.id} className="flex justify-between gap-2">
-                <span className="truncate">
-                  {a.action} · {a.target}
-                </span>
-                <span className="whitespace-nowrap">{new Date(a.at).toLocaleTimeString()}</span>
+            {auditRows.slice(0, 6).map((a: any, i: number) => (
+              <li key={a.id ?? i} className="flex justify-between gap-2">
+                <span className="truncate">{a.action} · {a.target_table ?? a.target ?? ""}</span>
+                <span className="whitespace-nowrap">{new Date(a.created_at ?? a.at).toLocaleString()}</span>
               </li>
             ))}
+            {!auditRows.length && <li>No audit events yet.</li>}
           </ul>
         </div>
       </div>

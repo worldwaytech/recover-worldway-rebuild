@@ -157,15 +157,18 @@ import { Route as AdminViatorAffiliateRouteImport } from './routes/admin.viator-
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
+import { Route as AdminTravelDnaRouteImport } from './routes/admin.travel-dna'
 import { Route as AdminToursRouteImport } from './routes/admin.tours'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminRatehawkRouteImport } from './routes/admin.ratehawk'
+import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as AdminJourneysRouteImport } from './routes/admin.journeys'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 import { Route as AdminHbxRouteImport } from './routes/admin.hbx'
 import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
@@ -177,6 +180,7 @@ import { Route as AdminBokunRouteImport } from './routes/admin.bokun'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminApiRouteImport } from './routes/admin.api'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminAlertsRouteImport } from './routes/admin.alerts'
 import { Route as AdminAiriqRouteImport } from './routes/admin.airiq'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
 import { Route as ActivitiesCodeRouteImport } from './routes/activities.$code'
@@ -977,6 +981,11 @@ const AdminTripjackRoute = AdminTripjackRouteImport.update({
   path: '/tripjack',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTravelDnaRoute = AdminTravelDnaRouteImport.update({
+  id: '/travel-dna',
+  path: '/travel-dna',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminToursRoute = AdminToursRouteImport.update({
   id: '/tours',
   path: '/tours',
@@ -1002,6 +1011,11 @@ const AdminRatehawkRoute = AdminRatehawkRouteImport.update({
   path: '/ratehawk',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPricingRoute = AdminPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
@@ -1020,6 +1034,11 @@ const AdminOperationsRoute = AdminOperationsRouteImport.update({
 const AdminKycRoute = AdminKycRouteImport.update({
   id: '/kyc',
   path: '/kyc',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminJourneysRoute = AdminJourneysRouteImport.update({
+  id: '/journeys',
+  path: '/journeys',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
@@ -1075,6 +1094,11 @@ const AdminApiRoute = AdminApiRouteImport.update({
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAlertsRoute = AdminAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAiriqRoute = AdminAiriqRouteImport.update({
@@ -1458,6 +1482,7 @@ export interface FileRoutesByFullPath {
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/airiq': typeof AdminAiriqRoute
+  '/admin/alerts': typeof AdminAlertsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -1469,15 +1494,18 @@ export interface FileRoutesByFullPath {
   '/admin/crystal': typeof AdminCrystalRoute
   '/admin/hbx': typeof AdminHbxRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/journeys': typeof AdminJourneysRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/pricing': typeof AdminPricingRoute
   '/admin/ratehawk': typeof AdminRatehawkRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
@@ -1658,6 +1686,7 @@ export interface FileRoutesByTo {
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/airiq': typeof AdminAiriqRoute
+  '/admin/alerts': typeof AdminAlertsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -1669,15 +1698,18 @@ export interface FileRoutesByTo {
   '/admin/crystal': typeof AdminCrystalRoute
   '/admin/hbx': typeof AdminHbxRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/journeys': typeof AdminJourneysRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/pricing': typeof AdminPricingRoute
   '/admin/ratehawk': typeof AdminRatehawkRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
@@ -1885,6 +1917,7 @@ export interface FileRoutesById {
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/airiq': typeof AdminAiriqRoute
+  '/admin/alerts': typeof AdminAlertsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -1896,15 +1929,18 @@ export interface FileRoutesById {
   '/admin/crystal': typeof AdminCrystalRoute
   '/admin/hbx': typeof AdminHbxRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/journeys': typeof AdminJourneysRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/pricing': typeof AdminPricingRoute
   '/admin/ratehawk': typeof AdminRatehawkRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
   '/admin/users': typeof AdminUsersRoute
@@ -2115,6 +2151,7 @@ export interface FileRouteTypes {
     | '/activities/$code'
     | '/admin/agents'
     | '/admin/airiq'
+    | '/admin/alerts'
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
@@ -2126,15 +2163,18 @@ export interface FileRouteTypes {
     | '/admin/crystal'
     | '/admin/hbx'
     | '/admin/integrations'
+    | '/admin/journeys'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/pricing'
     | '/admin/ratehawk'
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/travel-dna'
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
@@ -2315,6 +2355,7 @@ export interface FileRouteTypes {
     | '/activities/$code'
     | '/admin/agents'
     | '/admin/airiq'
+    | '/admin/alerts'
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
@@ -2326,15 +2367,18 @@ export interface FileRouteTypes {
     | '/admin/crystal'
     | '/admin/hbx'
     | '/admin/integrations'
+    | '/admin/journeys'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/pricing'
     | '/admin/ratehawk'
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/travel-dna'
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
@@ -2541,6 +2585,7 @@ export interface FileRouteTypes {
     | '/activities/$code'
     | '/admin/agents'
     | '/admin/airiq'
+    | '/admin/alerts'
     | '/admin/analytics'
     | '/admin/api'
     | '/admin/audit'
@@ -2552,15 +2597,18 @@ export interface FileRouteTypes {
     | '/admin/crystal'
     | '/admin/hbx'
     | '/admin/integrations'
+    | '/admin/journeys'
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
     | '/admin/payments'
+    | '/admin/pricing'
     | '/admin/ratehawk'
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
     | '/admin/tours'
+    | '/admin/travel-dna'
     | '/admin/tripjack'
     | '/admin/ttc'
     | '/admin/users'
@@ -3842,6 +3890,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTripjackRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/travel-dna': {
+      id: '/admin/travel-dna'
+      path: '/travel-dna'
+      fullPath: '/admin/travel-dna'
+      preLoaderRoute: typeof AdminTravelDnaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/tours': {
       id: '/admin/tours'
       path: '/tours'
@@ -3877,6 +3932,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRatehawkRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pricing': {
+      id: '/admin/pricing'
+      path: '/pricing'
+      fullPath: '/admin/pricing'
+      preLoaderRoute: typeof AdminPricingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/payments': {
       id: '/admin/payments'
       path: '/payments'
@@ -3903,6 +3965,13 @@ declare module '@tanstack/react-router' {
       path: '/kyc'
       fullPath: '/admin/kyc'
       preLoaderRoute: typeof AdminKycRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/journeys': {
+      id: '/admin/journeys'
+      path: '/journeys'
+      fullPath: '/admin/journeys'
+      preLoaderRoute: typeof AdminJourneysRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/integrations': {
@@ -3980,6 +4049,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/admin/analytics'
       preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/alerts': {
+      id: '/admin/alerts'
+      path: '/alerts'
+      fullPath: '/admin/alerts'
+      preLoaderRoute: typeof AdminAlertsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/airiq': {
@@ -4419,6 +4495,7 @@ const AccountRouteWithChildren =
 interface AdminRouteChildren {
   AdminAgentsRoute: typeof AdminAgentsRoute
   AdminAiriqRoute: typeof AdminAiriqRoute
+  AdminAlertsRoute: typeof AdminAlertsRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApiRoute: typeof AdminApiRoute
   AdminAuditRoute: typeof AdminAuditRoute
@@ -4430,15 +4507,18 @@ interface AdminRouteChildren {
   AdminCrystalRoute: typeof AdminCrystalRoute
   AdminHbxRoute: typeof AdminHbxRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
+  AdminJourneysRoute: typeof AdminJourneysRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminPricingRoute: typeof AdminPricingRoute
   AdminRatehawkRoute: typeof AdminRatehawkRoute
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
   AdminToursRoute: typeof AdminToursRoute
+  AdminTravelDnaRoute: typeof AdminTravelDnaRoute
   AdminTripjackRoute: typeof AdminTripjackRoute
   AdminTtcRoute: typeof AdminTtcRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -4458,6 +4538,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgentsRoute: AdminAgentsRoute,
   AdminAiriqRoute: AdminAiriqRoute,
+  AdminAlertsRoute: AdminAlertsRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApiRoute: AdminApiRoute,
   AdminAuditRoute: AdminAuditRoute,
@@ -4469,15 +4550,18 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCrystalRoute: AdminCrystalRoute,
   AdminHbxRoute: AdminHbxRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
+  AdminJourneysRoute: AdminJourneysRoute,
   AdminKycRoute: AdminKycRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminPricingRoute: AdminPricingRoute,
   AdminRatehawkRoute: AdminRatehawkRoute,
   AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
   AdminToursRoute: AdminToursRoute,
+  AdminTravelDnaRoute: AdminTravelDnaRoute,
   AdminTripjackRoute: AdminTripjackRoute,
   AdminTtcRoute: AdminTtcRoute,
   AdminUsersRoute: AdminUsersRoute,
