@@ -361,7 +361,7 @@ export function Up17FlightResults({
             <FilterGroup title="Fare source">
               {facets.sources.map((s) => (
                 <button key={s} type="button" onClick={() => toggle(sources, s, setSources)} className={chip(sources.includes(s))}>
-                  {s}
+                  {`Fare option ${facets.sources.indexOf(s) + 1}`}
                 </button>
               ))}
             </FilterGroup>
@@ -521,7 +521,7 @@ function OfferCard({
               {fare?.seatsAvailable !== null && fare?.seatsAvailable !== undefined && fare.seatsAvailable <= 5 ? (
                 <Tag tone="warn">{fare.seatsAvailable} seats left</Tag>
               ) : null}
-              {fare?.source ? <Tag>{fare.source}</Tag> : null}
+              
             </div>
           </div>
         </div>

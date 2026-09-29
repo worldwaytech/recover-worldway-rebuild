@@ -43,7 +43,7 @@ function VoucherPage() {
     setBusy(true);
     try {
       const r = await cancel({ data: { reference } });
-      setMsg(r.status === "cancelled" ? "Your transfer has been cancelled." : `Status: ${r.supplierStatus}`);
+      setMsg(r.status === "cancelled" ? "Your transfer has been cancelled." : `Status: ${r.status}`);
       await q.refetch();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Cancellation failed.");
@@ -70,7 +70,6 @@ function VoucherPage() {
               <div>
                 <div className="text-xs uppercase tracking-[0.3em] text-primary">Transfer voucher</div>
                 <h1 className="mt-1 text-2xl">Worldway reference {v.worldwayReference}</h1>
-                <p className="text-sm">Supplier reference number: <strong>{v.supplierReference}</strong></p>
                 <p className="text-sm">Booking confirmation date: {v.confirmationDate?.replace("T", " ")}</p>
                 <p className="text-sm">Status: {b?.status === "cancelled" ? "CANCELLED" : v.status}</p>
               </div>

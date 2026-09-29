@@ -49,7 +49,7 @@ type PaymentInstance = {
   destruct?: () => void;
 };
 
-const CARD_CONTAINER_ID = "viator-card-frame-holder";
+const CARD_CONTAINER_ID = "ww-card-frame-holder";
 
 declare global {
   interface Window {
@@ -179,7 +179,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
             ...(props.startTime ? { startTime: props.startTime } : {}),
             ...(props.languageGuide ? { languageGuide: props.languageGuide } : {}),
             booker: props.booker,
-            lines: [{ supplier: "viator", productKind: "activity" }],
+            lines: [{ supplier: "ww-activity", productKind: "activity" }],
           },
         })) as {
           ok: boolean;
@@ -454,7 +454,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
             {formatHoldExpiry(session.holdExpiresAt) ? (
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Supplier hold until</span>
-                <span data-testid="viator-hold-expiry" className="text-foreground">
+                <span data-testid="ww-hold-expiry" className="text-foreground">
                   {formatHoldExpiry(session.holdExpiresAt)}
                 </span>
               </div>
@@ -676,7 +676,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
             <div
               ref={containerRef}
               id={CARD_CONTAINER_ID}
-              data-testid="viator-card-element"
+              data-testid="ww-card-element"
               className="min-h-[220px] rounded-lg border border-border/60 bg-background/40 p-2"
             />
             <p className="text-[11px] text-muted-foreground">

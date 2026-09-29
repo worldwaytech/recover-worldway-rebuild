@@ -17,6 +17,6 @@ export default defineTool({
     const { callPartner } = await import("@/lib/wwl.server");
     const res = await callPartner("walletBalance", { clientEmail: email });
     const { externalToolResult } = await import("@/lib/confidentiality/redact");
-    return externalToolResult(res, !res.ok);
+    return externalToolResult(await (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(res, { absolute: true }), !res.ok);
   },
 });

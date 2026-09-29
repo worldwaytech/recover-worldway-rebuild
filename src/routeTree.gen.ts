@@ -131,6 +131,7 @@ import { Route as JourneysCodeRouteImport } from './routes/journeys.$code'
 import { Route as InsuranceSlugRouteImport } from './routes/insurance.$slug'
 import { Route as HotelsHbxRouteImport } from './routes/hotels.hbx'
 import { Route as HoneymoonSlugRouteImport } from './routes/honeymoon.$slug'
+import { Route as GoTokenRouteImport } from './routes/go.$token'
 import { Route as FamilySlugRouteImport } from './routes/family.$slug'
 import { Route as ExpeditionCruisesSlugRouteImport } from './routes/expedition-cruises.$slug'
 import { Route as DestinationsRegionRouteImport } from './routes/destinations.$region'
@@ -843,6 +844,11 @@ const HoneymoonSlugRoute = HoneymoonSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => HoneymoonRoute,
 } as any)
+const GoTokenRoute = GoTokenRouteImport.update({
+  id: '/go/$token',
+  path: '/go/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FamilySlugRoute = FamilySlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -1478,6 +1484,7 @@ export interface FileRoutesByFullPath {
   '/destinations/$region': typeof DestinationsRegionRouteWithChildren
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
+  '/go/$token': typeof GoTokenRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
   '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
@@ -1673,6 +1680,7 @@ export interface FileRoutesByTo {
   '/cultural/$slug': typeof CulturalSlugRoute
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
+  '/go/$token': typeof GoTokenRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
   '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
@@ -1897,6 +1905,7 @@ export interface FileRoutesById {
   '/destinations/$region': typeof DestinationsRegionRouteWithChildren
   '/expedition-cruises/$slug': typeof ExpeditionCruisesSlugRoute
   '/family/$slug': typeof FamilySlugRoute
+  '/go/$token': typeof GoTokenRoute
   '/honeymoon/$slug': typeof HoneymoonSlugRoute
   '/hotels/hbx': typeof HotelsHbxRoute
   '/insurance/$slug': typeof InsuranceSlugRoute
@@ -2123,6 +2132,7 @@ export interface FileRouteTypes {
     | '/destinations/$region'
     | '/expedition-cruises/$slug'
     | '/family/$slug'
+    | '/go/$token'
     | '/honeymoon/$slug'
     | '/hotels/hbx'
     | '/insurance/$slug'
@@ -2318,6 +2328,7 @@ export interface FileRouteTypes {
     | '/cultural/$slug'
     | '/expedition-cruises/$slug'
     | '/family/$slug'
+    | '/go/$token'
     | '/honeymoon/$slug'
     | '/hotels/hbx'
     | '/insurance/$slug'
@@ -2541,6 +2552,7 @@ export interface FileRouteTypes {
     | '/destinations/$region'
     | '/expedition-cruises/$slug'
     | '/family/$slug'
+    | '/go/$token'
     | '/honeymoon/$slug'
     | '/hotels/hbx'
     | '/insurance/$slug'
@@ -2715,6 +2727,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ActivitiesCodeRoute: typeof ActivitiesCodeRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  GoTokenRoute: typeof GoTokenRoute
   MarketplaceIdRoute: typeof MarketplaceIdRoute
   MediaTokenRoute: typeof MediaTokenRoute
   MerchantCodeRoute: typeof MerchantCodeRoute
@@ -3607,6 +3620,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/honeymoon/$slug'
       preLoaderRoute: typeof HoneymoonSlugRouteImport
       parentRoute: typeof HoneymoonRoute
+    }
+    '/go/$token': {
+      id: '/go/$token'
+      path: '/go/$token'
+      fullPath: '/go/$token'
+      preLoaderRoute: typeof GoTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/family/$slug': {
       id: '/family/$slug'
@@ -4916,6 +4936,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ActivitiesCodeRoute: ActivitiesCodeRoute,
   BlogSlugRoute: BlogSlugRoute,
+  GoTokenRoute: GoTokenRoute,
   MarketplaceIdRoute: MarketplaceIdRoute,
   MediaTokenRoute: MediaTokenRoute,
   MerchantCodeRoute: MerchantCodeRoute,

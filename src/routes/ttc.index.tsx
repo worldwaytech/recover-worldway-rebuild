@@ -6,7 +6,7 @@ import { inputClass } from "@/components/search-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTtcCatalogueFacets, searchTtcTours } from "@/lib/ttc/ttc.functions";
-import { TTC_BRANDS, TTC_BRAND_ORDER, TTC_SORT_OPTIONS, ttcTourPath } from "@/lib/ttc/config";
+import { TTC_SORT_OPTIONS, ttcTourPath } from "@/lib/ttc/config";
 import type { TtcCatalogueResult, TtcFacets } from "@/lib/ttc/types";
 import { mediaUrl } from "@/lib/media";
 
@@ -100,12 +100,7 @@ function TtcCataloguePage() {
   );
 
   const [pendingSort, setPendingSort] = useState<string | null>(null);
-  const visibleBrands = [
-    ...facets.brands,
-    ...TTC_BRAND_ORDER.filter((brand) => !facets.brands.some((entry) => entry.brand === brand)).map(
-      (brand) => ({ brand, label: TTC_BRANDS[brand].label, count: 0 }),
-    ),
-  ];
+  const visibleBrands = facets.brands;
   useEffect(() => {
     if (pendingSort === null) return;
     void run(1, { sort: pendingSort });

@@ -95,7 +95,7 @@ function BookingWorkspace() {
     <div className="space-y-6">
       <Panel
         title={b.title}
-        description={`${b.product_type} · ref ${b.reference} · travel ${fmtDate(b.travel_date)}${b.supplier ? ` · ${b.supplier}` : ""}`}
+        description={`${b.product_type} · ref ${b.reference} · travel ${fmtDate(b.travel_date)}`}
         actions={
           <Link
             to="/account/bookings"
@@ -111,11 +111,6 @@ function BookingWorkspace() {
           <Stat label="Paid" value={money(b.amount_paid, currency)} />
           <Stat label="Balance" value={money(b.balance_due, currency)} />
         </div>
-        {b.supplier_reference && (
-          <p className="mt-4 text-xs text-muted-foreground">
-            Supplier reference {b.supplier_reference} · supplier status {b.supplier_status}
-          </p>
-        )}
       </Panel>
 
       <Panel title="Payment schedule" description="Deposit and balance instalments.">

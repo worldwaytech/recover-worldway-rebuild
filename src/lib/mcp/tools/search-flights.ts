@@ -26,6 +26,6 @@ export default defineTool({
       cabin: input.cabin ?? "economy",
     });
     const { externalToolResult } = await import("@/lib/confidentiality/redact");
-    return externalToolResult(res, !res.ok);
+    return externalToolResult(await (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(res, { absolute: true }), !res.ok);
   },
 });

@@ -898,7 +898,7 @@ function ActivityDetailPage() {
 
                 {bookingAccess === false ? (
                   <p
-                    data-testid="viator-booking-access-note"
+                    data-testid="ww-booking-access-note"
                     className="rounded-lg border border-border/70 bg-background/60 p-3 text-[11px] leading-relaxed text-muted-foreground"
                   >
                     Book &amp; Pay Now / Pay Later activate automatically once the supplier

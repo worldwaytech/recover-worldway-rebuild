@@ -371,8 +371,8 @@ function BookPage() {
                 <p>{booking.amount ? money(booking.amount, booking.currency) : "On request"}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Crystal reference</p>
-                <p>{booking.supplierReference ?? "Pending"}</p>
+                <p className="text-muted-foreground">Cruise confirmation</p>
+                <p>{booking.supplierReference ? "Confirmed" : "Pending"}</p>
               </div>
             </div>
             {booking.status !== "confirmed" &&

@@ -49,7 +49,8 @@ export type RouteDecision = {
 
 function isViatorActivityLine(line: CheckoutLine): boolean {
   return (
-    line.supplier.trim().toLowerCase() === "viator" &&
+    // "ww-activity" is the neutral browser code for the same live activity rail.
+    ["viator", "ww-activity"].includes(line.supplier.trim().toLowerCase()) &&
     line.productKind.trim().toLowerCase() === "activity"
   );
 }

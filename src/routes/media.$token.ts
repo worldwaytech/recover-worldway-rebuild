@@ -17,7 +17,15 @@ export const Route = createFileRoute("/media/$token")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const raw = decodeMediaToken(String(params.token).slice(0, 4096));
+        const tok = String(params.token).slice(0, 4096);
+        let raw: string | null;
+        if (tok.startsWith("s.")) {
+          const { unseal } = await import("@/lib/confidentiality/seal.server");
+          const v = await unseal(tok.slice(2));
+          raw = typeof v === "string" ? v : null;
+        } else {
+          raw = decodeMediaToken(tok);
+        }
         let target: URL;
         try {
           target = new URL(raw ?? "");

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { journeys as staticJourneys } from "@/lib/all-journeys-content";
+import { getStaticJourneys } from "@/lib/all-journeys.functions";
 import { getSyncedJourneyCards } from "@/lib/catalogue-sync/sync.functions";
 import { mergeCatalogue } from "@/lib/catalogue-sync/merge";
 import {
@@ -28,11 +28,11 @@ export const Route = createFileRoute("/all-journeys/")({
     q: (s.q as string) || undefined,
   }),
   loader: async () => {
-    try {
-      return await getSyncedJourneyCards();
-    } catch {
-      return { cards: [], inactive: [] };
-    }
+    const [synced, st] = await Promise.all([
+      getSyncedJourneyCards().catch(() => ({ cards: [], inactive: [] })),
+      getStaticJourneys().catch(() => ({ journeys: [] as Journey[] })),
+    ]);
+    return { synced, staticJourneys: st.journeys as Journey[] };
   },
   head: () => ({
     meta: [
@@ -57,8 +57,8 @@ export const Route = createFileRoute("/all-journeys/")({
 
 function Journeys() {
   const search = Route.useSearch();
-  const synced = Route.useLoaderData();
-  const journeys = useMemo(() => mergeCatalogue(staticJourneys, synced), [synced]);
+  const { synced, staticJourneys } = Route.useLoaderData();
+  const journeys = useMemo(() => mergeCatalogue(staticJourneys, synced), [synced, staticJourneys]);
   const navigate = useNavigate();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);

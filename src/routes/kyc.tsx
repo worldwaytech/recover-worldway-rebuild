@@ -395,7 +395,7 @@ function KycPage() {
                           <div className="flex items-center gap-2 text-sm font-medium">
                             {KYC_DOCS.find((x) => x.type === d.type)?.label}
                             <Badge variant="outline" className="text-[10px]">
-                              {d.provider}
+                              Worldway verified
                             </Badge>
                           </div>
                           <div className="mt-0.5 truncate text-xs text-muted-foreground">
