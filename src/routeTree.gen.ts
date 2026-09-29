@@ -221,6 +221,8 @@ import { Route as DestinationsRegionCountryIndexRouteImport } from './routes/des
 import { Route as VoyagesCruiseaSailingIdRouteImport } from './routes/voyages.cruisea.sailing.$id'
 import { Route as VoyagesCruiseaBookingIdRouteImport } from './routes/voyages.cruisea.booking.$id'
 import { Route as DestinationsRegionCountryDestinationRouteImport } from './routes/destinations.$region.$country.$destination'
+import { Route as AuthV1OauthTokenRouteImport } from './routes/auth_.v1.oauth.token'
+import { Route as AuthV1OauthAuthorizeRouteImport } from './routes/auth_.v1.oauth.authorize'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
 import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/public/hooks/integration-sync'
 import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/api/public/hooks/hbx-transfers-refresh'
@@ -1304,6 +1306,16 @@ const DestinationsRegionCountryDestinationRoute =
     path: '/$destination',
     getParentRoute: () => DestinationsRegionCountryRoute,
   } as any)
+const AuthV1OauthTokenRoute = AuthV1OauthTokenRouteImport.update({
+  id: '/auth_/v1/oauth/token',
+  path: '/auth/v1/oauth/token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthV1OauthAuthorizeRoute = AuthV1OauthAuthorizeRouteImport.update({
+  id: '/auth_/v1/oauth/authorize',
+  path: '/auth/v1/oauth/authorize',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPartnerFeedPartnerIdRoute =
   ApiPublicPartnerFeedPartnerIdRouteImport.update({
     id: '/api/public/partner-feed/$partnerId',
@@ -1562,6 +1574,8 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
+  '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
+  '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
@@ -1753,6 +1767,8 @@ export interface FileRoutesByTo {
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
+  '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
+  '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
@@ -1975,6 +1991,8 @@ export interface FileRoutesById {
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
+  '/auth_/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
+  '/auth_/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
@@ -2198,6 +2216,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
+    | '/auth/v1/oauth/authorize'
+    | '/auth/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
@@ -2389,6 +2409,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
+    | '/auth/v1/oauth/authorize'
+    | '/auth/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
@@ -2610,6 +2632,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
     | '/api/public/partner-feed/$partnerId'
+    | '/auth_/v1/oauth/authorize'
+    | '/auth_/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
@@ -2708,6 +2732,8 @@ export interface RootRouteChildren {
   ApiPublicHooksHbxTransfersRefreshRoute: typeof ApiPublicHooksHbxTransfersRefreshRoute
   ApiPublicHooksIntegrationSyncRoute: typeof ApiPublicHooksIntegrationSyncRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
+  AuthV1OauthAuthorizeRoute: typeof AuthV1OauthAuthorizeRoute
+  AuthV1OauthTokenRoute: typeof AuthV1OauthTokenRoute
   VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
   VoyagesCruiseaSailingIdRoute: typeof VoyagesCruiseaSailingIdRoute
   ApiPublicHooksIntegrationWebhookProviderKeyRoute: typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
@@ -4199,6 +4225,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DestinationsRegionCountryDestinationRouteImport
       parentRoute: typeof DestinationsRegionCountryRoute
     }
+    '/auth_/v1/oauth/token': {
+      id: '/auth_/v1/oauth/token'
+      path: '/auth/v1/oauth/token'
+      fullPath: '/auth/v1/oauth/token'
+      preLoaderRoute: typeof AuthV1OauthTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth_/v1/oauth/authorize': {
+      id: '/auth_/v1/oauth/authorize'
+      path: '/auth/v1/oauth/authorize'
+      fullPath: '/auth/v1/oauth/authorize'
+      preLoaderRoute: typeof AuthV1OauthAuthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/partner-feed/$partnerId': {
       id: '/api/public/partner-feed/$partnerId'
       path: '/api/public/partner-feed/$partnerId'
@@ -4887,6 +4927,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksHbxTransfersRefreshRoute,
   ApiPublicHooksIntegrationSyncRoute: ApiPublicHooksIntegrationSyncRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
+  AuthV1OauthAuthorizeRoute: AuthV1OauthAuthorizeRoute,
+  AuthV1OauthTokenRoute: AuthV1OauthTokenRoute,
   VoyagesCruiseaBookingIdRoute: VoyagesCruiseaBookingIdRoute,
   VoyagesCruiseaSailingIdRoute: VoyagesCruiseaSailingIdRoute,
   ApiPublicHooksIntegrationWebhookProviderKeyRoute:
