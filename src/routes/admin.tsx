@@ -58,6 +58,12 @@ const NAV: Nav[] = [
     ["/admin/bookings", "Bookings", ClipboardList],
     ["/admin/operations", "Booking operations", ClipboardList],
     ["/admin/payments", "Payments", CreditCard],
+    ["/admin/alerts", "Operations alerts", ShieldAlert],
+  ]),
+  ...G("Packages & Pricing", [
+    ["/admin/journeys", "Journey console", Network],
+    ["/admin/pricing", "Pricing & FX", CreditCard],
+    ["/admin/travel-dna", "Travel DNA & AI", BadgeCheck],
   ]),
   ...G("API & Registry", [
     ["/admin/api", "API Management", KeyRound],
