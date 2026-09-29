@@ -63,8 +63,12 @@ export function pricePackage(
   items: NormalizedComponent[],
   target: string,
   fx: FxTable,
-  ruleFor: (c: NormalizedComponent) => PricingRule,
+  ruleFor: (c: NormalizedComponent) => PricingRule | null,
 ) {
-  const lines = items.map((c) => priceComponent(c, target, fx, ruleFor(c)));
+  const lines = items.map((c) => {
+    const rule = ruleFor(c);
+    if (!rule) throw new Error(`No Worldway commercial rule for ${c.title}`);
+    return priceComponent(c, target, fx, rule);
+  });
   return { currency: target, lines, total: round2(lines.reduce((s, l) => s + l.customerPrice, 0)) };
 }
