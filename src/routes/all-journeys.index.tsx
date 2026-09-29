@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { getStaticJourneys } from "@/lib/all-journeys.functions";
-import type { Journey } from "@/lib/data";
 import { getSyncedJourneyCards } from "@/lib/catalogue-sync/sync.functions";
 import { mergeCatalogue } from "@/lib/catalogue-sync/merge";
 import {
