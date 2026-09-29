@@ -13,6 +13,8 @@ const KNOWN_SUPPLIER_TERMS = [
   "G Adventures", "Bokun", "Bókun", "OCTO", "Crystal Cruises", "Abercrombie & Kent", "A&K",
   "AKTG", "TTC", "The Travel Corporation", "TourRadar", "Sabre", "Amadeus", "Travelport",
   "WorldwayLuxe", "Worldway Luxe Partner API", "worldwayluxe.com",
+  "Abercrombie", "Contiki", "Insight Vacations", "Luxury Gold", "CostSaver", "AAT Kings",
+  "Brendan Vacations", "Uniworld", "Hotelbeds Group", "Juniper", "GIATA", "Expedia EPS",
 ];
 
 /** Keys that carry supplier identity, routing or credentials — never external. */
@@ -37,6 +39,12 @@ function re() {
 }
 function has(s: string) {
   return new RegExp(re().source, "i").test(s);
+}
+
+/** Replace supplier/operator/brand names in free text (no URL handling). */
+export function redactNames(s: string): string {
+  if (!has(s)) return s;
+  return s.replace(re(), "Worldway").replace(/Worldway(\s+Worldway)+/g, "Worldway");
 }
 
 /** Replace supplier names/hosts in free text with Worldway branding. */
