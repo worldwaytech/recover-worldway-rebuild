@@ -17,6 +17,7 @@ export type PaymentRow = {
   verified_at?: string | null;
   fulfilled_at?: string | null;
   fulfilment_reference?: string | null;
+  reference?: Record<string, unknown> | null;
 };
 
 
