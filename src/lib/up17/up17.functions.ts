@@ -344,3 +344,29 @@ export const up17FlightBookingLookup = createServerFn({ method: "POST" })
     });
     return { ok: res.ok, error: res.error, booking: res.data ?? null };
   });
+
+/** Real supplier calendar fares with the approved Worldway flight markup applied. */
+export const up17CalendarFareLookup = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        origin: iata,
+        destination: iata,
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        cabin: z.enum(["economy", "premium_economy", "business", "first"]).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { up17CalendarFares } = await import("./up17.server");
+    const { commercialRuleFor } = await import("@/lib/engine/suppliers/commercial.server");
+    const rule = commercialRuleFor({ supplierKey: "up17" });
+    const res = await up17CalendarFares(data);
+    if (!res.ok || !rule) return { ok: false as const, fares: [] as { date: string; price: number; lowest: boolean }[], currency: "INR" };
+    const fares = (res.data?.fares ?? []).map((f) => ({
+      date: f.date,
+      price: Math.round(f.fare * (1 + rule.markupPercent / 100) + rule.serviceFee),
+      lowest: f.lowestOfMonth,
+    }));
+    return { ok: true as const, fares, currency: "INR" };
+  });

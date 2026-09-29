@@ -1254,3 +1254,56 @@ export async function up17FlightBookingDetail(args: {
   if (!res.ok) return { ok: false, status: res.status, error: res.error };
   return { ok: true, status: res.status, data: normalizeBooking(res.data) };
 }
+
+// ---------------------------------------------------------------- calendar fares
+// Official UP17 getcalendarfare: supplier-returned lowest fare per departure
+// date. Never interpolated — dates without a supplier fare are simply absent.
+export type Up17CalendarFare = { date: string; airline: string; fare: number; lowestOfMonth: boolean };
+
+export async function up17CalendarFares(args: {
+  origin: string;
+  destination: string;
+  date: string;
+  cabin?: Up17SearchInput["cabin"];
+}): Promise<Up17Result<{ fares: Up17CalendarFare[] }>> {
+  const res = await callUp17<unknown>("/airservice/rest/getcalendarfare", {
+    JourneyType: 1,
+    PreferredCarriers: null,
+    CabinClass: CABIN_MAP[args.cabin ?? "economy"] ?? 1,
+    AirSegments: [{ Origin: args.origin.toUpperCase(), Destination: args.destination.toUpperCase(), PreferredTime: `${args.date}T00:00:00` }],
+    Sources: null,
+  });
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  const rows = (asRec(res.data)["Result"] as unknown[] | undefined) ?? [];
+  const fares = rows
+    .map((r) => asRec(r))
+    .map((r) => ({
+      date: str(r["DepartureDate"]).slice(0, 10),
+      airline: str(r["AirlineCode"]),
+      fare: Number(r["Fare"]),
+      lowestOfMonth: r["IsLowestFareOfMonth"] === true,
+    }))
+    .filter((f) => /^\d{4}-\d{2}-\d{2}$/.test(f.date) && Number.isFinite(f.fare) && f.fare > 0);
+  return { ok: true, status: res.status, data: { fares } };
+}
+
+// ---------------------------------------------------------------- cancellation
+// Official UP17 cancelrequest (full or partial). Server-only; not exposed to
+// customers and not certified until a controlled production test is approved.
+export async function up17CancelFlight(args: {
+  bookingId: string;
+  searchTokenId: string;
+  requestType: "FullCancellation" | "PartialCancellation";
+  sectors?: { Origin: string; Destination: string }[];
+  paxIds?: number[];
+  remark?: string;
+}): Promise<Up17Result<unknown>> {
+  return callUp17<unknown>("/airservice/rest/cancelrequest", {
+    BookingId: args.bookingId,
+    SearchTokenId: args.searchTokenId,
+    RequestType: args.requestType,
+    ...(args.sectors?.length ? { Sectors: args.sectors } : {}),
+    ...(args.paxIds?.length ? { PaxId: args.paxIds } : {}),
+    Remark: args.remark ?? "Cancel Ticket",
+  });
+}
