@@ -54,7 +54,8 @@ const URL_IN_TEXT = /https?:\/\/[^\s"'<>)]+/gi;
 async function cleanString(s: string, key: string, opt: SanitizeOptions): Promise<string> {
   if (isSealed(s)) return s;
   if (URL_ONLY.test(s)) return isThirdParty(s) ? neutralUrl(s, key, opt) : s;
-  if (IDENT_KEY.test(key)) return s;
+  // Identifier codes stay intact; human-readable labels (with spaces) are still reworded.
+  if (IDENT_KEY.test(key) && !/\s/.test(s)) return s;
   let out = s;
   const urls = s.match(URL_IN_TEXT);
   if (urls) {
