@@ -114,3 +114,18 @@ describe("supplier health", () => {
     expect(h.reliability("bad", 0.9)).toBeLessThan(0.5);
   });
 });
+
+import { snapshotFromEvents } from "../suppliers/health-store.server";
+describe("persisted supplier health", () => {
+  it("rebuilds the same snapshot from stored events after a restart", () => {
+    const rows = ["used", "failed", "failed", "failed"].map((outcome, i) => ({ supplier_key: "x", outcome, latency_ms: 100 * (i + 1), detail: outcome === "failed" ? "503" : null, created_at: `2026-09-29T00:0${i}:00Z` }));
+    const { snapshot, reliability } = snapshotFromEvents("x", rows, 0.9);
+    expect(snapshot.status).toBe("down");
+    expect(snapshot.calls).toBe(4);
+    expect(snapshot.lastError).toBe("503");
+    expect(reliability).toBeLessThan(0.9);
+  });
+  it("only Crystal is production-bookable in the catalogue", () => {
+    expect(SUPPLIER_CATALOG.filter((s) => bookingBlockers(s).length === 0).map((s) => s.supplierKey)).toEqual(["crystal"]);
+  });
+});
