@@ -15,7 +15,7 @@ export function airportTz(iata: string) {
       if (code && tz) tzIndex.set(code, { tz, lat: Number(lat), lng: Number(lng) });
     }
   }
-  return tzIndex.get(iata.toUpperCase()) ?? null;
+  return typeof iata === "string" ? tzIndex.get(iata.toUpperCase()) ?? null : null;
 }
 
 /** Local wall time ("YYYY-MM-DD HH:mm" or ISO without offset) in an IANA zone → UTC ISO. */
@@ -48,7 +48,8 @@ function flightSupplier(offerId: string): string | null {
 }
 
 export function flightToCanonical(o: WorldwayFlightOffer): CanonicalOffer | null {
-  const sk = flightSupplier(o.offer_id);
+  const sk = typeof o?.offer_id === "string" ? flightSupplier(o.offer_id) : null;
+  if (!sk) return null;
   const a = airportTz(o.origin), b = airportTz(o.destination);
   if (!sk || !a || !b || !o.departure || !o.arrival || !(o.total_price > 0)) return null;
   const start = localToInstant(o.departure, a.tz), end = localToInstant(o.arrival, b.tz);
