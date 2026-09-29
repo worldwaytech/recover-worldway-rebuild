@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProductOpsPanel } from "@/components/admin/product-ops-panel";
+import { AviationDesk } from "@/components/admin/aviation-desk";
 
 export const Route = createFileRoute("/admin/ops/aviation")({
   head: () => ({
@@ -18,14 +19,18 @@ export const Route = createFileRoute("/admin/ops/aviation")({
 
 function Page() {
   return (
-    <ProductOpsPanel
-      area="aviation"
-      title="Private Aviation & Empty Legs"
-      description="Charter and empty-leg inquiries, aviation catalogue and bookings."
-      source="Aviation catalogue + inquiry form (aviation_inquiries)"
-      links={[
-        { to: "/private-aviation/empty-legs", label: "Empty legs page" },
-      ]}
-    />
+    <>
+      <ProductOpsPanel
+        area="aviation"
+        title="Private Aviation & Empty Legs"
+        description="Charter and empty-leg inquiries, aviation catalogue and bookings."
+        source="Villiers MCP + RSS feed (private_aviation_requests) and legacy inquiry form (aviation_inquiries)"
+        links={[
+          { to: "/private-jets", label: "Private jets page" },
+          { to: "/private-aviation/empty-legs", label: "Empty legs page" },
+        ]}
+      />
+      <AviationDesk />
+    </>
   );
 }
