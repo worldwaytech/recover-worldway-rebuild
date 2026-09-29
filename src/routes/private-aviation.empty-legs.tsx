@@ -19,6 +19,7 @@ import {
 } from "@/components/aviation/contact-fields";
 import { AirportAutocomplete } from "@/components/aviation/airport-autocomplete";
 import type { AirportOption } from "@/lib/aviation/private-aviation.functions";
+import { matchesAirport } from "@/lib/aviation/airport-match";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const HERO = "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=2000&q=80";
@@ -152,12 +153,6 @@ function EmptyLegsPage() {
       <EnquiryDialog leg={selected} pax={pax} onClose={() => setSelected(null)} />
     </PageShell>
   );
-}
-
-export function matchesAirport(a: AirportOption, code: string, name: string) {
-  const c = code.toUpperCase();
-  if (c && (c === a.iata || c === a.icao)) return true;
-  return !!name && name.toLowerCase() === a.name.toLowerCase();
 }
 
 function Info({ label, value }: { label: string; value: string }) {
