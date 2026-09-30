@@ -53,7 +53,7 @@ export async function prepareTourBooking(input: PrepareInput) {
     adults: input.adults,
     children: input.children,
     infants: input.infants,
-    rooms: input.rooms ?? {},
+    rooms: q.roomLines ?? input.rooms ?? {},
     lead_traveller: input.lead,
     special_requests: input.specialRequests ?? null,
     supplier_currency: q.currency,
@@ -138,6 +138,8 @@ export async function createSupplierBooking(bookingId: string, actor: { id: stri
     events: [...(b.events as unknown[]), event("supplier_booked", "Reference received")],
   }).eq("id", bookingId);
   await audit("tour_supplier_booking_created", { reference: ref, payment_id: paid.id });
+  const { kindOf } = await import("./certification.server");
+  await audit("tour_certification_evidence", { kind: kindOf(b.rooms), reference: ref, payment_id: paid.id, supplier_status: String(data["status"] ?? ""), response_keys: Object.keys(data) });
   return { ok: true as const, reference: ref };
 }
 
@@ -185,12 +187,12 @@ export async function staffPrepareTourPayment(input: PrepareInput) {
   if (!tourBookingsEnabled()) return { ok: false as const, reason: "Supplier booking is not yet authorised." };
   const q = await liveQuote(input);
   if (!q.ok) return q;
-  if (q.roomPriced) return { ok: false as const, reason: "Room-priced tours need partner room ids that aren't confirmed yet. Choose a per-person priced tour." };
+  if (q.roomPriced && !q.roomLines) return { ok: false as const, reason: "The partner didn't return room ids for this date and group, so it can't be booked online." };
   const { buildNewBookingBody } = await import("./booking-contract");
   const { partnerCountries } = await import("./countries.server");
-  const check = buildNewBookingBody({ tour_external_id: q.tourId, tour_date: input.date, service_type: input.service, adults: input.adults, children: input.children, infants: input.infants, rooms: {}, supplier_currency: q.currency, lead_traveller: input.lead }, await partnerCountries().catch(() => []));
+  const check = buildNewBookingBody({ tour_external_id: q.tourId, tour_date: input.date, service_type: input.service, adults: input.adults, children: input.children, infants: input.infants, rooms: q.roomLines ?? {}, supplier_currency: q.currency, lead_traveller: input.lead }, await partnerCountries().catch(() => []));
   if (!check.ok) return { ok: false as const, reason: check.blockers.join(" ") };
-  const r = await prepareTourBooking({ ...input, rooms: {} });
+  const r = await prepareTourBooking({ ...input, rooms: undefined });
   if (!r.ok) return r;
   return { ok: true as const, bookingId: r.booking.id as string, currency: r.booking.customer_currency as string, total: Number(r.booking.customer_total), checkedAt: r.booking.price_checked_at as string };
 }
@@ -199,16 +201,33 @@ export async function staffPrepareTourPayment(input: PrepareInput) {
 export async function tourPaymentAmount(bookingId: string, userId: string | null) {
   if (!userId) throw new Error("Sign in required.");
   const db = await admin();
-  const { data: staff } = await db.rpc("is_staff", { _user_id: userId });
-  if (staff !== true) throw new Error("Tour payment is staff-only until tour booking is certified.");
+  if (!tourBookingsEnabled()) throw new Error("Online tour payment isn't available yet.");
   const { data: b } = await db.from("travelshop_bookings").select("*").eq("id", bookingId).maybeSingle();
   if (!b || b.user_id !== userId || b.status !== "awaiting_supplier_authorization") throw new Error("This tour booking can't be paid.");
+  const { data: staff } = await db.rpc("is_staff", { _user_id: userId });
+  if (staff !== true) {
+    const { certificationStatus, kindOf } = await import("./certification.server");
+    if (!(await certificationStatus())[kindOf(b.rooms)].certified) throw new Error("Online payment isn't available for this tour yet — our team will confirm it.");
+  }
   const { data: prior } = await db.from("payments").select("id").eq("purpose", "tour").eq("status", "paid").contains("reference", { tour_booking_id: bookingId }).limit(1).maybeSingle();
   if (prior) throw new Error("This tour booking is already paid.");
   const q = await liveQuote({ slug: b.tour_slug, date: b.tour_date, service: b.service_type as ServiceType, adults: b.adults, children: b.children, infants: b.infants });
-  if (!q.ok || q.roomPriced || q.retailTotal !== Number(b.supplier_retail_total)) throw new Error("The live price or availability changed. Prepare the booking again.");
+  if (!q.ok || (q.roomPriced && JSON.stringify(q.roomLines) !== JSON.stringify(b.rooms)) || q.retailTotal !== Number(b.supplier_retail_total)) throw new Error("The live price or availability changed. Prepare the booking again.");
   const currency = String(b.customer_currency).toUpperCase();
   const amountMinor = Math.round(Number(b.customer_total) * 100);
   if (!Number.isSafeInteger(amountMinor) || amountMinor < 100) throw new Error("Invalid tour amount.");
   return { amountMinor, currency, planId: null };
+}
+
+/** Whether this saved booking can be paid online right now (flag, contract, certification for its kind). */
+export async function customerPayable(bookingId: string) {
+  if (!tourBookingsEnabled()) return false;
+  const db = await admin();
+  const { data: b } = await db.from("travelshop_bookings").select("*").eq("id", bookingId).maybeSingle();
+  if (!b) return false;
+  const { buildNewBookingBody } = await import("./booking-contract");
+  const { partnerCountries } = await import("./countries.server");
+  if (!buildNewBookingBody(b as never, await partnerCountries().catch(() => [])).ok) return false;
+  const { certificationStatus, kindOf } = await import("./certification.server");
+  return (await certificationStatus())[kindOf(b.rooms)].certified;
 }
