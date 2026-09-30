@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { checkTourApiHealth, getTourSupplierOverview, runTourCatalogueSync, getTourBookingGates, staffSendTourToPartner } from "@/lib/travelshop/tours.functions";
+import { checkTourApiHealth, getTourSupplierOverview, runTourCatalogueSync, getTourBookingGates, staffSendTourToPartner, staffRefundTour } from "@/lib/travelshop/tours.functions";
 import { PageHead, Panel, QueryState, Empty, when, useConsole, adminHead } from "@/components/admin/console-ui";
 
 export const Route = createFileRoute("/admin/tour-supplier")({
@@ -22,6 +22,7 @@ function TourSupplierPage() {
   const d = q.data;
   const gq = useConsole<Awaited<ReturnType<typeof getTourBookingGates>>>("tour-booking-gates", getTourBookingGates);
   const send = useServerFn(staffSendTourToPartner);
+  const refund = useServerFn(staffRefundTour);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
   return (
     <div className="space-y-6">
@@ -91,7 +92,7 @@ function TourSupplierPage() {
             <table className="w-full text-xs">
               <thead className="text-left text-muted-foreground"><tr><th>Created</th><th>Tour</th><th>Date</th><th>Pax</th><th>Customer</th><th>Supplier retail</th><th>Status</th><th>Supplier ref</th><th></th></tr></thead>
               <tbody>{d!.bookings.map((b) => (
-                <tr key={b.id} className="border-t border-border/40"><td className="py-1">{when(b.created_at)}</td><td>{b.tour_name}</td><td>{b.tour_date}</td><td>{b.adults}+{b.children}</td><td>{b.customer_currency} {b.customer_total}</td><td>{b.supplier_retail_total}</td><td>{b.status}</td><td>{b.supplier_reference_id ?? "—"}</td><td>{b.status === "awaiting_supplier_authorization" ? <button className="rounded-md border border-primary px-2 py-0.5 text-[11px] text-primary" onClick={async () => { if (!confirm("Send this paid booking to the partner? This creates a real booking.")) return; const r = await send({ data: { bookingId: b.id } }); setSendMsg(r.ok ? `Booked — reference ${r.reference}` : r.reason); void q.refetch(); void gq.refetch(); }}>Send to partner</button> : null}</td></tr>
+                <tr key={b.id} className="border-t border-border/40"><td className="py-1">{when(b.created_at)}</td><td>{b.tour_name}</td><td>{b.tour_date}</td><td>{b.adults}+{b.children}</td><td>{b.customer_currency} {b.customer_total}</td><td>{b.supplier_retail_total}</td><td>{b.status}</td><td>{b.supplier_reference_id ?? "—"}</td><td>{b.status === "awaiting_supplier_authorization" ? <button className="rounded-md border border-primary px-2 py-0.5 text-[11px] text-primary" onClick={async () => { if (!confirm("Send this paid booking to the partner? This creates a real booking.")) return; const r = await send({ data: { bookingId: b.id } }); setSendMsg(r.ok ? `Booked — reference ${r.reference}` : r.reason); void q.refetch(); void gq.refetch(); }}>Send to partner</button> : ["supplier_failed", "price_changed", "cancelled"].includes(b.status) ? <button className="rounded-md border border-destructive px-2 py-0.5 text-[11px] text-destructive" onClick={async () => { if (!confirm("Refund the customer's full payment for this booking?")) return; const r = await refund({ data: { bookingId: b.id } }); setSendMsg(r.ok ? "Refund issued" : r.reason); void q.refetch(); }}>Refund</button> : null}</td></tr>
               ))}</tbody>
             </table>
           )}
