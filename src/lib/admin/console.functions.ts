@@ -127,7 +127,7 @@ export const getJourneyDetail = createServerFn({ method: "POST" })
     return JSON.parse(JSON.stringify({ journey: j.data, versions: v.data ?? [], simulations: s.data ?? [], approvals: a.data ?? [], events: e.data ?? [] }));
   });
 
-const COMMERCIAL_KEYS = ["crystal", "up17", "airiq", "ratehawk", "viator-affiliate", "viator-merchant", "hbx-hotels", "hbx-activities", "hbx-transfers", "ttc", "cruisea", "bokun", "g-adventures", "abercrombie-kent", "tripjack-cabs", "tripjack-tripsafe", "private-aviation"];
+const COMMERCIAL_KEYS = ["crystal", "up17", "airiq", "ratehawk", "viator-affiliate", "viator-merchant", "hbx-hotels", "hbx-activities", "hbx-transfers", "ttc", "travelshop", "cruisea", "bokun", "g-adventures", "abercrombie-kent", "tripjack-cabs", "tripjack-tripsafe", "private-aviation"];
 const EFFECTIVE: Record<string, string> = { "worldway-initial-2026-09": "2026-09-29", "airiq-fixed": "Fixed in connector", "ratehawk-config": "Server configuration" };
 
 export const getPricingConsole = createServerFn({ method: "POST" })
