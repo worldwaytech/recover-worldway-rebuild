@@ -91,7 +91,8 @@ export async function createSupplierBooking(bookingId: string, actor: { id: stri
     return { ok: false as const, reason: "No verified Worldway payment for this booking." };
   }
   const { buildNewBookingBody } = await import("./booking-contract");
-  const built = buildNewBookingBody(pre as never);
+  const { partnerCountries } = await import("./countries.server");
+  const built = buildNewBookingBody(pre as never, await partnerCountries().catch(() => []));
   if (!built.ok) {
     await audit("tour_supplier_booking_refused", { reason: "contract", blockers: built.blockers });
     return { ok: false as const, reason: built.blockers.join(" ") };

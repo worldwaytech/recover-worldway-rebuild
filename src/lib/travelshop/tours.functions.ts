@@ -162,10 +162,12 @@ export const getTourBookingGates = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { tourBookingsEnabled } = await import("./booking.server");
     const { bookingGates, contractComplete, CONTRACT_EVIDENCE, UNVERIFIED } = await import("./booking-contract");
+    const { partnerCountries } = await import("./countries.server");
+    const countries = await partnerCountries().catch(() => []);
     const { count } = await supabaseAdmin.from("travelshop_bookings").select("id", { count: "exact", head: true }).eq("status", "supplier_booked");
     return {
-      gates: bookingGates({ flagEnabled: tourBookingsEnabled(), contractComplete: contractComplete(), verifiedStaffBooking: (count ?? 0) > 0, certified: false }),
-      evidence: CONTRACT_EVIDENCE, unverified: Object.values(UNVERIFIED),
+      gates: bookingGates({ flagEnabled: tourBookingsEnabled(), contractComplete: contractComplete(countries), verifiedStaffBooking: (count ?? 0) > 0, certified: false }),
+      evidence: { ...CONTRACT_EVIDENCE, partnerCountries: countries.length }, unverified: Object.values(UNVERIFIED),
     };
   });
 
