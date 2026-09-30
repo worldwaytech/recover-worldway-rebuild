@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { getTourSupplierOverview, runTourCatalogueSync } from "@/lib/travelshop/tours.functions";
+import { checkTourApiHealth, getTourSupplierOverview, runTourCatalogueSync } from "@/lib/travelshop/tours.functions";
 import { PageHead, Panel, QueryState, Empty, when, useConsole, adminHead } from "@/components/admin/console-ui";
 
 export const Route = createFileRoute("/admin/tour-supplier")({
@@ -16,10 +16,13 @@ function TourSupplierPage() {
   const q = useConsole<O>("tour-supplier", getTourSupplierOverview);
   const sync = useServerFn(runTourCatalogueSync);
   const [busy, setBusy] = useState(false);
+  const health = useServerFn(checkTourApiHealth);
+  const [h, setH] = useState<Awaited<ReturnType<typeof checkTourApiHealth>> | null>(null);
+  const [checking, setChecking] = useState(false);
   const d = q.data;
   return (
     <div className="space-y-6">
-      <PageHead eyebrow="Tours & Activities" title="TravelShop Booking — Tour Marketplace" intro="Supplier for /marketplace. Bókun is disabled on the marketplace; its historical data is kept." />
+      <PageHead eyebrow="Tours & Activities" title="TravelShop Settings — Tour Marketplace" intro="Supplier for /marketplace. Bókun is disabled on the marketplace; its historical data is kept." />
       <QueryState q={q}>
         <div className="grid gap-4 sm:grid-cols-4">
           <Panel title="Active tours"><div className="text-2xl font-semibold">{d?.activeTours ?? 0}</div></Panel>
@@ -27,6 +30,17 @@ function TourSupplierPage() {
           <Panel title="Last successful sync"><div className="text-sm">{when(d?.lastSuccessfulSync)}</div></Panel>
           <Panel title="Supplier booking"><div className={`text-sm ${d?.bookingsEnabled ? "text-primary" : "text-destructive"}`}>{d?.bookingsEnabled ? "Enabled" : "Not authorised (TRAVELSHOP_BOOKING_ENABLED off)"}</div></Panel>
         </div>
+        <Panel
+          title="API status & inventory"
+          right={<button disabled={checking} onClick={async () => { setChecking(true); try { setH(await health()); } finally { setChecking(false); } }} className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground disabled:opacity-50">{checking ? "Checking…" : "Check API now"}</button>}
+        >
+          {!h ? <Empty>Run a live check to see API status and exact inventory counts.</Empty> : (
+            <div className="space-y-2 text-sm">
+              <p className={h.health.ok ? "text-primary" : "text-destructive"}>{h.health.ok ? `API reachable · ${h.health.ms} ms` : `API error: ${h.health.error}`} · checked {when(h.health.checkedAt)}</p>
+              <div className="flex flex-wrap gap-4 text-xs">{Object.entries(h.counts).map(([k, v]) => <span key={k}><b>{v}</b> {k}</span>)}</div>
+            </div>
+          )}
+        </Panel>
         <Panel title="Pricing">
           <p className="text-sm">{d?.pricing.markupPercent == null ? "No Worldway markup approved — customers pay the live retail price; margin = supplier commission." : `Worldway markup ${d.pricing.markupPercent}% on live retail price.`}</p>
         </Panel>
