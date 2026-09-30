@@ -1,3 +1,4 @@
+import { template as tourConfirmation } from './tour-booking-confirmation'
 import type { ComponentType } from 'react'
 
 export interface TemplateEntry {
@@ -18,6 +19,7 @@ export interface TemplateEntry {
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'tour-booking-confirmation': tourConfirmation,
   // Add templates here as they are created, e.g.:
   // 'welcome': welcomeTemplate,
 }
