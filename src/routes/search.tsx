@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Breadcrumbs, CollectionItemCard, SectionHeading } from "@/components/CollectionTemplate";
+import { Breadcrumbs, CollectionItemCard } from "@/components/CollectionTemplate";
 import { globalSearch, searchSuggestions, POPULAR_SEARCHES } from "@/lib/catalogue-engine";
 import {
   addRecentSearch,
