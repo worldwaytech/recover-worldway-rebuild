@@ -244,7 +244,7 @@ function ConciergePage() {
               </div>
             </div>
 
-            <div className={`rounded-sm border border-primary/15 bg-card/50 p-5 backdrop-blur ${messages.length <= 1 ? "hidden lg:block" : ""}`}>
+            <div className={`rounded-sm border border-primary/15 bg-card/50 p-5 backdrop-blur ${messages.length <= 1 ? "hidden" : ""}`}>
               <div className="text-[10px] uppercase tracking-[0.35em] text-primary">Begin with</div>
               <ul className="mt-4 divide-y divide-border/60">
                 {SUGGESTIONS.map((s) => (
