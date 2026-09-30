@@ -123,6 +123,13 @@ function TripPlanner() {
                         </li>
                       ))}
                     </ol>
+                    {p.total != null && r.fx && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Converted at live rates{" "}
+                        {Object.entries(r.fx.rates).filter(([c]) => c !== r.fx!.target).map(([c, rate]) => `1 ${c} = ${Number(rate).toFixed(4)} ${r.fx!.target}`).join(", ")}
+                        {r.fx.ratesAt ? ` · rates from ${new Date(r.fx.ratesAt).toUTCString()}` : ""}
+                      </p>
+                    )}
                     {p.total == null && p.blockers.length > 0 && <p className="mt-2 text-xs text-muted-foreground">Why: {p.blockers.slice(0, 2).join("; ")}</p>}
                     <p className="mt-2 text-xs text-muted-foreground">Nothing is booked or charged. Our team confirms availability before booking.</p>
                   </div>

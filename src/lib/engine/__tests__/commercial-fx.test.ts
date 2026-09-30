@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 vi.mock("@/lib/airiq/client.server", () => ({ WORLDWAY_MARKUP_PERCENT: 5 }));
 vi.mock("@/lib/ratehawk/hotels.server", () => ({ worldwayPricingConfig: () => ({ markupPercent: 8, serviceFeePercent: 0, fixedFee: 0 }) }));
 import { commercialRuleFor, commercialCoverage } from "../suppliers/commercial.server";
-import { approvedFx, crossRates, isStale } from "../suppliers/fx.server";
+import { __resetFxCache, approvedFx, crossRates, isStale } from "../suppliers/fx.server";
 import { priceComponent } from "../pricing";
 
 describe("approved Worldway commercial rules", () => {
@@ -33,10 +33,24 @@ describe("Open Exchange Rates FX", () => {
     expect(isStale(Date.now() / 1000 - 7 * 3600)).toBe(true);
     expect(isStale(Date.now() / 1000 - 60)).toBe(false);
   });
-  it("fails safely without a configured key (identity only)", async () => {
+  it("fails safely when every live provider fails (identity only, never a guessed rate)", async () => {
+    __resetFxCache();
     vi.stubEnv("OPEN_EXCHANGE_RATES_APP_ID", "");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("down", { status: 503 })));
     const r = await approvedFx("INR", ["USD"]);
     expect(r.table).toEqual({ INR: 1 });
-    expect(r.audit.error).toMatch(/not configured/);
+    expect(r.audit.error).toMatch(/unavailable/);
+  });
+  it("falls back to the keyless ECB feed and records source + timestamp", async () => {
+    __resetFxCache();
+    vi.stubEnv("OPEN_EXCHANGE_RATES_APP_ID", "");
+    const today = new Date().toISOString().slice(0, 10);
+    vi.stubGlobal("fetch", vi.fn(async (u: string) => String(u).includes("frankfurter")
+      ? Response.json({ base: "USD", date: today, rates: { INR: 96, EUR: 0.8 } })
+      : new Response("x", { status: 500 })));
+    const r = await approvedFx("INR", ["EUR"]);
+    expect(r.source).toBe("frankfurter-ecb");
+    expect(r.table.EUR).toBeCloseTo(120);
+    expect(r.audit.ratesAt).toContain(today);
   });
 });

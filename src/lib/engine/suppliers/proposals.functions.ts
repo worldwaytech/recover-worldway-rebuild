@@ -50,6 +50,8 @@ export async function assembleAndSave(userId: string, requirements: z.infer<type
   const tourDto = (t: (typeof report.tours)[number]) => ({ ref: t.ref, title: t.title, startDate: t.startDate, endDate: t.endDate, durationDays: t.durationDays ?? null, accommodationIncluded: !!t.accommodationIncluded, price: t.indicativeFrom, image: t.image ?? null, note: t.reason });
   return {
     sources: report.sources, proposals, optionalStays,
+    fx: report.fx.provider ? { provider: report.fx.provider, ratesAt: report.fx.ratesAt, fetchedAt: report.fx.fetchedAt ?? null, rates: report.fx.rates, target: report.fx.target } : null,
+    fxError: report.fx.error,
     arrivalDate: report.arrivalDate, departureDate: report.departureDate,
     tours: report.tours.map(tourDto),
     selectedTour: report.selectedTour ? { ...tourDto(report.selectedTour), coversNights: report.selectedTour.coversNights } : null,

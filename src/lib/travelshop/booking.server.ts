@@ -79,15 +79,22 @@ export async function createSupplierBooking(bookingId: string) {
     return { ok: false as const, reason: "Supplier booking is not yet authorised." };
   }
   const db = await admin();
-  const { data: b } = await db.from("travelshop_bookings").select("*").eq("id", bookingId).single();
-  if (!b || b.status !== "awaiting_supplier_authorization") return { ok: false as const, reason: "Booking is not awaiting supplier creation." };
+  // Idempotency: atomically claim the record. A second concurrent call finds no
+  // row in "awaiting_supplier_authorization" and stops — one record, one supplier write.
+  const { data: b } = await db.from("travelshop_bookings")
+    .update({ status: "supplier_booking_in_progress" })
+    .eq("id", bookingId).eq("status", "awaiting_supplier_authorization")
+    .select("*").maybeSingle();
+  if (!b) return { ok: false as const, reason: "Booking is not awaiting supplier creation (already in progress or done)." };
   const q = await liveQuote({ slug: b.tour_slug, date: b.tour_date, service: b.service_type as ServiceType, adults: b.adults, children: b.children, infants: b.infants });
   if (!q.ok || q.retailTotal !== Number(b.supplier_retail_total)) {
     await db.from("travelshop_bookings").update({ status: "price_changed", events: [...(b.events as unknown[]), event("revalidation_failed", q.ok ? `now ${q.currency} ${q.customerTotal}` : q.reason)] }).eq("id", bookingId);
     return { ok: false as const, reason: "The live price or availability changed. Please re-confirm." };
   }
   const lead = b.lead_traveller as PrepareInput["lead"];
-  const res = await travelshopRequest<Record<string, unknown>>(TRAVELSHOP_PATHS.newBooking, {
+  let res: Record<string, unknown>;
+  try {
+    res = await travelshopRequest<Record<string, unknown>>(TRAVELSHOP_PATHS.newBooking, {
     method: "POST",
     maxRetries: 0, // never auto-retry a booking write
     timeoutMs: 90_000,
@@ -104,6 +111,13 @@ export async function createSupplierBooking(bookingId: string) {
       external_reference: b.id,
     },
   });
+  } catch (e) {
+    // Uncertain outcome (timeout / network / 5xx): the supplier MAY have booked.
+    // Never retry automatically — staff reconcile via refresh before anything else happens.
+    await db.from("travelshop_bookings").update({ status: "supplier_uncertain", events: [...(b.events as unknown[]), event("supplier_uncertain", e instanceof Error ? e.message.slice(0, 160) : "unknown")] }).eq("id", bookingId);
+    console.error("[travelshop] booking outcome uncertain", JSON.stringify({ bookingId }));
+    return { ok: false as const, reason: "We couldn't confirm the booking yet. Our team will check it — you have not been charged twice." };
+  }
   const ref = String(res["reference_id"] ?? res["referenceId"] ?? "");
   const token = String(res["token"] ?? res["booking_token"] ?? "");
   if (!ref) {

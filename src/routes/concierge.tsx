@@ -84,7 +84,7 @@ function ConciergePage() {
     setError(null);
     try {
       const res = await runConciergeChat({
-        data: { message: text, session_id: sessionId, ...(conversationRef.current ? { conversation_id: conversationRef.current } : {}) },
+        data: { message: text, session_id: sessionId, history: messages.slice(-12).map((m) => ({ role: m.role as "user" | "assistant", content: m.content })), ...(conversationRef.current ? { conversation_id: conversationRef.current } : {}) },
       });
       if (!res.ok) setError(res.error ?? "Request failed");
       else {

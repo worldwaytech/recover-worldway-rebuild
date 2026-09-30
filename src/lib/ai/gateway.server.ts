@@ -11,7 +11,7 @@ export class AiUnavailableError extends Error {
   constructor(message: string, public status?: number) { super(message); }
 }
 
-function provider() {
+export function provider() {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new AiUnavailableError("AI is not configured.");
   const runIdFetch = createLovableAiGatewayRunIdFetch();
