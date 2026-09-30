@@ -71,16 +71,33 @@ export async function prepareTourBooking(input: PrepareInput) {
 }
 
 /**
- * FINAL supplier call. Gated. Revalidates immediately before booking and
- * refuses if the live price moved. Only runs once staff enable the flag.
+ * FINAL supplier call — STAFF ONLY (Gate 4). Runs only when: the switch is on,
+ * a Worldway payment for this record is verified "paid", the verified partner
+ * contract can be built, and live revalidation still matches. Atomic claim,
+ * never auto-retried, every outcome audited.
  */
-export async function createSupplierBooking(bookingId: string) {
-  if (!tourBookingsEnabled()) {
-    return { ok: false as const, reason: "Supplier booking is not yet authorised." };
-  }
+export async function createSupplierBooking(bookingId: string, actor: { id: string; email: string | null }) {
+  if (!tourBookingsEnabled()) return { ok: false as const, reason: "Supplier booking is not yet authorised." };
   const db = await admin();
-  // Idempotency: atomically claim the record. A second concurrent call finds no
-  // row in "awaiting_supplier_authorization" and stops — one record, one supplier write.
+  const audit = (action: string, detail: Record<string, unknown>) =>
+    db.from("admin_audit_log").insert({ actor_id: actor.id, actor_email: actor.email, action, target_table: "travelshop_bookings", target_id: bookingId, detail });
+
+  const { data: pre } = await db.from("travelshop_bookings").select("*").eq("id", bookingId).maybeSingle();
+  if (!pre) return { ok: false as const, reason: "Booking not found." };
+  const { data: paid } = await db.from("payments").select("id, amount_minor, currency")
+    .eq("purpose", "tour").eq("status", "paid").contains("reference", { tour_booking_id: bookingId }).limit(1).maybeSingle();
+  if (!paid) {
+    await audit("tour_supplier_booking_refused", { reason: "no_verified_payment" });
+    return { ok: false as const, reason: "No verified Worldway payment for this booking." };
+  }
+  const { buildNewBookingBody } = await import("./booking-contract");
+  const built = buildNewBookingBody(pre as never);
+  if (!built.ok) {
+    await audit("tour_supplier_booking_refused", { reason: "contract", blockers: built.blockers });
+    return { ok: false as const, reason: built.blockers.join(" ") };
+  }
+
+  // Idempotency: atomically claim the record — one record, one supplier write.
   const { data: b } = await db.from("travelshop_bookings")
     .update({ status: "supplier_booking_in_progress" })
     .eq("id", bookingId).eq("status", "awaiting_supplier_authorization")
@@ -89,47 +106,38 @@ export async function createSupplierBooking(bookingId: string) {
   const q = await liveQuote({ slug: b.tour_slug, date: b.tour_date, service: b.service_type as ServiceType, adults: b.adults, children: b.children, infants: b.infants });
   if (!q.ok || q.retailTotal !== Number(b.supplier_retail_total)) {
     await db.from("travelshop_bookings").update({ status: "price_changed", events: [...(b.events as unknown[]), event("revalidation_failed", q.ok ? `now ${q.currency} ${q.customerTotal}` : q.reason)] }).eq("id", bookingId);
+    await audit("tour_supplier_booking_refused", { reason: "revalidation_failed" });
     return { ok: false as const, reason: "The live price or availability changed. Please re-confirm." };
   }
-  const lead = b.lead_traveller as PrepareInput["lead"];
   let res: Record<string, unknown>;
   try {
-    res = await travelshopRequest<Record<string, unknown>>(TRAVELSHOP_PATHS.newBooking, {
-    method: "POST",
-    maxRetries: 0, // never auto-retry a booking write
-    timeoutMs: 90_000,
-    body: {
-      tour_id: b.tour_external_id,
-      date: b.tour_date,
-      type: b.service_type,
-      adl: b.adults,
-      chd: b.children,
-      inf: b.infants,
-      rooms: b.rooms,
-      customer: { first_name: lead.firstName, last_name: lead.lastName, email: lead.email, phone: lead.phone, nationality: lead.nationality },
-      note: b.special_requests ?? undefined,
-      external_reference: b.id,
-    },
-  });
+    res = await travelshopRequest<Record<string, unknown>>(TRAVELSHOP_PATHS.newBooking, { method: "POST", maxRetries: 0, timeoutMs: 90_000, body: built.body });
   } catch (e) {
-    // Uncertain outcome (timeout / network / 5xx): the supplier MAY have booked.
-    // Never retry automatically — staff reconcile via refresh before anything else happens.
-    await db.from("travelshop_bookings").update({ status: "supplier_uncertain", events: [...(b.events as unknown[]), event("supplier_uncertain", e instanceof Error ? e.message.slice(0, 160) : "unknown")] }).eq("id", bookingId);
-    console.error("[travelshop] booking outcome uncertain", JSON.stringify({ bookingId }));
-    return { ok: false as const, reason: "We couldn't confirm the booking yet. Our team will check it — you have not been charged twice." };
+    const msg = e instanceof Error ? e.message.slice(0, 300) : "unknown";
+    // 4xx = partner rejected at validation → nothing was booked. Anything else is uncertain.
+    const rejected = /Supplier HTTP 4\d\d/.test(msg);
+    await db.from("travelshop_bookings").update({
+      status: rejected ? "supplier_failed" : "supplier_uncertain",
+      events: [...(b.events as unknown[]), event(rejected ? "supplier_rejected" : "supplier_uncertain", msg.slice(0, 160))],
+    }).eq("id", bookingId);
+    await audit(rejected ? "tour_supplier_booking_rejected" : "tour_supplier_booking_uncertain", { error: msg });
+    return { ok: false as const, reason: rejected ? `Partner rejected the booking: ${msg}` : "Outcome uncertain — reconcile with the partner before any retry." };
   }
-  const ref = String(res["reference_id"] ?? res["referenceId"] ?? "");
-  const token = String(res["token"] ?? res["booking_token"] ?? "");
+  const data = (res["data"] as Record<string, unknown> | undefined) ?? res;
+  const ref = String(data["reference_id"] ?? data["reference"] ?? data["booking_reference"] ?? "");
+  const token = String(data["token"] ?? "");
   if (!ref) {
-    await db.from("travelshop_bookings").update({ status: "supplier_failed", supplier_response: res, events: [...(b.events as unknown[]), event("supplier_failed", "No reference returned")] }).eq("id", bookingId);
-    return { ok: false as const, reason: "The booking could not be created with our partner." };
+    await db.from("travelshop_bookings").update({ status: "supplier_uncertain", supplier_response: res, events: [...(b.events as unknown[]), event("supplier_uncertain", "No reference recognised in response")] }).eq("id", bookingId);
+    await audit("tour_supplier_booking_uncertain", { reason: "no_reference", response_keys: Object.keys(data) });
+    return { ok: false as const, reason: "The partner answered without a recognisable reference — the response is saved for staff review." };
   }
   await db.from("travelshop_bookings").update({
     status: "supplier_booked", supplier_reference_id: ref, supplier_booking_token: token || null,
-    supplier_status: String(res["status"] ?? ""), supplier_response: res,
+    supplier_status: String(data["status"] ?? ""), supplier_response: res,
     events: [...(b.events as unknown[]), event("supplier_booked", "Reference received")],
   }).eq("id", bookingId);
-  return { ok: true as const };
+  await audit("tour_supplier_booking_created", { reference: ref, payment_id: paid.id });
+  return { ok: true as const, reference: ref };
 }
 
 /** Supplier payment request for a supplier-created booking (gated). */
