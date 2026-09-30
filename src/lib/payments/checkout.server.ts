@@ -216,8 +216,14 @@ export async function confirmPayment(input: {
     tour = { confirmed: accepted, worldwayReference: (await import("@/lib/travelshop/reference")).worldwayTourRef(tourBookingId) };
   }
 
-  // Membership entitlement is granted ONLY by the signature-verified payment
-  // webhook (api/public/razorpay-webhook), never from this client-triggered path.
+  // Membership: this path is signature-verified, re-fetched from the provider and
+  // amount-matched above, so entitlement is applied immediately (idempotent; the
+  // webhook applies the same tier as a backstop).
+  if (record?.purpose === "membership" && record.user_id && record.plan_id) {
+    const { applyVerifiedMembership } = await import("./payments.server");
+    await applyVerifiedMembership(String(record.user_id), String(record.plan_id));
+  }
+
 
 
   return {

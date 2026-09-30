@@ -242,7 +242,8 @@ export function TransferFlow() {
           remark: String(f.get("remark") || "") || null,
         },
       });
-      if (res.ok && res.bookingId) navigate({ to: "/transfers/voucher/$reference", params: { reference: res.worldwayReference } });
+      // A created booking (confirmed or pending) always goes to its voucher — never shown as a failure.
+      if (res.bookingId && res.worldwayReference) navigate({ to: "/transfers/voucher/$reference", params: { reference: res.worldwayReference } });
       else setError(res.message ?? "Booking failed. Please try again.");
     } catch (err) {
       setError(err instanceof Error && /unauth/i.test(err.message) ? "Please sign in to book." : "Booking failed. Please try again.");
