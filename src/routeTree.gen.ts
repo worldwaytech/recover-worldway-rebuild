@@ -160,6 +160,7 @@ import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
 import { Route as AdminTravelDnaRouteImport } from './routes/admin.travel-dna'
 import { Route as AdminToursRouteImport } from './routes/admin.tours'
 import { Route as AdminTourSupplierRouteImport } from './routes/admin.tour-supplier'
+import { Route as AdminTourPaymentRouteImport } from './routes/admin.tour-payment'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
@@ -1002,6 +1003,11 @@ const AdminTourSupplierRoute = AdminTourSupplierRouteImport.update({
   path: '/tour-supplier',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTourPaymentRoute = AdminTourPaymentRouteImport.update({
+  id: '/tour-payment',
+  path: '/tour-payment',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSuperRoute = AdminSuperRouteImport.update({
   id: '/super',
   path: '/super',
@@ -1543,6 +1549,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tour-payment': typeof AdminTourPaymentRoute
   '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
@@ -1753,6 +1760,7 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tour-payment': typeof AdminTourPaymentRoute
   '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
@@ -1990,6 +1998,7 @@ export interface FileRoutesById {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tour-payment': typeof AdminTourPaymentRoute
   '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
@@ -2230,6 +2239,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tour-payment'
     | '/admin/tour-supplier'
     | '/admin/tours'
     | '/admin/travel-dna'
@@ -2440,6 +2450,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tour-payment'
     | '/admin/tour-supplier'
     | '/admin/tours'
     | '/admin/travel-dna'
@@ -2676,6 +2687,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tour-payment'
     | '/admin/tour-supplier'
     | '/admin/tours'
     | '/admin/travel-dna'
@@ -3987,6 +3999,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTourSupplierRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/tour-payment': {
+      id: '/admin/tour-payment'
+      path: '/tour-payment'
+      fullPath: '/admin/tour-payment'
+      preLoaderRoute: typeof AdminTourPaymentRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/super': {
       id: '/admin/super'
       path: '/super'
@@ -4638,6 +4657,7 @@ interface AdminRouteChildren {
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
+  AdminTourPaymentRoute: typeof AdminTourPaymentRoute
   AdminTourSupplierRoute: typeof AdminTourSupplierRoute
   AdminToursRoute: typeof AdminToursRoute
   AdminTravelDnaRoute: typeof AdminTravelDnaRoute
@@ -4683,6 +4703,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
+  AdminTourPaymentRoute: AdminTourPaymentRoute,
   AdminTourSupplierRoute: AdminTourSupplierRoute,
   AdminToursRoute: AdminToursRoute,
   AdminTravelDnaRoute: AdminTravelDnaRoute,

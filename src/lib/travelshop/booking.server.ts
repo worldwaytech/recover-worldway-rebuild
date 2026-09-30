@@ -30,7 +30,7 @@ export interface PrepareInput {
   children: number;
   infants: number;
   rooms?: { single?: number; double?: number; triple?: number };
-  lead: { firstName: string; lastName: string; email: string; phone: string; nationality?: string };
+  lead: { title?: string; firstName: string; lastName: string; email: string; phone: string; phoneCountryCode?: string; nationality?: string };
   specialRequests?: string;
 }
 
@@ -173,4 +173,42 @@ export async function listCustomerTourBookings(userId: string) {
     .order("created_at", { ascending: false })
     .limit(50);
   return data ?? [];
+}
+
+/**
+ * Staff-only controlled payment path (Gate 4). Prepares a booking only for
+ * tours whose partner requirements are fully confirmed: per-person priced
+ * (no partner room ids needed) and a lead traveller the live partner contract
+ * accepts. Refuses before any payment if the booking could not be sent.
+ */
+export async function staffPrepareTourPayment(input: PrepareInput) {
+  if (!tourBookingsEnabled()) return { ok: false as const, reason: "Supplier booking is not yet authorised." };
+  const q = await liveQuote(input);
+  if (!q.ok) return q;
+  if (q.roomPriced) return { ok: false as const, reason: "Room-priced tours need partner room ids that aren't confirmed yet. Choose a per-person priced tour." };
+  const { buildNewBookingBody } = await import("./booking-contract");
+  const { partnerCountries } = await import("./countries.server");
+  const check = buildNewBookingBody({ tour_external_id: q.tourId, tour_date: input.date, service_type: input.service, adults: input.adults, children: input.children, infants: input.infants, rooms: {}, supplier_currency: q.currency, lead_traveller: input.lead }, await partnerCountries().catch(() => []));
+  if (!check.ok) return { ok: false as const, reason: check.blockers.join(" ") };
+  const r = await prepareTourBooking({ ...input, rooms: {} });
+  if (!r.ok) return r;
+  return { ok: true as const, bookingId: r.booking.id as string, currency: r.booking.customer_currency as string, total: Number(r.booking.customer_total), checkedAt: r.booking.price_checked_at as string };
+}
+
+/** Amount for a staff tour payment — server-owned: caller must be staff and own the record; price re-checked live. */
+export async function tourPaymentAmount(bookingId: string, userId: string | null) {
+  if (!userId) throw new Error("Sign in required.");
+  const db = await admin();
+  const { data: staff } = await db.rpc("is_staff", { _user_id: userId });
+  if (staff !== true) throw new Error("Tour payment is staff-only until tour booking is certified.");
+  const { data: b } = await db.from("travelshop_bookings").select("*").eq("id", bookingId).maybeSingle();
+  if (!b || b.user_id !== userId || b.status !== "awaiting_supplier_authorization") throw new Error("This tour booking can't be paid.");
+  const { data: prior } = await db.from("payments").select("id").eq("purpose", "tour").eq("status", "paid").contains("reference", { tour_booking_id: bookingId }).limit(1).maybeSingle();
+  if (prior) throw new Error("This tour booking is already paid.");
+  const q = await liveQuote({ slug: b.tour_slug, date: b.tour_date, service: b.service_type as ServiceType, adults: b.adults, children: b.children, infants: b.infants });
+  if (!q.ok || q.roomPriced || q.retailTotal !== Number(b.supplier_retail_total)) throw new Error("The live price or availability changed. Prepare the booking again.");
+  const currency = String(b.customer_currency).toUpperCase();
+  const amountMinor = Math.round(Number(b.customer_total) * 100);
+  if (!Number.isSafeInteger(amountMinor) || amountMinor < 100) throw new Error("Invalid tour amount.");
+  return { amountMinor, currency, planId: null };
 }

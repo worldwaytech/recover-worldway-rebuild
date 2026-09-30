@@ -52,6 +52,7 @@ function TourSupplierPage() {
           </ol>
           {gq.data ? <p className="mt-3 text-xs text-muted-foreground">Contract evidence: {gq.data.evidence.method}, {gq.data.evidence.verifiedAt}. Still unverified: {gq.data.unverified.join(" ")}</p> : null}
           {sendMsg ? <p className="mt-2 text-xs">{sendMsg}</p> : null}
+          <p className="mt-2 text-xs"><a href="/admin/tour-payment" className="underline">Open staff tour payment</a></p>
         </Panel>
         <Panel title="Pricing">
           <p className="text-sm">{d?.pricing.markupPercent == null ? "No Worldway markup approved — customers pay the live retail price; margin = supplier commission." : `Worldway markup ${d.pricing.markupPercent}% on live retail price.`}</p>
