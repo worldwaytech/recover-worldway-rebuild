@@ -87,13 +87,19 @@ export function extractText(body: any): string {
 }
 
 export const SESSION_RE = /^[A-Za-z0-9_-]{8,120}$/;
+export const RESPONSE_ID_RE = /^[A-Za-z0-9_-]{8,200}$/;
 
-/** Send one user message to Worldway-AetherCore; returns reply + session id to reuse. */
+/**
+ * Send one user message to Worldway-AetherCore. History continuity uses
+ * previous_response_id (the prior turn's response id, returned to the client as
+ * conversation_id); agent_session_id is kept only for sandbox affinity.
+ */
 export async function askAetherCore(
   message: string,
   sessionId: string | undefined,
+  previousResponseId?: string,
   opts: { cfg?: AetherCoreConfig; fetchImpl?: typeof fetch; timeoutMs?: number } = {},
-): Promise<{ reply: string; sessionId: string }> {
+): Promise<{ reply: string; sessionId: string; conversationId: string | null }> {
   const cfg = opts.cfg ?? readConfig();
   const fetchImpl = opts.fetchImpl ?? fetch;
   const session = sessionId && SESSION_RE.test(sessionId) ? sessionId : `wwtg-${crypto.randomUUID()}`;
@@ -106,7 +112,12 @@ export async function askAetherCore(
     const res = await fetchImpl(url, {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ input: message, agent_session_id: session, agent: { type: "agent_reference", name: cfg.agentName, version: cfg.agentVersion } }),
+      body: JSON.stringify({
+        input: message,
+        agent_reference: { type: "agent_reference", name: cfg.agentName, version: cfg.agentVersion },
+        agent_session_id: session,
+        ...(previousResponseId && RESPONSE_ID_RE.test(previousResponseId) ? { previous_response_id: previousResponseId } : {}),
+      }),
       signal: ctrl.signal,
     });
     if (!res.ok) {
@@ -114,10 +125,12 @@ export async function askAetherCore(
       const busy = res.status === 429 || res.status >= 500;
       throw new AetherCoreError("upstream", busy ? "The concierge is busy right now. Please try again in a moment." : "The concierge couldn't process that request.", res.status);
     }
-    const reply = extractText(await res.json());
+    const body = (await res.json()) as any;
+    const reply = extractText(body);
+    const conversationId = typeof body?.id === "string" && RESPONSE_ID_RE.test(body.id) ? body.id : null;
     if (!reply) throw new AetherCoreError("empty", "The concierge didn't return an answer. Please rephrase your request.");
     log("ok", { ms: Date.now() - started, chars: reply.length });
-    return { reply, sessionId: session };
+    return { reply, sessionId: session, conversationId };
   } catch (e) {
     if (e instanceof AetherCoreError) throw e;
     if ((e as Error)?.name === "AbortError") {
