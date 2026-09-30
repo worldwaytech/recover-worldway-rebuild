@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Breadcrumbs, CollectionItemCard, SectionHeading } from "@/components/CollectionTemplate";
+import { Breadcrumbs, CollectionItemCard } from "@/components/CollectionTemplate";
 import { globalSearch, searchSuggestions, POPULAR_SEARCHES } from "@/lib/catalogue-engine";
 import {
   addRecentSearch,
@@ -71,11 +71,13 @@ function SearchPage() {
         </section>
 
         <section className="container-lux py-12">
-          <SectionHeading
-            eyebrow="Enterprise catalogue search"
-            title="Search everything Worldway"
-            intro="Destinations, countries, cities, collections, travel styles and interests — across every vertical we operate."
-          />
+          <div className="max-w-3xl">
+            <p className="eyebrow text-gold">Enterprise catalogue search</p>
+            <h1 className="mt-2 font-serif text-3xl md:text-4xl">Search everything Worldway</h1>
+            <p className="mt-4 text-muted-foreground">
+              Destinations, countries, cities, collections, travel styles and interests — across every vertical we operate.
+            </p>
+          </div>
 
           <form
             className="mt-8 flex flex-wrap gap-3"

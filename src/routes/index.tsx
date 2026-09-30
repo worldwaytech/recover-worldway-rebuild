@@ -5,10 +5,10 @@ import { mediaUrl } from "@/lib/media";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Worldway Travels Group — Bespoke Luxury Travel" },
-      { name: "description", content: "Private jets, five-star residences, curated activities, and a 24/7 AI concierge." },
-      { property: "og:title", content: "Worldway Travels Group — Bespoke Luxury Travel" },
-      { property: "og:description", content: "Private jets, five-star residences, curated activities, and a 24/7 AI concierge." },
+      { title: "Luxury Tours, Hotels & Flights | Worldway Travels" },
+      { name: "description", content: "Plan bespoke luxury journeys with Worldway: guided tours, five-star hotels, flights, private transfers and a 24/7 travel concierge, all in one place." },
+      { property: "og:title", content: "Luxury Tours, Hotels & Flights | Worldway Travels" },
+      { property: "og:description", content: "Bespoke luxury journeys: guided tours, five-star hotels, flights, private transfers and a 24/7 travel concierge." },
       { property: "og:image", content: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1600&q=80" },
     ],
   }),
