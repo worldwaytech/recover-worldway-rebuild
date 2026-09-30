@@ -164,8 +164,9 @@ function AuthPage() {
           {mode === "signup" && (
             <>
               <div>
-                <Label>Full name</Label>
+                <Label htmlFor="auth-name">Full name</Label>
                 <Input
+                  id="auth-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ada Lovelace"
@@ -192,8 +193,9 @@ function AuthPage() {
             </>
           )}
           <div>
-            <Label>Email</Label>
+            <Label htmlFor="auth-email">Email</Label>
             <Input
+              id="auth-email"
               type="email"
               required
               value={email}
@@ -202,8 +204,9 @@ function AuthPage() {
             />
           </div>
           <div>
-            <Label>Password</Label>
+            <Label htmlFor="auth-password">Password</Label>
             <Input
+              id="auth-password"
               type="password"
               required
               minLength={6}
