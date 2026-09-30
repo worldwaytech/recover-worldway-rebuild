@@ -242,6 +242,7 @@ import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 import { Route as ApiPublicHooksCruiseaHoldSweepRouteImport } from './routes/api/public/hooks/cruisea-hold-sweep'
 import { Route as ApiPublicHooksBokunMarketplaceSyncRouteImport } from './routes/api/public/hooks/bokun-marketplace-sync'
+import { Route as ApiPublicV1CommerceOpRouteImport } from './routes/api/public/v1/commerce.$op'
 import { Route as ApiPublicHooksIntegrationWebhookProviderKeyRouteImport } from './routes/api/public/hooks/integration-webhook.$providerKey'
 
 const YachtsRoute = YachtsRouteImport.update({
@@ -1431,6 +1432,11 @@ const ApiPublicHooksBokunMarketplaceSyncRoute =
     path: '/api/public/hooks/bokun-marketplace-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1CommerceOpRoute = ApiPublicV1CommerceOpRouteImport.update({
+  id: '/api/public/v1/commerce/$op',
+  path: '/api/public/v1/commerce/$op',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksIntegrationWebhookProviderKeyRoute =
   ApiPublicHooksIntegrationWebhookProviderKeyRouteImport.update({
     id: '/api/public/hooks/integration-webhook/$providerKey',
@@ -1673,6 +1679,7 @@ export interface FileRoutesByFullPath {
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
   '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  '/api/public/v1/commerce/$op': typeof ApiPublicV1CommerceOpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1879,6 +1886,7 @@ export interface FileRoutesByTo {
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryIndexRoute
   '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  '/api/public/v1/commerce/$op': typeof ApiPublicV1CommerceOpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -2116,6 +2124,7 @@ export interface FileRoutesById {
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
   '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  '/api/public/v1/commerce/$op': typeof ApiPublicV1CommerceOpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2354,6 +2363,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
     | '/api/public/hooks/integration-webhook/$providerKey'
+    | '/api/public/v1/commerce/$op'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2560,6 +2570,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country'
     | '/api/public/hooks/integration-webhook/$providerKey'
+    | '/api/public/v1/commerce/$op'
   id:
     | '__root__'
     | '/'
@@ -2796,6 +2807,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
     | '/api/public/hooks/integration-webhook/$providerKey'
+    | '/api/public/v1/commerce/$op'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2901,6 +2913,7 @@ export interface RootRouteChildren {
   VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
   VoyagesCruiseaSailingIdRoute: typeof VoyagesCruiseaSailingIdRoute
   ApiPublicHooksIntegrationWebhookProviderKeyRoute: typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  ApiPublicV1CommerceOpRoute: typeof ApiPublicV1CommerceOpRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -4536,6 +4549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBokunMarketplaceSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/commerce/$op': {
+      id: '/api/public/v1/commerce/$op'
+      path: '/api/public/v1/commerce/$op'
+      fullPath: '/api/public/v1/commerce/$op'
+      preLoaderRoute: typeof ApiPublicV1CommerceOpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/integration-webhook/$providerKey': {
       id: '/api/public/hooks/integration-webhook/$providerKey'
       path: '/api/public/hooks/integration-webhook/$providerKey'
@@ -5207,6 +5227,7 @@ const rootRouteChildren: RootRouteChildren = {
   VoyagesCruiseaSailingIdRoute: VoyagesCruiseaSailingIdRoute,
   ApiPublicHooksIntegrationWebhookProviderKeyRoute:
     ApiPublicHooksIntegrationWebhookProviderKeyRoute,
+  ApiPublicV1CommerceOpRoute: ApiPublicV1CommerceOpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
