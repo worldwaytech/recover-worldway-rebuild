@@ -12,11 +12,15 @@ import { MembershipUpgradeDialog } from "@/components/membership-upgrade-dialog"
 export const Route = createFileRoute("/hotels/")({
   head: () => ({
     meta: [
-      { title: "Hotels — Worldway Travels Group" },
+      { title: "Luxury Hotels & Villas — Worldway Travels Group" },
       {
         name: "description",
-        content: "Five-star residences, private villas, and heritage estates.",
+        content: "Search five-star hotels, private villas and heritage estates worldwide with live rates and availability, arranged by the Worldway Travels Group team.",
       },
+      { property: "og:title", content: "Luxury Hotels & Villas — Worldway Travels Group" },
+      { property: "og:description", content: "Search five-star hotels, private villas and heritage estates worldwide with live rates and availability." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HotelsPage,

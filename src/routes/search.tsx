@@ -71,11 +71,13 @@ function SearchPage() {
         </section>
 
         <section className="container-lux py-12">
-          <SectionHeading
-            eyebrow="Enterprise catalogue search"
-            title="Search everything Worldway"
-            intro="Destinations, countries, cities, collections, travel styles and interests — across every vertical we operate."
-          />
+          <div className="max-w-3xl">
+            <p className="eyebrow text-gold">Enterprise catalogue search</p>
+            <h1 className="mt-2 font-serif text-3xl md:text-4xl">Search everything Worldway</h1>
+            <p className="mt-4 text-muted-foreground">
+              Destinations, countries, cities, collections, travel styles and interests — across every vertical we operate.
+            </p>
+          </div>
 
           <form
             className="mt-8 flex flex-wrap gap-3"
