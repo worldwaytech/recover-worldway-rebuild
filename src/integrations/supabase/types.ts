@@ -2940,6 +2940,389 @@ export type Database = {
         }
         Relationships: []
       }
+      travelshop_bookings: {
+        Row: {
+          adults: number
+          children: number
+          created_at: string
+          customer_currency: string
+          customer_total: number
+          events: Json
+          id: string
+          infants: number
+          lead_traveller: Json
+          markup_percent: number | null
+          price_checked_at: string
+          pricing_basis: string
+          rooms: Json
+          service_type: string
+          special_requests: string | null
+          status: string
+          supplier_booking_token: string | null
+          supplier_currency: string
+          supplier_net_total: number | null
+          supplier_payment_request: Json | null
+          supplier_reference_id: string | null
+          supplier_response: Json | null
+          supplier_retail_total: number
+          supplier_status: string | null
+          tour_date: string
+          tour_external_id: number
+          tour_name: string
+          tour_slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adults: number
+          children?: number
+          created_at?: string
+          customer_currency: string
+          customer_total: number
+          events?: Json
+          id?: string
+          infants?: number
+          lead_traveller: Json
+          markup_percent?: number | null
+          price_checked_at: string
+          pricing_basis: string
+          rooms?: Json
+          service_type: string
+          special_requests?: string | null
+          status?: string
+          supplier_booking_token?: string | null
+          supplier_currency: string
+          supplier_net_total?: number | null
+          supplier_payment_request?: Json | null
+          supplier_reference_id?: string | null
+          supplier_response?: Json | null
+          supplier_retail_total: number
+          supplier_status?: string | null
+          tour_date: string
+          tour_external_id: number
+          tour_name: string
+          tour_slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adults?: number
+          children?: number
+          created_at?: string
+          customer_currency?: string
+          customer_total?: number
+          events?: Json
+          id?: string
+          infants?: number
+          lead_traveller?: Json
+          markup_percent?: number | null
+          price_checked_at?: string
+          pricing_basis?: string
+          rooms?: Json
+          service_type?: string
+          special_requests?: string | null
+          status?: string
+          supplier_booking_token?: string | null
+          supplier_currency?: string
+          supplier_net_total?: number | null
+          supplier_payment_request?: Json | null
+          supplier_reference_id?: string | null
+          supplier_response?: Json | null
+          supplier_retail_total?: number
+          supplier_status?: string | null
+          tour_date?: string
+          tour_external_id?: number
+          tour_name?: string
+          tour_slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      travelshop_sync_failures: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string
+          external_id: number | null
+          id: string
+          kind: string
+          page: number | null
+          resolved: boolean
+          run_id: string | null
+          slug: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error: string
+          external_id?: number | null
+          id?: string
+          kind: string
+          page?: number | null
+          resolved?: boolean
+          run_id?: string | null
+          slug?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string
+          external_id?: number | null
+          id?: string
+          kind?: string
+          page?: number | null
+          resolved?: boolean
+          run_id?: string | null
+          slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travelshop_sync_failures_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "travelshop_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travelshop_sync_runs: {
+        Row: {
+          created: number
+          created_at: string
+          deactivated: number
+          duplicates: number
+          failed: number
+          fetched: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          next_page: number
+          pages_done: number
+          pages_total: number | null
+          request_count: number
+          retry_count: number
+          scope: string
+          skipped: number
+          started_at: string
+          status: string
+          total_reported: number | null
+          trigger: string
+          unchanged: number
+          updated: number
+          updated_at: string
+        }
+        Insert: {
+          created?: number
+          created_at?: string
+          deactivated?: number
+          duplicates?: number
+          failed?: number
+          fetched?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          next_page?: number
+          pages_done?: number
+          pages_total?: number | null
+          request_count?: number
+          retry_count?: number
+          scope?: string
+          skipped?: number
+          started_at?: string
+          status?: string
+          total_reported?: number | null
+          trigger?: string
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Update: {
+          created?: number
+          created_at?: string
+          deactivated?: number
+          duplicates?: number
+          failed?: number
+          fetched?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          next_page?: number
+          pages_done?: number
+          pages_total?: number | null
+          request_count?: number
+          retry_count?: number
+          scope?: string
+          skipped?: number
+          started_at?: string
+          status?: string
+          total_reported?: number | null
+          trigger?: string
+          unchanged?: number
+          updated?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      travelshop_tours: {
+        Row: {
+          activities: string[]
+          category_name: string | null
+          category_slug: string | null
+          content_hash: string | null
+          country: string | null
+          cover_image: string | null
+          created_at: string
+          currency: string | null
+          description_html: string | null
+          destination_slugs: string[]
+          destinations: string[]
+          details: Json
+          duration_days: number | null
+          duration_hours: number | null
+          end_location: string | null
+          exclusions: Json
+          external_id: number
+          first_seen_at: string
+          free_cancellation: boolean
+          group_max: number | null
+          group_min: number | null
+          highlights: Json
+          id: string
+          images: Json
+          inclusions: Json
+          instant_confirmation: boolean
+          is_active: boolean
+          is_private: boolean
+          is_regular: boolean
+          itinerary: Json
+          languages: string[]
+          last_seen_run: string | null
+          last_synced_at: string
+          max_pax: number | null
+          name: string
+          net_price_from: number | null
+          price_from: number | null
+          rating: number | null
+          region: string | null
+          review_count: number
+          slug: string
+          source_deleted_at: string | null
+          source_ref: Json
+          source_status: string | null
+          source_updated_at: string | null
+          start_location: string | null
+          suitable_ages: string | null
+          summary: string | null
+          tour_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          activities?: string[]
+          category_name?: string | null
+          category_slug?: string | null
+          content_hash?: string | null
+          country?: string | null
+          cover_image?: string | null
+          created_at?: string
+          currency?: string | null
+          description_html?: string | null
+          destination_slugs?: string[]
+          destinations?: string[]
+          details?: Json
+          duration_days?: number | null
+          duration_hours?: number | null
+          end_location?: string | null
+          exclusions?: Json
+          external_id: number
+          first_seen_at?: string
+          free_cancellation?: boolean
+          group_max?: number | null
+          group_min?: number | null
+          highlights?: Json
+          id?: string
+          images?: Json
+          inclusions?: Json
+          instant_confirmation?: boolean
+          is_active?: boolean
+          is_private?: boolean
+          is_regular?: boolean
+          itinerary?: Json
+          languages?: string[]
+          last_seen_run?: string | null
+          last_synced_at?: string
+          max_pax?: number | null
+          name: string
+          net_price_from?: number | null
+          price_from?: number | null
+          rating?: number | null
+          region?: string | null
+          review_count?: number
+          slug: string
+          source_deleted_at?: string | null
+          source_ref?: Json
+          source_status?: string | null
+          source_updated_at?: string | null
+          start_location?: string | null
+          suitable_ages?: string | null
+          summary?: string | null
+          tour_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activities?: string[]
+          category_name?: string | null
+          category_slug?: string | null
+          content_hash?: string | null
+          country?: string | null
+          cover_image?: string | null
+          created_at?: string
+          currency?: string | null
+          description_html?: string | null
+          destination_slugs?: string[]
+          destinations?: string[]
+          details?: Json
+          duration_days?: number | null
+          duration_hours?: number | null
+          end_location?: string | null
+          exclusions?: Json
+          external_id?: number
+          first_seen_at?: string
+          free_cancellation?: boolean
+          group_max?: number | null
+          group_min?: number | null
+          highlights?: Json
+          id?: string
+          images?: Json
+          inclusions?: Json
+          instant_confirmation?: boolean
+          is_active?: boolean
+          is_private?: boolean
+          is_regular?: boolean
+          itinerary?: Json
+          languages?: string[]
+          last_seen_run?: string | null
+          last_synced_at?: string
+          max_pax?: number | null
+          name?: string
+          net_price_from?: number | null
+          price_from?: number | null
+          rating?: number | null
+          region?: string | null
+          review_count?: number
+          slug?: string
+          source_deleted_at?: string | null
+          source_ref?: Json
+          source_status?: string | null
+          source_updated_at?: string | null
+          start_location?: string | null
+          suitable_ages?: string | null
+          summary?: string | null
+          tour_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tripjack_api_logs: {
         Row: {
           capability: string
@@ -3785,6 +4168,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      travelshop_facets: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "agent" | "b2b" | "b2c"
