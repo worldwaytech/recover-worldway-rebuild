@@ -154,3 +154,26 @@ export const runTourCatalogueSync = createServerFn({ method: "POST" })
     const id = await startRun(supabaseAdmin as never, "manual", "full");
     return continueRun(supabaseAdmin as never, id, Date.now() + 25_000);
   });
+
+export const getTourBookingGates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStaff(context as never);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { tourBookingsEnabled } = await import("./booking.server");
+    const { bookingGates, contractComplete, CONTRACT_EVIDENCE, UNVERIFIED } = await import("./booking-contract");
+    const { count } = await supabaseAdmin.from("travelshop_bookings").select("id", { count: "exact", head: true }).eq("status", "supplier_booked");
+    return {
+      gates: bookingGates({ flagEnabled: tourBookingsEnabled(), contractComplete: contractComplete(), verifiedStaffBooking: (count ?? 0) > 0, certified: false }),
+      evidence: CONTRACT_EVIDENCE, unverified: Object.values(UNVERIFIED),
+    };
+  });
+
+export const staffSendTourToPartner = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ bookingId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context as never);
+    const { createSupplierBooking } = await import("./booking.server");
+    return createSupplierBooking(data.bookingId, { id: context.userId, email: (context.claims as { email?: string } | undefined)?.email ?? null });
+  });

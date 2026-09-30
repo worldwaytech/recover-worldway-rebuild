@@ -105,4 +105,5 @@ export function bookingGates(i: GateInput) {
   ];
 }
 
-export const contractComplete = () => Object.keys(PHONE_COUNTRY_IDS).length > 0 && false; // success shape still unobserved
+/** Complete only when the partner's country ids are supplied; the success shape is then captured by the first staff booking. */
+export const contractComplete = () => Object.keys(PHONE_COUNTRY_IDS).length > 0;
