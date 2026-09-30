@@ -5,7 +5,8 @@ import { TRAVELSHOP_PATHS, travelshopRequest } from "./client.server";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  // Untyped view: these rows are mapped to Worldway DTOs explicitly below.
+  return supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient;
 }
 
 export const PAGE_SIZE = 24;
