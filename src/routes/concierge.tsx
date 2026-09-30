@@ -189,7 +189,7 @@ function ConciergePage() {
             {[
               { icon: Clock3, k: "Availability", v: "24 / 7" },
               { icon: ShieldCheck, k: "Pricing", v: "Live" },
-              { icon: Lock, k: "Conversations", v: "Private" },
+              { icon: Lock, k: "Discreet", v: "Private" },
             ].map(({ icon: Icon, k, v }) => (
               <div key={k} className="bg-background/80 px-3 py-5 backdrop-blur-md">
                 <Icon className="mx-auto h-4 w-4 text-primary" aria-hidden />
@@ -244,7 +244,7 @@ function ConciergePage() {
               </div>
             </div>
 
-            <div className="rounded-sm border border-primary/15 bg-card/50 p-5 backdrop-blur">
+            <div className={`rounded-sm border border-primary/15 bg-card/50 p-5 backdrop-blur ${messages.length <= 1 ? "hidden lg:block" : ""}`}>
               <div className="text-[10px] uppercase tracking-[0.35em] text-primary">Begin with</div>
               <ul className="mt-4 divide-y divide-border/60">
                 {SUGGESTIONS.map((s) => (
@@ -281,7 +281,7 @@ function ConciergePage() {
 
           {/* Conversation */}
           <div
-            className="order-1 flex min-h-[640px] flex-col overflow-hidden rounded-sm border border-primary/25 bg-card/60 backdrop-blur-xl lg:order-2 lg:h-[760px]"
+            className="order-1 flex min-h-[560px] lg:min-h-[640px] flex-col overflow-hidden rounded-sm border border-primary/25 bg-card/60 backdrop-blur-xl lg:order-2 lg:h-[760px]"
             style={{ boxShadow: "var(--shadow-portal)" }}
           >
             <header className="flex items-center justify-between gap-4 border-b border-primary/15 px-5 py-4 sm:px-7">
@@ -333,6 +333,32 @@ function ConciergePage() {
                   </div>
                 ),
               )}
+              {messages.length <= 1 && !loading ? (
+                <div className="pt-6">
+                  <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+                    <span className="h-px flex-1 bg-border/60" /> A few ways to begin <span className="h-px flex-1 bg-border/60" />
+                  </div>
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s.text}
+                        type="button"
+                        onClick={() => {
+                          setInput(s.text);
+                          inputRef.current?.focus();
+                        }}
+                        className="group rounded-sm border border-border/60 bg-background/40 p-5 text-left transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-background/70"
+                      >
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-primary">
+                          {s.tag}
+                          <ArrowUpRight className="h-3.5 w-3.5 opacity-40 transition group-hover:opacity-100" aria-hidden />
+                        </div>
+                        <div className="mt-3 font-serif text-lg leading-snug text-foreground">{s.text}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {loading ? (
                 <div className="flex gap-4">
                   <div className="w-px shrink-0 bg-primary/50" />
