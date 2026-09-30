@@ -94,6 +94,7 @@ export function useRazorpayCheckout() {
             ...(req.flightFare ? { flightFare: req.flightFare } : {}),
             ...(req.prePurchasedBookingId ? { prePurchasedBookingId: req.prePurchasedBookingId } : {}),
             ...(req.aviationReference ? { aviationReference: req.aviationReference } : {}),
+            ...(req.tourBookingId ? { tourBookingId: req.tourBookingId } : {}),
           },
         });
 
