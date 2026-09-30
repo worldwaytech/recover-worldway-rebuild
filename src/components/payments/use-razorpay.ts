@@ -41,6 +41,8 @@ export type PayResult = {
   amountMinor: number;
   currency: string;
   method: string | null;
+  /** Tour bookings only: Worldway reference + whether the booking was accepted. */
+  tour?: { confirmed: boolean; worldwayReference: string } | null;
 };
 
 export type PayRequest = {
@@ -156,6 +158,7 @@ export function useRazorpayCheckout() {
           amountMinor: verified.amountMinor,
           currency: verified.currency,
           method: verified.method,
+          tour: (verified as { tour?: { confirmed: boolean; worldwayReference: string } | null }).tour ?? null,
         };
       } catch (e) {
         setError(e instanceof Error ? e.message : "Payment could not be completed.");
