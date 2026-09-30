@@ -19,6 +19,11 @@ export const Route = createFileRoute("/api/public/hooks/bokun-marketplace-sync")
           matches(supplied, (process.env["INTEGRATION_SYNC_SECRET"] ?? "").trim()) ||
           matches(supplied, (process.env["INTEGRATION_SYNC_SCHEDULE_TOKEN"] ?? "").trim());
         if (!ok) return Response.json({ error: "unauthorised" }, { status: 401 });
+        // Bókun is disabled as the marketplace source (replaced by the tour
+        // supplier sync). Historical data is kept; no new sync runs.
+        if ((process.env["BOKUN_MARKETPLACE_ENABLED"] ?? "").trim() !== "true") {
+          return Response.json({ ok: true, skipped: "marketplace source disabled" });
+        }
         try {
           const { runMarketplaceSync } = await import("@/lib/bokun/sync.server");
           const r = await runMarketplaceSync({ scope: "incremental", trigger: "auto" });

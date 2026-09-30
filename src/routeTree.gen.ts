@@ -159,6 +159,7 @@ import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
 import { Route as AdminTravelDnaRouteImport } from './routes/admin.travel-dna'
 import { Route as AdminToursRouteImport } from './routes/admin.tours'
+import { Route as AdminTourSupplierRouteImport } from './routes/admin.tour-supplier'
 import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
@@ -233,6 +234,7 @@ import { Route as DestinationsRegionCountryDestinationRouteImport } from './rout
 import { Route as AuthV1OauthTokenRouteImport } from './routes/auth_.v1.oauth.token'
 import { Route as AuthV1OauthAuthorizeRouteImport } from './routes/auth_.v1.oauth.authorize'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
+import { Route as ApiPublicHooksTourCatalogueSyncRouteImport } from './routes/api/public/hooks/tour-catalogue-sync'
 import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/public/hooks/integration-sync'
 import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/api/public/hooks/hbx-transfers-refresh'
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
@@ -991,6 +993,11 @@ const AdminToursRoute = AdminToursRouteImport.update({
   path: '/tours',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTourSupplierRoute = AdminTourSupplierRouteImport.update({
+  id: '/tour-supplier',
+  path: '/tour-supplier',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSuperRoute = AdminSuperRouteImport.update({
   id: '/super',
   path: '/super',
@@ -1376,6 +1383,12 @@ const ApiPublicPartnerFeedPartnerIdRoute =
     path: '/api/public/partner-feed/$partnerId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksTourCatalogueSyncRoute =
+  ApiPublicHooksTourCatalogueSyncRouteImport.update({
+    id: '/api/public/hooks/tour-catalogue-sync',
+    path: '/api/public/hooks/tour-catalogue-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksIntegrationSyncRoute =
   ApiPublicHooksIntegrationSyncRouteImport.update({
     id: '/api/public/hooks/integration-sync',
@@ -1504,6 +1517,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
@@ -1636,6 +1650,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
+  '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
@@ -1708,6 +1723,7 @@ export interface FileRoutesByTo {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
@@ -1838,6 +1854,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
+  '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
@@ -1939,6 +1956,7 @@ export interface FileRoutesById {
   '/admin/seo': typeof AdminSeoRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/super': typeof AdminSuperRoute
+  '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
@@ -2071,6 +2089,7 @@ export interface FileRoutesById {
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
+  '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/auth_/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth_/v1/oauth/token': typeof AuthV1OauthTokenRoute
@@ -2173,6 +2192,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tour-supplier'
     | '/admin/tours'
     | '/admin/travel-dna'
     | '/admin/tripjack'
@@ -2305,6 +2325,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
+    | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/auth/v1/oauth/authorize'
     | '/auth/v1/oauth/token'
@@ -2377,6 +2398,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tour-supplier'
     | '/admin/tours'
     | '/admin/travel-dna'
     | '/admin/tripjack'
@@ -2507,6 +2529,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
+    | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/auth/v1/oauth/authorize'
     | '/auth/v1/oauth/token'
@@ -2607,6 +2630,7 @@ export interface FileRouteTypes {
     | '/admin/seo'
     | '/admin/settings'
     | '/admin/super'
+    | '/admin/tour-supplier'
     | '/admin/tours'
     | '/admin/travel-dna'
     | '/admin/tripjack'
@@ -2739,6 +2763,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
+    | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/auth_/v1/oauth/authorize'
     | '/auth_/v1/oauth/token'
@@ -2844,6 +2869,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
   ApiPublicHooksHbxTransfersRefreshRoute: typeof ApiPublicHooksHbxTransfersRefreshRoute
   ApiPublicHooksIntegrationSyncRoute: typeof ApiPublicHooksIntegrationSyncRoute
+  ApiPublicHooksTourCatalogueSyncRoute: typeof ApiPublicHooksTourCatalogueSyncRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
   AuthV1OauthAuthorizeRoute: typeof AuthV1OauthAuthorizeRoute
   AuthV1OauthTokenRoute: typeof AuthV1OauthTokenRoute
@@ -3904,6 +3930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminToursRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/tour-supplier': {
+      id: '/admin/tour-supplier'
+      path: '/tour-supplier'
+      fullPath: '/admin/tour-supplier'
+      preLoaderRoute: typeof AdminTourSupplierRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/super': {
       id: '/admin/super'
       path: '/super'
@@ -4422,6 +4455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPartnerFeedPartnerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/tour-catalogue-sync': {
+      id: '/api/public/hooks/tour-catalogue-sync'
+      path: '/api/public/hooks/tour-catalogue-sync'
+      fullPath: '/api/public/hooks/tour-catalogue-sync'
+      preLoaderRoute: typeof ApiPublicHooksTourCatalogueSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/integration-sync': {
       id: '/api/public/hooks/integration-sync'
       path: '/api/public/hooks/integration-sync'
@@ -4517,6 +4557,7 @@ interface AdminRouteChildren {
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSuperRoute: typeof AdminSuperRoute
+  AdminTourSupplierRoute: typeof AdminTourSupplierRoute
   AdminToursRoute: typeof AdminToursRoute
   AdminTravelDnaRoute: typeof AdminTravelDnaRoute
   AdminTripjackRoute: typeof AdminTripjackRoute
@@ -4560,6 +4601,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSeoRoute: AdminSeoRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSuperRoute: AdminSuperRoute,
+  AdminTourSupplierRoute: AdminTourSupplierRoute,
   AdminToursRoute: AdminToursRoute,
   AdminTravelDnaRoute: AdminTravelDnaRoute,
   AdminTripjackRoute: AdminTripjackRoute,
@@ -5115,6 +5157,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksHbxTransfersRefreshRoute:
     ApiPublicHooksHbxTransfersRefreshRoute,
   ApiPublicHooksIntegrationSyncRoute: ApiPublicHooksIntegrationSyncRoute,
+  ApiPublicHooksTourCatalogueSyncRoute: ApiPublicHooksTourCatalogueSyncRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
   AuthV1OauthAuthorizeRoute: AuthV1OauthAuthorizeRoute,
   AuthV1OauthTokenRoute: AuthV1OauthTokenRoute,

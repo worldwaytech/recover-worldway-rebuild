@@ -15,6 +15,7 @@ const KNOWN_SUPPLIER_TERMS = [
   "WorldwayLuxe", "Worldway Luxe Partner API", "worldwayluxe.com",
   "Abercrombie", "Contiki", "Insight Vacations", "Luxury Gold", "CostSaver", "AAT Kings",
   "Brendan Vacations", "Uniworld", "Hotelbeds Group",
+  "TravelShop Booking", "TravelShop Turkey", "TravelShop", "travelshopbooking.com", "travelshopbooking",
 ];
 
 /** Keys that carry supplier identity, routing or credentials — never external. */
