@@ -41,6 +41,8 @@ export type PayResult = {
   amountMinor: number;
   currency: string;
   method: string | null;
+  /** Tour bookings only: Worldway reference + whether the booking was accepted. */
+  tour?: { confirmed: boolean; worldwayReference: string } | null;
 };
 
 export type PayRequest = {
