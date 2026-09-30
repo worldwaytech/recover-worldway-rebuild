@@ -156,6 +156,7 @@ export interface OnRequestItem {
   startDate?: string; endDate?: string; durationDays?: number;
   /** The tour's own inclusions already contain accommodation → no hotel is added for these nights. */
   accommodationIncluded?: boolean;
+  image?: string | null;
 }
 
 /** Activity search has no scheduled slots at this stage → on-request, never scheduled or priced as final. */
@@ -173,39 +174,61 @@ export async function searchActivitiesOnRequest(city: string, startDate: string,
 /**
  * Live tours for the destination, ranked by real review volume, priced live for
  * the first open date ON/AFTER the actual arrival date that also ends by the
- * onward departure date. Operators publish dates, not start times, so tours are
- * live-priced ON REQUEST items (never scheduled with an invented time).
+ * onward departure date. Prices are the live customer price (markup applied).
  */
-export async function searchToursLive(destIata: string, arrivalDate: string, departureDate: string, adults: number, children: number): Promise<OnRequestItem[]> {
+export async function searchToursLive(destIata: string, arrivalDate: string, departureDate: string, adults: number, children: number, query?: string, limit = 8): Promise<OnRequestItem[]> {
   if (!supports(registrationFor("travelshop"), "search")) return [];
   const { tourIncludesAccommodation, tourFitsTrip } = await import("../tour-stays");
   const { findAirportByCode } = await import("@/lib/aviation/airports.server");
   const city = (findAirportByCode(destIata)?.city ?? destIata).replace(/[%,(){}"]/g, " ").trim();
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient;
-  const { data } = await db.from("travelshop_tours").select("slug, name, duration_days, inclusions")
-    .eq("is_active", true).or(`start_location.ilike.${city},destinations.cs.{"${city}"}`)
-    .order("review_count", { ascending: false, nullsFirst: false }).limit(4);
-  const { liveAvailability, liveQuote } = await import("@/lib/travelshop/catalogue.server");
-  const items: OnRequestItem[] = [];
-  for (const t of (data ?? []) as { slug: string; name: string; duration_days: number | null; inclusions: unknown }[]) {
+  let q = db.from("travelshop_tours").select("slug, name, duration_days, inclusions, cover_image")
+    .eq("is_active", true).or(`start_location.ilike.${city},destinations.cs.{"${city}"}`);
+  const text = (query ?? "").replace(/[%,(){}"]/g, " ").trim();
+  if (text) q = q.ilike("name", `%${text}%`);
+  const { data } = await q.order("review_count", { ascending: false, nullsFirst: false }).limit(limit);
+  const { liveAvailability } = await import("@/lib/travelshop/catalogue.server");
+  const rows = (data ?? []) as { slug: string; name: string; duration_days: number | null; inclusions: unknown; cover_image: string | null }[];
+  const found = await Promise.all(rows.map(async (t): Promise<OnRequestItem | null> => {
     const av = await liveAvailability(t.slug, arrivalDate, adults + children).catch(() => null);
-    const fits = (av?.dates ?? []).filter((x) => tourFitsTrip(x.date, x.endDate, arrivalDate, departureDate));
+    const fits = (av?.dates ?? []).filter((x) => tourFitsTrip(x.date, x.endDate || x.date, arrivalDate, departureDate)
+      && ((x.endDate || x.date) > x.date || x.date < departureDate)); // day tours can't run on the flight-home day
     const d = fits.find((x) => x.service === "regular") ?? fits[0];
-    if (!d) continue;
-    const q = await liveQuote({ slug: t.slug, date: d.date, service: d.service, adults, children, infants: 0 }).catch(() => null);
-    if (!q?.ok) continue;
+    if (!d) return null;
+    const total = d.perUnit > 0 && !(d.perAdult > 0) ? d.perUnit : d.perAdult * adults + (d.perChild > 0 ? d.perChild : d.perAdult) * children;
     const acc = tourIncludesAccommodation(t.inclusions, t.duration_days);
-    items.push({
+    return {
       kind: "activity", title: t.name, ref: `tour:${t.slug}|${d.date}|${d.service}`,
-      startDate: d.date, endDate: d.endDate || d.date, durationDays: t.duration_days ?? undefined, accommodationIncluded: acc,
+      startDate: d.date, endDate: d.endDate || d.date, durationDays: t.duration_days ?? undefined, accommodationIncluded: acc, image: t.cover_image,
       reason: acc
-        ? `Live price for ${d.date}–${d.endDate}. Accommodation is included in this tour, so no hotel is added for those nights.`
+        ? `Live price for ${d.date}–${d.endDate || d.date}. Accommodation is included, so no hotel is added for those nights.`
         : `Live price and availability for ${d.date}; start time confirmed by the tour operator before booking.`,
-      indicativeFrom: { amount: q.customerTotal, currency: q.currency },
-    });
-  }
-  return items;
+      indicativeFrom: { amount: Math.round(total * 100) / 100, currency: d.currency },
+    };
+  }));
+  return found.filter((x): x is OnRequestItem => !!x);
+}
+
+/** Selected tour → canonical offer (date precision; starts no earlier than actual arrival). Net = live supplier retail. */
+export async function tourToCanonical(t: OnRequestItem, destIata: string, arrivalAt: string, adults: number, children: number): Promise<CanonicalOffer | null> {
+  const place = airportTz(destIata);
+  if (!place || !t.startDate) return null;
+  const [slug, date, service] = t.ref.replace(/^tour:/, "").split("|");
+  const { liveQuote } = await import("@/lib/travelshop/catalogue.server");
+  const q = await liveQuote({ slug: slug!, date: date!, service: service === "private" ? "private" : "regular", adults, children, infants: 0 }).catch(() => null);
+  if (!q?.ok) return null;
+  const dayStart = localToInstant(`${t.startDate} 00:00`, place.tz)!;
+  const start = Date.parse(dayStart) < Date.parse(arrivalAt) ? arrivalAt : dayStart;
+  const multi = (t.endDate ?? t.startDate) > t.startDate;
+  const end = multi ? localToInstant(`${t.endDate} 00:00`, place.tz)! : localToInstant(`${t.startDate} 23:59`, place.tz)!;
+  const checkedAt = new Date().toISOString();
+  return {
+    supplierKey: "travelshop", kind: "activity", externalId: `${t.ref}|${adults}|${children}`, title: t.title,
+    start: { at: start, timezone: place.tz, place: destIata, lat: place.lat, lng: place.lng },
+    end: { at: end, timezone: place.tz, place: destIata, lat: place.lat, lng: place.lng },
+    net: { amount: q.retailTotal, currency: q.currency }, refundable: false, observedAt: checkedAt,
+  };
 }
 
 // ---------------------------------------------------------------- cruises (production live feed)
