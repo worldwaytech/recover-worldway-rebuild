@@ -138,6 +138,7 @@ export async function createSupplierBooking(bookingId: string, actor: { id: stri
     events: [...(b.events as unknown[]), event("supplier_booked", "Reference received")],
   }).eq("id", bookingId);
   await audit("tour_supplier_booking_created", { reference: ref, payment_id: paid.id });
+  await queueTourConfirmationEmail(bookingId).catch(() => null);
   const { kindOf } = await import("./certification.server");
   await audit("tour_certification_evidence", { kind: kindOf(b.rooms), reference: ref, payment_id: paid.id, supplier_status: String(data["status"] ?? ""), response_keys: Object.keys(data) });
   return { ok: true as const, reference: ref };
@@ -165,7 +166,7 @@ export async function refreshSupplierBooking(bookingId: string) {
   return { ok: true as const, status };
 }
 
-/** Customer-safe view of their own tour bookings. */
+/** Customer-safe view of their own tour bookings — Worldway references and labels only. */
 export async function listCustomerTourBookings(userId: string) {
   const db = await admin();
   const { data } = await db
@@ -174,7 +175,69 @@ export async function listCustomerTourBookings(userId: string) {
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(50);
-  return data ?? [];
+  const { worldwayTourRef, customerTourStatus } = await import("./reference");
+  return (data ?? []).map(({ status, ...b }) => ({ ...b, reference: worldwayTourRef(b.id), status: customerTourStatus(status) }));
+}
+
+/** One customer tour booking with its Worldway receipt — owner only, no partner fields. */
+export async function getCustomerTourBooking(userId: string, bookingId: string) {
+  const db = await admin();
+  const { data: b } = await db.from("travelshop_bookings")
+    .select("id, user_id, tour_slug, tour_name, tour_date, service_type, adults, children, infants, customer_currency, customer_total, status, created_at, lead_traveller")
+    .eq("id", bookingId).maybeSingle();
+  if (!b || b.user_id !== userId) return null;
+  const { data: pays } = await db.from("payments").select("id, amount_minor, currency, status, verified_at, created_at")
+    .eq("purpose", "tour").contains("reference", { tour_booking_id: bookingId }).in("status", ["paid", "refunded", "refund_in_progress"]).order("created_at");
+  const { worldwayTourRef, worldwayReceiptNo, customerTourStatus } = await import("./reference");
+  const lead = (b.lead_traveller ?? {}) as Record<string, unknown>;
+  return {
+    reference: worldwayTourRef(b.id), status: customerTourStatus(b.status),
+    tourName: b.tour_name, tourSlug: b.tour_slug, tourDate: b.tour_date, service: b.service_type,
+    adults: b.adults, children: b.children, infants: b.infants,
+    currency: b.customer_currency, total: Number(b.customer_total), createdAt: b.created_at,
+    lead: { name: [lead["title"], lead["firstName"] ?? lead["first_name"], lead["lastName"] ?? lead["last_name"]].filter(Boolean).join(" "), email: String(lead["email"] ?? "") },
+    payments: (pays ?? []).map((p) => ({ receiptNo: worldwayReceiptNo(p.id), amount: p.amount_minor / 100, currency: p.currency, status: p.status, paidAt: p.verified_at ?? p.created_at })),
+  };
+}
+
+/** Worldway-branded confirmation email. Rendered and logged; delivery starts once the Worldway sender domain is verified. */
+export async function queueTourConfirmationEmail(bookingId: string) {
+  const db = await admin();
+  const { data: b } = await db.from("travelshop_bookings").select("id, tour_name, tour_date, lead_traveller, events").eq("id", bookingId).maybeSingle();
+  if (!b) return "not_found";
+  const { worldwayTourRef } = await import("./reference");
+  const to = String(((b.lead_traveller ?? {}) as Record<string, unknown>)["email"] ?? "");
+  const subject = `Your Worldway tour is confirmed — ${worldwayTourRef(b.id)}`;
+  const status = to ? "queued_no_domain" : "no_recipient";
+  await db.from("travelshop_bookings").update({ events: [...(b.events as unknown[]), event("confirmation_email", `${status}: ${subject}`)] }).eq("id", bookingId);
+  return status;
+}
+
+/** Staff-only full refund for a paid tour that could not be confirmed. Atomic claim — refunds at most once. */
+export async function staffRefundTourPayment(bookingId: string, actor: { id: string; email: string | null }) {
+  const db = await admin();
+  const audit = (action: string, detail: Record<string, unknown>) =>
+    db.from("admin_audit_log").insert({ actor_id: actor.id, actor_email: actor.email, action, target_table: "travelshop_bookings", target_id: bookingId, detail });
+  const { data: b } = await db.from("travelshop_bookings").select("id, status, events").eq("id", bookingId).maybeSingle();
+  if (!b) return { ok: false as const, reason: "Booking not found." };
+  if (!["supplier_failed", "price_changed", "cancelled"].includes(b.status))
+    return { ok: false as const, reason: b.status === "supplier_uncertain" ? "Reconcile with the partner first — the booking may exist." : "Only failed, price-changed or cancelled bookings can be refunded." };
+  const { data: p } = await db.from("payments").update({ status: "refund_in_progress" })
+    .eq("purpose", "tour").eq("status", "paid").contains("reference", { tour_booking_id: bookingId })
+    .select("id, payment_id, amount_minor").maybeSingle();
+  if (!p?.payment_id) return { ok: false as const, reason: "No paid payment to refund (already refunded or in progress)." };
+  try {
+    const { refundRazorpayPayment } = await import("@/lib/payments/razorpay.server");
+    const r = await refundRazorpayPayment(p.payment_id, p.amount_minor, bookingId.slice(0, 36));
+    await db.from("payments").update({ status: "refunded" }).eq("id", p.id);
+    await db.from("travelshop_bookings").update({ status: "refunded", events: [...(b.events as unknown[]), event("refunded", "Full refund issued")] }).eq("id", bookingId);
+    await audit("tour_payment_refunded", { payment_row: p.id, refund_id: r.id, refund_status: r.status });
+    return { ok: true as const };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message.slice(0, 200) : "unknown";
+    await audit("tour_payment_refund_failed", { payment_row: p.id, error: msg });
+    return { ok: false as const, reason: `Refund not confirmed — payment left as "refund in progress" for manual check: ${msg}` };
+  }
 }
 
 /**

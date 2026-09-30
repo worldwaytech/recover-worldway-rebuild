@@ -121,7 +121,24 @@ export const listMyTourBookings = createServerFn({ method: "GET" })
     return listCustomerTourBookings(context.userId);
   });
 
+export const getMyTourBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { getCustomerTourBooking } = await import("./booking.server");
+    return getCustomerTourBooking(context.userId, data.id);
+  });
+
 // ------------------------------------------------------------------ staff
+
+export const staffRefundTour = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ bookingId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context as never);
+    const { staffRefundTourPayment } = await import("./booking.server");
+    return staffRefundTourPayment(data.bookingId, { id: context.userId, email: (context.claims as { email?: string } | undefined)?.email ?? null });
+  });
 
 export const getTourSupplierOverview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
