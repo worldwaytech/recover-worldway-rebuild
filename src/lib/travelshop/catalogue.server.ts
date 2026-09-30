@@ -117,7 +117,23 @@ function withCustomerFromPrice<T extends { price_from: number | null }>(row: T) 
 
 // ------------------------------------------------------ live availability
 
-type PriceBlock = { unit: number; adl: number; chd: number; inf: number };
+type PriceBlock = { unit: number; adl: number; chd: number; inf: number; sng?: number; dbl?: number; trp?: number };
+
+/**
+ * Multi-day tours are priced per person by room occupancy (sng / dbl / trp).
+ * Adults are split into the fewest rooms: pairs in doubles, an odd adult out as
+ * a triple (3+) or single (1). Returns null when the needed room price is missing.
+ */
+export function roomBasedTotal(p: PriceBlock, adults: number): number | null {
+  const sng = p.sng ?? 0, dbl = p.dbl ?? 0, trp = p.trp ?? 0;
+  if (adults < 1) return null;
+  if (adults === 1) return sng > 0 ? sng : null;
+  if (adults % 2 === 0) return dbl > 0 ? dbl * adults : null;
+  if (trp > 0 && dbl > 0) return trp * 3 + dbl * (adults - 3);
+  if (trp > 0 && adults === 3) return trp * 3;
+  return dbl > 0 && sng > 0 ? dbl * (adults - 1) + sng : null;
+}
+const isRoomPriced = (p: PriceBlock) => !(p.adl > 0 || p.unit > 0) && ((p.sng ?? 0) > 0 || (p.dbl ?? 0) > 0 || (p.trp ?? 0) > 0);
 interface AvailabilityResponse {
   id: number;
   slug: string;
@@ -154,6 +170,14 @@ export async function liveAvailability(slug: string, fromDate: string, pax: numb
       for (const service of ["private", "regular"] as const) {
         const p = d.prices?.[service];
         if (!p) continue;
+        if (isRoomPriced(p)) {
+          const adults = Math.max(1, pax);
+          const total = roomBasedTotal(p, adults);
+          if (total === null) continue;
+          const seats = typeof d.seats === "number" && d.seats > 0 ? d.seats : null;
+          out.push({ date: d.start, endDate: d.end, service, currency: d.prices.currency ?? res.currency, perAdult: customerPrice(total / adults), perChild: 0, perInfant: 0, perUnit: 0, seats });
+          continue;
+        }
         if (!(p.adl > 0 || p.unit > 0)) continue;
         const seats = typeof d.seats === "number" && d.seats > 0 ? d.seats : null;
         out.push({
@@ -176,6 +200,14 @@ export async function liveQuote(input: { slug: string; date: string; service: Se
   if (pax > (res.maxPax || 999)) return { ok: false as const, reason: `This tour allows up to ${res.maxPax} travellers.` };
   const day = (res.prices ?? []).flatMap((b) => b.dates ?? []).find((d) => d.start === input.date);
   const p = day?.prices?.[input.service];
+  if (day && p && isRoomPriced(p)) {
+    if (input.children > 0 || input.infants > 0) return { ok: false as const, reason: "Children on this multi-day tour are priced by our team — please send a request." };
+    const room = roomBasedTotal(p, input.adults);
+    if (room === null) return { ok: false as const, reason: "Room prices for this group size aren't available online." };
+    if (typeof day.seats === "number" && day.seats > 0 && pax > day.seats) return { ok: false as const, reason: `Only ${day.seats} places are left on this date.` };
+    const currency = day.prices.currency ?? res.currency;
+    return { ok: true as const, currency, retailTotal: Math.round(room * 100) / 100, customerTotal: customerPrice(room), rule: tourPricingRule(), checkedAt: new Date().toISOString(), tourId: res.id };
+  }
   if (!day || !p || !(p.adl > 0 || p.unit > 0)) return { ok: false as const, reason: "This date is no longer available for the selected option." };
   if (typeof day.seats === "number" && day.seats > 0 && pax > day.seats) return { ok: false as const, reason: `Only ${day.seats} places are left on this date.` };
   if (input.children > 0 && !(p.chd > 0) && !(p.adl > 0)) return { ok: false as const, reason: "Children can't be priced online for this date." };
