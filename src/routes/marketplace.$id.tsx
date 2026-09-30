@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
 import { useMemo, useState } from "react";
 import { getTourDetail, getTourLiveAvailability, getTourLiveQuote, requestTourBooking } from "@/lib/travelshop/tours.functions";
 import { mediaUrl } from "@/lib/media";
@@ -144,31 +145,50 @@ function TourDetailPage() {
 
 function BookingForm(p: { slug: string; pick: { date: string; service: "private" | "regular" }; adults: number; children: number; infants: number }) {
   const submit = useServerFn(requestTourBooking);
-  const [lead, setLead] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const { pay, busy: paying, error: payError } = useRazorpayCheckout();
+  const [lead, setLead] = useState({ title: "Mr" as "Mr" | "Mrs" | "Ms" | "Miss" | "Dr", firstName: "", lastName: "", email: "", phoneCountryCode: "+", phone: "" });
   const [notes, setNotes] = useState("");
-  const [state, setState] = useState<{ busy: boolean; msg?: string; ok?: boolean }>({ busy: false });
+  const [state, setState] = useState<{ busy: boolean; msg?: string; ok?: boolean; payable?: { id: string; currency: string; total: number } }>({ busy: false });
+  const [done, setDone] = useState<string | null>(null);
+  async function onPay() {
+    if (!state.payable) return;
+    const r = await pay({ purpose: "tour", tourBookingId: state.payable.id, currency: state.payable.currency, description: "Worldway tour booking", name: `${lead.firstName} ${lead.lastName}`, email: lead.email, phone: lead.phone });
+    if (r) setDone("Payment received. Your tour is being confirmed — you'll see the confirmation in your bookings, and our team will contact you if anything needs attention.");
+  }
   return (
     <form className="mt-3 space-y-2" onSubmit={async (e) => {
       e.preventDefault();
       setState({ busy: true });
       try {
-        const r = await submit({ data: { slug: p.slug, date: p.pick.date, service: p.pick.service, adults: p.adults, children: p.children, infants: p.infants, lead, specialRequests: notes || undefined } });
-        setState(r.ok
-          ? { busy: false, ok: true, msg: `Request saved — ${r.booking.customer_currency} ${Number(r.booking.customer_total).toFixed(2)}, live price re-checked. Our team will confirm your booking and send the payment link. Nothing has been charged.` }
-          : { busy: false, msg: r.reason });
+        const r = await submit({ data: { slug: p.slug, date: p.pick.date, service: p.pick.service, adults: p.adults, children: p.children, infants: p.infants, lead: { ...lead, phoneCountryCode: lead.phoneCountryCode.length > 1 ? lead.phoneCountryCode : undefined }, specialRequests: notes || undefined } });
+        if (!r.ok) { setState({ busy: false, msg: r.reason }); return; }
+        const total = Number(r.booking.customer_total);
+        setState(r.payable
+          ? { busy: false, ok: true, payable: { id: r.booking.id as string, currency: r.booking.customer_currency as string, total }, msg: `Live price confirmed: ${r.booking.customer_currency} ${total.toFixed(2)}.` }
+          : { busy: false, ok: true, msg: `Request saved — ${r.booking.customer_currency} ${total.toFixed(2)}, live price re-checked. Our team will confirm your booking and send the payment link. Nothing has been charged.` });
       } catch {
         setState({ busy: false, msg: "Please sign in to book, then try again." });
       }
     }}>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-[5rem_1fr_1fr] gap-2">
+        <select aria-label="Title" className={box} value={lead.title} onChange={(e) => setLead({ ...lead, title: e.target.value as typeof lead.title })}>{["Mr", "Mrs", "Ms", "Miss", "Dr"].map((t) => <option key={t}>{t}</option>)}</select>
         <input required placeholder="First name" className={box} value={lead.firstName} onChange={(e) => setLead({ ...lead, firstName: e.target.value })} />
         <input required placeholder="Last name" className={box} value={lead.lastName} onChange={(e) => setLead({ ...lead, lastName: e.target.value })} />
       </div>
       <input required type="email" placeholder="Email" className={`${box} w-full`} value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} />
-      <input required placeholder="Phone" className={`${box} w-full`} value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
+      <div className="grid grid-cols-[5rem_1fr] gap-2">
+        <input required aria-label="Country code" placeholder="+44" className={box} value={lead.phoneCountryCode} onChange={(e) => setLead({ ...lead, phoneCountryCode: e.target.value })} />
+        <input required placeholder="Phone" className={box} value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
+      </div>
       <textarea placeholder="Special requests (optional)" maxLength={1000} className={`${box} w-full`} value={notes} onChange={(e) => setNotes(e.target.value)} />
-      <button disabled={state.busy || state.ok} className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{state.busy ? "Re-checking live price…" : "Request booking"}</button>
+      {!state.payable ? (
+        <button disabled={state.busy || state.ok} className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{state.busy ? "Re-checking live price…" : "Continue"}</button>
+      ) : (
+        <button type="button" onClick={onPay} disabled={paying || !!done} className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{paying ? "Processing…" : `Pay ${state.payable.currency} ${state.payable.total.toFixed(2)} and book`}</button>
+      )}
       {state.msg && <p className={`text-sm ${state.ok ? "text-primary" : "text-destructive"}`}>{state.msg}</p>}
+      {done && <p className="text-sm text-primary">{done}</p>}
+      {payError && !done && <p className="text-sm text-destructive">{payError}</p>}
     </form>
   );
 }

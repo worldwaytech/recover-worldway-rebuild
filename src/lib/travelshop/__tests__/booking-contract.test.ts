@@ -29,3 +29,14 @@ describe("tour booking contract", () => {
     expect(bookingGates({ flagEnabled: true, contractComplete: true, verifiedStaffBooking: true, certified: false }).map((x) => x.open)).toEqual([true, true, false, false]);
   });
 });
+
+describe("partner room lines", () => {
+  it("sends only partner-returned room ids", async () => {
+    const { partnerRoomLines, roomAllocation } = await import("../catalogue.server");
+    const a = roomAllocation({ adl: 0, chd: 0, inf: 0, unit: 0, sng: 400, dbl: 300 } as never, 3)!;
+    expect(partnerRoomLines(a, [{ id: "sng", max_pax: 1 }, { id: "dbl", max_pax: 2 }])).toEqual([{ id: "sng", pax: 1, count: 1 }, { id: "dbl", pax: 2, count: 1 }]);
+    expect(partnerRoomLines(a, [{ id: "dbl", max_pax: 2 }])).toBeNull();
+    const r = buildNewBookingBody({ ...rec, rooms: [{ id: "dbl", pax: 2, count: 1 }] } as never, C, "2026-09-30");
+    expect(r.ok && r.body.rooms).toEqual([{ id: "dbl", pax: 2, count: 1 }]);
+  });
+});

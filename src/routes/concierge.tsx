@@ -1,3 +1,4 @@
+import { mediaUrl } from "@/lib/media";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -164,7 +165,7 @@ function ConciergePage() {
       {/* Editorial hero */}
       <section className="relative isolate overflow-hidden border-b border-primary/15">
         <img
-          src={HERO_IMAGE}
+          src={mediaUrl(HERO_IMAGE)}
           alt=""
           className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40"
           loading="eager"

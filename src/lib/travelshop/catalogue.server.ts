@@ -133,6 +133,28 @@ export function roomBasedTotal(p: PriceBlock, adults: number): number | null {
   if (trp > 0 && adults === 3) return trp * 3;
   return dbl > 0 && sng > 0 ? dbl * (adults - 1) + sng : null;
 }
+/** Room split matching roomBasedTotal exactly (same pairing rules). */
+export function roomAllocation(p: PriceBlock, adults: number): { sng: number; dbl: number; trp: number } | null {
+  const sng = p.sng ?? 0, dbl = p.dbl ?? 0, trp = p.trp ?? 0;
+  if (adults < 1) return null;
+  if (adults === 1) return sng > 0 ? { sng: 1, dbl: 0, trp: 0 } : null;
+  if (adults % 2 === 0) return dbl > 0 ? { sng: 0, dbl: adults / 2, trp: 0 } : null;
+  if (trp > 0 && dbl > 0) return { sng: 0, dbl: (adults - 3) / 2, trp: 1 };
+  if (trp > 0 && adults === 3) return { sng: 0, dbl: 0, trp: 1 };
+  return dbl > 0 && sng > 0 ? { sng: 1, dbl: (adults - 1) / 2, trp: 0 } : null;
+}
+/** Partner room lines, using ONLY room ids the partner returned for this date. Null if any needed id is missing. */
+export function partnerRoomLines(alloc: { sng: number; dbl: number; trp: number }, partnerRooms: Array<{ id?: unknown; max_pax?: unknown }>) {
+  const ids = new Map(partnerRooms.filter((r) => typeof r.id === "string").map((r) => [r.id as string, Number(r.max_pax) || 0]));
+  const lines: Array<{ id: string; pax: number; count: number }> = [];
+  for (const [id, per] of [["sng", 1], ["dbl", 2], ["trp", 3]] as const) {
+    const count = alloc[id];
+    if (!count) continue;
+    if (!ids.has(id)) return null;
+    lines.push({ id, pax: count * per, count });
+  }
+  return lines;
+}
 const isRoomPriced = (p: PriceBlock) => !(p.adl > 0 || p.unit > 0) && ((p.sng ?? 0) > 0 || (p.dbl ?? 0) > 0 || (p.trp ?? 0) > 0);
 interface AvailabilityResponse {
   id: number;
@@ -141,6 +163,7 @@ interface AvailabilityResponse {
   is_regular: boolean;
   is_private: boolean;
   maxPax: number;
+  rooms?: Array<{ id?: unknown; max_pax?: unknown }>;
   prices?: Array<{ dates?: Array<{ start: string; end: string; seats: number; prices: { regular: PriceBlock; private: PriceBlock; currency: string } }> }>;
 }
 
@@ -203,10 +226,12 @@ export async function liveQuote(input: { slug: string; date: string; service: Se
   if (day && p && isRoomPriced(p)) {
     if (input.children > 0 || input.infants > 0) return { ok: false as const, reason: "Children on this multi-day tour are priced by our team — please send a request." };
     const room = roomBasedTotal(p, input.adults);
+    const alloc = roomAllocation(p, input.adults);
+    const roomLines = alloc ? partnerRoomLines(alloc, res.rooms ?? []) : null;
     if (room === null) return { ok: false as const, reason: "Room prices for this group size aren't available online." };
     if (typeof day.seats === "number" && day.seats > 0 && pax > day.seats) return { ok: false as const, reason: `Only ${day.seats} places are left on this date.` };
     const currency = day.prices.currency ?? res.currency;
-    return { ok: true as const, currency, retailTotal: Math.round(room * 100) / 100, customerTotal: customerPrice(room), rule: tourPricingRule(), checkedAt: new Date().toISOString(), tourId: res.id, roomPriced: true as boolean };
+    return { ok: true as const, currency, retailTotal: Math.round(room * 100) / 100, customerTotal: customerPrice(room), rule: tourPricingRule(), checkedAt: new Date().toISOString(), tourId: res.id, roomPriced: true as boolean, roomLines: roomLines as Array<{ id: string; pax: number; count: number }> | null };
   }
   if (!day || !p || !(p.adl > 0 || p.unit > 0)) return { ok: false as const, reason: "This date is no longer available for the selected option." };
   if (typeof day.seats === "number" && day.seats > 0 && pax > day.seats) return { ok: false as const, reason: `Only ${day.seats} places are left on this date.` };
@@ -225,6 +250,7 @@ export async function liveQuote(input: { slug: string; date: string; service: Se
     checkedAt: new Date().toISOString(),
     tourId: res.id,
     roomPriced: false as boolean,
+    roomLines: null as Array<{ id: string; pax: number; count: number }> | null,
   };
 }
 

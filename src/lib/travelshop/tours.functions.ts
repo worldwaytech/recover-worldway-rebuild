@@ -102,13 +102,16 @@ export const requestTourBooking = createServerFn({ method: "POST" })
       lead: z.object({
         firstName: z.string().trim().min(1).max(80), lastName: z.string().trim().min(1).max(80),
         email: z.string().trim().email().max(200), phone: z.string().trim().min(5).max(30), nationality: z.string().trim().max(60).optional(),
+        title: z.enum(["Mr", "Mrs", "Ms", "Miss", "Dr"]).optional(),
+        phoneCountryCode: z.string().trim().regex(/^\+?\d{1,4}$/).optional(),
       }),
       specialRequests: z.string().trim().max(1000).optional(),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { prepareTourBooking } = await import("./booking.server");
-    return prepareTourBooking({ ...data, userId: context.userId });
+    const { prepareTourBooking, customerPayable } = await import("./booking.server");
+    const r = await prepareTourBooking({ ...data, lead: { ...data.lead, phone: data.lead.phone.replace(/\D/g, "") }, userId: context.userId });
+    return r.ok ? { ...r, payable: await customerPayable(r.booking.id as string).catch(() => false) } : r;
   });
 
 export const listMyTourBookings = createServerFn({ method: "GET" })
@@ -164,9 +167,13 @@ export const getTourBookingGates = createServerFn({ method: "POST" })
     const { bookingGates, contractComplete, CONTRACT_EVIDENCE, UNVERIFIED } = await import("./booking-contract");
     const { partnerCountries } = await import("./countries.server");
     const countries = await partnerCountries().catch(() => []);
-    const { count } = await supabaseAdmin.from("travelshop_bookings").select("id", { count: "exact", head: true }).eq("status", "supplier_booked");
+    void supabaseAdmin;
+    const { certificationStatus } = await import("./certification.server");
+    const cert = await certificationStatus();
+    const kindGates = (k: "per_person" | "room") => bookingGates({ flagEnabled: tourBookingsEnabled(), contractComplete: contractComplete(countries), verifiedStaffBooking: cert[k].certified, certified: cert[k].certified });
     return {
-      gates: bookingGates({ flagEnabled: tourBookingsEnabled(), contractComplete: contractComplete(countries), verifiedStaffBooking: (count ?? 0) > 0, certified: false }),
+      gates: [...kindGates("per_person").map((g) => ({ ...g, gate: `Per-person tours · ${g.gate}` })), ...kindGates("room").map((g) => ({ ...g, gate: `Room-priced tours · ${g.gate}` }))],
+      certification: cert,
       evidence: { ...CONTRACT_EVIDENCE, partnerCountries: countries.length }, unverified: Object.values(UNVERIFIED),
     };
   });
