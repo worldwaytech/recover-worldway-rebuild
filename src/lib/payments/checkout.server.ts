@@ -213,7 +213,7 @@ export async function confirmPayment(input: {
     } catch (e) {
       console.error("[tour] booking after payment failed", e instanceof Error ? e.message : e);
     }
-    tour = { confirmed: accepted, worldwayReference: `WWT-${tourBookingId.replace(/-/g, "").slice(0, 10).toUpperCase()}` };
+    tour = { confirmed: accepted, worldwayReference: (await import("@/lib/travelshop/reference")).worldwayTourRef(tourBookingId) };
   }
 
   // Membership entitlement is granted ONLY by the signature-verified payment

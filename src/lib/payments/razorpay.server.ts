@@ -130,3 +130,11 @@ export function verifyWebhookSignature(rawBody: string, signature: string | null
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
   return safeEqualHex(expected, signature.trim().toLowerCase());
 }
+
+/** Full refund of a captured payment. Idempotent on our side via the caller's atomic claim. */
+export async function refundRazorpayPayment(paymentId: string, amountMinor: number, receipt: string) {
+  return callRazorpay<{ id: string; status: string; amount: number }>(`/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: "POST",
+    body: { amount: amountMinor, speed: "normal", receipt, notes: { reason: "Worldway tour booking could not be confirmed" } },
+  });
+}
