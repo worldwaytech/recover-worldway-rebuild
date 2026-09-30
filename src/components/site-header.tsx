@@ -81,7 +81,7 @@ const NAV: NavItem[] = [
 ];
 
 const linkClass =
-  "group relative whitespace-nowrap px-3 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:text-primary after:pointer-events-none after:absolute after:bottom-0 after:left-3 after:right-3 after:h-px after:origin-center after:scale-x-0 after:bg-gradient-to-r after:from-transparent after:via-primary after:to-transparent after:opacity-0 after:transition-all after:duration-500 hover:after:scale-x-100 hover:after:opacity-100";
+  "group relative whitespace-nowrap px-1 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:text-primary after:pointer-events-none after:absolute after:bottom-0 after:left-1 after:right-1 after:h-px after:origin-center after:scale-x-0 after:bg-gradient-to-r after:from-transparent after:via-primary after:to-transparent after:opacity-0 after:transition-all after:duration-500 hover:after:scale-x-100 hover:after:opacity-100 xl:px-1.5 xl:after:left-1.5 xl:after:right-1.5 2xl:px-3 2xl:after:left-3 2xl:after:right-3";
 
 function NavDropdown({ item }: { item: Extract<NavItem, { children: NavChild[] }> }) {
   const [open, setOpen] = useState(false);
@@ -172,18 +172,18 @@ export function SiteHeader() {
             : "/b2c";
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-6 py-3">
+      <div className="mx-auto grid w-full max-w-screen-2xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 lg:grid-cols-[max-content_minmax(0,1fr)_max-content] lg:gap-2 xl:gap-4 xl:px-6">
         <Link
           to="/"
           aria-label="Worldway Travels Group home"
-          className="mr-auto flex shrink-0 items-center gap-3 font-serif text-primary lg:mr-8"
+          className="flex min-w-0 shrink-0 items-center gap-3 font-serif text-primary"
         >
           <img
             src={mediaUrl(logoAsset.url)}
             alt="Worldway Travels Group logo"
             className="h-10 w-10 rounded-full object-cover ring-1 ring-primary/40 shadow-[0_0_18px_-6px_oklch(0.82_0.13_85/0.55)]"
           />
-          <span className="flex flex-col leading-tight whitespace-nowrap">
+          <span className="hidden flex-col leading-tight whitespace-nowrap xl:flex">
             <span className="font-serif text-[0.95rem] tracking-[0.24em] text-primary">
               WORLDWAY
             </span>
@@ -192,7 +192,7 @@ export function SiteHeader() {
             </span>
           </span>
         </Link>
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden min-w-0 items-center justify-center gap-1 lg:flex">
           {NAV.map((item) =>
             "to" in item ? (
               <Link
