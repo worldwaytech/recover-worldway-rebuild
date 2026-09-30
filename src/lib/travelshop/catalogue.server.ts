@@ -10,6 +10,8 @@ async function admin() {
 }
 
 export const PAGE_SIZE = 24;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TourRow = { price_from: number | null; [k: string]: any };
 const CARD_COLS =
   "slug, name, summary, category_name, destinations, country, duration_days, duration_hours, rating, review_count, currency, price_from, cover_image, is_private, is_regular, free_cancellation, instant_confirmation, languages";
 
@@ -58,7 +60,7 @@ export async function searchTours(input: SearchInput) {
   q = q.order("external_id", { ascending: true }).range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   const { data, count, error } = await q;
   if (error) throw new Error("Catalogue unavailable");
-  return { items: (data ?? []).map(withCustomerFromPrice), total: count ?? 0, page, pageSize: PAGE_SIZE };
+  return { items: ((data ?? []) as TourRow[]).map(withCustomerFromPrice), total: count ?? 0, page, pageSize: PAGE_SIZE };
 }
 
 export async function facets() {
@@ -84,7 +86,7 @@ export async function getTour(slug: string) {
     .eq("is_active", true)
     .maybeSingle();
   if (!data) return null;
-  return withCustomerFromPrice(data as never);
+  return withCustomerFromPrice(data as TourRow);
 }
 
 // ---------------------------------------------------------------- pricing
