@@ -207,7 +207,9 @@ export async function assembleLiveProposals(req: TripRequirements, opts: Assembl
   const allOffers = [...out.offers, ...back.offers, ...[...stays.values()].flat(), ...(cruise?.offers ?? []), ...fixed];
   const { approvedFx } = await import("./fx.server");
   const fxr = await approvedFx(currency, [...new Set(allOffers.map((o) => o.net.currency))]);
-  const ranked = out.offers.length ? combine(req, out.offers, stays, back.offers, currency, extra, cruise?.offers ?? [], fxr.table, fixed) : [];
+  // A chosen tour pins the plan: only outbound flights landing before the tour starts may pair with it.
+  const outbound = tourOffer ? out.offers.filter((o) => Date.parse(o.end.at) <= Date.parse(tourOffer.start.at)) : out.offers;
+  const ranked = outbound.length ? combine(req, outbound, stays, back.offers, currency, extra, cruise?.offers ?? [], fxr.table, fixed) : [];
   const shortlist = ranked.slice(0, 3);
   const { revalidateOffers } = await import("./revalidate.server");
   const final = shortlist.length ? await revalidateProposals(req, shortlist, currency, extra, revalidateOffers, fxr.table) : { proposals: [], revalidation: [] };
