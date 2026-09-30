@@ -56,7 +56,8 @@ export const getTourLiveAvailability = createServerFn({ method: "POST" })
     const { liveAvailability } = await import("./catalogue.server");
     try {
       return { ...(await liveAvailability(data.slug, data.from, data.pax)), error: null as string | null };
-    } catch {
+    } catch (e) {
+      console.error("[tours] live availability failed", e instanceof Error ? e.message : e);
       return { checkedAt: new Date().toISOString(), maxPax: 0, dates: [], error: "Live availability is temporarily unavailable." };
     }
   });
@@ -73,7 +74,8 @@ export const getTourLiveQuote = createServerFn({ method: "POST" })
     try {
       const q = await liveQuote(data);
       return q.ok ? { ok: true as const, currency: q.currency, total: q.customerTotal, checkedAt: q.checkedAt } : q;
-    } catch {
+    } catch (e) {
+      console.error("[tours] live quote failed", e instanceof Error ? e.message : e);
       return { ok: false as const, reason: "Live pricing is temporarily unavailable." };
     }
   });
