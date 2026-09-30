@@ -187,10 +187,10 @@ export async function searchToursLive(destIata: string, arrivalDate: string, dep
     .eq("is_active", true).or(`start_location.ilike.${city},destinations.cs.{"${city}"}`);
   const text = (query ?? "").replace(/[%,(){}"]/g, " ").trim();
   if (text) q = q.ilike("name", `%${text}%`);
-  const { data } = await q.order("review_count", { ascending: false, nullsFirst: false }).limit(limit);
+  const { data } = await q.order("review_count", { ascending: false, nullsFirst: false }).limit(Math.max(limit * 5, 40));
   const { liveAvailability } = await import("@/lib/travelshop/catalogue.server");
   const rows = (data ?? []) as { slug: string; name: string; duration_days: number | null; inclusions: unknown; cover_image: string | null }[];
-  const found = await Promise.all(rows.map(async (t): Promise<OnRequestItem | null> => {
+  const check = async (t: (typeof rows)[number]): Promise<OnRequestItem | null> => {
     const av = await liveAvailability(t.slug, arrivalDate, adults + children).catch(() => null);
     const fits = (av?.dates ?? []).filter((x) => tourFitsTrip(x.date, x.endDate || x.date, arrivalDate, departureDate)
       && ((x.endDate || x.date) > x.date || x.date < departureDate)); // day tours can't run on the flight-home day
@@ -206,8 +206,13 @@ export async function searchToursLive(destIata: string, arrivalDate: string, dep
         : `Live price and availability for ${d.date}; start time confirmed by the tour operator before booking.`,
       indicativeFrom: { amount: Math.round(total * 100) / 100, currency: d.currency },
     };
-  }));
-  return found.filter((x): x is OnRequestItem => !!x);
+  };
+  // Many top-reviewed tours have no dates in a given window — check in small batches until enough fit.
+  const found: OnRequestItem[] = [];
+  for (let i = 0; i < rows.length && found.length < limit; i += 8) {
+    for (const x of await Promise.all(rows.slice(i, i + 8).map(check))) if (x && found.length < limit) found.push(x);
+  }
+  return found;
 }
 
 /** Selected tour → canonical offer (date precision; starts no earlier than actual arrival). Net = live supplier retail. */
