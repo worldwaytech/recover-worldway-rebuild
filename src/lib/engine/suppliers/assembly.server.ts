@@ -9,7 +9,7 @@ import { classifyOffer, isFresh, type ComponentStatus } from "../classify";
 import type { ComponentKind, TripRequirements } from "../types";
 import { liveStatus, SUPPLIER_CATALOG, supplierRegistry } from "./catalog.server";
 import { commercialRuleFor } from "./commercial.server";
-import { localDateIn, searchActivitiesOnRequest, searchCruisesCanonical, searchFlightsCanonical, searchHotelsCanonical, type OnRequestItem } from "./live-search.server";
+import { localDateIn, searchActivitiesOnRequest, searchCruisesCanonical, searchFlightsCanonical, searchHotelsCanonical, searchToursLive, type OnRequestItem } from "./live-search.server";
 import type { RevalidationResult } from "./revalidate.server";
 
 export interface ClassifiedOnRequest extends OnRequestItem { status: ComponentStatus }
@@ -34,6 +34,21 @@ export interface AssemblyReport {
   /** Product coverage by capability (internal: supplier keys). */
   coverage: { supplierKey: string; kinds: ComponentKind[]; live: string; usedInAssembly: boolean; bookable: boolean }[];
   currency: string;
+  /**
+   * Optional pre-/post-tour hotels around multi-day tours that include their own
+   * accommodation. NEVER part of any proposal's offers, itinerary, booking or total.
+   */
+  optionalStays: OptionalTourStay[];
+}
+
+export interface OptionalTourStay {
+  tourRef: string;
+  tourTitle: string;
+  position: "pre-tour" | "post-tour";
+  checkin: string;
+  checkout: string;
+  offers: CanonicalOffer[];
+  optional: true;
 }
 
 export function readinessOf(offers: CanonicalOffer[], p: PipelinePackage, revalidation: Map<string, RevalidationResult> = new Map(), now = Date.now()): AssembledProposal["readiness"] {
@@ -139,11 +154,28 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
   }
   const wantsCruise = req.interests.some((i) => CRUISE_INTEREST.test(i));
   const cruise = wantsCruise ? await searchCruisesCanonical(destIata, req.departFrom, req.returnBy, currency).catch(() => ({ offers: [], unscheduled: 0, error: "Cruise search unavailable" })) : null;
-  const activities = await searchActivitiesOnRequest(dest, req.departFrom, req.returnBy, currency).catch(() => []);
+  // Activities/tours begin on the ACTUAL arrival date at the destination (local), never the flight departure date.
+  const arrivalDate = out.offers[0] ? localDateIn(out.offers[0].end.at, out.offers[0].end.timezone) : req.departFrom;
+  const departureDate = back.offers[0] ? localDateIn(back.offers[0].start.at, back.offers[0].start.timezone) : req.returnBy;
+  const [activities, tours] = await Promise.all([
+    searchActivitiesOnRequest(dest, arrivalDate, departureDate, currency).catch(() => []),
+    out.offers.length ? searchToursLive(destIata, arrivalDate, departureDate, req.adults, req.children).catch(() => []) : Promise.resolve([]),
+  ]);
+  // Optional pre/post-tour hotels (separate; never added to proposals or totals).
+  const { stayPlanAroundTour } = await import("../tour-stays");
+  const optionalStays: OptionalTourStay[] = [];
+  for (const t of tours.filter((x) => x.accommodationIncluded && x.startDate && x.endDate).slice(0, 2)) {
+    const plan = stayPlanAroundTour({ arrivalDate, departureDate, tourStart: t.startDate!, tourEnd: t.endDate!, accommodationIncluded: true });
+    for (const [position, w] of [["pre-tour", plan.optionalPre], ["post-tour", plan.optionalPost]] as const) {
+      if (!w) continue;
+      const h = await searchHotelsCanonical(destIata, w.checkin, w.checkout, req.adults, currency).catch(() => ({ offers: [] as CanonicalOffer[] }));
+      if (h.offers.length) optionalStays.push({ tourRef: t.ref, tourTitle: t.title, position, checkin: w.checkin, checkout: w.checkout, offers: h.offers.slice(0, 3), optional: true });
+    }
+  }
   const extra: OnRequestItem[] = [
     ...activities,
     ...(cruise && cruise.unscheduled ? [{ kind: "cruise", title: `${cruise.unscheduled} live voyage(s) in your window`, reason: "Embark/disembark times not published for scheduling; confirmed on request.", indicativeFrom: null, ref: "cruise" }] : []),
-    { kind: "activity", title: "Guided small-group tours", reason: "Tour suppliers are not production-certified; availability confirmed on request.", indicativeFrom: null, ref: "tours" },
+    ...tours,
   ];
   // Live FX (approved provider only) for any non-target currencies; failure leaves identity → mixed currencies fail safely.
   const allOffers = [...out.offers, ...back.offers, ...[...stays.values()].flat(), ...(cruise?.offers ?? [])];
@@ -159,6 +191,7 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
   return {
     currency,
     fx: fxr.audit,
+    optionalStays,
     proposals: final.proposals,
     coverage: SUPPLIER_CATALOG.map((s) => ({ supplierKey: s.supplierKey, kinds: s.kinds, live: liveStatus(s), usedInAssembly: used.has(s.supplierKey), bookable: bookingBlockers(reg.get(s.supplierKey)).length === 0 })),
     sources: [
@@ -168,6 +201,8 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
       { step: "hotels (sandbox, on request)", count: [...stays.values()].reduce((s, x) => s + x.length, 0) - liveHotels, error: null },
       ...(cruise ? [{ step: "cruises (live)", count: cruise.offers.length, error: cruise.error }] : []),
       { step: "activities (on request)", count: activities.length, error: null },
+      { step: "tours (live-priced, on request)", count: tours.length, error: null },
+      { step: "optional pre/post-tour hotels", count: optionalStays.length, error: null },
       { step: "revalidated", count: final.revalidation.filter((r) => r.status === "confirmed" || r.status === "changed").length, error: final.revalidation.some((r) => r.status === "rejected") ? `${final.revalidation.filter((r) => r.status === "rejected").length} offer(s) rejected on revalidation` : null },
     ],
   };

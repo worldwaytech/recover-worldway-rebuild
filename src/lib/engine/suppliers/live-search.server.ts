@@ -150,7 +150,13 @@ export async function searchHotelsCanonical(cityIata: string, checkin: string, c
 }
 
 // ---------------------------------------------------------------- activities (on request)
-export interface OnRequestItem { kind: string; title: string; reason: string; indicativeFrom: { amount: number; currency: string } | null; ref: string }
+export interface OnRequestItem {
+  kind: string; title: string; reason: string; indicativeFrom: { amount: number; currency: string } | null; ref: string;
+  /** Local destination dates (multi-day tours). */
+  startDate?: string; endDate?: string; durationDays?: number;
+  /** The tour's own inclusions already contain accommodation → no hotel is added for these nights. */
+  accommodationIncluded?: boolean;
+}
 
 /** Activity search has no scheduled slots at this stage → on-request, never scheduled or priced as final. */
 export async function searchActivitiesOnRequest(city: string, startDate: string, endDate: string, currency: string): Promise<OnRequestItem[]> {
@@ -162,6 +168,44 @@ export async function searchActivitiesOnRequest(city: string, startDate: string,
     reason: "Time slot and availability must be confirmed live before it can be scheduled.",
     indicativeFrom: p.price != null ? { amount: p.price, currency: p.currency } : null,
   }));
+}
+
+/**
+ * Live tours for the destination, ranked by real review volume, priced live for
+ * the first open date ON/AFTER the actual arrival date that also ends by the
+ * onward departure date. Operators publish dates, not start times, so tours are
+ * live-priced ON REQUEST items (never scheduled with an invented time).
+ */
+export async function searchToursLive(destIata: string, arrivalDate: string, departureDate: string, adults: number, children: number): Promise<OnRequestItem[]> {
+  if (!supports(registrationFor("travelshop"), "search")) return [];
+  const { tourIncludesAccommodation, tourFitsTrip } = await import("../tour-stays");
+  const { findAirportByCode } = await import("@/lib/aviation/airports.server");
+  const city = (findAirportByCode(destIata)?.city ?? destIata).replace(/[%,(){}"]/g, " ").trim();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const db = supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient;
+  const { data } = await db.from("travelshop_tours").select("slug, name, duration_days, inclusions")
+    .eq("is_active", true).or(`start_location.ilike.${city},destinations.cs.{"${city}"}`)
+    .order("review_count", { ascending: false, nullsFirst: false }).limit(4);
+  const { liveAvailability, liveQuote } = await import("@/lib/travelshop/catalogue.server");
+  const items: OnRequestItem[] = [];
+  for (const t of (data ?? []) as { slug: string; name: string; duration_days: number | null; inclusions: unknown }[]) {
+    const av = await liveAvailability(t.slug, arrivalDate, adults + children).catch(() => null);
+    const fits = (av?.dates ?? []).filter((x) => tourFitsTrip(x.date, x.endDate, arrivalDate, departureDate));
+    const d = fits.find((x) => x.service === "regular") ?? fits[0];
+    if (!d) continue;
+    const q = await liveQuote({ slug: t.slug, date: d.date, service: d.service, adults, children, infants: 0 }).catch(() => null);
+    if (!q?.ok) continue;
+    const acc = tourIncludesAccommodation(t.inclusions, t.duration_days);
+    items.push({
+      kind: "activity", title: t.name, ref: `tour:${t.slug}|${d.date}|${d.service}`,
+      startDate: d.date, endDate: d.endDate || d.date, durationDays: t.duration_days ?? undefined, accommodationIncluded: acc,
+      reason: acc
+        ? `Live price for ${d.date}–${d.endDate}. Accommodation is included in this tour, so no hotel is added for those nights.`
+        : `Live price and availability for ${d.date}; start time confirmed by the tour operator before booking.`,
+      indicativeFrom: { amount: q.customerTotal, currency: q.currency },
+    });
+  }
+  return items;
 }
 
 // ---------------------------------------------------------------- cruises (production live feed)

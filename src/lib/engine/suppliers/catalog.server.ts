@@ -30,6 +30,10 @@ export const SUPPLIER_CATALOG: SupplierRegistration[] = [
     ...g("production", false, "Key lacks affiliate booking access — booking not certified", "book"),
   ]),
   entry("gadventures", ["activity"], "uat", 0.7, g("uat", false, "Certification evidence gaps", "search", "availability", "price", "book")),
+  entry("travelshop", ["activity"], "production", 0.85, [
+    ...g("production", true, "Full live catalogue sync 8,345/8,345 tours; live availability + price verified 30 Sep 2026", "search", "availability", "price"),
+    ...g("production", false, "Booking built but switched off (TRAVELSHOP_BOOKING_ENABLED unset) — no authorised production booking", "book"),
+  ]),
   entry("ttc", ["activity"], "uat", 0.6, g("production", false, "Catalogue synced from website; no booking API credentials", "search")),
   entry("hbx-hotels", ["stay"], "uat", 0.8, g("uat", false, "Certification audit open; mTLS certificate missing", "search", "availability", "price", "prebook", "book", "cancel")),
   entry("hbx-transfers", ["transfer"], "uat", 0.7, g("uat", false, "Certification evidence gaps", "search", "availability", "price", "book", "cancel")),
