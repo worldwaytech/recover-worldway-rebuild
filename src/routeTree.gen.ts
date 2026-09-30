@@ -186,6 +186,7 @@ import { Route as AdminAiriqRouteImport } from './routes/admin.airiq'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
 import { Route as ActivitiesCodeRouteImport } from './routes/activities.$code'
 import { Route as AccountTripsRouteImport } from './routes/account.trips'
+import { Route as AccountTripPlannerRouteImport } from './routes/account.trip-planner'
 import { Route as AccountTravellersRouteImport } from './routes/account.travellers'
 import { Route as AccountSavedRouteImport } from './routes/account.saved'
 import { Route as AccountNotificationsRouteImport } from './routes/account.notifications'
@@ -1129,6 +1130,11 @@ const AccountTripsRoute = AccountTripsRouteImport.update({
   path: '/trips',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountTripPlannerRoute = AccountTripPlannerRouteImport.update({
+  id: '/trip-planner',
+  path: '/trip-planner',
+  getParentRoute: () => AccountRoute,
+} as any)
 const AccountTravellersRoute = AccountTravellersRouteImport.update({
   id: '/travellers',
   path: '/travellers',
@@ -1497,6 +1503,7 @@ export interface FileRoutesByFullPath {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/travellers': typeof AccountTravellersRoute
+  '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
@@ -1704,6 +1711,7 @@ export interface FileRoutesByTo {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/travellers': typeof AccountTravellersRoute
+  '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
@@ -1938,6 +1946,7 @@ export interface FileRoutesById {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/travellers': typeof AccountTravellersRoute
+  '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
   '/activities/$code': typeof ActivitiesCodeRoute
   '/admin/agents': typeof AdminAgentsRoute
@@ -2175,6 +2184,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/travellers'
+    | '/account/trip-planner'
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
@@ -2382,6 +2392,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/travellers'
+    | '/account/trip-planner'
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
@@ -2615,6 +2626,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/travellers'
+    | '/account/trip-planner'
     | '/account/trips'
     | '/activities/$code'
     | '/admin/agents'
@@ -4132,6 +4144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountTripsRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/trip-planner': {
+      id: '/account/trip-planner'
+      path: '/trip-planner'
+      fullPath: '/account/trip-planner'
+      preLoaderRoute: typeof AccountTripPlannerRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/travellers': {
       id: '/account/travellers'
       path: '/travellers'
@@ -4533,6 +4552,7 @@ interface AccountRouteChildren {
   AccountNotificationsRoute: typeof AccountNotificationsRoute
   AccountSavedRoute: typeof AccountSavedRoute
   AccountTravellersRoute: typeof AccountTravellersRoute
+  AccountTripPlannerRoute: typeof AccountTripPlannerRoute
   AccountTripsRoute: typeof AccountTripsRoute
   AccountIndexRoute: typeof AccountIndexRoute
   AccountBookingIdRoute: typeof AccountBookingIdRoute
@@ -4544,6 +4564,7 @@ const AccountRouteChildren: AccountRouteChildren = {
   AccountNotificationsRoute: AccountNotificationsRoute,
   AccountSavedRoute: AccountSavedRoute,
   AccountTravellersRoute: AccountTravellersRoute,
+  AccountTripPlannerRoute: AccountTripPlannerRoute,
   AccountTripsRoute: AccountTripsRoute,
   AccountIndexRoute: AccountIndexRoute,
   AccountBookingIdRoute: AccountBookingIdRoute,

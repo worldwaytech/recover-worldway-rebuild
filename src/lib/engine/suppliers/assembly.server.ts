@@ -9,7 +9,7 @@ import { classifyOffer, isFresh, type ComponentStatus } from "../classify";
 import type { ComponentKind, TripRequirements } from "../types";
 import { liveStatus, SUPPLIER_CATALOG, supplierRegistry } from "./catalog.server";
 import { commercialRuleFor } from "./commercial.server";
-import { localDateIn, searchActivitiesOnRequest, searchCruisesCanonical, searchFlightsCanonical, searchHotelsCanonical, searchToursLive, type OnRequestItem } from "./live-search.server";
+import { localDateIn, searchActivitiesOnRequest, searchCruisesCanonical, searchFlightsCanonical, searchHotelsCanonical, searchToursLive, tourToCanonical, type OnRequestItem } from "./live-search.server";
 import type { RevalidationResult } from "./revalidate.server";
 
 export interface ClassifiedOnRequest extends OnRequestItem { status: ComponentStatus }
@@ -39,6 +39,12 @@ export interface AssemblyReport {
    * accommodation. NEVER part of any proposal's offers, itinerary, booking or total.
    */
   optionalStays: OptionalTourStay[];
+  /** Eligible live tours the customer can choose (fit actual arrival → onward departure). */
+  tours: OnRequestItem[];
+  /** The customer's selected tour, when one was chosen and is still live. */
+  selectedTour: (OnRequestItem & { coversNights: { checkin: string; checkout: string } | null }) | null;
+  arrivalDate: string | null;
+  departureDate: string | null;
 }
 
 export interface OptionalTourStay {
@@ -81,7 +87,7 @@ function onRequestFor(offers: CanonicalOffer[], extra: OnRequestItem[]): Classif
 }
 
 /** Pure combination + pipeline step (tested without network). */
-export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays: Map<string, CanonicalOffer[]>, inbound: CanonicalOffer[], currency: string, onRequest: OnRequestItem[], cruises: CanonicalOffer[] = [], fx: FxTable = { [currency]: 1 }) {
+export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays: Map<string, CanonicalOffer[]>, inbound: CanonicalOffer[], currency: string, onRequest: OnRequestItem[], cruises: CanonicalOffer[] = [], fx: FxTable = { [currency]: 1 }, fixed: CanonicalOffer[] = []) {
   const candidates: { id: string; offers: CanonicalOffer[] }[] = [];
   for (const out of outbound.slice(0, 3)) {
     const checkIn = localDateIn(out.end.at, out.end.timezone);
@@ -90,7 +96,7 @@ export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays
     // Cruise only when it embarks after actual arrival and ends before onward travel.
     const cruise = cruises.find((c) => Date.parse(c.start.at) > Date.parse(out.end.at) && (!ret || Date.parse(c.end.at) < Date.parse(ret.start.at)));
     for (const h of hotels.length ? hotels.slice(0, 3) : [null]) {
-      const offers = [out, ...(h ? [h] : []), ...(cruise ? [cruise] : []), ...(ret ? [ret] : [])];
+      const offers = [out, ...(h ? [h] : []), ...(cruise ? [cruise] : []), ...fixed.filter((f) => Date.parse(f.start.at) >= Date.parse(out.end.at)), ...(ret ? [ret] : [])];
       candidates.push({ id: `P${candidates.length + 1}`, offers });
     }
   }
@@ -129,7 +135,9 @@ export async function revalidateProposals(req: TripRequirements, shortlist: Asse
 
 const CRUISE_INTEREST = /cruise|voyage|sail/i;
 
-export async function assembleLiveProposals(req: TripRequirements): Promise<AssemblyReport> {
+export interface AssemblyOptions { tourRef?: string; tourQuery?: string }
+
+export async function assembleLiveProposals(req: TripRequirements, opts: AssemblyOptions = {}): Promise<AssemblyReport> {
   const cabin = req.luxuryLevel >= 5 ? "business" : "economy";
   const pax = req.adults + req.children;
   const dest = req.destinations[0]!;
@@ -139,34 +147,51 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
   ]);
   const currency = out.offers[0]?.net.currency ?? "INR";
   const destIata = out.offers[0]?.end.place ?? out.query?.destination ?? dest;
-  // Hotel dates come from ACTUAL flight arrival / onward departure, never the package date.
+  // All hotel/tour/activity dates come from the ACTUAL flight arrival (local destination date), never departure.
+  const arrivalDate = out.offers[0] ? localDateIn(out.offers[0].end.at, out.offers[0].end.timezone) : null;
+  const departureDate = back.offers[0] ? localDateIn(back.offers[0].start.at, back.offers[0].start.timezone) : req.returnBy;
+
+  // Tours first: a selected tour with included accommodation removes those hotel nights.
+  const { stayPlanAroundTour } = await import("../tour-stays");
+  const tours = arrivalDate ? await searchToursLive(destIata, arrivalDate, departureDate, req.adults, req.children, opts.tourQuery).catch(() => []) : [];
+  let chosen = opts.tourRef ? tours.find((t) => t.ref === opts.tourRef) ?? null : null;
+  if (!chosen && opts.tourRef && arrivalDate) {
+    // Selected tour may fall outside the ranked list — re-check it live by reference.
+    const slug = opts.tourRef.replace(/^tour:/, "").split("|")[0]!;
+    const all = await searchToursLive(destIata, arrivalDate, departureDate, req.adults, req.children, undefined, 60).catch(() => []);
+    chosen = all.find((t) => t.ref === opts.tourRef) ?? all.find((t) => t.ref.startsWith(`tour:${slug}|`)) ?? null;
+  }
+  const tourOffer = chosen && out.offers[0] ? await tourToCanonical(chosen, destIata, out.offers[0].end.at, req.adults, req.children) : null;
+  const selected = chosen && tourOffer ? chosen : null;
+  const plan = selected && arrivalDate
+    ? stayPlanAroundTour({ arrivalDate, departureDate, tourStart: selected.startDate!, tourEnd: selected.endDate!, accommodationIncluded: !!selected.accommodationIncluded })
+    : null;
+  const tourCoversStay = !!plan?.tourNights;
+
   const checkIns = [...new Set(out.offers.slice(0, 3).map((o) => localDateIn(o.end.at, o.end.timezone)))];
   const stays = new Map<string, CanonicalOffer[]>();
   const hotelErrors: string[] = [];
   let liveHotels = 0;
-  for (const ci of checkIns) {
-    const checkout = back.offers[0] ? localDateIn(back.offers[0].start.at, back.offers[0].start.timezone) : req.returnBy;
-    if (checkout <= ci) continue;
-    const h = await searchHotelsCanonical(destIata, ci, checkout, req.adults, currency);
+  // FIT hotels for the stay — skipped when the selected tour's own accommodation covers the trip (no duplicates);
+  // nights before/after such a tour are offered only as OPTIONAL stays below.
+  if (!tourCoversStay) for (const ci of checkIns) {
+    if (departureDate <= ci) continue;
+    const h = await searchHotelsCanonical(destIata, ci, departureDate, req.adults, currency);
     stays.set(ci, h.offers);
     liveHotels += h.liveCount;
     if (h.error) hotelErrors.push(h.error);
   }
   const wantsCruise = req.interests.some((i) => CRUISE_INTEREST.test(i));
-  const cruise = wantsCruise ? await searchCruisesCanonical(destIata, req.departFrom, req.returnBy, currency).catch(() => ({ offers: [], unscheduled: 0, error: "Cruise search unavailable" })) : null;
-  // Activities/tours begin on the ACTUAL arrival date at the destination (local), never the flight departure date.
-  const arrivalDate = out.offers[0] ? localDateIn(out.offers[0].end.at, out.offers[0].end.timezone) : req.departFrom;
-  const departureDate = back.offers[0] ? localDateIn(back.offers[0].start.at, back.offers[0].start.timezone) : req.returnBy;
-  const [activities, tours] = await Promise.all([
-    searchActivitiesOnRequest(dest, arrivalDate, departureDate, currency).catch(() => []),
-    out.offers.length ? searchToursLive(destIata, arrivalDate, departureDate, req.adults, req.children).catch(() => []) : Promise.resolve([]),
-  ]);
-  // Optional pre/post-tour hotels (separate; never added to proposals or totals).
-  const { stayPlanAroundTour } = await import("../tour-stays");
+  const cruise = wantsCruise ? await searchCruisesCanonical(destIata, arrivalDate ?? req.departFrom, departureDate, currency).catch(() => ({ offers: [], unscheduled: 0, error: "Cruise search unavailable" })) : null;
+  const activities = await searchActivitiesOnRequest(dest, arrivalDate ?? req.departFrom, departureDate, currency).catch(() => []);
+
+  // Optional pre/post-tour hotels (separate; never added to proposals, itinerary, booking or totals).
   const optionalStays: OptionalTourStay[] = [];
-  for (const t of tours.filter((x) => x.accommodationIncluded && x.startDate && x.endDate).slice(0, 2)) {
-    const plan = stayPlanAroundTour({ arrivalDate, departureDate, tourStart: t.startDate!, tourEnd: t.endDate!, accommodationIncluded: true });
-    for (const [position, w] of [["pre-tour", plan.optionalPre], ["post-tour", plan.optionalPost]] as const) {
+  const around = selected ? (tourCoversStay ? [selected] : []) : tours.filter((x) => x.accommodationIncluded).slice(0, 2);
+  for (const t of around) {
+    if (!arrivalDate) break;
+    const w2 = stayPlanAroundTour({ arrivalDate, departureDate, tourStart: t.startDate!, tourEnd: t.endDate!, accommodationIncluded: true });
+    for (const [position, w] of [["pre-tour", w2.optionalPre], ["post-tour", w2.optionalPost]] as const) {
       if (!w) continue;
       const h = await searchHotelsCanonical(destIata, w.checkin, w.checkout, req.adults, currency).catch(() => ({ offers: [] as CanonicalOffer[] }));
       if (h.offers.length) optionalStays.push({ tourRef: t.ref, tourTitle: t.title, position, checkin: w.checkin, checkout: w.checkout, offers: h.offers.slice(0, 3), optional: true });
@@ -175,33 +200,42 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
   const extra: OnRequestItem[] = [
     ...activities,
     ...(cruise && cruise.unscheduled ? [{ kind: "cruise", title: `${cruise.unscheduled} live voyage(s) in your window`, reason: "Embark/disembark times not published for scheduling; confirmed on request.", indicativeFrom: null, ref: "cruise" }] : []),
-    ...tours,
+    ...(selected ? [] : tours),
   ];
+  const fixed = tourOffer ? [tourOffer] : [];
   // Live FX (approved provider only) for any non-target currencies; failure leaves identity → mixed currencies fail safely.
-  const allOffers = [...out.offers, ...back.offers, ...[...stays.values()].flat(), ...(cruise?.offers ?? [])];
+  const allOffers = [...out.offers, ...back.offers, ...[...stays.values()].flat(), ...(cruise?.offers ?? []), ...fixed];
   const { approvedFx } = await import("./fx.server");
   const fxr = await approvedFx(currency, [...new Set(allOffers.map((o) => o.net.currency))]);
-  const ranked = out.offers.length ? combine(req, out.offers, stays, back.offers, currency, extra, cruise?.offers ?? [], fxr.table) : [];
-  // Optimize: shortlist the best-ranked packages, then revalidate before pricing/readiness.
+  // A chosen tour pins the plan: only outbound flights landing before the tour starts may pair with it.
+  const outbound = tourOffer ? out.offers.filter((o) => Date.parse(o.end.at) <= Date.parse(tourOffer.start.at)) : out.offers;
+  const ranked = outbound.length ? combine(req, outbound, stays, back.offers, currency, extra, cruise?.offers ?? [], fxr.table, fixed) : [];
   const shortlist = ranked.slice(0, 3);
   const { revalidateOffers } = await import("./revalidate.server");
   const final = shortlist.length ? await revalidateProposals(req, shortlist, currency, extra, revalidateOffers, fxr.table) : { proposals: [], revalidation: [] };
-  const used = new Set(final.proposals.flatMap((p) => p.offers.map((o) => o.supplierKey)));
+  // Tour accommodation covers the stay → no "hotel on request" placeholder either.
+  const proposals = tourCoversStay ? final.proposals.map((p) => ({ ...p, onRequest: p.onRequest.filter((o) => o.ref !== "stay") })) : final.proposals;
+  const used = new Set(proposals.flatMap((p) => p.offers.map((o) => o.supplierKey)));
   const reg = supplierRegistry();
   return {
     currency,
     fx: fxr.audit,
     optionalStays,
-    proposals: final.proposals,
+    tours,
+    selectedTour: selected ? { ...selected, coversNights: plan?.tourNights ?? null } : null,
+    arrivalDate,
+    departureDate,
+    proposals,
     coverage: SUPPLIER_CATALOG.map((s) => ({ supplierKey: s.supplierKey, kinds: s.kinds, live: liveStatus(s), usedInAssembly: used.has(s.supplierKey), bookable: bookingBlockers(reg.get(s.supplierKey)).length === 0 })),
     sources: [
       { step: "outbound flights", count: out.offers.length, error: out.error },
       { step: "return flights", count: back.offers.length, error: back.error },
-      { step: "hotels (live)", count: liveHotels, error: hotelErrors[0] ?? null },
+      { step: "hotels (live)", count: liveHotels, error: tourCoversStay ? null : hotelErrors[0] ?? null },
       { step: "hotels (sandbox, on request)", count: [...stays.values()].reduce((s, x) => s + x.length, 0) - liveHotels, error: null },
       ...(cruise ? [{ step: "cruises (live)", count: cruise.offers.length, error: cruise.error }] : []),
       { step: "activities (on request)", count: activities.length, error: null },
-      { step: "tours (live-priced, on request)", count: tours.length, error: null },
+      { step: "tours (live)", count: tours.length, error: null },
+      ...(opts.tourRef ? [{ step: "selected tour", count: selected ? 1 : 0, error: selected ? null : "Selected tour is no longer available for these dates" }] : []),
       { step: "optional pre/post-tour hotels", count: optionalStays.length, error: null },
       { step: "revalidated", count: final.revalidation.filter((r) => r.status === "confirmed" || r.status === "changed").length, error: final.revalidation.some((r) => r.status === "rejected") ? `${final.revalidation.filter((r) => r.status === "rejected").length} offer(s) rejected on revalidation` : null },
     ],

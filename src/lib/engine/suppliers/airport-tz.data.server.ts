@@ -3415,6 +3415,7 @@ LYB|America/Cayman|19.660|-80.089
 BJV|Europe/Istanbul|37.251|27.664
 TBJ|Africa/Tunis|36.980|8.877
 SAW|Europe/Istanbul|40.899|29.309
+IST|Europe/Istanbul|41.275|28.752
 SCE|America/New_York|40.849|-77.849
 BME|Australia/Perth|-17.945|122.232
 NTL|Australia/Sydney|-32.795|151.834

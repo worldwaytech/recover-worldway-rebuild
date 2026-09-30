@@ -20,10 +20,11 @@ export async function journeyServiceFor() {
   return new JourneyService(supabaseJourneyRepo, (j) => ({ requirements: j.requirements as any, registry: supplierRegistry(), currency: j.currency, fx: { [j.currency]: 1 }, ruleFor: commercialRuleFor }));
 }
 
-export async function assembleAndSave(userId: string, requirements: z.infer<typeof Req>, save: boolean) {
+export async function assembleAndSave(userId: string, requirements: z.infer<typeof Req>, save: boolean, opts: { tourRef?: string; tourQuery?: string } = {}) {
   const { assembleLiveProposals } = await import("./assembly.server");
   const { explainPackage } = await import("@/lib/engine/intelligence/explain");
-  const report = await assembleLiveProposals(requirements);
+  const report = await assembleLiveProposals(requirements, opts);
+  const { commercialRuleFor } = await import("./commercial.server");
   const svc = save ? await journeyServiceFor() : null;
   const proposals = [];
   for (const p of report.proposals) {
@@ -38,13 +39,31 @@ export async function assembleAndSave(userId: string, requirements: z.infer<type
       onRequest: p.onRequest, factors: p.result.factors,
     });
   }
-  return { sources: report.sources, proposals };
+  // Optional stays: shown with the live customer price; never part of any proposal, itinerary, booking or total.
+  const optionalStays = report.optionalStays.map((o) => ({
+    tourRef: o.tourRef, tourTitle: o.tourTitle, position: o.position, checkin: o.checkin, checkout: o.checkout, optional: true as const,
+    hotels: o.offers.map((h) => {
+      const r = commercialRuleFor(h);
+      return { title: h.title, price: r ? { amount: Math.round((h.net.amount * (1 + r.markupPercent / 100) + r.serviceFee) * 100) / 100, currency: h.net.currency } : null };
+    }),
+  }));
+  const tourDto = (t: (typeof report.tours)[number]) => ({ ref: t.ref, title: t.title, startDate: t.startDate, endDate: t.endDate, durationDays: t.durationDays ?? null, accommodationIncluded: !!t.accommodationIncluded, price: t.indicativeFrom, image: t.image ?? null, note: t.reason });
+  return {
+    sources: report.sources, proposals, optionalStays,
+    arrivalDate: report.arrivalDate, departureDate: report.departureDate,
+    tours: report.tours.map(tourDto),
+    selectedTour: report.selectedTour ? { ...tourDto(report.selectedTour), coversNights: report.selectedTour.coversNights } : null,
+  };
 }
 
 export const assembleProposals = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ requirements: Req, save: z.boolean().default(true) }).parse(d))
-  .handler(async ({ data, context }) => assembleAndSave(context.userId, data.requirements, data.save));
+  .inputValidator((d: unknown) => z.object({
+    requirements: Req, save: z.boolean().default(true),
+    tourRef: z.string().regex(/^tour:[\w-]+\|\d{4}-\d{2}-\d{2}\|(regular|private)$/).optional(),
+    tourQuery: z.string().max(80).optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => assembleAndSave(context.userId, data.requirements, data.save, { tourRef: data.tourRef, tourQuery: data.tourQuery }));
 
 /** Change → live search → rebuild component → rerank/reprice/revalidate/re-audit → pending approvals. */
 export const rebuildJourneyComponent = createServerFn({ method: "POST" })
