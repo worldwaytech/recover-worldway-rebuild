@@ -206,7 +206,7 @@ export async function liveQuote(input: { slug: string; date: string; service: Se
     if (room === null) return { ok: false as const, reason: "Room prices for this group size aren't available online." };
     if (typeof day.seats === "number" && day.seats > 0 && pax > day.seats) return { ok: false as const, reason: `Only ${day.seats} places are left on this date.` };
     const currency = day.prices.currency ?? res.currency;
-    return { ok: true as const, currency, retailTotal: Math.round(room * 100) / 100, customerTotal: customerPrice(room), rule: tourPricingRule(), checkedAt: new Date().toISOString(), tourId: res.id };
+    return { ok: true as const, currency, retailTotal: Math.round(room * 100) / 100, customerTotal: customerPrice(room), rule: tourPricingRule(), checkedAt: new Date().toISOString(), tourId: res.id, roomPriced: true as boolean };
   }
   if (!day || !p || !(p.adl > 0 || p.unit > 0)) return { ok: false as const, reason: "This date is no longer available for the selected option." };
   if (typeof day.seats === "number" && day.seats > 0 && pax > day.seats) return { ok: false as const, reason: `Only ${day.seats} places are left on this date.` };
@@ -224,6 +224,7 @@ export async function liveQuote(input: { slug: string; date: string; service: Se
     rule: tourPricingRule(),
     checkedAt: new Date().toISOString(),
     tourId: res.id,
+    roomPriced: false as boolean,
   };
 }
 

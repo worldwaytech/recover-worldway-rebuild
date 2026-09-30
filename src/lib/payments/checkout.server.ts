@@ -41,7 +41,7 @@ export type OrderInput = {
  * server-side fare confirmation. Client-supplied amounts are never charged.
  */
 export async function resolvePaymentAmount(
-  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string; extras?: { baggage?: string[]; meal?: string[]; seat?: string[] }[] }; prePurchasedBookingId?: string; aviationReference?: string },
+  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string; extras?: { baggage?: string[]; meal?: string[]; seat?: string[] }[] }; prePurchasedBookingId?: string; aviationReference?: string; tourBookingId?: string },
 ): Promise<{
   amountMinor: number;
   currency: string;
@@ -61,6 +61,12 @@ export async function resolvePaymentAmount(
     const { aviationQuoteAmount } = await import("@/lib/aviation/payment.server");
     const r = await aviationQuoteAmount(input.aviationReference, await optionalUserId());
     return { ...r, planId: null };
+  }
+
+  if (input.purpose === "tour") {
+    if (!input.tourBookingId) throw new Error("The tour booking reference is required.");
+    const { tourPaymentAmount } = await import("@/lib/travelshop/booking.server");
+    return tourPaymentAmount(input.tourBookingId, await optionalUserId());
   }
 
   if (input.purpose === "flight" && input.prePurchasedBookingId) {

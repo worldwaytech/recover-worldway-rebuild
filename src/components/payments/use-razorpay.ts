@@ -60,6 +60,7 @@ export type PayRequest = {
   };
   prePurchasedBookingId?: string;
   aviationReference?: string;
+  tourBookingId?: string;
 };
 
 /**
