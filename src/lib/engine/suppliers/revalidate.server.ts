@@ -64,6 +64,12 @@ async function liveCheck(o: CanonicalOffer): Promise<{ found: boolean; net?: num
     const fare = r.live ? r.fares.find((f) => (f.gradeId ?? f.suiteCategory) === grade) : undefined;
     return fare && r.availability !== "closed" ? { found: true, net: fare.price, currency: r.currency } : { found: false, reason: r.error ? "Voyage fare could not be confirmed" : "Suite no longer available" };
   }
+  if (o.kind === "activity" && o.supplierKey === "travelshop") {
+    const [slug, date, service, adults, children] = o.externalId.replace(/^tour:/, "").split("|");
+    const { liveQuote } = await import("@/lib/travelshop/catalogue.server");
+    const q = await liveQuote({ slug: slug!, date: date!, service: service === "private" ? "private" : "regular", adults: Number(adults) || 1, children: Number(children) || 0, infants: 0 });
+    return q.ok ? { found: true, net: q.retailTotal, currency: q.currency } : { found: false, reason: q.reason };
+  }
   return { found: false, reason: "No live revalidation path for this product" };
 }
 

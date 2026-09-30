@@ -164,6 +164,48 @@ export async function searchActivitiesOnRequest(city: string, startDate: string,
   }));
 }
 
+/**
+ * Live tours from the synced multi-supplier catalogue, ranked by real review
+ * volume/rating, then priced live for the first open date in the trip window.
+ * Operators publish dates but not start times, so tours join proposals as
+ * live-priced ON REQUEST items (time confirmed before booking) — never scheduled
+ * with an invented time. Health is recorded for Supplier Intelligence.
+ */
+export async function searchToursLive(destIata: string, from: string, to: string, adults: number, children: number): Promise<OnRequestItem[]> {
+  const reg = registrationFor("travelshop");
+  if (!supports(reg, "search")) return [];
+  const t0 = Date.now();
+  const { persistOutcomes } = await import("./health-store.server");
+  try {
+    const { findAirportByCode } = await import("@/lib/aviation/airports.server");
+    const city = (findAirportByCode(destIata)?.city ?? destIata).replace(/[%,()]/g, " ").trim();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient;
+    const { data } = await db.from("travelshop_tours").select("slug, name, rating, review_count")
+      .eq("is_active", true).or(`start_location.ilike.${city},destinations.cs.{"${city}"}`)
+      .order("review_count", { ascending: false, nullsFirst: false }).limit(3);
+    const { liveAvailability, liveQuote } = await import("@/lib/travelshop/catalogue.server");
+    const items: OnRequestItem[] = [];
+    for (const t of (data ?? []) as { slug: string; name: string }[]) {
+      const av = await liveAvailability(t.slug, from, adults + children).catch(() => null);
+      const d = av?.dates.find((x) => x.date <= to && x.service === "regular") ?? av?.dates.find((x) => x.date <= to);
+      if (!d) continue;
+      const q = await liveQuote({ slug: t.slug, date: d.date, service: d.service, adults, children, infants: 0 }).catch(() => null);
+      if (!q?.ok) continue;
+      items.push({
+        kind: "activity", title: t.name, ref: `tour:${t.slug}|${d.date}|${d.service}|${adults}|${children}`,
+        reason: `Live price and availability for ${d.date}; start time confirmed by the tour operator before booking.`,
+        indicativeFrom: { amount: q.customerTotal, currency: q.currency },
+      });
+    }
+    await persistOutcomes("search", [{ supplierKey: "travelshop", status: items.length ? "used" : "empty", count: items.length, ms: Date.now() - t0 }]);
+    return items;
+  } catch (e) {
+    await persistOutcomes("search", [{ supplierKey: "travelshop", status: "failed", count: 0, ms: Date.now() - t0, detail: e instanceof Error ? e.message : "error" }]);
+    return [];
+  }
+}
+
 // ---------------------------------------------------------------- cruises (production live feed)
 /**
  * Live cruise voyages embarking at the destination within the trip window.

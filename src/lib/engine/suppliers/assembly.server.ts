@@ -9,7 +9,7 @@ import { classifyOffer, isFresh, type ComponentStatus } from "../classify";
 import type { ComponentKind, TripRequirements } from "../types";
 import { liveStatus, SUPPLIER_CATALOG, supplierRegistry } from "./catalog.server";
 import { commercialRuleFor } from "./commercial.server";
-import { localDateIn, searchActivitiesOnRequest, searchCruisesCanonical, searchFlightsCanonical, searchHotelsCanonical, type OnRequestItem } from "./live-search.server";
+import { localDateIn, searchActivitiesOnRequest, searchCruisesCanonical, searchFlightsCanonical, searchHotelsCanonical, searchToursLive, type OnRequestItem } from "./live-search.server";
 import type { RevalidationResult } from "./revalidate.server";
 
 export interface ClassifiedOnRequest extends OnRequestItem { status: ComponentStatus }
@@ -139,11 +139,14 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
   }
   const wantsCruise = req.interests.some((i) => CRUISE_INTEREST.test(i));
   const cruise = wantsCruise ? await searchCruisesCanonical(destIata, req.departFrom, req.returnBy, currency).catch(() => ({ offers: [], unscheduled: 0, error: "Cruise search unavailable" })) : null;
-  const activities = await searchActivitiesOnRequest(dest, req.departFrom, req.returnBy, currency).catch(() => []);
+  const [activities, tours] = await Promise.all([
+    searchActivitiesOnRequest(dest, req.departFrom, req.returnBy, currency).catch(() => []),
+    searchToursLive(destIata, req.departFrom, req.returnBy, req.adults, req.children).catch(() => []),
+  ]);
   const extra: OnRequestItem[] = [
     ...activities,
     ...(cruise && cruise.unscheduled ? [{ kind: "cruise", title: `${cruise.unscheduled} live voyage(s) in your window`, reason: "Embark/disembark times not published for scheduling; confirmed on request.", indicativeFrom: null, ref: "cruise" }] : []),
-    { kind: "activity", title: "Guided small-group tours", reason: "Tour suppliers are not production-certified; availability confirmed on request.", indicativeFrom: null, ref: "tours" },
+    ...tours,
   ];
   // Live FX (approved provider only) for any non-target currencies; failure leaves identity → mixed currencies fail safely.
   const allOffers = [...out.offers, ...back.offers, ...[...stays.values()].flat(), ...(cruise?.offers ?? [])];
@@ -168,6 +171,7 @@ export async function assembleLiveProposals(req: TripRequirements): Promise<Asse
       { step: "hotels (sandbox, on request)", count: [...stays.values()].reduce((s, x) => s + x.length, 0) - liveHotels, error: null },
       ...(cruise ? [{ step: "cruises (live)", count: cruise.offers.length, error: cruise.error }] : []),
       { step: "activities (on request)", count: activities.length, error: null },
+      { step: "tours (live-priced, on request)", count: tours.length, error: null },
       { step: "revalidated", count: final.revalidation.filter((r) => r.status === "confirmed" || r.status === "changed").length, error: final.revalidation.some((r) => r.status === "rejected") ? `${final.revalidation.filter((r) => r.status === "rejected").length} offer(s) rejected on revalidation` : null },
     ],
   };
