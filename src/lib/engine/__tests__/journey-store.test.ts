@@ -101,7 +101,7 @@ import { runPackagePipeline } from "../package";
 describe("commercial rules + live status", () => {
   it("LIVE suppliers are Crystal, UP17, AIR iQ, Viator (+ aviation); only Crystal is bookable; Amadeus off", () => {
     const live = SUPPLIER_CATALOG.filter((s) => liveStatus(s) === "LIVE").map((s) => s.supplierKey).sort();
-    expect(live).toEqual(["airiq", "crystal", "private-aviation", "up17", "viator-affiliate"]);
+    expect(live).toEqual(["airiq", "crystal", "private-aviation", "travelshop", "up17", "viator-affiliate"]);
     expect(SUPPLIER_CATALOG.filter((s) => !bookingBlockers(s).length).map((s) => s.supplierKey)).toEqual(["crystal"]);
     expect(liveStatus(SUPPLIER_CATALOG.find((s) => s.supplierKey === "amadeus")!)).toBe("OFF");
   });
