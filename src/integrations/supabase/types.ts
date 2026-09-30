@@ -4168,6 +4168,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      travelshop_catalogue_totals: { Args: never; Returns: Json }
       travelshop_explore: { Args: never; Returns: Json }
       travelshop_facets: { Args: never; Returns: Json }
     }
