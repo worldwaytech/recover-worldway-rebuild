@@ -2475,6 +2475,172 @@ export type Database = {
           },
         ]
       }
+      partner_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          revoked_at: string | null
+          scopes: string[]
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_api_usage: {
+        Row: {
+          auth_method: string
+          created_at: string
+          duration_ms: number | null
+          id: number
+          key_id: string | null
+          operation: string
+          status: number
+          tenant_id: string
+          user_id: string | null
+        }
+        Insert: {
+          auth_method: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: number
+          key_id?: string | null
+          operation: string
+          status: number
+          tenant_id: string
+          user_id?: string | null
+        }
+        Update: {
+          auth_method?: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: number
+          key_id?: string | null
+          operation?: string
+          status?: number
+          tenant_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_api_usage_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "partner_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_api_usage_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_members_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_tenants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          name: string
+          rate_limit_per_minute: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name: string
+          rate_limit_per_minute?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          rate_limit_per_minute?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_minor: number
@@ -4074,6 +4240,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_partner_member: {
+        Args: { _tenant: string; _user: string }
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }

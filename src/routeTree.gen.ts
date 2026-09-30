@@ -175,6 +175,7 @@ import { Route as AdminHbxRouteImport } from './routes/admin.hbx'
 import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
+import { Route as AdminCommerceApiRouteImport } from './routes/admin.commerce-api'
 import { Route as AdminCatalogueSyncRouteImport } from './routes/admin.catalogue-sync'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminBokunRouteImport } from './routes/admin.bokun'
@@ -242,6 +243,7 @@ import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 import { Route as ApiPublicHooksCruiseaHoldSweepRouteImport } from './routes/api/public/hooks/cruisea-hold-sweep'
 import { Route as ApiPublicHooksBokunMarketplaceSyncRouteImport } from './routes/api/public/hooks/bokun-marketplace-sync'
+import { Route as ApiPublicV1CommerceOpRouteImport } from './routes/api/public/v1/commerce.$op'
 import { Route as ApiPublicHooksIntegrationWebhookProviderKeyRouteImport } from './routes/api/public/hooks/integration-webhook.$providerKey'
 
 const YachtsRoute = YachtsRouteImport.update({
@@ -1075,6 +1077,11 @@ const AdminContentRoute = AdminContentRouteImport.update({
   path: '/content',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCommerceApiRoute = AdminCommerceApiRouteImport.update({
+  id: '/commerce-api',
+  path: '/commerce-api',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCatalogueSyncRoute = AdminCatalogueSyncRouteImport.update({
   id: '/catalogue-sync',
   path: '/catalogue-sync',
@@ -1431,6 +1438,11 @@ const ApiPublicHooksBokunMarketplaceSyncRoute =
     path: '/api/public/hooks/bokun-marketplace-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1CommerceOpRoute = ApiPublicV1CommerceOpRouteImport.update({
+  id: '/api/public/v1/commerce/$op',
+  path: '/api/public/v1/commerce/$op',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksIntegrationWebhookProviderKeyRoute =
   ApiPublicHooksIntegrationWebhookProviderKeyRouteImport.update({
     id: '/api/public/hooks/integration-webhook/$providerKey',
@@ -1515,6 +1527,7 @@ export interface FileRoutesByFullPath {
   '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/catalogue-sync': typeof AdminCatalogueSyncRoute
+  '/admin/commerce-api': typeof AdminCommerceApiRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
@@ -1673,6 +1686,7 @@ export interface FileRoutesByFullPath {
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
   '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  '/api/public/v1/commerce/$op': typeof ApiPublicV1CommerceOpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1723,6 +1737,7 @@ export interface FileRoutesByTo {
   '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/catalogue-sync': typeof AdminCatalogueSyncRoute
+  '/admin/commerce-api': typeof AdminCommerceApiRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
@@ -1879,6 +1894,7 @@ export interface FileRoutesByTo {
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryIndexRoute
   '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  '/api/public/v1/commerce/$op': typeof ApiPublicV1CommerceOpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1958,6 +1974,7 @@ export interface FileRoutesById {
   '/admin/bokun': typeof AdminBokunRoute
   '/admin/bookings': typeof AdminBookingsRoute
   '/admin/catalogue-sync': typeof AdminCatalogueSyncRoute
+  '/admin/commerce-api': typeof AdminCommerceApiRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
   '/admin/crystal': typeof AdminCrystalRoute
@@ -2116,6 +2133,7 @@ export interface FileRoutesById {
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
   '/api/public/hooks/integration-webhook/$providerKey': typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  '/api/public/v1/commerce/$op': typeof ApiPublicV1CommerceOpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2196,6 +2214,7 @@ export interface FileRouteTypes {
     | '/admin/bokun'
     | '/admin/bookings'
     | '/admin/catalogue-sync'
+    | '/admin/commerce-api'
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
@@ -2354,6 +2373,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
     | '/api/public/hooks/integration-webhook/$providerKey'
+    | '/api/public/v1/commerce/$op'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2404,6 +2424,7 @@ export interface FileRouteTypes {
     | '/admin/bokun'
     | '/admin/bookings'
     | '/admin/catalogue-sync'
+    | '/admin/commerce-api'
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
@@ -2560,6 +2581,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country'
     | '/api/public/hooks/integration-webhook/$providerKey'
+    | '/api/public/v1/commerce/$op'
   id:
     | '__root__'
     | '/'
@@ -2638,6 +2660,7 @@ export interface FileRouteTypes {
     | '/admin/bokun'
     | '/admin/bookings'
     | '/admin/catalogue-sync'
+    | '/admin/commerce-api'
     | '/admin/content'
     | '/admin/crm'
     | '/admin/crystal'
@@ -2796,6 +2819,7 @@ export interface FileRouteTypes {
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
     | '/api/public/hooks/integration-webhook/$providerKey'
+    | '/api/public/v1/commerce/$op'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2901,6 +2925,7 @@ export interface RootRouteChildren {
   VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
   VoyagesCruiseaSailingIdRoute: typeof VoyagesCruiseaSailingIdRoute
   ApiPublicHooksIntegrationWebhookProviderKeyRoute: typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
+  ApiPublicV1CommerceOpRoute: typeof ApiPublicV1CommerceOpRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -4067,6 +4092,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContentRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/commerce-api': {
+      id: '/admin/commerce-api'
+      path: '/commerce-api'
+      fullPath: '/admin/commerce-api'
+      preLoaderRoute: typeof AdminCommerceApiRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/catalogue-sync': {
       id: '/admin/catalogue-sync'
       path: '/catalogue-sync'
@@ -4536,6 +4568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBokunMarketplaceSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/commerce/$op': {
+      id: '/api/public/v1/commerce/$op'
+      path: '/api/public/v1/commerce/$op'
+      fullPath: '/api/public/v1/commerce/$op'
+      preLoaderRoute: typeof ApiPublicV1CommerceOpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/integration-webhook/$providerKey': {
       id: '/api/public/hooks/integration-webhook/$providerKey'
       path: '/api/public/hooks/integration-webhook/$providerKey'
@@ -4583,6 +4622,7 @@ interface AdminRouteChildren {
   AdminBokunRoute: typeof AdminBokunRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminCatalogueSyncRoute: typeof AdminCatalogueSyncRoute
+  AdminCommerceApiRoute: typeof AdminCommerceApiRoute
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
   AdminCrystalRoute: typeof AdminCrystalRoute
@@ -4627,6 +4667,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBokunRoute: AdminBokunRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminCatalogueSyncRoute: AdminCatalogueSyncRoute,
+  AdminCommerceApiRoute: AdminCommerceApiRoute,
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
   AdminCrystalRoute: AdminCrystalRoute,
@@ -5207,6 +5248,7 @@ const rootRouteChildren: RootRouteChildren = {
   VoyagesCruiseaSailingIdRoute: VoyagesCruiseaSailingIdRoute,
   ApiPublicHooksIntegrationWebhookProviderKeyRoute:
     ApiPublicHooksIntegrationWebhookProviderKeyRoute,
+  ApiPublicV1CommerceOpRoute: ApiPublicV1CommerceOpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -143,7 +143,7 @@ export const getPricingConsole = createServerFn({ method: "POST" })
       .or("action.ilike.%markup%,action.ilike.%pricing%,action.ilike.%fx%,action.ilike.%commission%").order("created_at", { ascending: false }).limit(50);
     return JSON.parse(JSON.stringify({
       rules,
-      fx: { provider: "Open Exchange Rates", configured: Boolean(process.env["OPEN_EXCHANGE_RATES_APP_ID"]), cacheMinutes: 60, staleAfterHours: 6 },
+      fx: { provider: "Live: Open Exchange Rates (if key set) → ECB via Frankfurter → ExchangeRate-API", configured: true, cacheMinutes: 30, staleAfterHours: 96 },
       audit: audit ?? [],
     }));
   });

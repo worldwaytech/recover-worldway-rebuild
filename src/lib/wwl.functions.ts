@@ -134,6 +134,7 @@ const conciergeSchema = z
     session_id: z.string().max(120).optional(),
     conversation_id: z.string().regex(/^[A-Za-z0-9_-]{8,200}$/).optional(),
     context: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+    history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(8000) })).max(24).optional(),
   })
   .strict();
 
@@ -229,13 +230,13 @@ export const conciergeChat = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => conciergeSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAiEntitlement(context);
-    // Worldway-AetherCore (Azure AI Foundry) answers the Concierge.
-    const { askAetherCore, AetherCoreError } = await import("./ai/aethercore.server");
+    // Provider-agnostic Concierge: built-in AI + live Worldway commerce tools (or AetherCore via CONCIERGE_PROVIDER).
+    const { askConcierge, ConciergeError } = await import("./ai/concierge.server");
     try {
-      const r = await askAetherCore(data.message, data.session_id, data.conversation_id);
+      const r = await askConcierge({ message: data.message, history: data.history, sessionId: data.session_id, conversationId: data.conversation_id });
       return { ok: true as const, data: { reply: r.reply, session_id: r.sessionId, conversation_id: r.conversationId } };
     } catch (e) {
-      if (e instanceof AetherCoreError) return { ok: false as const, error: e.userMessage };
+      if (e instanceof ConciergeError) return { ok: false as const, error: e.userMessage };
       return { ok: false as const, error: "The concierge is temporarily unavailable. Please try again shortly." };
     }
   });
