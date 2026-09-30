@@ -132,6 +132,7 @@ const conciergeSchema = z
   .object({
     message: z.string().trim().min(1).max(4000),
     session_id: z.string().max(120).optional(),
+    conversation_id: z.string().regex(/^[A-Za-z0-9_-]{8,200}$/).optional(),
     context: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   })
   .strict();
@@ -231,8 +232,8 @@ export const conciergeChat = createServerFn({ method: "POST" })
     // Worldway-AetherCore (Azure AI Foundry) answers the Concierge.
     const { askAetherCore, AetherCoreError } = await import("./ai/aethercore.server");
     try {
-      const r = await askAetherCore(data.message, data.session_id);
-      return { ok: true as const, data: { reply: r.reply, session_id: r.sessionId } };
+      const r = await askAetherCore(data.message, data.session_id, data.conversation_id);
+      return { ok: true as const, data: { reply: r.reply, session_id: r.sessionId, conversation_id: r.conversationId } };
     } catch (e) {
       if (e instanceof AetherCoreError) return { ok: false as const, error: e.userMessage };
       return { ok: false as const, error: "The concierge is temporarily unavailable. Please try again shortly." };

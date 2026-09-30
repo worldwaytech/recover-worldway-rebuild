@@ -51,6 +51,7 @@ function ConciergePage() {
     () => `wtg-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`,
     [],
   );
+  const conversationRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -82,9 +83,15 @@ function ConciergePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await runConciergeChat({ data: { message: text, session_id: sessionId } });
+      const res = await runConciergeChat({
+        data: { message: text, session_id: sessionId, ...(conversationRef.current ? { conversation_id: conversationRef.current } : {}) },
+      });
       if (!res.ok) setError(res.error ?? "Request failed");
-      else setMessages([...next, { role: "assistant", content: extractReply(res.data) || "…" }]);
+      else {
+        const cid = (res.data as { conversation_id?: string | null } | undefined)?.conversation_id;
+        if (cid) conversationRef.current = cid;
+        setMessages([...next, { role: "assistant", content: extractReply(res.data) || "…" }]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
     } finally {
