@@ -18,6 +18,8 @@ export const searchTourMarketplace = createServerFn({ method: "POST" })
       query: z.string().max(120).optional(),
       destination: z.string().max(120).optional(),
       country: z.string().max(120).optional(),
+      region: z.string().max(120).optional(),
+      city: z.string().max(120).optional(),
       category: z.string().max(120).optional(),
       activity: z.string().max(120).optional(),
       language: z.string().max(60).optional(),
@@ -42,6 +44,18 @@ export const getTourFacets = createServerFn({ method: "GET" }).handler(async () 
   const { facets } = await import("./catalogue.server");
   return facets();
 });
+
+export const getTourExplore = createServerFn({ method: "GET" }).handler(async () => {
+  const { explore } = await import("./catalogue.server");
+  return explore();
+});
+
+export const getCountryGuide = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) => z.object({ country: z.string().min(1).max(120) }).parse(i))
+  .handler(async ({ data }) => {
+    const { countryGuide } = await import("./catalogue.server");
+    return countryGuide(data.country);
+  });
 
 export const getTourDetail = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) => z.object({ slug }).parse(i))
@@ -119,6 +133,21 @@ export const getTourSupplierOverview = createServerFn({ method: "POST" })
       .select("id, tour_name, tour_date, adults, children, customer_currency, customer_total, supplier_retail_total, status, supplier_reference_id, created_at")
       .order("created_at", { ascending: false }).limit(25);
     return { ...(await syncOverview(supabaseAdmin as never)), bookingsEnabled: tourBookingsEnabled(), pricing: tourPricingRule(), bookings: bookings.data ?? [] };
+  });
+
+export const checkTourApiHealth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStaff(context as never);
+    const { apiHealth } = await import("./catalogue.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ex } = await supabaseAdmin.rpc("travelshop_facets" as never);
+    const f = (ex ?? {}) as Record<string, unknown[]>;
+    const { explore } = await import("./catalogue.server");
+    const e = await explore();
+    const countries = e.hierarchy.reduce((s, r) => s + r.countries.length, 0);
+    const cities = new Set(e.hierarchy.flatMap((r) => r.countries.flatMap((c) => c.cities.map((x) => c.country + "|" + x.city)))).size;
+    return { health: await apiHealth(), counts: { categories: f.categories?.length ?? 0, activities: f.activities?.length ?? 0, destinations: f.destinations?.length ?? 0, regions: e.hierarchy.length, countries, cities } };
   });
 
 export const runTourCatalogueSync = createServerFn({ method: "POST" })

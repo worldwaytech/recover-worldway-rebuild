@@ -19,6 +19,8 @@ export interface SearchInput {
   query?: string;
   destination?: string;
   country?: string;
+  region?: string;
+  city?: string;
   category?: string;
   activity?: string;
   language?: string;
@@ -40,6 +42,8 @@ export async function searchTours(input: SearchInput) {
   }
   if (input.destination) q = q.contains("destinations", [input.destination]);
   if (input.country) q = q.eq("country", input.country);
+  if (input.region) q = q.eq("region", input.region);
+  if (input.city) q = q.eq("start_location", input.city);
   if (input.category) q = q.eq("category_slug", input.category);
   if (input.activity) q = q.contains("activities", [input.activity]);
   if (input.language) q = q.contains("languages", [input.language]);
@@ -189,4 +193,77 @@ export async function liveQuote(input: { slug: string; date: string; service: Se
     checkedAt: new Date().toISOString(),
     tourId: res.id,
   };
+}
+
+// ------------------------------------------------------------ explore/guides
+
+export interface ExploreData {
+  hierarchy: Array<{ region: string; count: number; countries: Array<{ country: string; count: number; cities: Array<{ city: string; count: number }> }> }>;
+  trending: Array<{ value: string; count: number; reviews: number }>;
+}
+
+/** Featured = highest-rated tours with meaningful review volume; best-selling = most reviewed. Real catalogue signals only. */
+export async function explore() {
+  const db = await admin();
+  const [ex, featured, best] = await Promise.all([
+    db.rpc("travelshop_explore" as never),
+    db.from("travelshop_tours").select(CARD_COLS).eq("is_active", true).gte("review_count", 20).order("rating", { ascending: false, nullsFirst: false }).order("review_count", { ascending: false }).limit(8),
+    db.from("travelshop_tours").select(CARD_COLS).eq("is_active", true).order("review_count", { ascending: false }).limit(8),
+  ]);
+  const e = (ex.data ?? { hierarchy: [], trending: [] }) as ExploreData;
+  return {
+    ...e,
+    featured: ((featured.data ?? []) as TourRow[]).map(withCustomerFromPrice),
+    bestSelling: ((best.data ?? []) as TourRow[]).map(withCustomerFromPrice),
+  };
+}
+
+/** Destination guide built only from catalogue facts for one country. */
+export async function countryGuide(country: string) {
+  const db = await admin();
+  const { data, error } = await db
+    .from("travelshop_tours")
+    .select("region, start_location, category_name, activities, duration_days, rating, review_count, price_from, currency, languages")
+    .eq("is_active", true).eq("country", country).limit(1000);
+  if (error) throw new Error("Guide unavailable");
+  const rows = (data ?? []) as TourRow[];
+  if (rows.length === 0) return null;
+  const tally = (vals: (string | null | undefined)[]) => {
+    const m = new Map<string, number>();
+    for (const v of vals) if (v) m.set(v, (m.get(v) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ value, count }));
+  };
+  const rated = rows.filter((r) => r.rating && r.review_count);
+  const reviews = rated.reduce((s, r) => s + Number(r.review_count), 0);
+  const avgRating = reviews ? rated.reduce((s, r) => s + Number(r.rating) * Number(r.review_count), 0) / reviews : null;
+  const prices = rows.filter((r) => r.price_from !== null).map((r) => customerPrice(Number(r.price_from)));
+  const durations = rows.map((r) => Number(r.duration_days) || 0);
+  const top = await db.from("travelshop_tours").select(CARD_COLS).eq("is_active", true).eq("country", country).order("review_count", { ascending: false }).limit(9);
+  return {
+    country,
+    region: tally(rows.map((r) => r.region))[0]?.value ?? null,
+    tourCount: rows.length,
+    cities: tally(rows.map((r) => r.start_location)).slice(0, 15),
+    categories: tally(rows.map((r) => r.category_name)).slice(0, 10),
+    activities: tally(rows.flatMap((r) => r.activities ?? [])).slice(0, 15),
+    languages: tally(rows.flatMap((r) => r.languages ?? [])).slice(0, 8),
+    reviews,
+    avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+    dayTrips: durations.filter((d) => d <= 1).length,
+    multiDay: durations.filter((d) => d > 1).length,
+    priceFrom: prices.length ? Math.min(...prices) : null,
+    currency: tally(rows.map((r) => r.currency))[0]?.value ?? null,
+    topTours: ((top.data ?? []) as TourRow[]).map(withCustomerFromPrice),
+  };
+}
+
+/** Staff API health: one real catalogue request, timed. */
+export async function apiHealth() {
+  const started = Date.now();
+  try {
+    const res = await travelshopRequest<{ total?: number; meta?: { total?: number } }>(TRAVELSHOP_PATHS.search, { method: "POST", body: { page: 1 }, maxRetries: 1, timeoutMs: 20_000 } as never);
+    return { ok: true, ms: Date.now() - started, reportedTotal: res?.meta?.total ?? res?.total ?? null, checkedAt: new Date().toISOString(), error: null as string | null };
+  } catch (e) {
+    return { ok: false, ms: Date.now() - started, reportedTotal: null, checkedAt: new Date().toISOString(), error: e instanceof Error ? e.message : "failed" };
+  }
 }
