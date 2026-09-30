@@ -141,13 +141,8 @@ export const checkTourApiHealth = createServerFn({ method: "POST" })
     await assertStaff(context as never);
     const { apiHealth } = await import("./catalogue.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: ex } = await supabaseAdmin.rpc("travelshop_facets" as never);
-    const f = (ex ?? {}) as Record<string, unknown[]>;
-    const { explore } = await import("./catalogue.server");
-    const e = await explore();
-    const countries = e.hierarchy.reduce((s, r) => s + r.countries.length, 0);
-    const cities = new Set(e.hierarchy.flatMap((r) => r.countries.flatMap((c) => c.cities.map((x) => c.country + "|" + x.city)))).size;
-    return { health: await apiHealth(), counts: { categories: f.categories?.length ?? 0, activities: f.activities?.length ?? 0, destinations: f.destinations?.length ?? 0, regions: e.hierarchy.length, countries, cities } };
+    const { data: totals } = await supabaseAdmin.rpc("travelshop_catalogue_totals" as never);
+    return { health: await apiHealth(), counts: (totals ?? {}) as Record<string, number> };
   });
 
 export const runTourCatalogueSync = createServerFn({ method: "POST" })

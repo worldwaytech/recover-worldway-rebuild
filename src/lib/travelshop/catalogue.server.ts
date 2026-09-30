@@ -261,7 +261,7 @@ export async function countryGuide(country: string) {
 export async function apiHealth() {
   const started = Date.now();
   try {
-    const res = await travelshopRequest<{ total?: number; meta?: { total?: number } }>(TRAVELSHOP_PATHS.search, { method: "POST", body: { page: 1 }, maxRetries: 1, timeoutMs: 20_000 } as never);
+    const res = await travelshopRequest<{ total?: number; meta?: { total?: number } }>(TRAVELSHOP_PATHS.search, { method: "POST", body: { page: 1 }, maxRetries: 1, timeoutMs: 20_000 });
     return { ok: true, ms: Date.now() - started, reportedTotal: res?.meta?.total ?? res?.total ?? null, checkedAt: new Date().toISOString(), error: null as string | null };
   } catch (e) {
     return { ok: false, ms: Date.now() - started, reportedTotal: null, checkedAt: new Date().toISOString(), error: e instanceof Error ? e.message : "failed" };
