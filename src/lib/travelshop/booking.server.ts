@@ -200,16 +200,35 @@ export async function getCustomerTourBooking(userId: string, bookingId: string) 
   };
 }
 
-/** Worldway-branded confirmation email. Rendered and logged; delivery starts once the Worldway sender domain is verified. */
+/** Worldway-branded confirmation email to the lead traveller. Idempotent per booking; outcome logged on the booking. */
 export async function queueTourConfirmationEmail(bookingId: string) {
   const db = await admin();
-  const { data: b } = await db.from("travelshop_bookings").select("id, tour_name, tour_date, lead_traveller, events").eq("id", bookingId).maybeSingle();
+  const { data: b } = await db.from("travelshop_bookings").select("id, tour_name, tour_date, adults, children, customer_currency, customer_total, lead_traveller, events").eq("id", bookingId).maybeSingle();
   if (!b) return "not_found";
   const { worldwayTourRef } = await import("./reference");
-  const to = String(((b.lead_traveller ?? {}) as Record<string, unknown>)["email"] ?? "");
-  const subject = `Your Worldway tour is confirmed — ${worldwayTourRef(b.id)}`;
-  const status = to ? "queued_no_domain" : "no_recipient";
-  await db.from("travelshop_bookings").update({ events: [...(b.events as unknown[]), event("confirmation_email", `${status}: ${subject}`)] }).eq("id", bookingId);
+  const lead = (b.lead_traveller ?? {}) as Record<string, unknown>;
+  const to = String(lead["email"] ?? "");
+  const reference = worldwayTourRef(b.id);
+  let status = "no_recipient";
+  if (to) {
+    try {
+      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+      const r = await sendTemplateEmail("tour-booking-confirmation", to, {
+        templateData: {
+          name: [lead["title"], lead["firstName"] ?? lead["first_name"], lead["lastName"] ?? lead["last_name"]].filter(Boolean).join(" "),
+          reference, tourName: b.tour_name, tourDate: b.tour_date,
+          travellers: `${b.adults} adult${b.adults === 1 ? "" : "s"}${b.children ? `, ${b.children} child${b.children === 1 ? "" : "ren"}` : ""}`,
+          total: `${b.customer_currency} ${Number(b.customer_total).toFixed(2)}`,
+          bookingUrl: `https://worldwaytravelsgroup.com/account/tour/${b.id}`,
+        },
+        idempotencyKey: `tour-booking-confirmation-${b.id}`,
+      });
+      status = r.sent ? "sent" : String((r as { reason?: string }).reason ?? "not_sent");
+    } catch (e) {
+      status = `failed: ${(e as { code?: string }).code ?? (e instanceof Error ? e.message.slice(0, 80) : "unknown")}`;
+    }
+  }
+  await db.from("travelshop_bookings").update({ events: [...(b.events as unknown[]), event("confirmation_email", `${status} (${reference})`)] }).eq("id", bookingId);
   return status;
 }
 
