@@ -86,6 +86,16 @@ export async function travelshopRequest<T>(
       throw new TravelShopError(`Supplier HTTP ${res.status}`, res.status, true);
     }
     const text = await res.text();
+    // The supplier's edge occasionally answers with a bot-check page (HTTP 403
+    // HTML). It clears on retry, so treat it like a transient error.
+    if (res.status === 403 && /Just a moment|cf_chl|challenge-platform/i.test(text)) {
+      if (attempt < maxRetries) {
+        attempt++; retryCount++;
+        await sleep(Math.min(20_000, 1500 * 2 ** attempt));
+        continue;
+      }
+      throw new TravelShopError("Supplier edge challenge", 403, true);
+    }
     if (!res.ok) throw new TravelShopError(`Supplier HTTP ${res.status}: ${text.slice(0, 200)}`, res.status, false);
     try {
       return JSON.parse(text) as T;

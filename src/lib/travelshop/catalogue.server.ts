@@ -140,7 +140,7 @@ export interface LiveDate {
 export async function liveAvailability(slug: string, fromDate: string, pax: number): Promise<{ checkedAt: string; maxPax: number; dates: LiveDate[] }> {
   const res = await travelshopRequest<AvailabilityResponse>(TRAVELSHOP_PATHS.availability(slug), {
     query: { date: fromDate, pax: Math.max(1, pax) },
-    maxRetries: 2,
+    maxRetries: 3,
     timeoutMs: 25_000,
   });
   const out: LiveDate[] = [];
@@ -167,7 +167,7 @@ export async function liveAvailability(slug: string, fromDate: string, pax: numb
 export async function liveQuote(input: { slug: string; date: string; service: ServiceType; adults: number; children: number; infants: number }) {
   const pax = input.adults + input.children;
   const res = await travelshopRequest<AvailabilityResponse>(TRAVELSHOP_PATHS.availability(input.slug), {
-    query: { date: input.date, pax }, maxRetries: 2, timeoutMs: 25_000,
+    query: { date: input.date, pax }, maxRetries: 3, timeoutMs: 25_000,
   });
   if (pax > (res.maxPax || 999)) return { ok: false as const, reason: `This tour allows up to ${res.maxPax} travellers.` };
   const day = (res.prices ?? []).flatMap((b) => b.dates ?? []).find((d) => d.start === input.date);
