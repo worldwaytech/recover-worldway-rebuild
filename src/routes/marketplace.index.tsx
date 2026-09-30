@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useState } from "react";
-import { getTourFacets, searchTourMarketplace } from "@/lib/travelshop/tours.functions";
+import { getTourExplore, getTourFacets, searchTourMarketplace } from "@/lib/travelshop/tours.functions";
 import { mediaUrl } from "@/lib/media";
 
 export const Route = createFileRoute("/marketplace/")({
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/marketplace/")({
 });
 
 type Filters = {
-  query?: string; country?: string; destination?: string; category?: string; activity?: string; language?: string;
+  query?: string; region?: string; city?: string; country?: string; destination?: string; category?: string; activity?: string; language?: string;
   duration?: "day" | "2-4" | "5-8" | "9+"; minPrice?: number; maxPrice?: number; minRating?: number;
   sort?: "popular" | "price-asc" | "price-desc" | "rating" | "duration"; page?: number;
 };
@@ -36,6 +36,10 @@ function MarketplacePage() {
     queryFn: () => searchTourMarketplace({ data: f }),
     placeholderData: keepPreviousData,
   });
+  const ex = useQuery({ queryKey: ["tour-explore"], queryFn: () => getTourExplore(), staleTime: 3600_000 });
+  const region = ex.data?.hierarchy.find((r) => r.region === f.region);
+  const countryNode = (region?.countries ?? ex.data?.hierarchy.flatMap((r) => r.countries))?.find((c) => c.country === f.country);
+  const filtered = Boolean(f.query || f.region || f.country || f.city || f.destination || f.category || f.activity);
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const fc = facets.data;
 
@@ -50,10 +54,18 @@ function MarketplacePage() {
         <button type="submit" className="rounded-md bg-primary px-5 py-2 text-primary-foreground">Search</button>
       </form>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-8">
-        <select aria-label="Country" className={sel} value={f.country ?? ""} onChange={(e) => set({ country: e.target.value || undefined })}>
+      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-5">
+        <select aria-label="Region" className={sel} value={f.region ?? ""} onChange={(e) => set({ region: e.target.value || undefined, country: undefined, city: undefined })}>
+          <option value="">All regions</option>
+          {ex.data?.hierarchy.map((r) => <option key={r.region} value={r.region}>{r.region} ({r.count})</option>)}
+        </select>
+        <select aria-label="Country" className={sel} value={f.country ?? ""} onChange={(e) => set({ country: e.target.value || undefined, city: undefined })}>
           <option value="">All countries</option>
-          {fc?.countries.map((c) => <option key={c.value} value={c.value}>{c.value} ({c.count})</option>)}
+          {(region ? region.countries.map((c) => ({ value: c.country, count: c.count })) : fc?.countries ?? []).map((c) => <option key={c.value} value={c.value}>{c.value} ({c.count})</option>)}
+        </select>
+        <select aria-label="City" className={sel} value={f.city ?? ""} disabled={!countryNode} onChange={(e) => set({ city: e.target.value || undefined })}>
+          <option value="">{countryNode ? "All cities" : "Pick a country"}</option>
+          {countryNode?.cities.map((c) => <option key={c.city} value={c.city}>{c.city} ({c.count})</option>)}
         </select>
         <select aria-label="Destination" className={sel} value={f.destination ?? ""} onChange={(e) => set({ destination: e.target.value || undefined })}>
           <option value="">All destinations</option>
@@ -87,26 +99,51 @@ function MarketplacePage() {
         {data && <span className="text-muted-foreground">{data.total.toLocaleString()} tours</span>}
       </div>
 
+      {!filtered && ex.data && (
+        <div className="mt-10 space-y-10">
+          <Row title="Featured tours" items={ex.data.featured} />
+          <Row title="Best-selling tours" items={ex.data.bestSelling} />
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">Trending destinations</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {ex.data.trending.map((t) => <button key={t.value} onClick={() => set({ destination: t.value })} className="rounded-full border border-border px-3 py-1 text-sm text-foreground hover:bg-muted">{t.value} · {t.count} tours</button>)}
+            </div>
+          </section>
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">Things to do</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {fc?.activities.slice(0, 24).map((a) => <button key={a.value} onClick={() => set({ activity: a.value })} className="rounded-full bg-muted px-3 py-1 text-sm text-foreground hover:bg-accent">{a.value} ({a.count})</button>)}
+            </div>
+          </section>
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">Categories</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {fc?.categories.map((c) => <button key={c.value} onClick={() => set({ category: c.value })} className="rounded-full border border-border px-3 py-1 text-sm text-foreground hover:bg-muted">{c.label} ({c.count})</button>)}
+            </div>
+          </section>
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">Travel guides by country</h2>
+            <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+              {ex.data.hierarchy.map((r) => (
+                <div key={r.region}>
+                  <p className="text-sm font-medium text-foreground">{r.region}</p>
+                  <ul className="mt-1 space-y-0.5 text-sm">
+                    {r.countries.slice(0, 8).map((c) => <li key={c.country}><Link to="/marketplace/guide/$country" params={{ country: c.country }} className="text-muted-foreground hover:text-foreground">{c.country} ({c.count})</Link></li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+          <h2 className="text-xl font-semibold text-foreground">All tours</h2>
+        </div>
+      )}
+
       {isLoading && <p className="mt-10 text-muted-foreground">Loading tours…</p>}
       {data?.error && <p className="mt-10 text-muted-foreground">The catalogue is temporarily unavailable. Please try again.</p>}
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {data?.items.map((p) => (
-          <Link key={p.slug} to="/marketplace/$id" params={{ id: p.slug }} className="overflow-hidden rounded-xl border border-border bg-card transition hover:shadow-lg">
-            {p.cover_image ? <img src={mediaUrl(p.cover_image)} alt={p.name} className="h-44 w-full object-cover" loading="lazy" /> : <div className="h-44 w-full bg-muted" />}
-            <div className="p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{p.category_name}</p>
-              <h2 className="mt-1 line-clamp-2 font-medium text-foreground">{p.name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {[p.destinations?.[0], p.country].filter(Boolean).join(", ")}
-                {p.duration_days ? ` · ${p.duration_days} day${p.duration_days > 1 ? "s" : ""}` : ""}
-              </p>
-              <div className="mt-2 flex items-center justify-between text-sm">
-                {p.price_from !== null ? <span className="font-semibold text-foreground">From {p.currency} {Number(p.price_from).toFixed(0)}</span> : <span className="text-muted-foreground">Price on request</span>}
-                {p.rating ? <span className="text-muted-foreground">★ {Number(p.rating).toFixed(1)} ({p.review_count})</span> : null}
-              </div>
-            </div>
-          </Link>
+          <TourCard key={p.slug} p={p} />
         ))}
       </div>
       {data && data.items.length === 0 && !isLoading && !data.error && <p className="mt-10 text-muted-foreground">No tours matched your filters.</p>}
@@ -119,5 +156,37 @@ function MarketplacePage() {
       )}
       <p className="mt-6 text-xs text-muted-foreground">"From" prices come from our last catalogue refresh. Live price and availability are checked when you choose a date.</p>
     </main>
+  );
+}
+
+type Card = Awaited<ReturnType<typeof searchTourMarketplace>>["items"][number];
+
+function TourCard({ p }: { p: Card }) {
+  return (
+          <Link to="/marketplace/$id" params={{ id: p.slug }} className="overflow-hidden rounded-xl border border-border bg-card transition hover:shadow-lg">
+            {p.cover_image ? <img src={mediaUrl(p.cover_image)} alt={p.name} className="h-44 w-full object-cover" loading="lazy" /> : <div className="h-44 w-full bg-muted" />}
+            <div className="p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{p.category_name}</p>
+              <h3 className="mt-1 line-clamp-2 font-medium text-foreground">{p.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {[p.destinations?.[0], p.country].filter(Boolean).join(", ")}
+                {p.duration_days ? ` · ${p.duration_days} day${p.duration_days > 1 ? "s" : ""}` : ""}
+              </p>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                {p.price_from !== null ? <span className="font-semibold text-foreground">From {p.currency} {Number(p.price_from).toFixed(0)}</span> : <span className="text-muted-foreground">Price on request</span>}
+                {p.rating ? <span className="text-muted-foreground">★ {Number(p.rating).toFixed(1)} ({p.review_count})</span> : null}
+              </div>
+            </div>
+          </Link>
+  );
+}
+
+function Row({ title, items }: { title: string; items: Card[] }) {
+  if (!items.length) return null;
+  return (
+    <section>
+      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+      <div className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">{items.map((p) => <TourCard key={p.slug} p={p} />)}</div>
+    </section>
   );
 }

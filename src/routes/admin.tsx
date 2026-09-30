@@ -86,7 +86,7 @@ const NAV: Nav[] = [
     ["/admin/tours", "Tours connector", Compass],
     ["/admin/ttc", "TTC tours", Compass],
     ["/admin/catalogue-sync", "AKTG & TTC Sync", RefreshCw],
-    ["/admin/tour-supplier", "TravelShop Tours (Marketplace)", Compass],
+    ["/admin/tour-supplier", "TravelShop Settings", Compass],
     ["/admin/bokun", "Bókun (disabled — history only)", Compass],
   ]),
   ...G("Transfers & Insurance", [
