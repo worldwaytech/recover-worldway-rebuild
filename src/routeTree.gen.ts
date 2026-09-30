@@ -236,6 +236,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as DestinationsRegionCountryIndexRouteImport } from './routes/destinations.$region.$country.index'
 import { Route as VoyagesCruiseaSailingIdRouteImport } from './routes/voyages.cruisea.sailing.$id'
 import { Route as VoyagesCruiseaBookingIdRouteImport } from './routes/voyages.cruisea.booking.$id'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as DestinationsRegionCountryDestinationRouteImport } from './routes/destinations.$region.$country.$destination'
 import { Route as AuthV1OauthTokenRouteImport } from './routes/auth_.v1.oauth.token'
 import { Route as AuthV1OauthAuthorizeRouteImport } from './routes/auth_.v1.oauth.authorize'
@@ -1398,6 +1399,12 @@ const VoyagesCruiseaBookingIdRoute = VoyagesCruiseaBookingIdRouteImport.update({
   path: '/voyages/cruisea/booking/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DestinationsRegionCountryDestinationRoute =
   DestinationsRegionCountryDestinationRouteImport.update({
     id: '/$destination',
@@ -1703,6 +1710,7 @@ export interface FileRoutesByFullPath {
   '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
@@ -1914,6 +1922,7 @@ export interface FileRoutesByTo {
   '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country': typeof DestinationsRegionCountryIndexRoute
@@ -2156,6 +2165,7 @@ export interface FileRoutesById {
   '/auth_/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth_/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/voyages/cruisea/booking/$id': typeof VoyagesCruiseaBookingIdRoute
   '/voyages/cruisea/sailing/$id': typeof VoyagesCruiseaSailingIdRoute
   '/destinations/$region/$country/': typeof DestinationsRegionCountryIndexRoute
@@ -2399,6 +2409,7 @@ export interface FileRouteTypes {
     | '/auth/v1/oauth/authorize'
     | '/auth/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
+    | '/lovable/email/transactional/preview'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
@@ -2610,6 +2621,7 @@ export interface FileRouteTypes {
     | '/auth/v1/oauth/authorize'
     | '/auth/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
+    | '/lovable/email/transactional/preview'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country'
@@ -2851,6 +2863,7 @@ export interface FileRouteTypes {
     | '/auth_/v1/oauth/authorize'
     | '/auth_/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
+    | '/lovable/email/transactional/preview'
     | '/voyages/cruisea/booking/$id'
     | '/voyages/cruisea/sailing/$id'
     | '/destinations/$region/$country/'
@@ -2958,6 +2971,7 @@ export interface RootRouteChildren {
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
   AuthV1OauthAuthorizeRoute: typeof AuthV1OauthAuthorizeRoute
   AuthV1OauthTokenRoute: typeof AuthV1OauthTokenRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   VoyagesCruiseaBookingIdRoute: typeof VoyagesCruiseaBookingIdRoute
   VoyagesCruiseaSailingIdRoute: typeof VoyagesCruiseaSailingIdRoute
   ApiPublicHooksIntegrationWebhookProviderKeyRoute: typeof ApiPublicHooksIntegrationWebhookProviderKeyRoute
@@ -4555,6 +4569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VoyagesCruiseaBookingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/destinations/$region/$country/$destination': {
       id: '/destinations/$region/$country/$destination'
       path: '/$destination'
@@ -5307,6 +5328,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
   AuthV1OauthAuthorizeRoute: AuthV1OauthAuthorizeRoute,
   AuthV1OauthTokenRoute: AuthV1OauthTokenRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   VoyagesCruiseaBookingIdRoute: VoyagesCruiseaBookingIdRoute,
   VoyagesCruiseaSailingIdRoute: VoyagesCruiseaSailingIdRoute,
   ApiPublicHooksIntegrationWebhookProviderKeyRoute:
