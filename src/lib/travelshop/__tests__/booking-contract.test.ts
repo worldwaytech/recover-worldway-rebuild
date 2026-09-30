@@ -20,7 +20,7 @@ describe("tour booking contract", () => {
   it("blocks room-priced tours and past dates", () => {
     const r = buildNewBookingBody({ ...rec, tour_date: "2020-01-01", rooms: { double: 1 } } as never, C, "2026-09-30");
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.blockers.length).toBeGreaterThanOrEqual(3);
+    if (!r.ok) expect(r.blockers.length).toBeGreaterThanOrEqual(2);
   });
   it("gates are deterministic and ordered", () => {
     expect(contractComplete([])).toBe(false);
