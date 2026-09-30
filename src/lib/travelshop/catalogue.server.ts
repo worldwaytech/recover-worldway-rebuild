@@ -221,12 +221,16 @@ export async function explore() {
 /** Destination guide built only from catalogue facts for one country. */
 export async function countryGuide(country: string) {
   const db = await admin();
-  const { data, error } = await db
-    .from("travelshop_tours")
-    .select("region, start_location, category_name, activities, duration_days, rating, review_count, price_from, currency, languages")
-    .eq("is_active", true).eq("country", country).limit(1000);
-  if (error) throw new Error("Guide unavailable");
-  const rows = (data ?? []) as TourRow[];
+  const rows: TourRow[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db
+      .from("travelshop_tours")
+      .select("region, start_location, category_name, activities, duration_days, rating, review_count, price_from, currency, languages")
+      .eq("is_active", true).eq("country", country).order("external_id").range(from, from + 999);
+    if (error) throw new Error("Guide unavailable");
+    rows.push(...((data ?? []) as TourRow[]));
+    if (!data || data.length < 1000) break;
+  }
   if (rows.length === 0) return null;
   const tally = (vals: (string | null | undefined)[]) => {
     const m = new Map<string, number>();
