@@ -204,11 +204,11 @@ export async function tourPaymentAmount(bookingId: string, userId: string | null
   if (!tourBookingsEnabled()) throw new Error("Online tour payment isn't available yet.");
   const { data: b } = await db.from("travelshop_bookings").select("*").eq("id", bookingId).maybeSingle();
   if (!b || b.user_id !== userId || b.status !== "awaiting_supplier_authorization") throw new Error("This tour booking can't be paid.");
-  const { data: staff } = await db.rpc("is_staff", { _user_id: userId });
-  if (staff !== true) {
-    const { certificationStatus, kindOf } = await import("./certification.server");
-    if (!(await certificationStatus())[kindOf(b.rooms)].certified) throw new Error("Online payment isn't available for this tour yet — our team will confirm it.");
-  }
+  // Owner-approved go-live: customer payment no longer waits on a prior certification booking.
+  // The contract, live price/availability and room checks below remain mandatory.
+  const { buildNewBookingBody } = await import("./booking-contract");
+  const { partnerCountries } = await import("./countries.server");
+  if (!buildNewBookingBody(b as never, await partnerCountries().catch(() => [])).ok) throw new Error("Online payment isn't available for this tour — our team will confirm it.");
   const { data: prior } = await db.from("payments").select("id").eq("purpose", "tour").eq("status", "paid").contains("reference", { tour_booking_id: bookingId }).limit(1).maybeSingle();
   if (prior) throw new Error("This tour booking is already paid.");
   const q = await liveQuote({ slug: b.tour_slug, date: b.tour_date, service: b.service_type as ServiceType, adults: b.adults, children: b.children, infants: b.infants });
@@ -227,7 +227,5 @@ export async function customerPayable(bookingId: string) {
   if (!b) return false;
   const { buildNewBookingBody } = await import("./booking-contract");
   const { partnerCountries } = await import("./countries.server");
-  if (!buildNewBookingBody(b as never, await partnerCountries().catch(() => [])).ok) return false;
-  const { certificationStatus, kindOf } = await import("./certification.server");
-  return (await certificationStatus())[kindOf(b.rooms)].certified;
+  return buildNewBookingBody(b as never, await partnerCountries().catch(() => [])).ok;
 }
