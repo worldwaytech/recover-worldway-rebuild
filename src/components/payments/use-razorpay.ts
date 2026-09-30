@@ -156,6 +156,7 @@ export function useRazorpayCheckout() {
           amountMinor: verified.amountMinor,
           currency: verified.currency,
           method: verified.method,
+          tour: (verified as { tour?: { confirmed: boolean; worldwayReference: string } | null }).tour ?? null,
         };
       } catch (e) {
         setError(e instanceof Error ? e.message : "Payment could not be completed.");

@@ -153,7 +153,11 @@ function BookingForm(p: { slug: string; pick: { date: string; service: "private"
   async function onPay() {
     if (!state.payable) return;
     const r = await pay({ purpose: "tour", tourBookingId: state.payable.id, currency: state.payable.currency, description: "Worldway tour booking", name: `${lead.firstName} ${lead.lastName}`, email: lead.email, phone: lead.phone });
-    if (r) setDone("Payment received. Your tour is being confirmed — you'll see the confirmation in your bookings, and our team will contact you if anything needs attention.");
+    if (!r) return;
+    const ref = r.tour?.worldwayReference;
+    setDone(r.tour?.confirmed
+      ? `Booking confirmed. Your Worldway booking reference is ${ref}. A confirmation will follow by email.`
+      : `Payment received${ref ? ` (Worldway reference ${ref})` : ""}. Your booking is not yet confirmed — the Worldway team is finalising it and will contact you shortly.`);
   }
   return (
     <form className="mt-3 space-y-2" onSubmit={async (e) => {

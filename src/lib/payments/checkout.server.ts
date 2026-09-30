@@ -201,16 +201,19 @@ export async function confirmPayment(input: {
   }
 
   // Tours: after a verified payment, send to the partner exactly once (atomic claim inside).
-  let tour: { ok: boolean; reference?: string; reason?: string } | null = null;
+  // Customer-facing result carries ONLY a Worldway reference — the partner's reference stays server-side.
+  let tour: { confirmed: boolean; worldwayReference: string } | null = null;
   const tourBookingId = (record as { reference?: Record<string, unknown> } | null)?.reference?.["tour_booking_id"];
   if (record?.purpose === "tour" && typeof tourBookingId === "string") {
+    let accepted = false;
     try {
       const { createSupplierBooking } = await import("@/lib/travelshop/booking.server");
-      tour = await createSupplierBooking(tourBookingId, { id: String(record.user_id ?? ""), email: null });
+      const r = await createSupplierBooking(tourBookingId, { id: String(record.user_id ?? ""), email: null });
+      accepted = r.ok === true;
     } catch (e) {
-      console.error("[tour] supplier booking after payment failed", e instanceof Error ? e.message : e);
-      tour = { ok: false, reason: "Our team will confirm your tour shortly." };
+      console.error("[tour] booking after payment failed", e instanceof Error ? e.message : e);
     }
+    tour = { confirmed: accepted, worldwayReference: `WWT-${tourBookingId.replace(/-/g, "").slice(0, 10).toUpperCase()}` };
   }
 
   // Membership entitlement is granted ONLY by the signature-verified payment
