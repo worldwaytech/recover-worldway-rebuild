@@ -228,8 +228,25 @@ export const conciergeChat = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => conciergeSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAiEntitlement(context);
-    const { callPartner } = await import("./wwl.server");
-    return callPartner("concierge", data);
+    // Worldway-AetherCore (Azure AI Foundry) answers the Concierge.
+    const { askAetherCore, AetherCoreError } = await import("./ai/aethercore.server");
+    try {
+      const r = await askAetherCore(data.message, data.session_id);
+      return { ok: true as const, data: { reply: r.reply, session_id: r.sessionId } };
+    } catch (e) {
+      if (e instanceof AetherCoreError) return { ok: false as const, error: e.userMessage };
+      return { ok: false as const, error: "The concierge is temporarily unavailable. Please try again shortly." };
+    }
+  });
+
+/** Staff-only AetherCore configuration check (no credential values). */
+export const aetherCoreHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: staff } = await (context.supabase as any).rpc("is_staff", { _user_id: context.userId });
+    if (!staff) throw new Error("Forbidden");
+    const { configStatus } = await import("./ai/aethercore.server");
+    return configStatus();
   });
 
 // -------- Wallet --------
