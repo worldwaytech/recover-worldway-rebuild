@@ -156,7 +156,7 @@ function BookingForm(p: { slug: string; pick: { date: string; service: "private"
     if (!r) return;
     const ref = r.tour?.worldwayReference;
     setDone(r.tour?.confirmed
-      ? `Booking confirmed. Your Worldway booking reference is ${ref}. A confirmation will follow by email.`
+      ? `Booking confirmed. Your Worldway booking reference is ${ref}. Your confirmation and receipt are in My account → Tours.`
       : `Payment received${ref ? ` (Worldway reference ${ref})` : ""}. Your booking is not yet confirmed — the Worldway team is finalising it and will contact you shortly.`);
   }
   return (
