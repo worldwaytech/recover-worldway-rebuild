@@ -130,7 +130,7 @@ function TenantCard({ t, onKey, onRevoke, onRotate, onLimit, onStatus, onMember 
         {usage && (
           <div className="rounded border p-2 text-xs">
             {usage.operations.length === 0 ? <p className="text-muted-foreground">No calls in the last 7 days.</p> : usage.operations.map((o) => <p key={o.operation}><code>{o.operation}</code> · {o.calls} calls · {o.errors} errors · avg {o.avgMs} ms</p>)}
-            {usage.recent.length > 0 && <p className="mt-1 text-muted-foreground">Latest: {usage.recent.slice(0, 5).map((r) => `${r.operation} ${r.status}`).join(" · ")}</p>}
+            {usage.recent.length > 0 && <p className="mt-1 text-muted-foreground">Latest: {usage.recent.slice(0, 5).map((r: { operation: string; status: number }) => `${r.operation} ${r.status}`).join(" · ")}</p>}
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
