@@ -25,20 +25,37 @@ export async function assembleAndSave(userId: string, requirements: z.infer<type
   const { explainPackage } = await import("@/lib/engine/intelligence/explain");
   const report = await assembleLiveProposals(requirements, opts);
   const { commercialRuleFor } = await import("./commercial.server");
+  const [{ evaluateProposals }, intelSrv, { supplierRegistry }] = await Promise.all([
+    import("@/lib/engine/intelligence/evaluate"), import("@/lib/engine/intelligence/intel.server"), import("./catalog.server"),
+  ]);
+  const intel = evaluateProposals({
+    proposals: report.proposals.map((p) => ({ id: p.id, result: p.result, bookable: p.readiness.bookable })),
+    registry: supplierRegistry(), learned: await intelSrv.loadLearning(), now: new Date().toISOString(),
+    budget: requirements.budget?.currency === report.currency ? requirements.budget.amount : undefined,
+  });
   const svc = save ? await journeyServiceFor() : null;
   const proposals = [];
-  for (const p of report.proposals) {
+  const decisions = [];
+  for (const [idx, p] of report.proposals.entries()) {
     const e = explainPackage(p.result);
     const explanation = [e.headline, ...e.reasons, ...e.cautions.map((c) => `Note: ${c}`)].join(". ");
+    const pi = intel[idx]!;
     let journeyId: string | null = null;
     if (svc) journeyId = (await svc.create(userId, p.offers, report.currency, requirements, { explanation, readiness: p.readiness, on_request: p.onRequest, sources: report.sources })).id;
+    decisions.push({ intel: pi, journeyId, score: p.result.score, total: p.result.pricing?.total ?? null, currency: report.currency });
     proposals.push({
-      journeyId, score: p.result.score, bookable: p.readiness.bookable, blockers: p.readiness.blockers,
+      journeyId, score: p.result.score, bookable: p.readiness.bookable && pi.bookable, blockers: [...p.readiness.blockers, ...pi.risks.filter((r) => r.severity === "error").map((r) => r.message)],
       total: p.result.pricing?.total ?? null, currency: report.currency, explanation,
       components: p.result.graph.map((c) => ({ kind: c.kind, title: c.title, start: c.start, end: c.end, status: p.readiness.perComponent.find((x) => x.externalId === c.externalId)?.status ?? "LIVE" })),
       onRequest: p.onRequest, factors: p.result.factors,
+      intel: { label: pi.label, labelWhy: pi.labelWhy, confidence: pi.minConfidence, risks: pi.risks, channels: pi.channels.map((c) => ({ channel: c.channel, ready: c.ready, mode: c.mode })), needsRecheck: pi.recheckDue.length },
     });
   }
+  await intelSrv.persistDecisions(userId, decisions);
+  const searchRef = `${userId}:${Date.now()}`;
+  const keys = new Map<string, string>();
+  for (const p of report.proposals) for (const o of p.offers) keys.set(o.supplierKey, o.kind);
+  await intelSrv.recordOutcomes([...keys].map(([supplierKey, kind]) => ({ supplierKey, kind, event: "searched" as const, ref: `${searchRef}:${supplierKey}` })));
   // Optional stays: shown with the live customer price; never part of any proposal, itinerary, booking or total.
   const optionalStays = report.optionalStays.map((o) => ({
     tourRef: o.tourRef, tourTitle: o.tourTitle, position: o.position, checkin: o.checkin, checkout: o.checkout, optional: true as const,
