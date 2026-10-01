@@ -109,10 +109,13 @@ function TripPlanner() {
           <Panel title="Your trip plan" description="In order of travel. Prices are re-checked live before anything can be booked.">
             {r.proposals.length === 0 ? <EmptyState title="No live plan for these dates" hint={r.sources.find((s) => s.error)?.error ?? "Try different dates."} /> : (
               <div className="space-y-6">
-                {r.proposals.slice(0, 2).map((p, i) => (
+                {r.proposals.slice(0, 4).map((p, i) => (
                   <div key={i} className="rounded-xl border border-border/60 p-4">
                     <div className="mb-3 flex items-center justify-between">
-                      <div className="font-medium">Option {i + 1}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{p.intel.label ?? `Option ${i + 1}`}</span>
+                        {p.intel.labelWhy && <span className="text-xs text-muted-foreground">{p.intel.labelWhy}</span>}
+                      </div>
                       <div className="text-sm">{p.total != null ? <>Total <strong>{money({ amount: p.total, currency: p.currency })}</strong></> : <span className="text-muted-foreground">Total not available yet</span>}</div>
                     </div>
                     <ol className="space-y-2 text-sm">
@@ -123,6 +126,18 @@ function TripPlanner() {
                         </li>
                       ))}
                     </ol>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      <Badge variant={p.bookable ? "default" : "secondary"}>{p.bookable ? "Ready to book" : "Enquiry — our team confirms first"}</Badge>
+                      <Badge variant="outline">Confidence {Math.round(p.intel.confidence * 100)}%</Badge>
+                      <Badge variant="outline">{p.intel.freshness === "live-checked" ? "Price checked live" : "Price needs a fresh check"}</Badge>
+                      {p.intel.withinBudget === false && <Badge variant="outline">Above your budget</Badge>}
+                    </div>
+                    {p.intel.risks.length > 0 && (
+                      <ul className="mt-2 list-disc pl-5 text-xs text-muted-foreground">
+                        {p.intel.risks.map((k, j) => <li key={j}>{k.message}</li>)}
+                      </ul>
+                    )}
+                    {p.intel.reasons.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{p.intel.reasons.map((x) => x.replace(/supplier/gi, "partner")).join(" · ")}</p>}
                     {p.total != null && r.fx && (
                       <p className="mt-2 text-xs text-muted-foreground">
                         Converted at live rates{" "}
