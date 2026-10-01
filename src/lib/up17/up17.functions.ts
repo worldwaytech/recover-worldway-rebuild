@@ -238,6 +238,9 @@ export const up17ConfirmFlightFare = createServerFn({ method: "POST" })
     return { ok: res.ok, error: res.error, confirmation: res.data ?? null };
   });
 
+const UNCERTAIN_MSG =
+  "Payment received. Your ticket is being confirmed by the Worldway team — please do not pay again; we will contact you shortly.";
+
 export const up17BookFlightTicket = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
@@ -318,12 +321,16 @@ export const up17BookFlightTicket = createServerFn({ method: "POST" })
         }),
       });
     } catch (e) {
-      await releaseFulfilmentClaim(data.orderId);
-      return {
-        ok: false as const,
-        error: e instanceof Error ? e.message : "The airline could not be reached.",
-        booking: null,
-      };
+      // Outcome unknown — the ticket may exist. Keep the claim (no retry on this
+      // payment) and hand to staff for reconciliation; never risk a duplicate ticket.
+      console.error("[up17] book outcome uncertain", { orderId: data.orderId, error: e instanceof Error ? e.message : e });
+      return { ok: false as const, uncertain: true as const, error: UNCERTAIN_MSG, booking: null };
+    }
+
+    if (!res.ok && (res.status === 0 || res.status >= 500)) {
+      // Timeout / network / server error: the airline may have issued the ticket.
+      console.error("[up17] book outcome uncertain", { orderId: data.orderId, status: res.status, error: res.error });
+      return { ok: false as const, uncertain: true as const, error: UNCERTAIN_MSG, booking: null };
     }
 
     if (!res.ok) {
