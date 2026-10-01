@@ -12,7 +12,7 @@ export type LiveConfig = {
 };
 
 // Fill from co-loaded knowledge: the gateway URL, the Live model and the resolved chat model.
-const liveSettings = { baseURL: "", liveModel: "", backendModel: "" };
+const liveSettings = { baseURL: "https://ai.gateway.lovable.dev", liveModel: "openai/gpt-live-1", backendModel: "openai/gpt-6-astra" };
 
 export type LiveSocket = {
   readonly readyState: number;
@@ -111,35 +111,16 @@ export function handleLiveRequest(request: Request): Response {
   return new Response(null, response);
 }
 
-const conversationInstructions = `You are Mira, a calm learning companion.
-Speak naturally in brief replies. Ask a focused question when details are unclear.
+const conversationInstructions = `You are the Worldway Travels Group voice concierge — a warm, discreet luxury travel advisor. Speak English naturally in brief replies.
+Never state a flight, hotel, tour, price, date or availability unless the backend returned it. Nothing is booked or charged on this call; bookings are confirmed by the Worldway team after the customer approves the final live price. Never mention supplier, partner, API or system names.
 Backchannel policy: Use moderate listening sounds without taking over.
-Interruption policy: Stop your answer and listen when the user interrupts.
+Interruption policy: Stop your answer and listen when the caller interrupts.
 Delegation policy:
-Backend tools: Reason through questions and plan study sessions across days.
-Delegate to the backend when: The user wants a study schedule or careful reasoning,
-or a correction changes a question already being worked on.
-Do not delegate to the backend when: Greeting, clarifying a question, or repeating
-a still-current answer. Wait for the backend result before presenting its answer.`;
+Backend tools: Live flight search, tour search, tour availability, tour quotes and full live trip plans.
+Delegate to the backend when: The caller asks about flights, tours, prices, availability or a trip plan, or corrects details of one being worked on.
+Do not delegate to the backend when: Greeting, asking for missing dates, origin or travellers, or repeating a still-current answer. Wait for the backend result before presenting it.`;
 
-const studyScheduleInput = z
-  .object({
-    total_minutes: z.number().int().min(1).max(10_080),
-    days: z.number().int().min(1).max(30),
-  })
-  .strict();
-
-function planStudySchedule(args: z.infer<typeof studyScheduleInput>) {
-  const daily = Math.floor(args.total_minutes / args.days);
-  return {
-    total_minutes: args.total_minutes,
-    days: args.days,
-    sessions: Array.from({ length: args.days }, (_, index) => ({
-      day: index + 1,
-      minutes: daily + (index < args.total_minutes % args.days ? 1 : 0),
-    })),
-  };
-}
+type ToolProgress = { tool: string; ok: boolean };
 
 function isListeningSound(text: string) {
   const normalized = text.toLowerCase().replace(/[\s\p{Pd}]/gu, "");
@@ -152,7 +133,7 @@ async function answerQuestion(
   correlation: { runID: string; sessionID: string | undefined; delegationID: string },
   signal: AbortSignal,
   consumeInput: () => void,
-  onPlan: (plan: ReturnType<typeof planStudySchedule>) => void,
+  onPlan: (plan: ToolProgress) => void,
 ) {
   signal.throwIfAborted();
   const provider = createOpenAI({
@@ -199,27 +180,11 @@ async function answerQuestion(
           : {}),
       },
     },
-    system:
-      "Help a spoken learning companion answer the latest user question. " +
-      "Transcripts may be incomplete or corrected. Use the latest correction. " +
-      "Continue from completed tool results; do not repeat completed actions. " +
-      "Return verified facts and useful next steps in at most 150 words. " +
-      "To display a study schedule for the current request, call plan_study_schedule with its total minutes and days. " +
-      "Ask for missing details instead of guessing. The tool only calculates a draft plan; " +
-      "it does not save calendar events. You have no other tools.",
+    system: (await import("@/lib/ai/concierge.server")).conciergeSystemPrompt() +
+      "\nYou are answering for a spoken voice call. Transcripts may be incomplete or corrected; use the latest correction. " +
+      "Continue from completed tool results; do not repeat completed actions. Reply in at most 120 spoken words, no lists or markdown.",
     messages,
-    tools: {
-      plan_study_schedule: tool({
-        description: "Distribute a total study time evenly across days and return a draft schedule.",
-        inputSchema: studyScheduleInput,
-        execute: async (args) => {
-          signal.throwIfAborted();
-          const plan = planStudySchedule(args);
-          onPlan(plan);
-          return plan;
-        },
-      }),
-    },
+    tools: (await import("@/lib/ai/concierge.server")).conciergeTools((name, ok) => { signal.throwIfAborted(); onPlan({ tool: name, ok }); }) as any,
   });
   let completed = false;
   let stepCompleted = false;
@@ -420,7 +385,7 @@ export function bindLiveConnection(
           }),
         );
       }
-      if (plan) emit({ type: "app.study_schedule.plan", delegation_id: delegationID, plan });
+      if (plan) emit({ type: "app.concierge.tool", delegation_id: delegationID, plan });
       completedDelegation = pendingDelegations.shift();
     } catch {
       stop();
