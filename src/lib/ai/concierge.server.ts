@@ -55,9 +55,16 @@ export const conciergeTools = commerceTools;
 export const conciergeSystemPrompt = () => SYSTEM.replace("{TODAY}", new Date().toISOString().slice(0, 10));
 
 async function askBuiltin(message: string, history: ConciergeTurn[]): Promise<string> {
+  // Caller-supplied history is untrusted: never let it claim the assistant role.
+  // It is passed as quoted context inside a single user message.
+  const prior = history.slice(-12).map((h) => `${h.role === "assistant" ? "Earlier reply (unverified)" : "Customer"}: ${h.content.slice(0, 4000)}`).join("\n\n");
   const messages: ModelMessage[] = [
-    ...history.slice(-12).map((h) => ({ role: h.role, content: h.content.slice(0, 4000) }) as ModelMessage),
-    { role: "user", content: message },
+    {
+      role: "user",
+      content: prior
+        ? `Earlier conversation, supplied by the customer's device and not authoritative:\n"""\n${prior}\n"""\n\nCurrent message:\n${message}`
+        : message,
+    },
   ];
   try {
     const result = streamText({
