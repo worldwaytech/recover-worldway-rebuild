@@ -69,7 +69,9 @@ export function redact(value: unknown, depth = 0): unknown {
   if (value && typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = SENSITIVE_KEYS.has(k.toLowerCase().replace(/[^a-z_]/g, "")) ? REDACTED : redact(v, depth + 1);
+      out[k] = SENSITIVE_KEYS.has(k.toLowerCase().replace(/[^a-z_]/g, ""))
+        ? REDACTED
+        : redact(v, depth + 1);
     }
     return out;
   }
@@ -108,7 +110,9 @@ function supplierBookingIdFrom(...sources: unknown[]): string | null {
   for (const s of sources) {
     if (!s || typeof s !== "object") continue;
     const o = s as Record<string, unknown>;
-    const data = (o.data && typeof o.data === "object" ? (o.data as Record<string, unknown>) : undefined) ?? {};
+    const data =
+      (o.data && typeof o.data === "object" ? (o.data as Record<string, unknown>) : undefined) ??
+      {};
     for (const k of ["bookingId", "bookingIds", "bid", "id"]) {
       const v = o[k] ?? data[k];
       if (typeof v === "string" && v.length >= 6 && v.length <= 40) return v;
@@ -160,7 +164,10 @@ async function persistEvidence(rec: EvidenceRecord): Promise<void> {
       supplier_booking_id: supplierBookingIdFrom(rec.responseBody, rec.requestBody, rec.query),
     });
   } catch (error) {
-    console.warn("[tripjack] evidence persistence skipped:", error instanceof Error ? error.message : "unknown");
+    console.warn(
+      "[tripjack] evidence persistence skipped:",
+      error instanceof Error ? error.message : "unknown",
+    );
   }
 }
 
@@ -177,7 +184,6 @@ export async function tripjackCall<T = unknown>(
   body?: unknown,
   query?: Record<string, string>,
 ): Promise<TripjackResult<T>> {
-
   const correlationId = tripjackCorrelationId(suite, capability);
   const started = Date.now();
 
@@ -236,7 +242,12 @@ export async function tripjackCall<T = unknown>(
 
   try {
     const payload = cap.method === "POST" ? JSON.stringify(body ?? {}) : undefined;
-    const relay = await relayTarget(suite, cap.method, `${cap.path}${search ? `?${search}` : ""}`, payload ?? "");
+    const relay = await relayTarget(
+      suite,
+      cap.method,
+      `${cap.path}${search ? `?${search}` : ""}`,
+      payload ?? "",
+    );
     if (mode === "on" && !relay) throw new Error("relay target unavailable");
     const response = await fetch(relay?.url ?? url, {
       method: cap.method,
@@ -254,7 +265,17 @@ export async function tripjackCall<T = unknown>(
     const text = await response.text();
     if (suite === "cabs" && capability === "location-search") {
       // UAT diagnostics: upstream URL, transport, status and body — no credential material.
-      console.info("[tripjack] cabs location-search", JSON.stringify({ url, via: relay ? "relay" : "direct", method: cap.method, correlationId, status: response.status, body: text.slice(0, 2000) }));
+      console.info(
+        "[tripjack] cabs location-search",
+        JSON.stringify({
+          url,
+          via: relay ? "relay" : "direct",
+          method: cap.method,
+          correlationId,
+          status: response.status,
+          body: text.slice(0, 2000),
+        }),
+      );
     }
     let parsed: unknown = null;
     const requestBody = cap.method === "POST" ? (body ?? {}) : undefined;
@@ -283,7 +304,11 @@ export async function tripjackCall<T = unknown>(
           requestBody,
           status: response.status,
           // Non-JSON bodies (e.g. an HTML 404 page) are kept as a truncated string.
-          responseBody: { nonJson: true, contentType: response.headers.get("content-type"), text: text.slice(0, 2000) },
+          responseBody: {
+            nonJson: true,
+            contentType: response.headers.get("content-type"),
+            text: text.slice(0, 2000),
+          },
           durationMs,
           outcome: "error",
           errorKind: "invalid-response",

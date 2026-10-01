@@ -11,15 +11,29 @@ const ENV = ["TRIPJACK_RELAY_URL", "TRIPJACK_RELAY_SECRET", TRIPJACK_API_KEY_SEC
 let calls: { url: string; init: RequestInit }[] = [];
 beforeEach(() => {
   calls = [];
-  delete process.env["TRIPJACK_RELAY_URL"]; delete process.env["TRIPJACK_RELAY_SECRET"];
+  delete process.env["TRIPJACK_RELAY_URL"];
+  delete process.env["TRIPJACK_RELAY_SECRET"];
   process.env[TRIPJACK_API_KEY_SECRET] = KEY;
-  vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
-    calls.push({ url, init });
-    return new Response('{"status":{"success":true}}', { status: 200, headers: { "content-type": "application/json" } });
-  }));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response('{"status":{"success":true}}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }),
+  );
 });
-afterEach(() => { ENV.forEach((k) => delete process.env[k]); vi.unstubAllGlobals(); vi.useRealTimers(); });
-const relayOn = () => { process.env["TRIPJACK_RELAY_URL"] = "https://34-93-108-121.sslip.io"; process.env["TRIPJACK_RELAY_SECRET"] = SECRET; };
+afterEach(() => {
+  ENV.forEach((k) => delete process.env[k]);
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
+const relayOn = () => {
+  process.env["TRIPJACK_RELAY_URL"] = "https://34-93-108-121.sslip.io";
+  process.env["TRIPJACK_RELAY_SECRET"] = SECRET;
+};
 
 describe("TripJack client → relay boundary", () => {
   it("POST: exact relay URL, canonical HMAC, relay headers, apikey forwarded", async () => {
@@ -30,7 +44,9 @@ describe("TripJack client → relay boundary", () => {
     expect(url).toBe("https://34-93-108-121.sslip.io/tripjack/cabs/cabs/v1/google-places");
     const h = init.headers as Record<string, string>;
     expect(h["X-Relay-Timestamp"]).toBe("1790000000");
-    const canon = `1790000000\nPOST\n/tripjack/cabs/cabs/v1/google-places\n${createHash("sha256").update(init.body as string).digest("hex")}`;
+    const canon = `1790000000\nPOST\n/tripjack/cabs/cabs/v1/google-places\n${createHash("sha256")
+      .update(init.body as string)
+      .digest("hex")}`;
     expect(h["X-Relay-Signature"]).toBe(createHmac("sha256", SECRET).update(canon).digest("hex"));
     expect(h.apikey).toBe(KEY);
     expect(JSON.stringify(h)).not.toContain(SECRET);
@@ -40,7 +56,9 @@ describe("TripJack client → relay boundary", () => {
     relayOn();
     await tripjackCall("cabs", "booking-details", undefined, { bookingIds: "A1" });
     const { url, init } = calls[0];
-    expect(url).toBe("https://34-93-108-121.sslip.io/tripjack/cabs/cabs/v1/booking/details?bookingIds=A1");
+    expect(url).toBe(
+      "https://34-93-108-121.sslip.io/tripjack/cabs/cabs/v1/booking/details?bookingIds=A1",
+    );
     const h = init.headers as Record<string, string>;
     const canon = `${h["X-Relay-Timestamp"]}\nGET\n/tripjack/cabs/cabs/v1/booking/details?bookingIds=A1\n${createHash("sha256").update("").digest("hex")}`;
     expect(h["X-Relay-Signature"]).toBe(createHmac("sha256", SECRET).update(canon).digest("hex"));
@@ -84,10 +102,13 @@ describe("TripJack client → relay boundary", () => {
 
 describe("route alignment with relay allow-list", () => {
   it("every mapped cabs capability is relay-allowed", () => {
-    for (const c of TRIPJACK_CAPABILITIES.cabs) if (c.path) expect(relayAllows("cabs", c.method, c.path)).toBe(true);
+    for (const c of TRIPJACK_CAPABILITIES.cabs)
+      if (c.path) expect(relayAllows("cabs", c.method, c.path)).toBe(true);
   });
   it("tripsafe: only review/book are outside the relay allow-list", () => {
-    const blocked = TRIPJACK_CAPABILITIES.tripsafe.filter((c) => c.path && !relayAllows("tripsafe", c.method, c.path)).map((c) => c.key);
+    const blocked = TRIPJACK_CAPABILITIES.tripsafe
+      .filter((c) => c.path && !relayAllows("tripsafe", c.method, c.path))
+      .map((c) => c.key);
     expect(blocked.sort()).toEqual(["book", "review"]);
     expect(RELAY_ALLOWLIST.cabs.size).toBe(9);
     expect(RELAY_ALLOWLIST.tripsafe.size).toBe(5);
