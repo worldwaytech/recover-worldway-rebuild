@@ -166,7 +166,8 @@ export async function loadCertificationOverview(client: Client) {
     cases,
     totals: {
       cases: cases.length,
-      passed: cases.filter((c) => c.status === "passed").length,
+      // A case only counts as passed when it is marked passed AND real stored evidence backs it.
+      passed: cases.filter((c) => c.status === "passed" && c.evidenceCount > 0).length,
       blocked: cases.filter((c) => c.status === "blocked").length,
       evidenceRows: count ?? 0,
     },
@@ -368,15 +369,25 @@ export const TRIPJACK_EVIDENCE_STEPS = [
   { id: "CAB-LATLONG", suite: "cabs", step: "Get Latitude/Longitude", capabilities: ["location-latlong"] },
   { id: "CAB-QUOTES", suite: "cabs", step: "Quotes", capabilities: ["quote"] },
   { id: "CAB-REVIEW", suite: "cabs", step: "Review", capabilities: ["book"] },
-  { id: "CAB-PAY", suite: "cabs", step: "Pay", capabilities: ["payment", "booking-details"] },
+  { id: "CAB-PAY", suite: "cabs", step: "Pay", capabilities: ["payment"] },
+  { id: "CAB-DETAILS", suite: "cabs", step: "Booking Details", capabilities: ["booking-details"] },
+  { id: "CAB-AMEND-CHARGES", suite: "cabs", step: "Get Amendment Charges", capabilities: ["amend-charges"] },
+  { id: "CAB-CANCEL", suite: "cabs", step: "Cancel", capabilities: ["cancel"] },
+  { id: "TS-AMEND", suite: "tripsafe", step: "Raise Amendment", capabilities: ["amend"] },
+  { id: "TS-CANCEL", suite: "tripsafe", step: "Confirm Cancellation", capabilities: ["cancel"] },
 ] as const;
 
 export type EvidenceStatus = "PASS" | "BLOCKED" | "FAILED" | "EVIDENCE_MISSING";
 
-function evidenceStatus(rows: LogRow[]): EvidenceStatus {
+type StatusRow = Pick<LogRow, "outcome" | "response_status" | "error_kind" | "created_at">;
+
+/** Status of a step = the LATEST stored real call (older passes don't mask a current failure). */
+export function evidenceStatus(rows: StatusRow[]): EvidenceStatus {
   if (!rows.length) return "EVIDENCE_MISSING";
-  if (rows.some((r) => r.outcome === "ok" && r.response_status !== null && r.response_status >= 200 && r.response_status < 300)) return "PASS";
-  if (rows.some((r) => r.error_kind === "invalid-response" || [403, 404, 503].includes(r.response_status ?? 0))) return "BLOCKED";
+  const latest = [...rows].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[rows.length - 1]!;
+  const st = latest.response_status;
+  if (latest.outcome === "ok" && st !== null && st >= 200 && st < 300) return "PASS";
+  if (latest.error_kind === "invalid-response" || [401, 403, 404, 503].includes(st ?? 0)) return "BLOCKED";
   return "FAILED";
 }
 
@@ -388,9 +399,10 @@ export type PackageRow = {
 
 /** Every persisted real call, grouped per certification step. Nothing is synthesised. */
 export async function exportCertificationPackage(client: Client) {
-  const { data, error } = await client.from("tripjack_api_logs").select("*").order("created_at", { ascending: true }).limit(1000);
+  // Latest stored evidence first (so the newest calls are never cut off), then chronological.
+  const { data, error } = await client.from("tripjack_api_logs").select("*").order("created_at", { ascending: false }).limit(1000);
   if (error) throw new Error(error.message);
-  const logs = (data ?? []) as LogRow[];
+  const logs = ((data ?? []) as LogRow[]).slice().reverse();
   const { data: caseRows } = await client.from("tripjack_certification_cases").select("*");
   const files: EvidenceFile[] = [];
   const rows: PackageRow[] = [];
@@ -426,6 +438,7 @@ export async function exportCertificationPackage(client: Client) {
   files.unshift({ name: "TripJack_Certification_Evidence.json", content: JSON.stringify({ environment: "uat", baseUrl: TRIPJACK_UAT_BASE_URL, generatedAt, evidenceRows: logs.length, cases: steps, adminCaseRecords: (caseRows ?? []).map((c) => ({ caseKey: c.case_key, status: c.status, supplierBookingId: c.supplier_booking_id, confirmationNumbers: c.confirmation_numbers, correlationIds: c.correlation_ids, updatedAt: c.updated_at })) }, null, 2) });
   files.push({ name: "EVIDENCE_INDEX.md", content: ["# Evidence Index", "", "| Case | Status | Correlation ID | Timestamp | HTTP | Ref | Request | Response |", "|---|---|---|---|---|---|---|---|", ...rows.map((r) => `| ${r.stepId} | ${r.status} | ${r.correlationId || "—"} | ${r.timestamp || "—"} | ${r.httpStatus ?? "—"} | ${r.reference || "—"} | ${r.requestFile || "—"} | ${r.responseFile || "—"} |`)].join("\n") + "\n" });
   const pass = steps.filter((s) => s.status === "PASS").length;
+  files.push({ name: "README.md", content: [`# TripJack UAT Certification Evidence`, `Generated ${generatedAt}`, "", "Contents: requests/ and responses/ (stored sanitized JSON per real call), case_logs/ (per-step timeline with timestamp, HTTP status, correlation ID, supplier reference), EVIDENCE_INDEX.md, FINAL_AUDIT_REPORT.md, TripJack_Certification_Evidence.json.", "", "Step status = the latest stored real call for that step. Missing steps are listed as EVIDENCE_MISSING; nothing is reconstructed. Credentials are never stored."].join("\n") + "\n" });
   files.push({ name: "FINAL_AUDIT_REPORT.md", content: [`# TripJack UAT Certification — Audit Report`, `Generated ${generatedAt} · UAT ${TRIPJACK_UAT_BASE_URL}`, "", `Real evidence rows: ${logs.length}. Steps with real passing evidence: ${pass}/${steps.length}.`, `Overall: ${pass === steps.length ? "ALL STEPS EVIDENCED" : "NOT READY — see missing/blocked steps"}`, "", ...steps.map((s) => `- ${s.caseId} (${s.suite} ${s.step}): ${s.status}`), "", "All payloads are unmodified supplier JSON from tripjack_api_logs. Credentials are never stored; the API key must be attached separately."].join("\n") + "\n" });
   return { files, rows, count: logs.length };
 }
