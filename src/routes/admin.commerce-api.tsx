@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { addPartnerMember, createPartnerKey, createPartnerTenant, listPartnerTenants, revokePartnerKey, setPartnerStatus } from "@/lib/commerce/partners.functions";
+import { addPartnerMember, createPartnerKey, createPartnerTenant, getPartnerUsage, listPartnerTenants, revokePartnerKey, rotatePartnerKey, setPartnerRateLimit, setPartnerStatus } from "@/lib/commerce/partners.functions";
 
 export const Route = createFileRoute("/admin/commerce-api")({
   head: () => ({
@@ -29,6 +29,8 @@ function CommerceApiAdmin() {
   const revoke = useServerFn(revokePartnerKey);
   const status = useServerFn(setPartnerStatus);
   const member = useServerFn(addPartnerMember);
+  const rotate = useServerFn(rotatePartnerKey);
+  const limit = useServerFn(setPartnerRateLimit);
   const [rows, setRows] = useState<Tenant[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -47,7 +49,7 @@ function CommerceApiAdmin() {
       <div>
         <h1 className="font-display text-3xl">Travel Commerce API</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Partners call <code>POST /api/public/v1/commerce/&#123;search-flights | search-tours | tour-availability | quote-tour | plan-trip&#125;</code> with an API key
+          Partners call <code>POST https://worldwaytravelsgroup.com/api/v1/commerce/&#123;search-flights | search-tours | tour-availability | quote-tour | plan-trip&#125;</code> with an API key
           (<code>X-Api-Key</code>) or a partner user's sign-in token. Booking is not available through the API.
         </p>
       </div>
@@ -74,20 +76,25 @@ function CommerceApiAdmin() {
       </Card>
       {rows?.length === 0 && <p className="text-sm text-muted-foreground">No partners yet.</p>}
       {rows?.map((t) => <TenantCard key={t.id} t={t} onKey={(scopes, label) => act(() => mkKey({ data: { tenantId: t.id, label, scopes, expiresInDays: 365 } }).then((r) => setNewKey(r.key)), "Key created")}
-        onRevoke={(id) => act(() => revoke({ data: { keyId: id } }), "Key revoked")}
+        onRevoke={(id) => { if (confirm("Revoke this key? Calls using it will fail immediately.")) void act(() => revoke({ data: { keyId: id } }), "Key revoked"); }}
+        onRotate={(id) => { if (confirm("Rotate this key? A new key is issued and the old one stops working now.")) void act(() => rotate({ data: { keyId: id } }).then((r) => setNewKey(r.key)), "Key rotated"); }}
+        onLimit={(n) => act(() => limit({ data: { tenantId: t.id, rateLimitPerMinute: n } }), "Rate limit updated")}
         onStatus={(s) => act(() => status({ data: { tenantId: t.id, status: s } }), "Updated")}
         onMember={(email, role) => act(async () => { const r = await member({ data: { tenantId: t.id, email, role } }); if (!r.ok) throw new Error(r.error); }, "Member added")} />)}
     </div>
   );
 }
 
-function TenantCard({ t, onKey, onRevoke, onStatus, onMember }: {
-  t: Tenant; onKey: (s: string[], label: string) => void; onRevoke: (id: string) => void; onStatus: (s: "active" | "suspended") => void; onMember: (email: string, role: "owner" | "developer" | "viewer") => void;
+function TenantCard({ t, onKey, onRevoke, onRotate, onLimit, onStatus, onMember }: {
+  t: Tenant; onKey: (s: string[], label: string) => void; onRevoke: (id: string) => void; onRotate: (id: string) => void; onLimit: (n: number) => void; onStatus: (s: "active" | "suspended") => void; onMember: (email: string, role: "owner" | "developer" | "viewer") => void;
 }) {
   const [scopes, setScopes] = useState<string[]>(["flights.search", "tours.read"]);
   const [label, setLabel] = useState("Production");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"owner" | "developer" | "viewer">("developer");
+  const [rpm, setRpm] = useState(String(t.rate_limit_per_minute));
+  const usageFn = useServerFn(getPartnerUsage);
+  const [usage, setUsage] = useState<Awaited<ReturnType<typeof getPartnerUsage>> | null>(null);
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -102,6 +109,7 @@ function TenantCard({ t, onKey, onRevoke, onStatus, onMember }: {
               <code className="text-xs">{k.key_prefix}…</code><span>{k.label}</span>
               <span className="text-xs text-muted-foreground">{k.scopes.join(", ")}</span>
               <span className="text-xs text-muted-foreground">{k.revoked_at ? "revoked" : k.expires_at ? `expires ${new Date(k.expires_at).toLocaleDateString()}` : ""}{k.last_used_at ? ` · used ${new Date(k.last_used_at).toLocaleString()}` : " · never used"}</span>
+              {!k.revoked_at && <Button size="sm" variant="ghost" onClick={() => onRotate(k.id)}>Rotate</Button>}
               {!k.revoked_at && <Button size="sm" variant="ghost" onClick={() => onRevoke(k.id)}>Revoke</Button>}
             </div>
           ))}
@@ -113,6 +121,18 @@ function TenantCard({ t, onKey, onRevoke, onStatus, onMember }: {
           ))}
           <Button size="sm" disabled={!scopes.length || label.trim().length < 2} onClick={() => onKey(scopes, label)}>New key</Button>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Rate limit (calls/min)</span>
+          <Input type="number" min={1} max={1000} value={rpm} onChange={(e) => setRpm(e.target.value)} className="w-24" />
+          <Button size="sm" variant="outline" disabled={!(Number(rpm) >= 1 && Number(rpm) <= 1000)} onClick={() => onLimit(Math.round(Number(rpm)))}>Save limit</Button>
+          <Button size="sm" variant="ghost" onClick={() => usageFn({ data: { tenantId: t.id } }).then(setUsage).catch((e) => toast.error(e instanceof Error ? e.message : "Failed"))}>Usage (7 days)</Button>
+        </div>
+        {usage && (
+          <div className="rounded border p-2 text-xs">
+            {usage.operations.length === 0 ? <p className="text-muted-foreground">No calls in the last 7 days.</p> : usage.operations.map((o) => <p key={o.operation}><code>{o.operation}</code> · {o.calls} calls · {o.errors} errors · avg {o.avgMs} ms</p>)}
+            {usage.recent.length > 0 && <p className="mt-1 text-muted-foreground">Latest: {usage.recent.slice(0, 5).map((r) => `${r.operation} ${r.status}`).join(" · ")}</p>}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Input placeholder="Member email" value={email} onChange={(e) => setEmail(e.target.value)} className="max-w-xs" />
           <select className="rounded-md border bg-background px-3 py-2 text-sm" value={role} onChange={(e) => setRole(e.target.value as never)}>
