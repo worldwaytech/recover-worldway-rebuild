@@ -54,3 +54,30 @@ export const saveFeePolicy = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Charge breakdown for a checkout, from the real fee rules (server-side).
+ * Never estimates a gateway fee: absorb → ₹0; pass-through → disclosed by the payment window.
+ */
+export const getFeeQuote = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      product: z.string().min(1).max(40),
+      method: z.enum(["card", "upi", "netbanking", "wallet"]),
+      amountMinor: z.number().int().nonnegative(),
+      currency: z.string().length(3),
+      fx: z.object({ sourceCurrency: z.string().length(3), sourceAmount: z.number().nonnegative(), rate: z.number().positive() }).nullable().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { loadFeeRules } = await import("./fee-policy.server");
+    const { resolveFeePolicy, chargeLines } = await import("./fee-policy");
+    const policy = resolveFeePolicy(await loadFeeRules(), data.product, data.method);
+    return {
+      mode: policy.mode,
+      lines: chargeLines({ amountMinor: data.amountMinor, policy, method: data.method, fx: data.fx ?? null }),
+      // Total payable before any gateway-disclosed fee; the order amount the server charges.
+      totalMinor: data.amountMinor,
+      currency: data.currency,
+    };
+  });

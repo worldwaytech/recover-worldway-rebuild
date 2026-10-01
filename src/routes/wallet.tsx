@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { myWallet } from "@/lib/up17/booking.functions";
 import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
+import { ChargeBreakdown } from "@/components/payments/charge-breakdown";
 import { fmtMinor } from "@/components/up17/travel-checkout";
 
 export const Route = createFileRoute("/wallet")({
@@ -94,7 +95,12 @@ function WalletBody() {
           <Input id="topup" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="5000" />
           <Button onClick={topUp} disabled={busy}>{busy ? "Opening…" : "Add money"}</Button>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Money is added only after the payment is verified.</p>
+        {Number(amount) >= 100 && Number(amount) <= 200000 ? (
+          <div className="mt-3">
+            <ChargeBreakdown product="wallet_topup" amountMinor={Math.round(Number(amount) * 100)} currency="INR" methods={["card"]} />
+          </div>
+        ) : null}
+        <p className="mt-2 text-xs text-muted-foreground">Money is added only after the payment is verified. Paying for bookings from your Wallet has no processing fee.</p>
         {msg || error ? <p className="mt-2 text-xs">{msg ?? error}</p> : null}
       </div>
       <div>

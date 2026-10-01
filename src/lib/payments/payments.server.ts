@@ -119,7 +119,11 @@ export async function markPaymentStatus(input: {
   const patch: Record<string, unknown> = { status: input.status };
   if (input.paymentId) patch["payment_id"] = input.paymentId;
   if (input.failureReason !== undefined) patch["failure_reason"] = input.failureReason;
-  if (input.providerPayload !== undefined) patch["provider_payload"] = input.providerPayload;
+  if (input.providerPayload !== undefined) {
+    // Merge: never drop gateway fee/tax already recorded (webhook after checkout, retries).
+    const prev = ((existing as { provider_payload?: Record<string, unknown> | null } | null)?.provider_payload ?? {}) as Record<string, unknown>;
+    patch["provider_payload"] = mergeProviderPayload(prev, input.providerPayload);
+  }
   if (input.verified && !existing?.verified_at) patch["verified_at"] = new Date().toISOString();
 
   const { error } = await table.update(patch).eq("order_id", input.orderId);
@@ -262,4 +266,11 @@ export async function releaseFulfilmentClaim(orderId: string): Promise<void> {
     table.update({ fulfilled_at: null }).eq("order_id", orderId) as unknown as Promise<{ error: DbError }>
   );
   if (error) console.error("[payments] fulfilment release failed", error.message);
+}
+
+/** Pure: merge payloads; null/undefined never overwrite recorded values (fee/tax especially). */
+export function mergeProviderPayload(prev: Record<string, unknown>, next: Record<string, unknown> | null): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...prev };
+  for (const [k, v] of Object.entries(next ?? {})) if (v !== null && v !== undefined) out[k] = v;
+  return out;
 }
