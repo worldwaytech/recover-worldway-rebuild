@@ -161,6 +161,7 @@ export type CabBookingRequest = {
   };
   serviceRequest?: string;
   consent: "yes";
+  agentId?: string;
   agentEmail?: string;
   agentPhone?: string;
   /** Present only in the documented embedded flow. */
