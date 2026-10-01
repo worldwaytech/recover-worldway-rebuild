@@ -11,13 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCrystalVoyages, revalidateCrystalVoyage } from "@/lib/crystal/crystal.functions";
 import {
   cancelCrystalReservation,
-  confirmCrystalReservation,
   getCrystalAvailableSuites,
+  prepareCrystalDeposit,
   getCrystalBookingCapability,
   holdCrystalSuite,
 } from "@/lib/crystal/crystal-booking.functions";
 import { hydrateLicensedVoyages, voyageByCode } from "@/lib/crystal/inventory";
 import { supabase } from "@/integrations/supabase/client";
+import { TravelCheckout, type TravelIntent } from "@/components/up17/travel-checkout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { firstPenaltyDay, firstPercentPenaltyDay, policyWindows } from "@/lib/crystal/cancellation-policy";
 import {
@@ -102,7 +103,8 @@ function BookPage() {
   const revalidate = useServerFn(revalidateCrystalVoyage);
   const fetchSuites = useServerFn(getCrystalAvailableSuites);
   const hold = useServerFn(holdCrystalSuite);
-  const confirmFn = useServerFn(confirmCrystalReservation);
+  const prepareDeposit = useServerFn(prepareCrystalDeposit);
+  const [depositIntent, setDepositIntent] = useState<(TravelIntent & { depositSupplier: number; supplierCurrency: string; fxRate: number }) | null>(null);
   const cancelFn = useServerFn(cancelCrystalReservation);
 
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -292,20 +294,28 @@ function BookPage() {
     if (!policyAck) return toast.error("Please review and accept the cancellation terms first.");
     setBusy(true);
     try {
-      const res = await confirmFn({
-        data: {
-          bookingId: booking.id,
-          idempotencyKey: `${idemKey}_confirm`,
-          acceptedTerms: true,
-          acceptedCancellationPolicy: true,
-          policyVersion: booking.policyVersion ?? "",
-        },
+      const res = await prepareDeposit({ data: { bookingId: booking.id, policyVersion: booking.policyVersion ?? "" } });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      setDepositIntent({
+        bookingId: res.bookingId,
+        reference: res.reference,
+        amountMinor: res.amountMinor,
+        currency: res.currency,
+        product: "cruise",
+        cardAllowed: res.cardAllowed,
+        description: `Crystal deposit · ${voyage?.title ?? ""}`.slice(0, 200),
+        email: email || undefined,
+        phone: phone || undefined,
+        name: `${guests[0]?.firstName ?? ""} ${guests[0]?.lastName ?? ""}`.trim() || undefined,
+        depositSupplier: res.depositSupplier,
+        supplierCurrency: res.supplierCurrency,
+        fxRate: res.fxRate,
       });
-      setBooking(res.booking);
-      setMessage(res.message);
-      toast.success(res.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Confirmation failed.");
+      toast.error(err instanceof Error ? err.message : "Could not prepare the deposit.");
     } finally {
       setBusy(false);
     }
@@ -384,13 +394,22 @@ function BookPage() {
                 onAcceptedChange={setPolicyAck}
               />
             ) : null}
+            {depositIntent ? (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Deposit {money(depositIntent.depositSupplier, depositIntent.supplierCurrency)}
+                  {depositIntent.supplierCurrency !== "INR"
+                    ? ` · locked at 1 ${depositIntent.supplierCurrency} = ₹${depositIntent.fxRate.toFixed(2)} (live rate, held for 20 minutes)`
+                    : ""}
+                  . The balance is due later on Crystal&apos;s schedule.
+                </p>
+                <TravelCheckout intent={depositIntent} />
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
-              {booking.status !== "cancelled" && booking.status !== "cancellation_requested" ? (
-                <Button
-                  onClick={onConfirm}
-                  disabled={busy || booking.status === "confirmed" || !policyAck}
-                >
-                  {booking.status === "confirmed" ? "Confirmed" : "Confirm reservation"}
+              {!depositIntent && !booking.supplierReference && booking.status !== "cancelled" && booking.status !== "cancellation_requested" ? (
+                <Button onClick={onConfirm} disabled={busy || !policyAck}>
+                  {busy ? "Checking live price…" : "Pay deposit & book"}
                 </Button>
               ) : null}
               <Button asChild variant="outline">
