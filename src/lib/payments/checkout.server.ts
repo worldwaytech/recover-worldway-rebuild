@@ -41,7 +41,7 @@ export type OrderInput = {
  * server-side fare confirmation. Client-supplied amounts are never charged.
  */
 export async function resolvePaymentAmount(
-  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string; extras?: { baggage?: string[]; meal?: string[]; seat?: string[] }[] }; prePurchasedBookingId?: string; aviationReference?: string; tourBookingId?: string },
+  input: OrderInput & { flightFare?: { resultIndex: string; searchTokenId: string; extras?: { baggage?: string[]; meal?: string[]; seat?: string[] }[] }; prePurchasedBookingId?: string; aviationReference?: string; tourBookingId?: string; travelBookingId?: string },
 ): Promise<{
   amountMinor: number;
   currency: string;
@@ -61,6 +61,22 @@ export async function resolvePaymentAmount(
     const { aviationQuoteAmount } = await import("@/lib/aviation/payment.server");
     const r = await aviationQuoteAmount(input.aviationReference, await optionalUserId());
     return { ...r, planId: null };
+  }
+
+  if (input.travelBookingId) {
+    const { travelPaymentAmount } = await import("@/lib/up17/booking.server");
+    const r = await travelPaymentAmount(input.travelBookingId, await optionalUserId());
+    if (r.product !== input.purpose) throw new Error("Payment purpose does not match this booking.");
+    return { amountMinor: r.amountMinor, currency: r.currency, planId: null };
+  }
+
+  if (input.purpose === "wallet_topup") {
+    // Top-up amount is chosen by the customer; signed-in only, INR, bounded.
+    if (!(await optionalUserId())) throw new Error("Please sign in to add money to your wallet.");
+    if (input.currency !== "INR") throw new Error("Wallet top-ups are in INR.");
+    const amount = Number(input.amount);
+    if (!Number.isFinite(amount) || amount < 100 || amount > 200000) throw new Error("Top up between ₹100 and ₹2,00,000.");
+    return { amountMinor: toMinorUnits(amount), currency: "INR", planId: null };
   }
 
   if (input.purpose === "tour") {
@@ -216,6 +232,32 @@ export async function confirmPayment(input: {
     tour = { confirmed: accepted, worldwayReference: (await import("@/lib/travelshop/reference")).worldwayTourRef(tourBookingId) };
   }
 
+  // Flight / hotel / bus booking record: claim the verified payment once and book once.
+  let travel: { confirmed: boolean; uncertain: boolean; reference: string; bookingId: string; message: string | null } | null = null;
+  const travelBookingId = (record as { reference?: Record<string, unknown> } | null)?.reference?.["travel_booking_id"];
+  if (typeof travelBookingId === "string") {
+    const { payWithRazorpayAndFulfil, worldwayTravelRef, UNCERTAIN_MESSAGE } = await import("@/lib/up17/booking.server");
+    let r: Awaited<ReturnType<typeof payWithRazorpayAndFulfil>> | null = null;
+    try {
+      r = await payWithRazorpayAndFulfil({ bookingId: travelBookingId, orderId: input.orderId, paymentId: payment.id });
+    } catch (e) {
+      console.error("[travel] booking after payment failed", e instanceof Error ? e.message : e);
+    }
+    const res = r as { ok: boolean; confirmed?: boolean; uncertain?: boolean; error?: string } | null;
+    travel = {
+      confirmed: res?.confirmed === true,
+      uncertain: !res || res.uncertain === true,
+      reference: worldwayTravelRef(travelBookingId),
+      bookingId: travelBookingId,
+      message: res?.confirmed ? null : (res?.error ?? UNCERTAIN_MESSAGE),
+    };
+  }
+
+  if (record?.purpose === "wallet_topup") {
+    const { applyWalletTopup } = await import("@/lib/up17/booking.server");
+    await applyWalletTopup(input.orderId, payment.amount);
+  }
+
   // Membership: this path is signature-verified, re-fetched from the provider and
   // amount-matched above, so entitlement is applied immediately (idempotent; the
   // webhook applies the same tier as a backstop).
@@ -236,5 +278,6 @@ export async function confirmPayment(input: {
     purpose: record?.purpose ?? null,
     planId: record?.plan_id ?? null,
     tour,
+    travel,
   };
 }

@@ -46,6 +46,8 @@ const createOrderSchema = z
     aviationReference: z.string().regex(/^WWPA-\d{6}-[0-9A-F]{6}$/).optional(),
     /** Staff-only tour booking record; amount comes from the live-revalidated record. */
     tourBookingId: z.string().uuid().optional(),
+    /** Flight/hotel/bus booking record; amount comes from its live-verified server price. */
+    travelBookingId: z.string().uuid().optional(),
   })
   .strict();
 
@@ -63,12 +65,18 @@ export const createPaymentOrder = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { resolvePaymentAmount, openOrder } = await import("./checkout.server");
     try {
-      const { flightFare: _ff, prePurchasedBookingId, aviationReference, tourBookingId, ...rest } = data;
+      const { flightFare: _ff, prePurchasedBookingId, aviationReference, tourBookingId, travelBookingId, ...rest } = data;
       const amount = await resolvePaymentAmount(data);
       if (prePurchasedBookingId) rest.reference = { ...(rest.reference ?? {}), booking_id: prePurchasedBookingId };
+      if (travelBookingId) rest.reference = { ...(rest.reference ?? {}), travel_booking_id: travelBookingId };
       if (tourBookingId) rest.reference = { ...(rest.reference ?? {}), tour_booking_id: tourBookingId };
       if (aviationReference) rest.reference = { ...(rest.reference ?? {}), aviation_reference: aviationReference };
-      return await openOrder({ ...rest, ...amount });
+      const order = await openOrder({ ...rest, ...amount });
+      if (travelBookingId) {
+        const { attachOrder } = await import("@/lib/up17/booking.server");
+        await attachOrder(travelBookingId, order.orderId);
+      }
+      return order;
     } catch (e) {
       return {
         ok: false as const,
