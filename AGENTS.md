@@ -14,3 +14,5 @@
 - Live commerce has one home: src/lib/commerce/commerce.server.ts (Concierge + partner API /api/public/v1/commerce/$op; HMAC-peppered keys/OAuth, scopes, rate limits) — no duplicate engines.
 - Admin console reads live via src/lib/admin/console.functions.ts (is_staff; Travel DNA Super Admin + audited) — no sample data.
 - Journey marketing content comes from src/lib/all-journeys.functions.ts, never imported by routes — keeps operator content out of the bundle.
+- UP17 flight/hotel/bus bookings share one engine (src/lib/up17/booking.server.ts + travel_bookings): live-priced intent → Razorpay or Worldway Wallet → conditional-status claim → one supplier call → confirmed only on genuine supplier confirmation; unclear results go to /admin/travel-bookings, never retried — prevents double bookings and fake confirmations.
+- Worldway Wallet is server-side only (wallet_accounts + append-only wallet_ledger, mutated solely via service-role wallet_topup/reserve/settle/refund functions) — the old browser ledger (src/lib/wallet-ledger.ts) is not money.

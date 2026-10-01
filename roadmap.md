@@ -1,11 +1,12 @@
 # Roadmap — Flights + Hotels + Buses live booking & Wallet
-- [ ] DB: wallet_accounts, wallet_ledger, up17_bookings + atomic wallet functions
-- [ ] Wallet server functions (balance, ledger, Razorpay top-up verified once)
-- [ ] Wallet page switched to real ledger
-- [ ] UP17 hotel calls (roominfo, blockroom, book, voucher, detail, cancel) per docs
-- [ ] UP17 bus calls (seatlayout, boardingpoint, blockseat, book, detail, cancel) per docs
-- [ ] Shared booking engine (claim once, uncertain → staff, wallet reserve/capture/release)
-- [ ] Flights: wallet payment option
-- [ ] Hotel booking UI, bus booking UI
-- [ ] My account bookings list; admin uncertain queue
-- [ ] Tests; live search checks
+- [x] DB: wallet_accounts, wallet_ledger, travel_bookings + atomic wallet functions
+- [x] Wallet server functions + Razorpay top-up verified once (return + webhook)
+- [x] Wallet page switched to real ledger
+- [x] UP17 hotel calls per docs (live-checked: rooms)
+- [x] UP17 bus calls per docs (live-checked: seats, points)
+- [x] Shared booking engine (claim once, uncertain → staff, wallet reserve/capture/release)
+- [x] Flights: wallet payment option
+- [x] Hotel + bus booking UI
+- [x] Account bookings list/detail; admin queue (/admin/travel-bookings)
+- [x] Tests (351 pass)
+- [ ] BLOCKED (user): one real paid booking per product to certify

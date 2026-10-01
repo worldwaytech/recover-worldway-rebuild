@@ -338,7 +338,7 @@ export function customerView(r: TravelBookingRow) {
     amountMinor: Number(r.amount_minor),
     currency: r.currency,
     paymentMethod: r.payment_method,
-    summary: r.summary,
+    summary: r.summary as Record<string, string | number | boolean | null | string[]>,
     message: r.customer_message,
     createdAt: r.created_at,
     confirmedAt: r.confirmed_at,
