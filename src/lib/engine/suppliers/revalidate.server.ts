@@ -53,7 +53,14 @@ async function liveCheck(o: CanonicalOffer): Promise<{ found: boolean; net?: num
     const h = hotelHandle(o.externalId);
     if (!h) return { found: false, reason: "Hotel reference expired; search again" };
     const { up17SearchHotels, up17ServerIp } = await import("@/lib/up17/up17.server");
-    const r = await up17SearchHotels({ destination: h.destination, check_in: h.checkin, check_out: h.checkout, guests: h.guests, rooms: 1, user_ip: await up17ServerIp() } as never);
+    // One live search per destination/dates/guests within a revalidation pass (same request, shared result).
+    const key = `${h.destination}|${h.checkin}|${h.checkout}|${h.guests}`;
+    let search = hotelSearches?.get(key);
+    if (!search) {
+      search = (async () => up17SearchHotels({ destination: h.destination, check_in: h.checkin, check_out: h.checkout, guests: h.guests, rooms: 1, user_ip: await up17ServerIp() } as never))();
+      hotelSearches?.set(key, search);
+    }
+    const r = await search;
     const hit = r.ok ? r.data?.hotels.find((x) => x.hotelCode === h.hotelCode) : undefined;
     return hit?.totalPrice ? { found: true, net: hit.totalPrice, currency: hit.currency } : { found: false, reason: "Hotel no longer available" };
   }
@@ -74,13 +81,14 @@ async function liveCheck(o: CanonicalOffer): Promise<{ found: boolean; net?: num
 }
 
 export async function revalidateOffers(offers: CanonicalOffer[]) {
-  const out: { offer: CanonicalOffer | null; result: RevalidationResult }[] = [];
-  for (const o of offers) {
+  // Independent live checks run concurrently; results keep the input order.
+  const hotelSearches = new Map<string, Promise<any>>();
+  return Promise.all(offers.map(async (o): Promise<{ offer: CanonicalOffer | null; result: RevalidationResult }> => {
     const checkedAt = new Date().toISOString();
-    const live = await liveCheck(o).catch(() => ({ found: false, reason: "Supplier check failed" }) as const);
+    const live = await liveCheck(o, hotelSearches).catch(() => ({ found: false, reason: "Supplier check failed" }) as const);
     if (live === "not_live") {
-      out.push({ offer: o, result: { externalId: o.externalId, status: "not_live", reason: "Sandbox/UAT supplier — on request, not bookable", before: o.net, after: null, checkedAt } });
-    } else out.push(reconcile(o, live, checkedAt));
-  }
-  return out;
+      return { offer: o, result: { externalId: o.externalId, status: "not_live", reason: "Sandbox/UAT supplier — on request, not bookable", before: o.net, after: null, checkedAt } };
+    }
+    return reconcile(o, live, checkedAt);
+  }));
 }
