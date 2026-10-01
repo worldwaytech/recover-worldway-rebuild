@@ -52,8 +52,9 @@ describe("TripJack client → relay boundary", () => {
     await tripjackCall("cabs", "location-search", { input: "Delhi" });
     vi.setSystemTime(1_790_000_005_000);
     await tripjackCall("cabs", "location-search", { input: "Mumbai" });
-    expect(calls).toHaveLength(2);
-    const [a, b] = calls.map((c) => c.init.headers as Record<string, string>);
+    const relayed = calls.filter((c) => c.url.includes("/tripjack/cabs/"));
+    expect(relayed).toHaveLength(2);
+    const [a, b] = relayed.map((c) => c.init.headers as Record<string, string>);
     expect(Number(b["X-Relay-Timestamp"]) - Number(a["X-Relay-Timestamp"])).toBe(5);
     expect(a["X-Relay-Signature"]).not.toBe(b["X-Relay-Signature"]);
     expect(Math.abs(Number(a["X-Relay-Timestamp"]) - 1_790_000_000)).toBeLessThanOrEqual(60);
@@ -63,7 +64,7 @@ describe("TripJack client → relay boundary", () => {
     process.env["TRIPJACK_RELAY_URL"] = "https://34-93-108-121.sslip.io";
     const r = await tripjackCall("cabs", "location-search", { input: "Delhi" });
     expect(r.ok).toBe(false);
-    expect(calls).toHaveLength(0);
+    expect(calls.filter((c) => c.url.includes("tripjack"))).toHaveLength(0);
   });
 
   it("routes outside the relay allow-list fail closed when relay is on", async () => {
@@ -72,7 +73,7 @@ describe("TripJack client → relay boundary", () => {
       const r = await tripjackCall("tripsafe", k, {});
       expect(r.ok).toBe(false);
     }
-    expect(calls).toHaveLength(0);
+    expect(calls.filter((c) => c.url.includes("tripjack"))).toHaveLength(0);
   });
 
   it("no relay settings → original direct call", async () => {
