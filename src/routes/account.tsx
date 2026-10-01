@@ -12,6 +12,7 @@ import {
   Bell,
   Wallet,
   Compass,
+  Ticket,
 } from "lucide-react";
 
 export const Route = createFileRoute("/account")({
@@ -40,6 +41,7 @@ const NAV = [
   { to: "/account/trip-planner", label: "Trip planner", icon: <Compass className="h-4 w-4" /> },
   { to: "/account/bookings", label: "Bookings", icon: <ClipboardList className="h-4 w-4" /> },
   { to: "/account/tours", label: "Tours", icon: <MapPin className="h-4 w-4" /> },
+  { to: "/account/travel", label: "Flights, hotels & buses", icon: <Ticket className="h-4 w-4" /> },
   { to: "/account/saved", label: "Saved", icon: <Heart className="h-4 w-4" /> },
   { to: "/account/travellers", label: "Travellers", icon: <Users className="h-4 w-4" /> },
   { to: "/account/documents", label: "Documents", icon: <FileText className="h-4 w-4" /> },

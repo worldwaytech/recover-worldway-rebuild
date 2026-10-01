@@ -43,6 +43,8 @@ export type PayResult = {
   method: string | null;
   /** Tour bookings only: Worldway reference + whether the booking was accepted. */
   tour?: { confirmed: boolean; worldwayReference: string } | null;
+  /** Flight/hotel/bus bookings: Worldway reference + genuine supplier outcome. */
+  travel?: { confirmed: boolean; uncertain: boolean; reference: string; bookingId: string; message: string | null } | null;
 };
 
 export type PayRequest = {
@@ -63,6 +65,7 @@ export type PayRequest = {
   prePurchasedBookingId?: string;
   aviationReference?: string;
   tourBookingId?: string;
+  travelBookingId?: string;
 };
 
 /**
@@ -97,6 +100,7 @@ export function useRazorpayCheckout() {
             ...(req.prePurchasedBookingId ? { prePurchasedBookingId: req.prePurchasedBookingId } : {}),
             ...(req.aviationReference ? { aviationReference: req.aviationReference } : {}),
             ...(req.tourBookingId ? { tourBookingId: req.tourBookingId } : {}),
+            ...(req.travelBookingId ? { travelBookingId: req.travelBookingId } : {}),
           },
         });
 
@@ -159,6 +163,7 @@ export function useRazorpayCheckout() {
           currency: verified.currency,
           method: verified.method,
           tour: (verified as { tour?: { confirmed: boolean; worldwayReference: string } | null }).tour ?? null,
+          travel: (verified as { travel?: PayResult["travel"] }).travel ?? null,
         };
       } catch (e) {
         setError(e instanceof Error ? e.message : "Payment could not be completed.");

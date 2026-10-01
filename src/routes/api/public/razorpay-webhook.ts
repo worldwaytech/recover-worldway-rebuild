@@ -74,6 +74,12 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
           if (record?.purpose === "membership" && record.user_id && record.plan_id) {
             await applyVerifiedMembership(record.user_id, record.plan_id);
           }
+          if (record?.purpose === "wallet_topup") {
+            const { applyWalletTopup } = await import("@/lib/up17/booking.server");
+            await applyWalletTopup(orderId, typeof entity?.amount === "number" ? entity.amount : -1).catch((e) =>
+              console.error("[razorpay-webhook] wallet top-up failed", (e as Error).message),
+            );
+          }
           const avRef = (record?.reference as Record<string, unknown> | undefined)?.["aviation_reference"];
           if (record?.purpose === "private_aviation" && typeof avRef === "string" && entity?.id) {
             const { finalizeAviationPayment } = await import("@/lib/aviation/payment.server");

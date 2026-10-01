@@ -1410,3 +1410,331 @@ export async function resolveFlightExtras(args: {
   }
   return { ok: true, total: Math.round(total * 100) / 100, perPax };
 }
+
+// ------------------------------------------------- hotel & bus booking (docs-exact request fields)
+
+/** Depth-first lookup of the first matching key — UP17 nests results under varying wrappers. */
+function deepPick(v: unknown, keys: string[], depth = 0): unknown {
+  if (depth > 6 || !v || typeof v !== "object") return undefined;
+  if (Array.isArray(v)) {
+    for (const x of v) {
+      const f = deepPick(x, keys, depth + 1);
+      if (f !== undefined) return f;
+    }
+    return undefined;
+  }
+  const rec = v as Rec;
+  for (const k of keys) if (rec[k] !== undefined && rec[k] !== null && rec[k] !== "") return rec[k];
+  for (const val of Object.values(rec)) {
+    const f = deepPick(val, keys, depth + 1);
+    if (f !== undefined) return f;
+  }
+  return undefined;
+}
+
+function deepArray(v: unknown, keys: string[]): Rec[] {
+  const f = deepPick(v, keys);
+  return Array.isArray(f) ? (f as Rec[]) : [];
+}
+
+export type Up17RoomOption = {
+  roomIndex: number;
+  name: string;
+  mealPlan: string | null;
+  price: number | null;
+  currency: string;
+  cancellation: string | null;
+  refundable: boolean | null;
+};
+
+function roomFromRec(r: Rec): Up17RoomOption | null {
+  const idx = num(pick(r, ["RoomIndex"]));
+  if (idx === null) return null;
+  const p = asRec(pick(r, ["Price", "price"]));
+  const policy = pick(r, ["CancellationPolicy", "CancellationPolicies"]);
+  return {
+    roomIndex: idx,
+    name: str(pick(r, ["RoomTypeName", "RoomName", "RoomDescription"])) || `Room ${idx}`,
+    mealPlan: str(pick(r, ["MealType", "Inclusion", "RatePlanName"])) || null,
+    price:
+      num(pick(p, ["OfferedPriceRoundedOff", "OfferedPrice", "PublishedPriceRoundedOff", "PublishedPrice", "RoomPrice"])) ??
+      num(pick(r, ["OfferedPrice", "TotalFare"])),
+    currency: str(pick(p, ["CurrencyCode", "Currency"])) || "INR",
+    cancellation: typeof policy === "string" ? policy : Array.isArray(policy) ? JSON.stringify(policy).slice(0, 600) : null,
+    refundable: typeof pick(r, ["IsRefundable"]) === "boolean" ? (pick(r, ["IsRefundable"]) as boolean) : null,
+  };
+}
+
+export async function up17HotelRooms(args: { resultIndex: string; hotelCode: string; searchTokenId: string }) {
+  const res = await callUp17<unknown>("/hotelservice/rest/getroominfo", {
+    ResultIndex: args.resultIndex,
+    HotelCode: Number(args.hotelCode) || args.hotelCode,
+    SearchTokenId: args.searchTokenId,
+  });
+  if (!res.ok) return { ok: false as const, status: res.status, error: res.error, rooms: [] as Up17RoomOption[] };
+  const rooms = deepArray(res.data, ["HotelRoomsDetails", "RoomDetails", "Rooms"])
+    .map(roomFromRec)
+    .filter((r): r is Up17RoomOption => r !== null);
+  return { ok: true as const, status: res.status, rooms };
+}
+
+export async function up17HotelBlockRoom(args: {
+  resultIndex: string;
+  hotelCode: string;
+  hotelName: string;
+  searchTokenId: string;
+  roomIndexes: number[];
+}) {
+  const res = await callUp17<unknown>("/hotelservice/rest/blockroom", {
+    ResultIndex: Number(args.resultIndex) || args.resultIndex,
+    HotelCode: Number(args.hotelCode) || args.hotelCode,
+    HotelName: args.hotelName,
+    NoOfRooms: args.roomIndexes.length,
+    HotelRoomsDetails: args.roomIndexes.map((i) => ({ RoomIndex: i })),
+    SearchTokenId: args.searchTokenId,
+  });
+  if (!res.ok) return { ok: false as const, status: res.status, error: res.error };
+  const rooms = deepArray(res.data, ["HotelRoomsDetails"]).map(roomFromRec).filter((r): r is Up17RoomOption => r !== null);
+  const picked = rooms.filter((r) => args.roomIndexes.includes(r.roomIndex));
+  const total = picked.length === args.roomIndexes.length && picked.every((r) => r.price !== null)
+    ? picked.reduce((s, r) => s + (r.price ?? 0), 0)
+    : null;
+  return {
+    ok: true as const,
+    status: res.status,
+    priceChanged: deepPick(res.data, ["IsPriceChanged"]) === true,
+    total,
+    currency: picked[0]?.currency ?? "INR",
+    rooms: picked,
+  };
+}
+
+export type Up17HotelGuest = {
+  title: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  pax_type: 1 | 2;
+  age: number;
+  lead: boolean;
+  pan?: string;
+};
+
+export type Up17SupplierBooking = {
+  bookingId: string | null;
+  confirmationNo: string | null;
+  status: string | null;
+  confirmed: boolean;
+  raw: unknown;
+};
+
+const FAIL_RE = /fail|cancel|reject|error|declin/i;
+const OK_RE = /confirm|vouch|book|success|ticket/i;
+
+function supplierBooking(data: unknown, confirmKeys: string[]): Up17SupplierBooking {
+  const bookingId = str(deepPick(data, ["BookingId", "BookingID"])) || null;
+  const confirmationNo = str(deepPick(data, confirmKeys)) || null;
+  const status = str(deepPick(data, ["HotelBookingStatus", "BusBookingStatus", "BookingStatus", "Status"])) || null;
+  // Confirmed only with a supplier booking id plus a positive status or confirmation number.
+  const confirmed =
+    !!bookingId && !(status && FAIL_RE.test(status)) && (!!confirmationNo || (!!status && OK_RE.test(status)));
+  return { bookingId, confirmationNo, status, confirmed, raw: data };
+}
+
+export async function up17HotelBook(args: {
+  resultIndex: string;
+  hotelCode: string;
+  hotelName: string;
+  searchTokenId: string;
+  nationality: string;
+  rooms: { roomIndex: number; guests: Up17HotelGuest[] }[];
+}): Promise<Up17Result<Up17SupplierBooking>> {
+  const res = await callUp17<unknown>("/hotelservice/rest/book", {
+    ResultIndex: Number(args.resultIndex) || args.resultIndex,
+    HotelCode: Number(args.hotelCode) || args.hotelCode,
+    HotelName: args.hotelName,
+    GuestNationality: args.nationality.toUpperCase(),
+    NoOfRooms: String(args.rooms.length),
+    ClientReferenceNo: 0,
+    IsVoucherBooking: "true",
+    HotelRoomsDetails: args.rooms.map((r) => ({
+      RoomIndex: r.roomIndex,
+      HotelPassenger: r.guests.map((g) => ({
+        Title: g.title,
+        FirstName: g.first_name.toUpperCase(),
+        MiddleName: "",
+        LastName: g.last_name.toUpperCase(),
+        Phoneno: g.phone,
+        Email: g.email,
+        PaxType: g.pax_type,
+        LeadPassenger: g.lead ? "true" : "false",
+        Age: g.pax_type === 1 ? 0 : g.age,
+        PassportNo: null,
+        PassportIssueDate: null,
+        PassportExpDate: null,
+        PAN: g.pan ?? null,
+        GSTCompanyAddress: null,
+        GSTCompanyContactNumber: null,
+        GSTCompanyEmail: null,
+        GSTCompanyName: null,
+        GSTNumber: null,
+      })),
+    })),
+    SearchTokenId: args.searchTokenId,
+  });
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  return { ok: true, status: res.status, data: supplierBooking(res.data, ["ConfirmationNo", "BookingRefNo"]) };
+}
+
+export async function up17HotelBookingDetail(args: { bookingId: string; searchTokenId: string }) {
+  return callUp17<unknown>("/hotelservice/rest/getbookingdetail", {
+    BookingId: Number(args.bookingId) || args.bookingId,
+    SearchTokenId: args.searchTokenId,
+  });
+}
+
+export async function up17HotelCancel(args: { bookingId: string; searchTokenId: string; remarks: string }) {
+  return callUp17<unknown>("/hotelservice/rest/cancelrequest", {
+    BookingId: Number(args.bookingId) || args.bookingId,
+    Offline: true,
+    Remarks: args.remarks.slice(0, 200),
+    SearchTokenId: args.searchTokenId,
+  });
+}
+
+// ---- buses
+
+export type Up17Seat = { seatName: string; price: number | null; currency: string; available: boolean; ladies: boolean; deck: string | null };
+
+export async function up17BusSeatLayout(args: { resultIndex: string; searchTokenId: string }) {
+  const res = await callUp17<unknown>("/busservice/rest/seatlayout", {
+    SearchTokenId: args.searchTokenId,
+    ResultIndex: args.resultIndex,
+  });
+  if (!res.ok) return { ok: false as const, status: res.status, error: res.error, seats: [] as Up17Seat[] };
+  const seats: Up17Seat[] = [];
+  const walk = (v: unknown, d = 0) => {
+    if (d > 8 || !v || typeof v !== "object") return;
+    if (Array.isArray(v)) return v.forEach((x) => walk(x, d + 1));
+    const r = v as Rec;
+    const name = str(pick(r, ["SeatName"]));
+    if (name && (pick(r, ["SeatStatus"]) !== undefined || pick(r, ["SeatFare", "Price"]) !== undefined)) {
+      const p = asRec(pick(r, ["Price"]));
+      seats.push({
+        seatName: name,
+        price: num(pick(p, ["OfferedPrice", "PublishedPrice", "BasePrice"])) ?? num(pick(r, ["SeatFare"])),
+        currency: str(pick(p, ["CurrencyCode"])) || "INR",
+        available: pick(r, ["SeatStatus"]) === true || pick(r, ["SeatStatus"]) === "true" || pick(r, ["SeatStatus"]) === 1,
+        ladies: pick(r, ["IsLadiesSeat"]) === true,
+        deck: pick(r, ["IsUpper"]) === true ? "upper" : pick(r, ["IsUpper"]) === false ? "lower" : null,
+      });
+      return;
+    }
+    Object.values(r).forEach((x) => walk(x, d + 1));
+  };
+  walk(res.data);
+  return { ok: true as const, status: res.status, seats };
+}
+
+export type Up17StopPoint = { id: number; name: string; location: string; time: string | null };
+
+export async function up17BusPoints(args: { resultIndex: string; searchTokenId: string }) {
+  const res = await callUp17<unknown>("/busservice/rest/boardingpoint", {
+    SearchTokenId: args.searchTokenId,
+    ResultIndex: args.resultIndex,
+  });
+  const map = (rows: Rec[]): Up17StopPoint[] =>
+    rows
+      .map((r) => ({
+        id: num(pick(r, ["CityPointIndex", "BoardingPointId", "DroppingPointId", "PointId"])) ?? NaN,
+        name: str(pick(r, ["CityPointName", "PointName", "Name"])),
+        location: str(pick(r, ["CityPointLocation", "Location", "Address"])),
+        time: str(pick(r, ["CityPointTime", "Time"])) || null,
+      }))
+      .filter((p) => Number.isFinite(p.id));
+  if (!res.ok) return { ok: false as const, status: res.status, error: res.error, boarding: [], dropping: [] };
+  return {
+    ok: true as const,
+    status: res.status,
+    boarding: map(deepArray(res.data, ["BoardingPointsDetails", "BoardingPoints"])),
+    dropping: map(deepArray(res.data, ["DroppingPointsDetails", "DroppingPoints"])),
+  };
+}
+
+export type Up17BusPassenger = {
+  title: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  gender: "1" | "2";
+  age: number;
+  address: string;
+  seat_name: string;
+  lead: boolean;
+};
+
+function busBody(args: { resultIndex: string; searchTokenId: string; boardingPointId: number; droppingPointId: number; passengers: Up17BusPassenger[] }) {
+  return {
+    SearchTokenId: args.searchTokenId,
+    ResultIndex: Number(args.resultIndex) || args.resultIndex,
+    BoardingPointId: args.boardingPointId,
+    DroppingPointId: args.droppingPointId,
+    Passenger: args.passengers.map((p) => ({
+      LeadPassenger: p.lead,
+      Title: p.title,
+      FirstName: p.first_name,
+      LastName: p.last_name,
+      Email: p.email,
+      Phoneno: p.phone,
+      Gender: p.gender,
+      IdType: null,
+      IdNumber: null,
+      Address: p.address,
+      Age: String(p.age),
+      SeatName: Number(p.seat_name) || p.seat_name,
+    })),
+  };
+}
+
+export async function up17BusBlockSeat(args: Parameters<typeof busBody>[0]) {
+  const res = await callUp17<unknown>("/busservice/rest/blockseat", busBody(args));
+  if (!res.ok) return { ok: false as const, status: res.status, error: res.error };
+  const total = num(deepPick(res.data, ["OfferedPrice", "PublishedPrice", "TotalFare"]));
+  const currency = str(deepPick(res.data, ["CurrencyCode"])) || "INR";
+  // Sum per-seat prices when the hold response returns them per passenger.
+  const seatPrices = deepArray(res.data, ["Passenger", "Passengers"])
+    .map((p) => num(pick(asRec(pick(asRec(pick(p, ["Seat"])), ["Price"])), ["OfferedPrice", "PublishedPrice"])))
+    .filter((n): n is number => n !== null);
+  const summed = seatPrices.length === args.passengers.length ? seatPrices.reduce((a, b) => a + b, 0) : null;
+  return {
+    ok: true as const,
+    status: res.status,
+    total: summed ?? total,
+    currency,
+    priceChanged: deepPick(res.data, ["IsPriceChanged"]) === true,
+  };
+}
+
+export async function up17BusBook(args: Parameters<typeof busBody>[0]): Promise<Up17Result<Up17SupplierBooking>> {
+  const res = await callUp17<unknown>("/busservice/rest/book", busBody(args));
+  if (!res.ok) return { ok: false, status: res.status, error: res.error };
+  return { ok: true, status: res.status, data: supplierBooking(res.data, ["TicketNo", "TravelOperatorPNR", "BusId"]) };
+}
+
+export async function up17BusBookingDetail(args: { bookingId: string; searchTokenId: string }) {
+  return callUp17<unknown>("/busservice/rest/getbookingdetail", {
+    SearchTokenId: args.searchTokenId,
+    BookingId: Number(args.bookingId) || args.bookingId,
+  });
+}
+
+export async function up17BusCancel(args: { bookingId: string; seatId: number; searchTokenId: string; remarks: string }) {
+  return callUp17<unknown>("/busservice/rest/cancelrequest", {
+    SearchTokenId: args.searchTokenId,
+    BookingId: Number(args.bookingId) || args.bookingId,
+    SeatId: args.seatId,
+    Remarks: args.remarks.slice(0, 200),
+  });
+}

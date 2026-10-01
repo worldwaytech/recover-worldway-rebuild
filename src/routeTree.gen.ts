@@ -74,6 +74,7 @@ import { Route as AccountDocumentsRouteImport } from './routes/account.documents
 import { Route as AccountNotificationsRouteImport } from './routes/account.notifications'
 import { Route as AccountSavedRouteImport } from './routes/account.saved'
 import { Route as AccountToursRouteImport } from './routes/account.tours'
+import { Route as AccountTravelRouteImport } from './routes/account.travel'
 import { Route as AccountTravellersRouteImport } from './routes/account.travellers'
 import { Route as AccountTripPlannerRouteImport } from './routes/account.trip-planner'
 import { Route as AccountTripsRouteImport } from './routes/account.trips'
@@ -108,6 +109,7 @@ import { Route as AdminSuperRouteImport } from './routes/admin.super'
 import { Route as AdminTourPaymentRouteImport } from './routes/admin.tour-payment'
 import { Route as AdminTourSupplierRouteImport } from './routes/admin.tour-supplier'
 import { Route as AdminToursRouteImport } from './routes/admin.tours'
+import { Route as AdminTravelBookingsRouteImport } from './routes/admin.travel-bookings'
 import { Route as AdminTravelDnaRouteImport } from './routes/admin.travel-dna'
 import { Route as AdminTripjackRouteImport } from './routes/admin.tripjack'
 import { Route as AdminTtcRouteImport } from './routes/admin.ttc'
@@ -201,6 +203,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$id'
 import { Route as AccountTourIdRouteImport } from './routes/account.tour.$id'
+import { Route as AccountTravelIdRouteImport } from './routes/account.travel.$id'
 import { Route as AdminOpsAviationRouteImport } from './routes/admin.ops.aviation'
 import { Route as AdminOpsCruiseaRouteImport } from './routes/admin.ops.cruisea'
 import { Route as AdminOpsRailRouteImport } from './routes/admin.ops.rail'
@@ -577,6 +580,11 @@ const AccountToursRoute = AccountToursRouteImport.update({
   path: '/tours',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountTravelRoute = AccountTravelRouteImport.update({
+  id: '/travel',
+  path: '/travel',
+  getParentRoute: () => AccountRoute,
+} as any)
 const AccountTravellersRoute = AccountTravellersRouteImport.update({
   id: '/travellers',
   path: '/travellers',
@@ -745,6 +753,11 @@ const AdminTourSupplierRoute = AdminTourSupplierRouteImport.update({
 const AdminToursRoute = AdminToursRouteImport.update({
   id: '/tours',
   path: '/tours',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTravelBookingsRoute = AdminTravelBookingsRouteImport.update({
+  id: '/travel-bookings',
+  path: '/travel-bookings',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTravelDnaRoute = AdminTravelDnaRouteImport.update({
@@ -1214,6 +1227,11 @@ const AccountTourIdRoute = AccountTourIdRouteImport.update({
   path: '/tour/$id',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountTravelIdRoute = AccountTravelIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AccountTravelRoute,
+} as any)
 const AdminOpsAviationRoute = AdminOpsAviationRouteImport.update({
   id: '/ops/aviation',
   path: '/ops/aviation',
@@ -1540,6 +1558,7 @@ export interface FileRoutesByFullPath {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/tours': typeof AccountToursRoute
+  '/account/travel': typeof AccountTravelRouteWithChildren
   '/account/travellers': typeof AccountTravellersRoute
   '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
@@ -1572,6 +1591,7 @@ export interface FileRoutesByFullPath {
   '/admin/tour-payment': typeof AdminTourPaymentRoute
   '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/travel-bookings': typeof AdminTravelBookingsRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
@@ -1668,6 +1688,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
   '/account/tour/$id': typeof AccountTourIdRoute
+  '/account/travel/$id': typeof AccountTravelIdRoute
   '/admin/ops/aviation': typeof AdminOpsAviationRoute
   '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
   '/admin/ops/rail': typeof AdminOpsRailRoute
@@ -1754,6 +1775,7 @@ export interface FileRoutesByTo {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/tours': typeof AccountToursRoute
+  '/account/travel': typeof AccountTravelRouteWithChildren
   '/account/travellers': typeof AccountTravellersRoute
   '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
@@ -1786,6 +1808,7 @@ export interface FileRoutesByTo {
   '/admin/tour-payment': typeof AdminTourPaymentRoute
   '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/travel-bookings': typeof AdminTravelBookingsRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
@@ -1881,6 +1904,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
   '/account/tour/$id': typeof AccountTourIdRoute
+  '/account/travel/$id': typeof AccountTravelIdRoute
   '/admin/ops/aviation': typeof AdminOpsAviationRoute
   '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
   '/admin/ops/rail': typeof AdminOpsRailRoute
@@ -1995,6 +2019,7 @@ export interface FileRoutesById {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/tours': typeof AccountToursRoute
+  '/account/travel': typeof AccountTravelRouteWithChildren
   '/account/travellers': typeof AccountTravellersRoute
   '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
@@ -2027,6 +2052,7 @@ export interface FileRoutesById {
   '/admin/tour-payment': typeof AdminTourPaymentRoute
   '/admin/tour-supplier': typeof AdminTourSupplierRoute
   '/admin/tours': typeof AdminToursRoute
+  '/admin/travel-bookings': typeof AdminTravelBookingsRoute
   '/admin/travel-dna': typeof AdminTravelDnaRoute
   '/admin/tripjack': typeof AdminTripjackRoute
   '/admin/ttc': typeof AdminTtcRoute
@@ -2123,6 +2149,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
   '/account/tour/$id': typeof AccountTourIdRoute
+  '/account/travel/$id': typeof AccountTravelIdRoute
   '/admin/ops/aviation': typeof AdminOpsAviationRoute
   '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
   '/admin/ops/rail': typeof AdminOpsRailRoute
@@ -2239,6 +2266,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/tours'
+    | '/account/travel'
     | '/account/travellers'
     | '/account/trip-planner'
     | '/account/trips'
@@ -2271,6 +2299,7 @@ export interface FileRouteTypes {
     | '/admin/tour-payment'
     | '/admin/tour-supplier'
     | '/admin/tours'
+    | '/admin/travel-bookings'
     | '/admin/travel-dna'
     | '/admin/tripjack'
     | '/admin/ttc'
@@ -2367,6 +2396,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
     | '/account/tour/$id'
+    | '/account/travel/$id'
     | '/admin/ops/aviation'
     | '/admin/ops/cruisea'
     | '/admin/ops/rail'
@@ -2453,6 +2483,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/tours'
+    | '/account/travel'
     | '/account/travellers'
     | '/account/trip-planner'
     | '/account/trips'
@@ -2485,6 +2516,7 @@ export interface FileRouteTypes {
     | '/admin/tour-payment'
     | '/admin/tour-supplier'
     | '/admin/tours'
+    | '/admin/travel-bookings'
     | '/admin/travel-dna'
     | '/admin/tripjack'
     | '/admin/ttc'
@@ -2580,6 +2612,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
     | '/account/tour/$id'
+    | '/account/travel/$id'
     | '/admin/ops/aviation'
     | '/admin/ops/cruisea'
     | '/admin/ops/rail'
@@ -2693,6 +2726,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/tours'
+    | '/account/travel'
     | '/account/travellers'
     | '/account/trip-planner'
     | '/account/trips'
@@ -2725,6 +2759,7 @@ export interface FileRouteTypes {
     | '/admin/tour-payment'
     | '/admin/tour-supplier'
     | '/admin/tours'
+    | '/admin/travel-bookings'
     | '/admin/travel-dna'
     | '/admin/tripjack'
     | '/admin/ttc'
@@ -2821,6 +2856,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
     | '/account/tour/$id'
+    | '/account/travel/$id'
     | '/admin/ops/aviation'
     | '/admin/ops/cruisea'
     | '/admin/ops/rail'
@@ -3435,6 +3471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountToursRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/travel': {
+      id: '/account/travel'
+      path: '/travel'
+      fullPath: '/account/travel'
+      preLoaderRoute: typeof AccountTravelRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/travellers': {
       id: '/account/travellers'
       path: '/travellers'
@@ -3671,6 +3714,13 @@ declare module '@tanstack/react-router' {
       path: '/tours'
       fullPath: '/admin/tours'
       preLoaderRoute: typeof AdminToursRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/travel-bookings': {
+      id: '/admin/travel-bookings'
+      path: '/travel-bookings'
+      fullPath: '/admin/travel-bookings'
+      preLoaderRoute: typeof AdminTravelBookingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/travel-dna': {
@@ -4324,6 +4374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountTourIdRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/travel/$id': {
+      id: '/account/travel/$id'
+      path: '/$id'
+      fullPath: '/account/travel/$id'
+      preLoaderRoute: typeof AccountTravelIdRouteImport
+      parentRoute: typeof AccountTravelRoute
+    }
     '/admin/ops/aviation': {
       id: '/admin/ops/aviation'
       path: '/ops/aviation'
@@ -4663,12 +4720,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AccountTravelRouteChildren {
+  AccountTravelIdRoute: typeof AccountTravelIdRoute
+}
+
+const AccountTravelRouteChildren: AccountTravelRouteChildren = {
+  AccountTravelIdRoute: AccountTravelIdRoute,
+}
+
+const AccountTravelRouteWithChildren = AccountTravelRoute._addFileChildren(
+  AccountTravelRouteChildren,
+)
+
 interface AccountRouteChildren {
   AccountBookingsRoute: typeof AccountBookingsRoute
   AccountDocumentsRoute: typeof AccountDocumentsRoute
   AccountNotificationsRoute: typeof AccountNotificationsRoute
   AccountSavedRoute: typeof AccountSavedRoute
   AccountToursRoute: typeof AccountToursRoute
+  AccountTravelRoute: typeof AccountTravelRouteWithChildren
   AccountTravellersRoute: typeof AccountTravellersRoute
   AccountTripPlannerRoute: typeof AccountTripPlannerRoute
   AccountTripsRoute: typeof AccountTripsRoute
@@ -4683,6 +4753,7 @@ const AccountRouteChildren: AccountRouteChildren = {
   AccountNotificationsRoute: AccountNotificationsRoute,
   AccountSavedRoute: AccountSavedRoute,
   AccountToursRoute: AccountToursRoute,
+  AccountTravelRoute: AccountTravelRouteWithChildren,
   AccountTravellersRoute: AccountTravellersRoute,
   AccountTripPlannerRoute: AccountTripPlannerRoute,
   AccountTripsRoute: AccountTripsRoute,
@@ -4723,6 +4794,7 @@ interface AdminRouteChildren {
   AdminTourPaymentRoute: typeof AdminTourPaymentRoute
   AdminTourSupplierRoute: typeof AdminTourSupplierRoute
   AdminToursRoute: typeof AdminToursRoute
+  AdminTravelBookingsRoute: typeof AdminTravelBookingsRoute
   AdminTravelDnaRoute: typeof AdminTravelDnaRoute
   AdminTripjackRoute: typeof AdminTripjackRoute
   AdminTtcRoute: typeof AdminTtcRoute
@@ -4769,6 +4841,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTourPaymentRoute: AdminTourPaymentRoute,
   AdminTourSupplierRoute: AdminTourSupplierRoute,
   AdminToursRoute: AdminToursRoute,
+  AdminTravelBookingsRoute: AdminTravelBookingsRoute,
   AdminTravelDnaRoute: AdminTravelDnaRoute,
   AdminTripjackRoute: AdminTripjackRoute,
   AdminTtcRoute: AdminTtcRoute,

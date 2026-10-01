@@ -11,6 +11,8 @@ import {
   up17FlightExtrasLookup,
 } from "@/lib/up17/up17.functions";
 import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
+import { prepareFlightBooking } from "@/lib/up17/booking.functions";
+import { TravelCheckout, type TravelIntent } from "./travel-checkout";
 
 
 type PaxType = 1 | 2 | 3;
@@ -97,6 +99,9 @@ export function FlightBookingDialog({
   const { pay, busy: paying, error: payError, setError: setPayError } = useRazorpayCheckout();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const prepareFlight = useServerFn(prepareFlightBooking);
+  const [walletIntent, setWalletIntent] = useState<TravelIntent | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Record<string, unknown> | null>(null);
@@ -188,6 +193,37 @@ export function FlightBookingDialog({
   }
 
   /** Collects payment through Razorpay, then requests the ticket only once capture is verified. */
+  async function runWalletPrepare() {
+    if (!searchTokenId) return;
+    setWalletError(null);
+    setBusy(true);
+    try {
+      const r = await prepareFlight({
+        data: {
+          resultIndex,
+          searchTokenId,
+          route: summary,
+          passengers: pax.map((p, i) => ({
+            ...p,
+            first_name: p.first_name.trim(),
+            last_name: p.last_name.trim(),
+            email: p.email.trim(),
+            nationality: p.nationality.trim().toUpperCase(),
+            country_code: p.country_code.trim().toUpperCase(),
+            extras: selections[i] ?? {},
+          })) as unknown as Record<string, unknown>[],
+        },
+      });
+      if (!r.ok) return setWalletError(r.error);
+      const lead = pax[0];
+      setWalletIntent({ ...r, product: "flight", description: `Flight · ${summary}`, email: lead?.email, phone: lead?.contact_no, name: lead ? `${lead.first_name} ${lead.last_name}` : undefined });
+    } catch (e) {
+      setWalletError(e instanceof Error ? e.message.slice(0, 200) : "Could not prepare the wallet payment.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runPayAndBook() {
     if (!searchTokenId || !confirmedTotal) return;
     setError(null);
@@ -589,6 +625,19 @@ export function FlightBookingDialog({
                 {payError}
               </div>
             ) : null}
+
+            <div className="rounded-xl border border-border/60 p-4 text-xs">
+              {walletIntent ? (
+                <TravelCheckout intent={walletIntent} />
+              ) : (
+                <>
+                  <button type="button" disabled={busy || paying || !!payment} onClick={runWalletPrepare} className="rounded-full border border-primary px-5 py-2 text-[10px] uppercase tracking-[0.25em] text-primary disabled:opacity-50">
+                    Pay with Worldway Wallet instead
+                  </button>
+                  {walletError ? <p className="mt-2 text-destructive">{walletError}</p> : null}
+                </>
+              )}
+            </div>
 
             <div className="flex flex-wrap justify-between gap-3">
               <button
