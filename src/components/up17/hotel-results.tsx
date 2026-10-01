@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { up17HotelDetailLookup } from "@/lib/up17/up17.functions";
 import { mediaUrl } from "@/lib/media";
+import { HotelBookPanel } from "./booking-panels";
 
 /** Supplier CDNs 403 browser-origin requests; stream them through our proxy. */
 function proxied(url: string): string {
@@ -326,10 +327,20 @@ function HotelCard({ hotel, token }: { hotel: Hotel; token: string | null }) {
           >
             {open ? "Hide details" : "Property details"}
           </button>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            Worldway live inventory
-          </span>
+          <button
+            type="button"
+            disabled={!token}
+            onClick={() => setBooking((v) => !v)}
+            className="rounded-full bg-primary px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-primary-foreground disabled:opacity-40"
+          >
+            {booking ? "Close" : "Book"}
+          </button>
         </div>
+        {booking && token ? (
+          <div className="mt-4">
+            <HotelBookPanel resultIndex={hotel.resultIndex} hotelCode={hotel.hotelCode} hotelName={hotel.name} city={hotel.city} token={token} />
+          </div>
+        ) : null}
 
         {open ? (
           <div className="mt-4 border-t border-border/50 pt-4">
