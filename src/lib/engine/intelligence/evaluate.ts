@@ -5,9 +5,10 @@
 import type { SupplierRegistration } from "../types";
 import type { PipelinePackage } from "../package";
 import {
-  channelReadiness, componentEvidence, constraints as C, evaluateConstraints, optimiseMarkup,
+  channelReadiness, componentEvidence, constraints as C, evaluateConstraints,
   packageAlternatives, packageRisks, revalidationDue, type Constraint, type Evidence,
 } from "./commerce";
+import { optimiseMargin, type MarginResult } from "./margin";
 
 export interface EvaluateInput {
   proposals: { id: string; result: PipelinePackage; bookable: boolean }[];
@@ -18,8 +19,8 @@ export interface EvaluateInput {
   budget?: number;
   prefersRefundable?: boolean;
   passportExpiry?: string;
-  /** Allowed markup band; margin is only suggested inside it. */
-  marginBand?: { minPct: number; maxPct: number };
+  /** Approved markup floor as % of the approved markup (100 = no discounting). */
+  marginFloorPercent?: number;
 }
 
 export interface ProposalIntel {
@@ -32,7 +33,7 @@ export interface ProposalIntel {
   channels: ReturnType<typeof channelReadiness>;
   constraints: ReturnType<typeof evaluateConstraints>;
   recheckDue: ReturnType<typeof revalidationDue>;
-  margin: { markupPercent: number; total: number } | null;
+  margin: MarginResult | null;
   /** True only if the engine said bookable AND no error-level risk AND B2C ready. */
   bookable: boolean;
 }
@@ -59,8 +60,7 @@ export function evaluateProposals(i: EvaluateInput): ProposalIntel[] {
     const channels = channelReadiness({ ...p.result, bookable: p.bookable }, evidence);
     const total = p.result.pricing?.total ?? null;
     const constraints = evaluateConstraints(g, total, cs);
-    const base = p.result.pricing ? p.result.pricing.total : null;
-    const margin = base != null && i.marginBand ? optimiseMarkup(base, i.marginBand.minPct, i.marginBand.maxPct, g, cs) : null;
+    const margin = p.result.pricing ? optimiseMargin(p.result.pricing.lines, i.budget ?? null, i.marginFloorPercent ?? 100) : null;
     const lab = labels.get(p.result.id);
     const b2c = channels.find((c) => c.channel === "b2c");
     return {
