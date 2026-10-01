@@ -11,6 +11,7 @@ const ENV = ["TRIPJACK_RELAY_URL", "TRIPJACK_RELAY_SECRET", TRIPJACK_API_KEY_SEC
 let calls: { url: string; init: RequestInit }[] = [];
 beforeEach(() => {
   calls = [];
+  delete process.env["TRIPJACK_RELAY_URL"]; delete process.env["TRIPJACK_RELAY_SECRET"];
   process.env[TRIPJACK_API_KEY_SECRET] = KEY;
   vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
     calls.push({ url, init });
