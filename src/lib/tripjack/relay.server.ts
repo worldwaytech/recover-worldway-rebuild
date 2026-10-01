@@ -21,6 +21,39 @@ export function relayConfigured(): boolean {
   return Boolean(process.env["TRIPJACK_RELAY_URL"] && process.env["TRIPJACK_RELAY_SECRET"]);
 }
 
+/** "off" = neither set (direct, original design); "partial" = exactly one set → fail closed. */
+export function relayMode(): "off" | "on" | "partial" {
+  const u = Boolean(process.env["TRIPJACK_RELAY_URL"]);
+  const s = Boolean(process.env["TRIPJACK_RELAY_SECRET"]);
+  return u && s ? "on" : u || s ? "partial" : "off";
+}
+
+/** The relay's exact allow-list (authoritative). Never broaden here without the relay. */
+export const RELAY_ALLOWLIST: Record<TripjackSuite, ReadonlySet<string>> = {
+  cabs: new Set([
+    "POST /cabs/v1/google-places",
+    "POST /cabs/v1/get-lat-long",
+    "POST /cabs/v2/quotes",
+    "POST /cabs/v2/booking",
+    "POST /cabs/v1/payment/create",
+    "GET /cabs/v1/booking/details",
+    "GET /cabs/v1/amendment",
+    "POST /cabs/v1/amendment",
+    "POST /cabs/v2/embedded/booking",
+  ]),
+  tripsafe: new Set([
+    "POST /insurance/v1/searchquery-list",
+    "POST /insurance/v1/insurance",
+    "POST /oms/v1/insurance/booking-details",
+    "POST /oms/v1/ins/amendment/raise",
+    "POST /oms/v1/ins/amendment/confirm-insurance-cancellation",
+  ]),
+};
+
+export function relayAllows(suite: TripjackSuite, method: string, path: string): boolean {
+  return RELAY_ALLOWLIST[suite]?.has(`${method} ${path}`) ?? false;
+}
+
 export async function signRelayRequest(
   secret: string,
   timestamp: string,

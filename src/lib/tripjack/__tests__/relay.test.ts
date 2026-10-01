@@ -1,7 +1,8 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { createHmac, createHash } from "node:crypto";
 import { relayTarget, signRelayRequest } from "../relay.server";
 
+beforeEach(() => { delete process.env["TRIPJACK_RELAY_URL"]; delete process.env["TRIPJACK_RELAY_SECRET"]; });
 afterEach(() => { delete process.env["TRIPJACK_RELAY_URL"]; delete process.env["TRIPJACK_RELAY_SECRET"]; });
 
 describe("TripJack egress relay transport", () => {
