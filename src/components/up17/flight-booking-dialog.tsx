@@ -13,6 +13,7 @@ import {
 import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
 import { prepareFlightBooking } from "@/lib/up17/booking.functions";
 import { TravelCheckout, type TravelIntent } from "./travel-checkout";
+import { ChargeBreakdown } from "@/components/payments/charge-breakdown";
 
 
 type PaxType = 1 | 2 | 3;
@@ -602,6 +603,10 @@ export function FlightBookingDialog({
                 {pax.length} traveller{pax.length > 1 ? "s" : ""} · {summary}
               </div>
             </div>
+
+            {confirmedTotal ? (
+              <ChargeBreakdown product="flight" amountMinor={Math.round(confirmedTotal * 100)} currency={currency || "INR"} methods={["card"]} />
+            ) : null}
 
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-600">
               Payment is collected before the ticket is requested. Once we submit the booking the
