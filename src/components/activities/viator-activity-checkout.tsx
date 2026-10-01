@@ -250,8 +250,12 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   // document.getElementById(id) — it must be the element's ID string, not a
   // DOM node (passing the node throws "e.replace is not a function" and the
   // iFrame never renders).
+  // Stays mounted while paying AND while the payment is being submitted —
+  // re-running on the paying→booking switch would destroy the card element
+  // mid-submit ("Could not find a ready element").
+  const cardFormActive = phase === "paying" || phase === "booking";
   useEffect(() => {
-    if (!session || phase !== "paying") return;
+    if (!session || !cardFormActive) return;
     let disposed = false;
     const report = (event: string, detail?: string) =>
       void logEvent({
@@ -305,7 +309,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
       handlerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, phase]);
+  }, [session, cardFormActive]);
 
   const pollUntilSettled = useCallback(
     async (cartRef: string, accessToken: string) => {
