@@ -60,7 +60,8 @@ describe("HBX transfers model", () => {
     const raw = { bookings: [{ reference: "102-1", status: "CONFIRMED", creationDate: "2026-09-23T19:03:46", holder: { name: "A", surname: "B" }, totalAmount: 10, currency: "EUR", supplier: { name: "HOTELBEDS SPAIN, S.L.U", vatNumber: "ESB28916765" }, transfers: [{ status: "CONFIRMED", paxes: [{ type: "ADULT" }, { type: "CHILD" }], pickupInformation: { from: { description: "X" }, to: { description: "Y" }, date: "2026-11-10", time: "07:00:00" } }] }] };
     const b = normaliseBooking(raw)!;
     const v = buildTransferVoucher(b, "WWT1")!;
-    expect(v.payableStatement).toContain("Bookable and payable by HOTELBEDS SPAIN");
+    expect(v.payableStatement).toBe("Bookable and Payable by HOTELBEDS");
+    expect(v.hbxReference).toBeTruthy();
     expect(v.legs[0]!.paxDistribution).toEqual({ adults: 1, children: 1, infants: 0 });
     expect(buildTransferVoucher({ ...b, status: "CANCELLED" }, "WWT1")).toBeNull();
   });
