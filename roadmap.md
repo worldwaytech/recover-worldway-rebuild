@@ -10,3 +10,5 @@
 - [x] Account bookings list/detail; admin queue (/admin/travel-bookings)
 - [x] Tests (351 pass)
 - [ ] BLOCKED (user): one real paid booking per product to certify
+- [x] Crystal: deposit checkout (FX-locked INR, card within limit / Wallet), one Option per paid reservation, no write retries
+- [ ] BLOCKED (user): first real paid Crystal deposit to certify
