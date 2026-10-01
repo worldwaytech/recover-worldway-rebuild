@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Legacy alias of POST /api/v1/commerce/{operation}. Same gateway, auth and limits.
-export const Route = createFileRoute("/api/public/v1/commerce/$op")({
+// Worldway Travel Commerce API — POST https://worldwaytravelsgroup.com/api/v1/commerce/{operation}
+// Auth: X-Api-Key (wwk_live_…) or a partner user's Bearer access token. Verified in the gateway.
+export const Route = createFileRoute("/api/v1/commerce/$op")({
   server: {
     handlers: {
       POST: async ({ request, params }) => {
