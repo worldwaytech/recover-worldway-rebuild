@@ -104,8 +104,9 @@ function PointList({ title, points }: { title: string; points: BusPoint[] }) {
   );
 }
 
-function BusCard({ bus }: { bus: Bus }) {
+function BusCard({ bus, token }: { bus: Bus; token: string | null }) {
   const [open, setOpen] = useState(false);
+  const [booking, setBooking] = useState(false);
   const boarding = bus.boardingPoints ?? [];
   const dropping = bus.droppingPoints ?? [];
   const policies = bus.cancellationPolicies ?? [];
