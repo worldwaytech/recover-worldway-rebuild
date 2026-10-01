@@ -65,6 +65,9 @@ export const Route = createFileRoute("/api/public/razorpay-webhook")({
             method: entity?.method ?? null,
             amount: entity?.amount ?? null,
             currency: entity?.currency ?? null,
+            // Actual gateway cost as reported by Razorpay (never estimated).
+            fee: typeof (entity as { fee?: unknown })?.fee === "number" ? (entity as { fee: number }).fee : null,
+            tax: typeof (entity as { tax?: unknown })?.tax === "number" ? (entity as { tax: number }).tax : null,
           },
           verified: status === "paid",
         });
