@@ -130,10 +130,12 @@ export async function bookCrystalOption(p: CruisePayload): Promise<SupplierResul
     .update({ supplier_status: "option_in_progress" })
     .eq("id", p.crystalBookingId)
     .is("supplier_reference", null)
-    .neq("supplier_status", "option_in_progress")
-    .select("id, supplier_status")
+    .or("supplier_status.is.null,supplier_status.neq.option_in_progress")
+    .select("id")
     .maybeSingle();
   if (!claim) return { ok: false, status: 409, error: "This reservation has already been sent to Crystal." };
+  // Release the claim only when Crystal was certainly not reached.
+  const unclaim = () => supabaseAdmin.from("bookings").update({ supplier_status: "pending" }).eq("id", p.crystalBookingId).is("supplier_reference", null);
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = await confirmCrystalBooking(supabaseAdmin as any, p.crystalBookingId, p.idempotencyKey);
@@ -147,13 +149,22 @@ export async function bookCrystalOption(p: CruisePayload): Promise<SupplierResul
       return { ok: true, status: 200, data: { bookingId: ref, confirmationNo: ref, status: r.booking.status, confirmed: true, raw: { status: r.booking.status } } };
     }
     // Blocked before any supplier call (hold expired, missing data): safe refusal.
-    if ("blockedReason" in r && r.blockedReason) return { ok: false, status: 400, error: r.message };
+    if ("blockedReason" in r && r.blockedReason) {
+      await unclaim();
+      return { ok: false, status: 400, error: r.message };
+    }
     return { ok: false, status: 0, error: "Crystal accepted the request without returning a booking number." };
   } catch (e) {
-    if (e instanceof CrystalSupplierCallError) return { ok: false, status: e.status, error: e.message };
+    if (e instanceof CrystalSupplierCallError) {
+      if (e.status >= 400 && e.status < 500 && e.status !== 429) await unclaim();
+      return { ok: false, status: e.status === 429 ? 0 : e.status, error: e.message };
+    }
     const msg = e instanceof Error ? e.message : "unknown";
     // Validation errors thrown before calling Crystal (e.g. hold expired) are safe refusals.
-    if (/expired|cancelled|not found/i.test(msg)) return { ok: false, status: 400, error: msg };
+    if (/expired|cancelled|not found/i.test(msg)) {
+      await unclaim();
+      return { ok: false, status: 400, error: msg };
+    }
     return { ok: false, status: 0, error: msg };
   }
 }
