@@ -62,10 +62,14 @@ export const Route = createFileRoute("/journeys/$code")({
 });
 
 function JourneyError() {
-  return <JourneyNotFound />;
+  return <JourneyUnavailable />;
 }
 
 function JourneyNotFound() {
+  return <JourneyUnavailable />;
+}
+
+function JourneyUnavailable() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-24 text-center">
       <h1 className="font-serif text-3xl">Journey unavailable</h1>
