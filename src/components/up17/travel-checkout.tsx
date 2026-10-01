@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
+import { ChargeBreakdown } from "@/components/payments/charge-breakdown";
 import { useRazorpayCheckout } from "@/components/payments/use-razorpay";
 import { myWallet, payTravelBookingWithWallet } from "@/lib/up17/booking.functions";
 
@@ -93,13 +94,7 @@ export function TravelCheckout({ intent }: { intent: TravelIntent }) {
         <span className="text-muted-foreground">Total (live price)</span>
         <span className="font-serif text-2xl text-primary">{fmtMinor(intent.amountMinor, intent.currency)}</span>
       </div>
-      <ul className="space-y-1 border-y border-border py-2 text-xs">
-        {intent.fx ? (
-          <li className="flex justify-between gap-3"><span className="text-muted-foreground">Currency conversion</span><span className="text-right">{intent.fx.sourceCurrency} {intent.fx.sourceAmount.toLocaleString("en-IN")} at live rate {intent.fx.rate.toFixed(4)}, locked for this checkout</span></li>
-        ) : null}
-        <li className="flex justify-between gap-3"><span className="text-muted-foreground">Payment processing fee</span><span>₹0 · paid by Worldway</span></li>
-        <li className="flex justify-between gap-3 font-medium"><span>Total payable</span><span>{fmtMinor(intent.amountMinor, intent.currency)}</span></li>
-      </ul>
+      <ChargeBreakdown product={intent.product} amountMinor={intent.amountMinor} currency={intent.currency} fx={intent.fx} />
       {intent.priceChanged ? <p className="text-xs text-destructive">The price changed since your search. This is the current live price.</p> : null}
       <div className="grid gap-2 sm:grid-cols-2">
         <Button onClick={byWallet} disabled={locked || !enough}>
