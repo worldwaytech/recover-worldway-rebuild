@@ -249,6 +249,9 @@ export const requestTravelCancellation = createServerFn({ method: "POST" })
     const { getBooking } = await import("./booking.server");
     const row = await getBooking(data.id);
     if (!row || row.user_id !== ctx(context).userId) return { ok: false as const, error: "Booking not found." };
+    if (row.status === "confirmed" && row.product === "activity" && row.supplier_booking_id) {
+      return cancelActivity(row as never, ctx(context).userId);
+    }
     if (row.status !== "confirmed" || row.product !== "hotel" || !row.supplier_booking_id) {
       return { ok: false as const, error: "Please contact the Worldway team to change this booking." };
     }
@@ -311,3 +314,33 @@ export const staffResolveTravelBooking = createServerFn({ method: "POST" })
       return { ok: false as const, error: e instanceof Error ? e.message : "Failed" };
     }
   });
+
+/**
+ * Activity cancellation: only when Viator's own cancel quote returns a full
+ * refund (so the Worldway full refund is exact); reason code always from
+ * Viator's published list. Refund is completed by staff (card) or the wallet refund.
+ */
+async function cancelActivity(row: { id: string; supplier_booking_id: string }, userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const sb = supabaseAdmin as never as { from: (t: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { viatorCancelQuote, viatorCancelReasons, viatorCancelBooking } = await import("@/lib/viator/post-booking.server");
+  const quote = await viatorCancelQuote(row.supplier_booking_id);
+  const full = quote.ok && quote.status === "CANCELLABLE" && quote.refund?.refundAmount != null && quote.refund.itemPrice != null && quote.refund.refundAmount >= quote.refund.itemPrice;
+  if (!full) return { ok: false as const, error: "This experience can no longer be cancelled for a full refund online. Please contact the Worldway team." };
+  const reasons = await viatorCancelReasons("CUSTOMER");
+  const reason = reasons.reasons.find((r) => r.code === "Customer_Service.I_canceled_my_entire_trip") ?? reasons.reasons[0];
+  if (!reason) return { ok: false as const, error: "Please contact the Worldway team to cancel this booking." };
+  const { data: claimed } = await sb.from("travel_bookings").update({ status: "cancel_requested" }).eq("id", row.id).eq("status", "confirmed").select("id").maybeSingle();
+  if (!claimed) return { ok: false as const, error: "A cancellation is already in progress." };
+  const res = await viatorCancelBooking(row.supplier_booking_id, reason.code).catch(() => null);
+  const accepted = res?.ok && /ACCEPTED|CANCEL/i.test(res.status ?? "");
+  await sb.from("travel_bookings").update({
+    status: accepted ? "cancelled" : "cancel_requested",
+    customer_message: accepted
+      ? "Cancelled. Your full refund will be completed by the Worldway team."
+      : "Cancellation requested. The Worldway team will confirm it and your refund.",
+    supplier_response: { cancel: { quote: quote.refund, ok: res?.ok ?? false, status: res?.status ?? null, error: res?.error ?? null } },
+  }).eq("id", row.id);
+  await sb.from("admin_audit_log").insert({ action: accepted ? "travel_booking.cancelled" : "travel_booking.cancel_requested", target_table: "travel_bookings", target_id: row.id, actor_id: userId, detail: { supplier_ok: res?.ok ?? false, refund_needed: true } });
+  return { ok: true as const };
+}

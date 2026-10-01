@@ -10,7 +10,7 @@
  */
 import type { Up17HotelGuest, Up17BusPassenger, Up17Passenger, Up17SupplierBooking } from "./up17.server";
 
-export type TravelProduct = "flight" | "hotel" | "bus" | "cruise";
+export type TravelProduct = "flight" | "hotel" | "bus" | "cruise" | "activity";
 
 const ZERO_DECIMAL = new Set(["JPY", "KRW", "VND", "CLP", "ISK"]);
 export const toMinor = (amount: number, currency: string) =>
@@ -47,7 +47,7 @@ export type FlightPayload = {
   searchTokenId: string;
   passengers: Up17Passenger[];
 };
-export type SupplierPayload = HotelPayload | BusPayload | FlightPayload | import("@/lib/crystal/deposit.server").CruisePayload;
+export type SupplierPayload = HotelPayload | BusPayload | FlightPayload | import("@/lib/crystal/deposit.server").CruisePayload | import("@/lib/viator/paid-booking.server").ActivityPayload;
 
 export type TravelBookingRow = {
   id: string;
@@ -223,6 +223,10 @@ export function classifyOutcome(res: { ok: boolean; status: number; error?: stri
 }
 
 async function callSupplier(p: SupplierPayload) {
+  if (p.kind === "activity") {
+    const { bookViatorActivity } = await import("@/lib/viator/paid-booking.server");
+    return bookViatorActivity(p);
+  }
   if (p.kind === "cruise") {
     const { bookCrystalOption } = await import("@/lib/crystal/deposit.server");
     return bookCrystalOption(p);
@@ -298,6 +302,12 @@ async function finish(row: TravelBookingRow, outcome: Outcome, reference: string
         customer_message: null,
       })
       .eq("id", row.id);
+    if (row.product === "activity") {
+      // Worldway-branded voucher details on the customer's own booking record.
+      const { activityVoucherSummary } = await import("@/lib/viator/paid-booking.server");
+      const p = row.supplier_payload as import("@/lib/viator/paid-booking.server").ActivityPayload;
+      await sb.from("travel_bookings").update({ summary: { ...row.summary, ...activityVoucherSummary(p) } }).eq("id", row.id);
+    }
     if (wallet) await sb.rpc("wallet_settle", { _reserve_key: row.wallet_reserve_key, _capture: true });
     if (row.payment_order_id) {
       const { recordFulfilment } = await import("@/lib/payments/payments.server");
@@ -346,7 +356,7 @@ export function customerView(r: TravelBookingRow) {
     message: r.customer_message,
     createdAt: r.created_at,
     confirmedAt: r.confirmed_at,
-    canCancel: r.status === "confirmed" && r.product === "hotel",
+    canCancel: r.status === "confirmed" && (r.product === "hotel" || r.product === "activity"),
   };
 }
 

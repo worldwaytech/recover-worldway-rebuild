@@ -91,7 +91,10 @@ export async function viatorCheckAvailability(
     };
   }
   const data = res.data as Record<string, unknown>;
-  const bookable = pick<Record<string, unknown>[]>(data, ["bookableItems"]) ?? [];
+  // Viator lists every slot; only items with available !== false can be held.
+  const bookable = (pick<Record<string, unknown>[]>(data, ["bookableItems"]) ?? []).filter(
+    (i) => i["available"] !== false,
+  );
   const first = bookable[0];
   const lineItems = pick<Record<string, unknown>[]>(first, ["lineItems"]) ?? [];
   const priceObj =
@@ -139,6 +142,8 @@ export type CartHold = {
   }[];
   /** Origin sent to Viator as `hostingUrl` (for audit/diagnostics). */
   hostingUrl: string;
+  /** Worldway's cost for the held cart (partnerTotalPrice), when returned. */
+  cost: number | null;
 };
 
 export async function viatorCartHold(input: {
@@ -147,14 +152,20 @@ export async function viatorCartHold(input: {
   /** Our own unique booking reference — reused on retry so no duplicate is created. */
   partnerBookingRef: string;
   booker: BookerInput;
+  /**
+   * VIATOR_FORM = Viator's hosted card form (merchant accounts).
+   * NONE = Worldway collects payment itself (Affiliate Full + Booking); Viator
+   * rejects any payment submission mode on those accounts.
+   */
+  paymentSubmission?: "VIATOR_FORM" | "NONE";
 }): Promise<CartHold> {
   const { hold } = input;
-  const hostingUrl = await viatorHostingOrigin();
+  const viatorForm = (input.paymentSubmission ?? "VIATOR_FORM") === "VIATOR_FORM";
+  const hostingUrl = viatorForm ? await viatorHostingOrigin() : "";
   const body = {
     currency: hold.currency,
     partnerCartRef: input.partnerCartRef,
-    hostingUrl,
-    paymentDataSubmissionMode: "VIATOR_FORM",
+    ...(viatorForm ? { hostingUrl, paymentDataSubmissionMode: "VIATOR_FORM" } : {}),
     bookerInfo: {
       firstName: input.booker.firstName,
       lastName: input.booker.lastName,
@@ -191,6 +202,7 @@ export async function viatorCartHold(input: {
     total: null,
     items: [],
     hostingUrl,
+    cost: null,
   };
   if (!res.ok || !res.data) {
     const error = bookingError(res.status, res.error);
@@ -216,12 +228,13 @@ export async function viatorCartHold(input: {
   ]);
   const priceLeaf = pick<Record<string, unknown>>(priceObj, ["price"]) ?? priceObj;
 
-  if (!cartRef || !token) {
+  if (!cartRef || (viatorForm && !token)) {
     return { ...empty, error: "Viator did not return a payment session for this cart." };
   }
 
   const items = rawItems.map((i) => {
     const holdInfo = pick<Record<string, unknown>>(i, ["bookingHoldInfo"]);
+    const pricingHold = pick<Record<string, unknown>>(holdInfo, ["pricing"]);
     return {
       partnerBookingRef:
         pick<string>(i, ["partnerBookingRef", "partnerItemRef", "itemRef"]) ??
@@ -232,6 +245,7 @@ export async function viatorCartHold(input: {
       holdExpiry:
         pick<string>(holdInfo, ["availabilityHoldExpiry", "expiry", "expiresAt"]) ??
         pick<string>(i, ["holdExpiryTime", "expiresAt"]) ??
+        pick<string>(pricingHold, ["validUntil"]) ??
         null,
     };
   });
@@ -267,6 +281,7 @@ export async function viatorCartHold(input: {
       ]) ?? null,
     items: items.map(({ holdExpiry: _h, ...rest }) => rest),
     hostingUrl,
+    cost: pick<number>(priceLeaf, ["partnerTotalPrice"]) ?? null,
   };
 }
 
@@ -305,7 +320,8 @@ function readVoucherInfo(source: unknown): ViatorVoucherInfo | null {
 
 export async function viatorCartBook(input: {
   cartRef: string;
-  paymentToken: string;
+  /** Omitted for Worldway-collected payment (Affiliate Full + Booking). */
+  paymentToken?: string;
   booker: Required<BookerInput>;
   items: {
     /** Viator-generated bookingRef from cart/hold. */
@@ -322,7 +338,7 @@ export async function viatorCartBook(input: {
 }): Promise<CartBook> {
   const body = {
     cartRef: input.cartRef,
-    paymentToken: input.paymentToken,
+    ...(input.paymentToken ? { paymentToken: input.paymentToken } : {}),
     bookerInfo: { firstName: input.booker.firstName, lastName: input.booker.lastName },
     communication: {
       email: input.booker.email,
