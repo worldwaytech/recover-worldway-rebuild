@@ -143,6 +143,19 @@ export async function viatorFetch<T>(
     };
   } finally {
     clearTimeout(timer);
+    // Certification evidence capture: only when VIATOR_EVIDENCE_FILE is set in a
+    // local sandbox run. Headers (API key) are never written.
+    const evidenceFile = typeof process !== "undefined" ? process.env.VIATOR_EVIDENCE_FILE : undefined;
+    if (evidenceFile && viatorEnvironment() !== "production") {
+      void import("node:fs/promises")
+        .then((fs) =>
+          fs.appendFile(
+            evidenceFile,
+            JSON.stringify({ at: new Date().toISOString(), method: init.method, url: `${base}${path}`, status, durationMs: Date.now() - started, request: init.body ?? null, response: json }) + "\n",
+          ),
+        )
+        .catch(() => undefined);
+    }
     void recordViatorTrace({
       path,
       method: init.method,

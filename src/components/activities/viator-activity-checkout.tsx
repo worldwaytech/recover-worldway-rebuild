@@ -6,6 +6,8 @@
  * touches Worldway — we only receive a paymentToken which the server exchanges
  * at bookings/cart/book.
  */
+/** In-flight cart holds keyed by request, so a remounted dialog never holds twice. */
+const inflightHolds = new Map<string, Promise<unknown>>();
 import { cardFormShouldBeMounted, paymentBlocker, safeDiagnostic } from "@/lib/viator/payment-readiness";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -170,8 +172,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = (await hold({
-          data: {
+        const holdData = {
             productCode: props.productCode,
             productTitle: props.productTitle,
             travelDate: props.travelDate,
@@ -182,8 +183,17 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
             ...(props.languageGuide ? { languageGuide: props.languageGuide } : {}),
             booker: props.booker,
             lines: [{ supplier: "ww-activity", productKind: "activity" }],
-          },
-        })) as {
+          };
+        // One hold per checkout: a remount of this dialog reuses the in-flight hold
+        // instead of creating a second supplier cart.
+        const holdKey = JSON.stringify(holdData);
+        let pending = inflightHolds.get(holdKey);
+        if (!pending) {
+          pending = hold({ data: holdData as never });
+          inflightHolds.set(holdKey, pending);
+          setTimeout(() => inflightHolds.delete(holdKey), 30_000);
+        }
+        const res = (await pending) as {
           ok: boolean;
           error?: string;
           cartRef?: string;

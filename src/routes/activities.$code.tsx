@@ -655,7 +655,7 @@ function ActivityDetailPage() {
                         {/* Review source attribution is contractually required next to each review. */}
                         {r.provider ? (
                           <p className="mt-0.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                            {/* confidentiality-exempt: contractual review attribution */}Review via {r.provider === "TRIPADVISOR" ? "Tripadvisor" : "Viator"}
+                            {/* Supplier attribution stays internal (r.provider); customers see only a neutral label. Tripadvisor is a review source, not a supplier. */}{r.provider === "TRIPADVISOR" ? "Review via Tripadvisor" : "Verified traveller review"}
                           </p>
                         ) : null}
                         {r.title ? (
