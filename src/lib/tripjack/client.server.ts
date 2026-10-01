@@ -213,11 +213,31 @@ export async function tripjackCall<T = unknown>(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TRIPJACK_TIMEOUT_MS);
 
+  // Transport only: route via the static-IP egress relay when configured.
+  // Fail closed: a half-configured relay or a route outside the relay allow-list
+  // never silently falls back to a direct call.
+  const { relayTarget, relayMode, relayAllows } = await import("./relay.server");
+  const mode = relayMode();
+  if (mode === "partial" || (mode === "on" && !relayAllows(suite, cap.method, cap.path))) {
+    clearTimeout(timer);
+    return {
+      ok: false,
+      correlationId,
+      error: {
+        kind: "not-configured",
+        message:
+          mode === "partial"
+            ? "TripJack UAT relay is only partly configured; call refused."
+            : `TripJack ${suite} capability "${capability}" is not on the UAT relay allow-list; call refused.`,
+        correlationId,
+      },
+    };
+  }
+
   try {
     const payload = cap.method === "POST" ? JSON.stringify(body ?? {}) : undefined;
-    // Transport only: route via the static-IP egress relay when configured.
-    const { relayTarget } = await import("./relay.server");
     const relay = await relayTarget(suite, cap.method, `${cap.path}${search ? `?${search}` : ""}`, payload ?? "");
+    if (mode === "on" && !relay) throw new Error("relay target unavailable");
     const response = await fetch(relay?.url ?? url, {
       method: cap.method,
       headers: {
@@ -233,8 +253,8 @@ export async function tripjackCall<T = unknown>(
 
     const text = await response.text();
     if (suite === "cabs" && capability === "location-search") {
-      // UAT diagnostics: full URL, masked headers, status and body (no key value).
-      console.info("[tripjack] cabs location-search", JSON.stringify({ url, method: cap.method, headers: { apikey: `****${apiKey.slice(-4)}`, "Content-Type": "application/json", "X-Correlation-Id": correlationId }, status: response.status, body: text.slice(0, 2000) }));
+      // UAT diagnostics: upstream URL, transport, status and body — no credential material.
+      console.info("[tripjack] cabs location-search", JSON.stringify({ url, via: relay ? "relay" : "direct", method: cap.method, correlationId, status: response.status, body: text.slice(0, 2000) }));
     }
     let parsed: unknown = null;
     const requestBody = cap.method === "POST" ? (body ?? {}) : undefined;
