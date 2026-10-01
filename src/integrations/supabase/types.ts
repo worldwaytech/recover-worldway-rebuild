@@ -3043,6 +3043,78 @@ export type Database = {
         }
         Relationships: []
       }
+      travel_bookings: {
+        Row: {
+          amount_minor: number
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          customer_message: string | null
+          expires_at: string
+          id: string
+          paid_at: string | null
+          payment_id: string | null
+          payment_method: string | null
+          payment_order_id: string | null
+          product: string
+          status: string
+          summary: Json
+          supplier_booking_id: string | null
+          supplier_payload: Json
+          supplier_pnr: string | null
+          supplier_response: Json | null
+          updated_at: string
+          user_id: string
+          wallet_reserve_key: string | null
+        }
+        Insert: {
+          amount_minor: number
+          confirmed_at?: string | null
+          created_at?: string
+          currency: string
+          customer_message?: string | null
+          expires_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          payment_order_id?: string | null
+          product: string
+          status?: string
+          summary?: Json
+          supplier_booking_id?: string | null
+          supplier_payload?: Json
+          supplier_pnr?: string | null
+          supplier_response?: Json | null
+          updated_at?: string
+          user_id: string
+          wallet_reserve_key?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_message?: string | null
+          expires_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          payment_order_id?: string | null
+          product?: string
+          status?: string
+          summary?: Json
+          supplier_booking_id?: string | null
+          supplier_payload?: Json
+          supplier_pnr?: string | null
+          supplier_response?: Json | null
+          updated_at?: string
+          user_id?: string
+          wallet_reserve_key?: string | null
+        }
+        Relationships: []
+      }
       travel_dna: {
         Row: {
           consent_history: boolean
@@ -4196,6 +4268,72 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_accounts: {
+        Row: {
+          balance_minor: number
+          created_at: string
+          currency: string
+          reserved_minor: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_minor?: number
+          created_at?: string
+          currency?: string
+          reserved_minor?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_minor?: number
+          created_at?: string
+          currency?: string
+          reserved_minor?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_ledger: {
+        Row: {
+          amount_minor: number
+          booking_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          idempotency_key: string
+          kind: string
+          note: string | null
+          payment_order_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_minor: number
+          booking_id?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          idempotency_key: string
+          kind: string
+          note?: string | null
+          payment_order_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_minor?: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          idempotency_key?: string
+          kind?: string
+          note?: string | null
+          payment_order_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -4341,6 +4479,41 @@ export type Database = {
       travelshop_catalogue_totals: { Args: never; Returns: Json }
       travelshop_explore: { Args: never; Returns: Json }
       travelshop_facets: { Args: never; Returns: Json }
+      wallet_refund: {
+        Args: {
+          _amount: number
+          _booking: string
+          _currency: string
+          _key: string
+          _note: string
+          _user: string
+        }
+        Returns: boolean
+      }
+      wallet_reserve: {
+        Args: {
+          _amount: number
+          _booking: string
+          _currency: string
+          _key: string
+          _user: string
+        }
+        Returns: boolean
+      }
+      wallet_settle: {
+        Args: { _capture: boolean; _reserve_key: string }
+        Returns: boolean
+      }
+      wallet_topup: {
+        Args: {
+          _amount: number
+          _currency: string
+          _key: string
+          _order: string
+          _user: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "agent" | "b2b" | "b2c"
