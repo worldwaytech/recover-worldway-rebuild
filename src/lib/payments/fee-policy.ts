@@ -23,6 +23,7 @@ export type ChargeLine = { label: string; amountMinor: number | null; note?: str
 export function chargeLines(input: {
   amountMinor: number;
   policy: FeePolicy;
+  method?: string;
   fx?: { sourceCurrency: string; sourceAmount: number; rate: number } | null;
 }): ChargeLine[] {
   const lines: ChargeLine[] = [{ label: "Booking amount", amountMinor: input.amountMinor }];
@@ -35,7 +36,7 @@ export function chargeLines(input: {
   }
   lines.push(
     input.policy.mode === "absorb"
-      ? { label: "Payment processing fee", amountMinor: 0, note: "Paid by Worldway" }
+      ? { label: "Payment processing fee", amountMinor: 0, note: input.method === "wallet" ? "None on Wallet payments" : "Paid by Worldway" }
       : { label: "Payment processing fee", amountMinor: null, note: "Shown by the payment window for your chosen method before you pay" },
   );
   return lines;
