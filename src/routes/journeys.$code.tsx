@@ -57,7 +57,7 @@ export const Route = createFileRoute("/journeys/$code")({
     };
   },
   notFoundComponent: JourneyNotFound,
-  errorComponent: JourneyNotFound,
+  errorComponent: JourneyError,
   component: JourneyDetail,
 });
 
