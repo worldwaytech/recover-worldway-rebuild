@@ -91,7 +91,10 @@ export async function viatorCheckAvailability(
     };
   }
   const data = res.data as Record<string, unknown>;
-  const bookable = pick<Record<string, unknown>[]>(data, ["bookableItems"]) ?? [];
+  // Viator lists every slot; only items with available !== false can be held.
+  const bookable = (pick<Record<string, unknown>[]>(data, ["bookableItems"]) ?? []).filter(
+    (i) => i["available"] !== false,
+  );
   const first = bookable[0];
   const lineItems = pick<Record<string, unknown>[]>(first, ["lineItems"]) ?? [];
   const priceObj =
