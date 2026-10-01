@@ -82,9 +82,9 @@ async function audit(action: string, bookingId: string, details: Record<string, 
     const sb = await db();
     await sb.from("admin_audit_log").insert({
       action,
-      target_type: "travel_booking",
+      target_table: "travel_bookings",
       target_id: bookingId,
-      details,
+      detail: details,
     });
   } catch (e) {
     console.error("[travel-booking] audit failed", action, e instanceof Error ? e.message : e);
