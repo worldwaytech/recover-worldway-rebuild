@@ -34,9 +34,13 @@ export const Route = createFileRoute("/destinations/$region/")({
     };
   },
   notFoundComponent: Missing,
-  errorComponent: Missing,
+  errorComponent: MissingError,
   component: RegionPage,
 });
+
+function MissingError() {
+  return <Missing />;
+}
 
 function Missing() {
   return (

@@ -108,9 +108,13 @@ export const Route = createFileRoute("/destinations/$region/$country/")({
     };
   },
   notFoundComponent: Missing,
-  errorComponent: Missing,
+  errorComponent: MissingError,
   component: CountryPage,
 });
+
+function MissingError() {
+  return <Missing />;
+}
 
 function Missing() {
   return (
