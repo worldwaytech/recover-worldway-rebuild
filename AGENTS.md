@@ -17,3 +17,6 @@
 - UP17 flight/hotel/bus bookings share one engine (src/lib/up17/booking.server.ts + travel_bookings): live-priced intent → Razorpay or Worldway Wallet → conditional-status claim → one supplier call → confirmed only on genuine supplier confirmation; unclear results go to /admin/travel-bookings, never retried — prevents double bookings and fake confirmations.
 - Worldway Wallet is server-side only (wallet_accounts + append-only wallet_ledger, mutated solely via service-role wallet_topup/reserve/settle/refund functions) — the old browser ledger (src/lib/wallet-ledger.ts) is not money.
 - Partner API gateway lives in src/lib/commerce/partner-gateway.server.ts; /api/v1/commerce/$op is the documented base and /api/public/v1 is an alias; the OpenAPI doc (src/lib/commerce/openapi.ts) must stay in step with CommerceSchemas — one gateway, one spec.
+
+- Viator Affiliate Full + Booking uses Worldway-collected payment: prepare (availability → cart/hold with no payment mode → approved markup → FX lock) creates a travel_bookings "activity" intent; the shared engine calls cart/book once after verified Razorpay/Wallet payment — Viator rejects payment modes on affiliate accounts.
+- Sandbox uses VIATOR_SANDBOX_API_KEY; production uses VIATOR_API_KEY — Viator keys are environment-specific.
