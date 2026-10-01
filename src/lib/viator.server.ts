@@ -50,12 +50,24 @@ export function viatorEnvironment(): "sandbox" | "production" {
   return process.env.VIATOR_API_ENV === "production" ? "production" : "sandbox";
 }
 
+/**
+ * Viator issues separate keys per environment: the production key is rejected
+ * by the sandbox (401) and vice versa. Sandbox uses VIATOR_SANDBOX_API_KEY,
+ * falling back to VIATOR_API_KEY only when no sandbox key is configured.
+ */
+export function viatorApiKey(): string | undefined {
+  if (viatorEnvironment() === "sandbox") {
+    return process.env.VIATOR_SANDBOX_API_KEY || process.env.VIATOR_API_KEY;
+  }
+  return process.env.VIATOR_API_KEY;
+}
+
 export function viatorConfigured(): boolean {
-  return Boolean(process.env.VIATOR_API_KEY);
+  return Boolean(viatorApiKey());
 }
 
 function headers(): Record<string, string> | null {
-  const key = process.env.VIATOR_API_KEY;
+  const key = viatorApiKey();
   if (!key) return null;
   return {
     "exp-api-key": key,
