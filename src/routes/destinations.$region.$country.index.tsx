@@ -107,16 +107,20 @@ export const Route = createFileRoute("/destinations/$region/$country/")({
       ],
     };
   },
-  notFoundComponent: Missing,
+  notFoundComponent: MissingNotFound,
   errorComponent: MissingError,
   component: CountryPage,
 });
 
 function MissingError() {
-  return <Missing />;
+  return <UnavailableScreen />;
 }
 
-function Missing() {
+function MissingNotFound() {
+  return <UnavailableScreen />;
+}
+
+function UnavailableScreen() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-24 text-center">
       <h1 className="font-serif text-3xl">Country unavailable</h1>
