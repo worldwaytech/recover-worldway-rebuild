@@ -12,6 +12,7 @@ import {
   Bell,
   Wallet,
   Compass,
+  Ticket,
 } from "lucide-react";
 
 export const Route = createFileRoute("/account")({
