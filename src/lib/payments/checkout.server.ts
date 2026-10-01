@@ -67,6 +67,10 @@ export async function resolvePaymentAmount(
     const { travelPaymentAmount } = await import("@/lib/up17/booking.server");
     const r = await travelPaymentAmount(input.travelBookingId, await optionalUserId());
     if (r.product !== input.purpose) throw new Error("Payment purpose does not match this booking.");
+    if (r.product === "cruise") {
+      const { razorpayLimitMinor } = await import("@/lib/crystal/deposit.server");
+      if (r.amountMinor > razorpayLimitMinor()) throw new Error("This deposit is above the single card payment limit. Please pay from your Worldway Wallet.");
+    }
     return { amountMinor: r.amountMinor, currency: r.currency, planId: null };
   }
 
