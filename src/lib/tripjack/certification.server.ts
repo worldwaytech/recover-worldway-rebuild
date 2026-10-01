@@ -221,7 +221,7 @@ export async function upsertCertificationCase(
   return { ok: true as const };
 }
 
-const CREDENTIAL_KEYS = new Set(["apikey", "api_key", "authorization", "x-api-key", "secret", "password"]);
+const CREDENTIAL_KEYS = new Set(["apikey", "api_key", "authorization", "x-api-key", "secret", "password", "agentid", "agentemail", "agentphone"]);
 
 /** Defensive credential strip only — payload data is otherwise unmodified. */
 export function stripCredentials(value: unknown, depth = 0): unknown {

@@ -145,6 +145,14 @@ type EvidenceRecord = {
  * not stored and the body never contains the key. Failures are swallowed so an
  * evidence write can never break a customer flow.
  */
+const AGENT_FIELDS = ["agentId", "agentEmail", "agentPhone"] as const;
+export function stripAgentFields(body: unknown): unknown {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return body;
+  const out = { ...(body as Record<string, unknown>) };
+  for (const k of AGENT_FIELDS) if (k in out) out[k] = REDACTED;
+  return out;
+}
+
 async function persistEvidence(rec: EvidenceRecord): Promise<void> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -157,7 +165,8 @@ async function persistEvidence(rec: EvidenceRecord): Promise<void> {
       path: rec.path,
       environment: "uat",
       request_query: toJson(rec.query),
-      request_body: toJson(rec.requestBody),
+      // Agent identity is a credential: never persisted, even in evidence.
+      request_body: toJson(stripAgentFields(rec.requestBody)),
       response_status: rec.status,
       response_body: toJson(rec.responseBody),
       duration_ms: rec.durationMs,
