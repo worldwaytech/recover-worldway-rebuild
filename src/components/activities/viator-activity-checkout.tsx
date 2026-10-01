@@ -6,6 +6,7 @@
  * touches Worldway — we only receive a paymentToken which the server exchanges
  * at bookings/cart/book.
  */
+import { cardFormShouldBeMounted, paymentBlocker, safeDiagnostic } from "@/lib/viator/payment-readiness";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -253,7 +254,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   // Stays mounted while paying AND while the payment is being submitted —
   // re-running on the paying→booking switch would destroy the card element
   // mid-submit ("Could not find a ready element").
-  const cardFormActive = phase === "paying" || phase === "booking";
+  const cardFormActive = cardFormShouldBeMounted(phase);
   useEffect(() => {
     if (!session || !cardFormActive) return;
     let disposed = false;
@@ -387,14 +388,39 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   })();
 
   async function pay() {
-    if (!session || !handlerRef.current) return;
+    if (!session) return;
+    const blocker = paymentBlocker({
+      hasHandler: !!handlerRef.current,
+      formLoaded,
+      formValid: formReady,
+      submitting: submittingRef.current,
+      postalCode: billing.postalCode,
+      missingAnswer,
+    });
+    const diag = (event: string, detail?: string) =>
+      void logEvent({
+        data: { cartRef: session.cartRef, accessToken: session.accessToken, event, ...(detail ? { detail } : {}), origin: window.location.origin },
+      }).catch(() => undefined);
+    if (blocker || !handlerRef.current) {
+      diag("SUBMIT_BLOCKED", blocker ?? "HANDLER_MISSING");
+      return;
+    }
+    submittingRef.current = true;
     setError(null);
     setPhase("booking");
     try {
-      const tokenised = await handlerRef.current.submit({
+      diag("SUBMIT_START");
+      let tokenised: { paymentToken: string };
+      try {
+        tokenised = await handlerRef.current.submit({
         address: { country: billing.country.toUpperCase(), postalCode: billing.postalCode.trim() },
         email: props.booker.email,
       });
+      } catch (err) {
+        diag("TOKENISE_FAILED", safeDiagnostic(err));
+        throw err;
+      }
+      diag("TOKENISE_OK");
       const res = (await book({
         data: {
           cartRef: session.cartRef,
@@ -702,6 +728,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
               disabled={
                 phase === "booking" ||
                 !formReady ||
+                !formLoaded ||
                 !billing.postalCode.trim() ||
                 missingAnswer != null
               }
@@ -716,7 +743,7 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
           <div className="mt-6 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm text-foreground">
             {result.state === "confirmed" ? (
               <p>
-                Confirmed. Your supplier reference is{" "}
+                Confirmed. Your booking reference is{" "}
                 <strong>{result.bookingReference ?? "issued"}</strong>. A voucher is on its way to{" "}
                 {props.booker.email}.
               </p>
