@@ -407,6 +407,8 @@ export async function staffResolve(input: { bookingId: string; action: "release_
     if (row.wallet_reserve_key) await sb.rpc("wallet_settle", { _reserve_key: row.wallet_reserve_key, _capture: false });
   } else if (input.action === "refund_wallet") {
     if (!["supplier_failed", "cancelled"].includes(row.status)) throw new Error("Refunds apply to failed or cancelled bookings.");
+    // A wallet-paid booking that failed was never charged (hold released) — refunding would double-credit.
+    if (row.status === "supplier_failed" && row.payment_method === "wallet") throw new Error("Nothing was charged for this booking.");
     const { data } = await sb.rpc("wallet_refund", {
       _user: row.user_id,
       _currency: row.currency,
