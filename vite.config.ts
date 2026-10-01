@@ -20,7 +20,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [mcpPlugin(), liveVoiceDev()],
+    plugins: [mcpPlugin(), ...(process.env.VITEST ? [] : [liveVoiceDev()])],
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
