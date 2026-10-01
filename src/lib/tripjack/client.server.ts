@@ -214,15 +214,20 @@ export async function tripjackCall<T = unknown>(
   const timer = setTimeout(() => controller.abort(), TRIPJACK_TIMEOUT_MS);
 
   try {
-    const response = await fetch(url, {
+    const payload = cap.method === "POST" ? JSON.stringify(body ?? {}) : undefined;
+    // Transport only: route via the static-IP egress relay when configured.
+    const { relayTarget } = await import("./relay.server");
+    const relay = await relayTarget(suite, cap.method, `${cap.path}${search ? `?${search}` : ""}`, payload ?? "");
+    const response = await fetch(relay?.url ?? url, {
       method: cap.method,
       headers: {
         apikey: apiKey,
         "Content-Type": "application/json",
         Accept: "application/json",
         "X-Correlation-Id": correlationId,
+        ...(relay?.headers ?? {}),
       },
-      body: cap.method === "POST" ? JSON.stringify(body ?? {}) : undefined,
+      body: payload,
       signal: controller.signal,
     });
 
