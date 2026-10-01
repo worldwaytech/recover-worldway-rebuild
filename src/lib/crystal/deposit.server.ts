@@ -123,6 +123,17 @@ export async function bookCrystalOption(p: CruisePayload): Promise<SupplierResul
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { confirmCrystalBooking } = await import("./booking.server");
   const { CrystalSupplierCallError } = await import("./aktg-booking.server");
+  // One Option per cruise reservation, even if two deposits were paid: claim the
+  // reservation atomically; a second paid intent is refused (and refunded).
+  const { data: claim } = await supabaseAdmin
+    .from("bookings")
+    .update({ supplier_status: "option_in_progress" })
+    .eq("id", p.crystalBookingId)
+    .is("supplier_reference", null)
+    .neq("supplier_status", "option_in_progress")
+    .select("id, supplier_status")
+    .maybeSingle();
+  if (!claim) return { ok: false, status: 409, error: "This reservation has already been sent to Crystal." };
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = await confirmCrystalBooking(supabaseAdmin as any, p.crystalBookingId, p.idempotencyKey);
