@@ -32,7 +32,7 @@ function TourSupplierPage() {
           <Panel title="Active tours"><div className="text-2xl font-semibold">{d?.activeTours ?? 0}</div></Panel>
           <Panel title="Stored tours"><div className="text-2xl font-semibold">{d?.storedTours ?? 0}</div></Panel>
           <Panel title="Last successful sync"><div className="text-sm">{when(d?.lastSuccessfulSync)}</div></Panel>
-          <Panel title="Supplier booking"><div className={`text-sm ${d?.bookingsEnabled ? "text-primary" : "text-destructive"}`}>{d?.bookingsEnabled ? "Enabled" : "Not authorised (TRAVELSHOP_BOOKING_ENABLED off)"}</div></Panel>
+          <Panel title="Supplier booking"><div className={`text-sm ${d?.bookingsEnabled ? "text-primary" : "text-destructive"}`}>{d?.bookingsEnabled ? "LIVE · Pay & Book on" : "Off (TRAVELSHOP_BOOKING_ENABLED)"}</div></Panel>
         </div>
         <Panel
           title="API status & inventory"
@@ -45,13 +45,20 @@ function TourSupplierPage() {
             </div>
           )}
         </Panel>
-        <Panel title="Booking gates">
+        <Panel title="Live booking status">
           <ol className="space-y-1 text-sm">
             {(gq.data?.gates ?? []).map((g) => (
-              <li key={g.gate}><span className={g.open ? "text-primary" : "text-destructive"}>{g.open ? "OPEN" : "BLOCKED"}</span> · {g.gate} — <span className="text-muted-foreground">{g.detail}</span></li>
+              <li key={g.gate}><span className={g.open ? "text-primary" : "text-destructive"}>{g.open ? "LIVE" : "OFF"}</span> · {g.gate} — <span className="text-muted-foreground">{g.detail}</span></li>
             ))}
           </ol>
-          {gq.data ? <p className="mt-3 text-xs text-muted-foreground">Contract evidence: {gq.data.evidence.method}, {gq.data.evidence.verifiedAt}. Still unverified: {gq.data.unverified.join(" ")}</p> : null}
+          {gq.data ? <p className="mt-3 text-xs text-muted-foreground">Contract evidence: {gq.data.evidence.method}, {gq.data.evidence.verifiedAt}. Partner notes: {gq.data.unverified.join(" ")}</p> : null}
+        </Panel>
+        <Panel title="Certification evidence (does not block booking)">
+          <ul className="space-y-1 text-sm">
+            {(gq.data?.evidenceStatus ?? []).map((e) => (
+              <li key={e.kind}><span className={e.verified ? "text-primary" : "text-muted-foreground"}>{e.verified ? "VERIFIED" : "PENDING"}</span> · {e.kind} — <span className="text-muted-foreground">{e.verified ? `Partner-confirmed paid booking ${when(e.at)}` : "Awaiting first partner-confirmed paid booking"}</span></li>
+            ))}
+          </ul>
           {sendMsg ? <p className="mt-2 text-xs">{sendMsg}</p> : null}
           <p className="mt-2 text-xs"><a href="/admin/tour-payment" className="underline">Open staff tour payment</a></p>
         </Panel>

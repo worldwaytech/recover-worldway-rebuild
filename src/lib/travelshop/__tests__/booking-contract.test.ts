@@ -25,8 +25,9 @@ describe("tour booking contract", () => {
   it("gates are deterministic and ordered", () => {
     expect(contractComplete([])).toBe(false);
     const g = bookingGates({ flagEnabled: true, contractComplete: false, verifiedStaffBooking: true, certified: true });
-    expect(g.map((x) => x.open)).toEqual([false, false, false, false]);
-    expect(bookingGates({ flagEnabled: true, contractComplete: true, verifiedStaffBooking: true, certified: false }).map((x) => x.open)).toEqual([true, true, false, false]);
+    expect(g.map((x) => x.open)).toEqual([false, false, false, true]);
+    // Missing certification evidence never blocks live booking.
+    expect(bookingGates({ flagEnabled: true, contractComplete: true, verifiedStaffBooking: false, certified: false }).map((x) => x.open)).toEqual([true, true, true, false]);
   });
 });
 

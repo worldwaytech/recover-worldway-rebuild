@@ -101,16 +101,18 @@ export interface GateInput {
   verifiedStaffBooking: boolean; // a real partner-confirmed booking after a verified Worldway payment
   certified: boolean; // evidence-backed certification derived from that booking
 }
+/**
+ * Admin status. Live booking (API, supplier booking, customer Pay & Book) depends only on the
+ * contract + switch — certification evidence is reported separately and never blocks booking.
+ */
 export function bookingGates(i: GateInput) {
-  const g1 = i.contractComplete;
-  const g4 = g1 && i.flagEnabled && i.verifiedStaffBooking;
-  const g5 = g4 && i.certified;
-  const g6 = g5;
+  const api = i.contractComplete;
+  const supplier = api && i.flagEnabled;
   return [
-    { gate: "Booking API contract", open: g1, detail: g1 ? "Fields verified; country list live" : "Partner country list unavailable" },
-    { gate: "Gate 4 · Staff-only live booking", open: g4, detail: g4 ? "Partner-confirmed paid booking on record" : !g1 ? "Waiting on contract" : !i.flagEnabled ? "Switch off" : "No partner-confirmed paid booking yet" },
-    { gate: "Gate 5 · Certification evidence", open: g5, detail: g5 ? "Certified from live booking evidence" : "Needs Gate 4 evidence" },
-    { gate: "Gate 6 · Customer booking & checkout", open: g6, detail: g6 ? "Open" : "Closed until Gates 4–5 pass" },
+    { gate: "Booking API contract", open: api, kind: "live" as const, detail: api ? "LIVE — fields verified; country list live" : "Partner country list unavailable" },
+    { gate: "Supplier booking", open: supplier, kind: "live" as const, detail: supplier ? "LIVE — one idempotent submission after verified payment" : !api ? "Waiting on contract" : "Switch off (TRAVELSHOP_BOOKING_ENABLED)" },
+    { gate: "Customer Pay & Book", open: supplier, kind: "live" as const, detail: supplier ? "LIVE — enabled for every tour passing live price/availability checks" : "Off until supplier booking is live" },
+    { gate: "Certification evidence", open: i.verifiedStaffBooking && i.certified, kind: "evidence" as const, detail: i.verifiedStaffBooking && i.certified ? "Verified — partner-confirmed paid booking on record" : "Pending — no partner-confirmed paid booking yet (does not block booking)" },
   ];
 }
 
