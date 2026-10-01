@@ -1,3 +1,4 @@
+import { BusBookPanel } from "./booking-panels";
 import { useMemo, useState } from "react";
 
 type BusPoint = { name: string; location: string; time: string | null };
@@ -180,10 +181,20 @@ function BusCard({ bus }: { bus: Bus }) {
         ) : (
           <span />
         )}
-        <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          Worldway Live
-        </span>
+        <button
+          type="button"
+          disabled={!token}
+          onClick={() => setBooking((v) => !v)}
+          className="rounded-full bg-primary px-4 py-1.5 text-[10px] uppercase tracking-[0.25em] text-primary-foreground disabled:opacity-40"
+        >
+          {booking ? "Close" : "Book seats"}
+        </button>
       </div>
+      {booking && token ? (
+        <div className="mt-4">
+          <BusBookPanel resultIndex={bus.resultIndex} token={token} operator={bus.operator} route={`${bus.origin} → ${bus.destination}`} departure={bus.departure ?? null} />
+        </div>
+      ) : null}
 
       {open && hasDetail ? (
         <div className="mt-4 grid gap-5 border-t border-border/50 pt-4 md:grid-cols-3">
@@ -220,6 +231,7 @@ export function Up17BusResults({
   data: unknown;
 }) {
   const buses = useMemo<Bus[]>(() => readBuses(data), [data]);
+  const token = data && typeof data === "object" && typeof (data as { searchTokenId?: unknown }).searchTokenId === "string" ? (data as { searchTokenId: string }).searchTokenId : null;
 
   return (
     <section className="mx-auto mt-10 max-w-6xl px-6">
@@ -255,7 +267,7 @@ export function Up17BusResults({
         {buses.length > 0 ? (
           <div className="grid gap-3">
             {buses.map((b, i) => (
-              <BusCard key={`${b.resultIndex}-${i}`} bus={b} />
+              <BusCard key={`${b.resultIndex}-${i}`} bus={b} token={token} />
             ))}
           </div>
         ) : null}

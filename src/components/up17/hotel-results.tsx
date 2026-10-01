@@ -199,6 +199,7 @@ export function Up17HotelResults({
 function HotelCard({ hotel, token }: { hotel: Hotel; token: string | null }) {
   const loadDetail = useServerFn(up17HotelDetailLookup);
   const [open, setOpen] = useState(false);
+  const [booking, setBooking] = useState(false);
   const [detail, setDetail] = useState<{
     gallery: string[];
     amenities: string[];
