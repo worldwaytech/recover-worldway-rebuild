@@ -54,6 +54,33 @@ function fail<T>(message: string, correlationId?: string): ServiceResult<T> {
 
 // ─── Read operations (Cabs v2 §3) ────────────────────────────────────────────
 
+export type CabAuthPreflight = {
+  ok: boolean;
+  attempts: Array<{ correlationId: string; status: number | null; ok: boolean }>;
+  message: string;
+};
+
+/**
+ * Authenticated Location Search preflight with the saved key. A 401 is retried
+ * exactly once after a bounded delay; never rotates or swaps the key. Every
+ * attempt is persisted by tripjackCall into the evidence store.
+ */
+export async function cabAuthPreflight(
+  delayMs = 2000,
+  call: typeof tripjackCall = tripjackCall,
+): Promise<CabAuthPreflight> {
+  const attempts: CabAuthPreflight["attempts"] = [];
+  for (let i = 0; i < 2; i++) {
+    if (i === 1) await new Promise((r) => setTimeout(r, Math.min(Math.max(delayMs, 0), 5000)));
+    const r = await call("cabs", "location-search", { input: "Delhi Airport" });
+    const status = r.ok ? 200 : (r.error.status ?? null);
+    attempts.push({ correlationId: r.correlationId, status, ok: r.ok });
+    if (r.ok) return { ok: true, attempts, message: i ? "Authenticated on retry." : "Authenticated." };
+    if (status !== 401) return { ok: false, attempts, message: r.error.message };
+  }
+  return { ok: false, attempts, message: "TripJack authentication unavailable (HTTP 401 twice)." };
+}
+
 /** POST /cabs/v1/google-places — body { input }; response data.places[]. */
 export async function searchCabPlaces(input: string): Promise<ServiceResult<CabPlace[]>> {
   const r = await tripjackCall<TripjackEnvelope<{ places?: CabPlace[] }>>(
@@ -224,6 +251,11 @@ export async function bookCab(
   if (existing) {
     return { booking: toCabRecord(existing), replay: true, message: "Existing booking returned." };
   }
+
+  // Stop safely before any booking row or supplier write if auth is unavailable.
+  const preflight = await cabAuthPreflight();
+  if (!preflight.ok) throw new Error(`TripJack authentication unavailable — booking not attempted. ${preflight.message}`);
+
 
   const gross = Number(input.request.pricingInfo.grossAmount);
   const { data: row, error } = await (await writer())
