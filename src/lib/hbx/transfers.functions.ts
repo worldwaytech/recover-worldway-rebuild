@@ -135,7 +135,8 @@ export const getMyTransferBooking = createServerFn({ method: "POST" })
       currency: b.currency,
       travelDate: b.travel_date,
       title: b.title,
-      voucher: (details.voucher ?? null) as import("./transfer-model").TransferVoucher | null,
+      // Contractual HBX voucher: exempt from the supplier-privacy rewording (owner-only).
+      contractualVoucher: (details.voucher ?? null) as import("./transfer-model").TransferVoucher | null,
     };
   });
 

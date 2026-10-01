@@ -99,3 +99,10 @@ describe("browser payload privacy guard", () => {
     }
   });
 });
+
+import { sanitizeOutbound as __so } from "../guard.server";
+import { it as __it, expect as __ex } from "vitest";
+__it("keeps the contractual HBX transfer voucher wording intact", async () => {
+  const out = await __so({ contractualVoucher: { payableStatement: "Bookable and Payable by HOTELBEDS", hbxReference: "102-1" } });
+  __ex(out.contractualVoucher.payableStatement).toBe("Bookable and Payable by HOTELBEDS");
+});
