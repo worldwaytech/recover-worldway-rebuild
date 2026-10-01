@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import type { CanonicalOffer } from "../normalize";
-import { normalizeOffers } from "../normalize";
 import { runPackagePipeline, type PipelineInput } from "../package";
 import type { SupplierRegistration } from "../types";
 import { evaluateProposals } from "../intelligence/evaluate";
@@ -22,8 +21,8 @@ const base: Omit<PipelineInput, "candidates"> = {
   registry, currency: "USD", fx: { USD: 1 }, ruleFor: () => ({ markupPercent: 10, commissionPercent: 0, serviceFee: 0 }),
 };
 const pkgs = runPackagePipeline({ ...base, candidates: [
-  { id: "A", components: normalizeOffers([flight, hotel]).components },
-  { id: "B", components: normalizeOffers([flight, cheap]).components },
+  { id: "A", offers: [flight, hotel] },
+  { id: "B", offers: [flight, cheap] },
 ] });
 const props = pkgs.map((p) => ({ id: p.id, result: p, bookable: p.bookable }));
 
