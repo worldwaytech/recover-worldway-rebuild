@@ -46,8 +46,11 @@ export default {
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      // The visitor closed the page mid-request: nothing to render, not an app crash.
+      if (request.signal.aborted) return new Response(null, { status: 499 });
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (request.signal.aborted) return new Response(null, { status: 499 });
       console.error(error);
       return new Response(renderErrorPage(), {
         status: 500,
