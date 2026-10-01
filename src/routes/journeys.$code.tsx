@@ -1,3 +1,4 @@
+// Journey detail route.
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { JourneyTemplate } from "@/components/partners/journey-template";
