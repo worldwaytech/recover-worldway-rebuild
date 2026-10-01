@@ -371,7 +371,7 @@ export const bookViatorActivityCart = createServerFn({ method: "POST" })
       };
     }
 
-    const fraudPreventionDetails: FraudPreventionDetails = { voucherDeliveryType: "EMAIL" };
+    const fraudPreventionDetails: FraudPreventionDetails = { voucherDeliveryType: "EMAIL_TO_CUSTOMER" };
 
     try {
       const { viatorCartBook, viatorBookingStatus } = await import("@/lib/viator/booking.server");

@@ -194,7 +194,7 @@ export type FraudPreventionDetails = {
   agencyId?: string;
   agentId?: string;
   /** How the voucher reaches the traveller. */
-  voucherDeliveryType?: "EMAIL" | "TEXT" | "PRINTED" | "OTHER";
+  voucherDeliveryType?: "EMAIL_TO_CUSTOMER" | "EMAIL_TO_AGENT" | "EMAIL_TO_CUSTOMER_AND_AGENT";
   /** ISO date the customer's account was created, when known. */
   customerMemberSince?: string;
 };
