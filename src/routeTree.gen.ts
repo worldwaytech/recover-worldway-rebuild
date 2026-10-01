@@ -190,6 +190,7 @@ import { Route as ActivitiesCodeRouteImport } from './routes/activities.$code'
 import { Route as AccountTripsRouteImport } from './routes/account.trips'
 import { Route as AccountTripPlannerRouteImport } from './routes/account.trip-planner'
 import { Route as AccountTravellersRouteImport } from './routes/account.travellers'
+import { Route as AccountTravelRouteImport } from './routes/account.travel'
 import { Route as AccountToursRouteImport } from './routes/account.tours'
 import { Route as AccountSavedRouteImport } from './routes/account.saved'
 import { Route as AccountNotificationsRouteImport } from './routes/account.notifications'
@@ -229,6 +230,7 @@ import { Route as AdminOpsSafariRouteImport } from './routes/admin.ops.safari'
 import { Route as AdminOpsRailRouteImport } from './routes/admin.ops.rail'
 import { Route as AdminOpsCruiseaRouteImport } from './routes/admin.ops.cruisea'
 import { Route as AdminOpsAviationRouteImport } from './routes/admin.ops.aviation'
+import { Route as AccountTravelIdRouteImport } from './routes/account.travel.$id'
 import { Route as AccountTourIdRouteImport } from './routes/account.tour.$id'
 import { Route as AccountBookingIdRouteImport } from './routes/account.booking.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -1156,6 +1158,11 @@ const AccountTravellersRoute = AccountTravellersRouteImport.update({
   path: '/travellers',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountTravelRoute = AccountTravelRouteImport.update({
+  id: '/travel',
+  path: '/travel',
+  getParentRoute: () => AccountRoute,
+} as any)
 const AccountToursRoute = AccountToursRouteImport.update({
   id: '/tours',
   path: '/tours',
@@ -1362,6 +1369,11 @@ const AdminOpsAviationRoute = AdminOpsAviationRouteImport.update({
   path: '/ops/aviation',
   getParentRoute: () => AdminRoute,
 } as any)
+const AccountTravelIdRoute = AccountTravelIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AccountTravelRoute,
+} as any)
 const AccountTourIdRoute = AccountTourIdRouteImport.update({
   id: '/tour/$id',
   path: '/tour/$id',
@@ -1540,6 +1552,7 @@ export interface FileRoutesByFullPath {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/tours': typeof AccountToursRoute
+  '/account/travel': typeof AccountTravelRouteWithChildren
   '/account/travellers': typeof AccountTravellersRoute
   '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
@@ -1668,6 +1681,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
   '/account/tour/$id': typeof AccountTourIdRoute
+  '/account/travel/$id': typeof AccountTravelIdRoute
   '/admin/ops/aviation': typeof AdminOpsAviationRoute
   '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
   '/admin/ops/rail': typeof AdminOpsRailRoute
@@ -1754,6 +1768,7 @@ export interface FileRoutesByTo {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/tours': typeof AccountToursRoute
+  '/account/travel': typeof AccountTravelRouteWithChildren
   '/account/travellers': typeof AccountTravellersRoute
   '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
@@ -1881,6 +1896,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
   '/account/tour/$id': typeof AccountTourIdRoute
+  '/account/travel/$id': typeof AccountTravelIdRoute
   '/admin/ops/aviation': typeof AdminOpsAviationRoute
   '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
   '/admin/ops/rail': typeof AdminOpsRailRoute
@@ -1995,6 +2011,7 @@ export interface FileRoutesById {
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/saved': typeof AccountSavedRoute
   '/account/tours': typeof AccountToursRoute
+  '/account/travel': typeof AccountTravelRouteWithChildren
   '/account/travellers': typeof AccountTravellersRoute
   '/account/trip-planner': typeof AccountTripPlannerRoute
   '/account/trips': typeof AccountTripsRoute
@@ -2123,6 +2140,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/account/booking/$id': typeof AccountBookingIdRoute
   '/account/tour/$id': typeof AccountTourIdRoute
+  '/account/travel/$id': typeof AccountTravelIdRoute
   '/admin/ops/aviation': typeof AdminOpsAviationRoute
   '/admin/ops/cruisea': typeof AdminOpsCruiseaRoute
   '/admin/ops/rail': typeof AdminOpsRailRoute
@@ -2239,6 +2257,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/tours'
+    | '/account/travel'
     | '/account/travellers'
     | '/account/trip-planner'
     | '/account/trips'
@@ -2367,6 +2386,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
     | '/account/tour/$id'
+    | '/account/travel/$id'
     | '/admin/ops/aviation'
     | '/admin/ops/cruisea'
     | '/admin/ops/rail'
@@ -2453,6 +2473,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/tours'
+    | '/account/travel'
     | '/account/travellers'
     | '/account/trip-planner'
     | '/account/trips'
@@ -2580,6 +2601,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
     | '/account/tour/$id'
+    | '/account/travel/$id'
     | '/admin/ops/aviation'
     | '/admin/ops/cruisea'
     | '/admin/ops/rail'
@@ -2693,6 +2715,7 @@ export interface FileRouteTypes {
     | '/account/notifications'
     | '/account/saved'
     | '/account/tours'
+    | '/account/travel'
     | '/account/travellers'
     | '/account/trip-planner'
     | '/account/trips'
@@ -2821,6 +2844,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/account/booking/$id'
     | '/account/tour/$id'
+    | '/account/travel/$id'
     | '/admin/ops/aviation'
     | '/admin/ops/cruisea'
     | '/admin/ops/rail'
@@ -4247,6 +4271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountTravellersRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/travel': {
+      id: '/account/travel'
+      path: '/travel'
+      fullPath: '/account/travel'
+      preLoaderRoute: typeof AccountTravelRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/tours': {
       id: '/account/tours'
       path: '/tours'
@@ -4520,6 +4551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOpsAviationRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/account/travel/$id': {
+      id: '/account/travel/$id'
+      path: '/$id'
+      fullPath: '/account/travel/$id'
+      preLoaderRoute: typeof AccountTravelIdRouteImport
+      parentRoute: typeof AccountTravelRoute
+    }
     '/account/tour/$id': {
       id: '/account/tour/$id'
       path: '/tour/$id'
@@ -4663,12 +4701,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AccountTravelRouteChildren {
+  AccountTravelIdRoute: typeof AccountTravelIdRoute
+}
+
+const AccountTravelRouteChildren: AccountTravelRouteChildren = {
+  AccountTravelIdRoute: AccountTravelIdRoute,
+}
+
+const AccountTravelRouteWithChildren = AccountTravelRoute._addFileChildren(
+  AccountTravelRouteChildren,
+)
+
 interface AccountRouteChildren {
   AccountBookingsRoute: typeof AccountBookingsRoute
   AccountDocumentsRoute: typeof AccountDocumentsRoute
   AccountNotificationsRoute: typeof AccountNotificationsRoute
   AccountSavedRoute: typeof AccountSavedRoute
   AccountToursRoute: typeof AccountToursRoute
+  AccountTravelRoute: typeof AccountTravelRouteWithChildren
   AccountTravellersRoute: typeof AccountTravellersRoute
   AccountTripPlannerRoute: typeof AccountTripPlannerRoute
   AccountTripsRoute: typeof AccountTripsRoute
@@ -4683,6 +4734,7 @@ const AccountRouteChildren: AccountRouteChildren = {
   AccountNotificationsRoute: AccountNotificationsRoute,
   AccountSavedRoute: AccountSavedRoute,
   AccountToursRoute: AccountToursRoute,
+  AccountTravelRoute: AccountTravelRouteWithChildren,
   AccountTravellersRoute: AccountTravellersRoute,
   AccountTripPlannerRoute: AccountTripPlannerRoute,
   AccountTripsRoute: AccountTripsRoute,
