@@ -1,0 +1,1 @@
+- Payment fees: one global policy (src/lib/payments/fee-policy.ts + payment_fee_policies, admin /admin/payment-fees) — default Worldway absorbs; wallet never carries a fee; fees are never estimated, only Razorpay's reported fee/tax is recorded on each verified payment — keeps customer totals honest.
