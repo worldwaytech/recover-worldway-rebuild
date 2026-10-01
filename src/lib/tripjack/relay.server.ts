@@ -15,7 +15,8 @@ import type { TripjackSuite } from "./config";
 export type RelayTarget = { url: string; headers: Record<string, string> };
 
 const enc = new TextEncoder();
-const hex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+const hex = (b: ArrayBuffer) =>
+  [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 
 export function relayConfigured(): boolean {
   return Boolean(process.env["TRIPJACK_RELAY_URL"] && process.env["TRIPJACK_RELAY_SECRET"]);
@@ -62,8 +63,20 @@ export async function signRelayRequest(
   body: string,
 ): Promise<string> {
   const bodyHash = hex(await crypto.subtle.digest("SHA-256", enc.encode(body)));
-  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return hex(await crypto.subtle.sign("HMAC", key, enc.encode(`${timestamp}\n${method}\n${pathWithQuery}\n${bodyHash}`)));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  return hex(
+    await crypto.subtle.sign(
+      "HMAC",
+      key,
+      enc.encode(`${timestamp}\n${method}\n${pathWithQuery}\n${bodyHash}`),
+    ),
+  );
 }
 
 /** Returns the relay URL + auth headers, or null when the relay is not configured. */
