@@ -2641,6 +2641,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_fee_policies: {
+        Row: {
+          created_at: string
+          id: string
+          method: string
+          mode: string
+          note: string | null
+          product: string
+          service_fee_percent: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method?: string
+          mode?: string
+          note?: string | null
+          product: string
+          service_fee_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method?: string
+          mode?: string
+          note?: string | null
+          product?: string
+          service_fee_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_minor: number
