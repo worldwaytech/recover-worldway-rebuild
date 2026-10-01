@@ -13,7 +13,7 @@ export type TravelIntent = {
   amountMinor: number;
   currency: string;
   priceChanged?: boolean;
-  product: "flight" | "hotel" | "bus" | "cruise";
+  product: "flight" | "hotel" | "bus" | "cruise" | "activity";
   /** False when the amount exceeds the single card transaction limit. */
   cardAllowed?: boolean;
   description: string;

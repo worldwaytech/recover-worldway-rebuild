@@ -290,6 +290,10 @@ function ActivityDetailPage() {
       setBookingError("Choose which option of this experience you want.");
       return;
     }
+    if (guideChoices.length && !languageGuide) {
+      setBookingError("Choose a guide language for this experience.");
+      return;
+    }
     if (live.available === false) {
       setBookingError("Those places are not available. Pick another date or party size.");
       return;
@@ -808,7 +812,7 @@ function ActivityDetailPage() {
                       onChange={(e) => setLanguageGuide(e.target.value)}
                       className="w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm"
                     >
-                      <option value="">No preference</option>
+                      <option value="">Select a guide language</option>
                       {guideChoices.map((g) => (
                         <option
                           key={`${g.type}-${g.language}`}
