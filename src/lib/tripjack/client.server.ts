@@ -60,6 +60,9 @@ const SENSITIVE_KEYS = new Set([
   "pan",
   "cardnumber",
   "cvv",
+  "agentid",
+  "agentemail",
+  "agentphone",
 ]);
 
 /** Deep-redacts credential and PII fields before anything is logged. */
