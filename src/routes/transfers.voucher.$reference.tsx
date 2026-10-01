@@ -81,7 +81,7 @@ function VoucherPage() {
             </header>
             <div className="rounded-md bg-muted p-3 text-sm">
               <p className="font-semibold">{v.payableStatement}</p>
-              <p>HBX reference: <strong>{v.hbxReference ?? v.supplierReference}</strong></p>
+              <p>{/* confidentiality-exempt: contractual */}HBX reference: <strong>{v.hbxReference ?? v.supplierReference}</strong></p>
               {v.supplierLegal ? <p>{v.supplierLegal}</p> : null}
             </div>
             {v.legs.map((l, i) => (
