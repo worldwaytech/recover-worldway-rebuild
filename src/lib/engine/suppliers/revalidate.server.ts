@@ -61,7 +61,7 @@ async function liveCheck(o: CanonicalOffer, hotelSearches?: Map<string, Promise<
       hotelSearches?.set(key, search);
     }
     const r = await search;
-    const hit = r.ok ? r.data?.hotels.find((x) => x.hotelCode === h.hotelCode) : undefined;
+    const hit = r.ok ? r.data?.hotels.find((x: { hotelCode: string }) => x.hotelCode === h.hotelCode) : undefined;
     return hit?.totalPrice ? { found: true, net: hit.totalPrice, currency: hit.currency } : { found: false, reason: "Hotel no longer available" };
   }
   if (o.kind === "cruise") {
