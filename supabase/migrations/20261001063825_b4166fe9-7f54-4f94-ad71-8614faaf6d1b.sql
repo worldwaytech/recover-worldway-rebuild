@@ -1,0 +1,2 @@
+ALTER TABLE public.travel_bookings DROP CONSTRAINT IF EXISTS travel_bookings_product_check;
+ALTER TABLE public.travel_bookings ADD CONSTRAINT travel_bookings_product_check CHECK (product = ANY (ARRAY['flight','hotel','bus','cruise']));
