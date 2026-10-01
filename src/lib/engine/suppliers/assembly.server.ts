@@ -174,31 +174,39 @@ export async function assembleLiveProposals(req: TripRequirements, opts: Assembl
   let liveHotels = 0;
   // FIT hotels for the stay — skipped when the selected tour's own accommodation covers the trip (no duplicates);
   // nights before/after such a tour are offered only as OPTIONAL stays below.
-  if (!tourCoversStay) for (const ci of checkIns) {
-    if (departureDate <= ci) continue;
-    const h = await searchHotelsCanonical(destIata, ci, departureDate, req.adults, currency);
-    const { contractedStaysFor, mergeInventory } = await import("../intelligence/intel.server");
-    const contracted = await contractedStaysFor(destIata, ci, departureDate, currency);
+  // Independent live searches run concurrently (same inputs, same order of results).
+  const { contractedStaysFor, mergeInventory } = await import("../intelligence/intel.server");
+  const stayResults = tourCoversStay ? [] : await Promise.all(
+    checkIns.filter((ci) => departureDate > ci).map(async (ci) => {
+      const [h, contracted] = await Promise.all([
+        searchHotelsCanonical(destIata, ci, departureDate, req.adults, currency),
+        contractedStaysFor(destIata, ci, departureDate, currency),
+      ]);
+      return { ci, h, contracted };
+    }),
+  );
+  for (const { ci, h, contracted } of stayResults) {
     stays.set(ci, contracted.length ? mergeInventory(contracted, h.offers).map((x) => x.offer) : h.offers);
     liveHotels += h.liveCount;
     if (h.error) hotelErrors.push(h.error);
   }
   const wantsCruise = req.interests.some((i) => CRUISE_INTEREST.test(i));
-  const cruise = wantsCruise ? await searchCruisesCanonical(destIata, arrivalDate ?? req.departFrom, departureDate, currency).catch(() => ({ offers: [], unscheduled: 0, error: "Cruise search unavailable" })) : null;
-  const activities = await searchActivitiesOnRequest(dest, arrivalDate ?? req.departFrom, departureDate, currency).catch(() => []);
-
-  // Optional pre/post-tour hotels (separate; never added to proposals, itinerary, booking or totals).
-  const optionalStays: OptionalTourStay[] = [];
   const around = selected ? (tourCoversStay ? [selected] : []) : tours.filter((x) => x.accommodationIncluded).slice(0, 2);
-  for (const t of around) {
-    if (!arrivalDate) break;
+  const windows = arrivalDate ? around.flatMap((t) => {
     const w2 = stayPlanAroundTour({ arrivalDate, departureDate, tourStart: t.startDate!, tourEnd: t.endDate!, accommodationIncluded: true });
-    for (const [position, w] of [["pre-tour", w2.optionalPre], ["post-tour", w2.optionalPost]] as const) {
-      if (!w) continue;
-      const h = await searchHotelsCanonical(destIata, w.checkin, w.checkout, req.adults, currency).catch(() => ({ offers: [] as CanonicalOffer[] }));
-      if (h.offers.length) optionalStays.push({ tourRef: t.ref, tourTitle: t.title, position, checkin: w.checkin, checkout: w.checkout, offers: h.offers.slice(0, 3), optional: true });
-    }
-  }
+    return ([["pre-tour", w2.optionalPre], ["post-tour", w2.optionalPost]] as const).flatMap(([position, w]) => (w ? [{ t, position, w }] : []));
+  }) : [];
+  const [cruise, activities, optionalResults] = await Promise.all([
+    wantsCruise ? searchCruisesCanonical(destIata, arrivalDate ?? req.departFrom, departureDate, currency).catch(() => ({ offers: [], unscheduled: 0, error: "Cruise search unavailable" })) : Promise.resolve(null),
+    searchActivitiesOnRequest(dest, arrivalDate ?? req.departFrom, departureDate, currency).catch(() => []),
+    // Optional pre/post-tour hotels (separate; never added to proposals, itinerary, booking or totals).
+    Promise.all(windows.map(({ w }) => searchHotelsCanonical(destIata, w.checkin, w.checkout, req.adults, currency).catch(() => ({ offers: [] as CanonicalOffer[] })))),
+  ]);
+  const optionalStays: OptionalTourStay[] = [];
+  windows.forEach(({ t, position, w }, i) => {
+    const h = optionalResults[i]!;
+    if (h.offers.length) optionalStays.push({ tourRef: t.ref, tourTitle: t.title, position, checkin: w.checkin, checkout: w.checkout, offers: h.offers.slice(0, 3), optional: true });
+  });
   const extra: OnRequestItem[] = [
     ...activities,
     ...(cruise && cruise.unscheduled ? [{ kind: "cruise", title: `${cruise.unscheduled} live voyage(s) in your window`, reason: "Embark/disembark times not published for scheduling; confirmed on request.", indicativeFrom: null, ref: "cruise" }] : []),
