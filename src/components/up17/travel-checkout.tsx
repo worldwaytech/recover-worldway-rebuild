@@ -12,7 +12,9 @@ export type TravelIntent = {
   amountMinor: number;
   currency: string;
   priceChanged?: boolean;
-  product: "flight" | "hotel" | "bus";
+  product: "flight" | "hotel" | "bus" | "cruise";
+  /** False when the amount exceeds the single card transaction limit. */
+  cardAllowed?: boolean;
   description: string;
   email?: string;
   phone?: string;
@@ -94,7 +96,7 @@ export function TravelCheckout({ intent }: { intent: TravelIntent }) {
         <Button onClick={byWallet} disabled={locked || !enough}>
           {busy ? "Booking…" : `Pay with Wallet`}
         </Button>
-        <Button variant="outline" onClick={byCard} disabled={locked}>
+        <Button variant="outline" onClick={byCard} disabled={locked || intent.cardAllowed === false}>
           {cardBusy ? "Opening payment…" : "Pay by card / UPI"}
         </Button>
       </div>
@@ -102,6 +104,9 @@ export function TravelCheckout({ intent }: { intent: TravelIntent }) {
         Wallet available: {fmtMinor(available, intent.currency)}
         {!enough ? <> · <Link to="/wallet" className="underline">Top up</Link></> : null}
       </p>
+      {intent.cardAllowed === false ? (
+        <p className="text-xs text-muted-foreground">This amount is above the single card payment limit. Top up your Worldway Wallet by card/UPI, then pay from the wallet.</p>
+      ) : null}
       {error || cardError ? <p className="text-xs text-destructive">{error ?? cardError}</p> : null}
       <p className="text-[0.7rem] text-muted-foreground">Your booking is sent once only, after payment. It shows as confirmed only when it is confirmed.</p>
     </div>

@@ -10,7 +10,7 @@
  */
 import type { Up17HotelGuest, Up17BusPassenger, Up17Passenger, Up17SupplierBooking } from "./up17.server";
 
-export type TravelProduct = "flight" | "hotel" | "bus";
+export type TravelProduct = "flight" | "hotel" | "bus" | "cruise";
 
 const ZERO_DECIMAL = new Set(["JPY", "KRW", "VND", "CLP", "ISK"]);
 export const toMinor = (amount: number, currency: string) =>
@@ -47,7 +47,7 @@ export type FlightPayload = {
   searchTokenId: string;
   passengers: Up17Passenger[];
 };
-export type SupplierPayload = HotelPayload | BusPayload | FlightPayload;
+export type SupplierPayload = HotelPayload | BusPayload | FlightPayload | import("@/lib/crystal/deposit.server").CruisePayload;
 
 export type TravelBookingRow = {
   id: string;
@@ -223,6 +223,10 @@ export function classifyOutcome(res: { ok: boolean; status: number; error?: stri
 }
 
 async function callSupplier(p: SupplierPayload) {
+  if (p.kind === "cruise") {
+    const { bookCrystalOption } = await import("@/lib/crystal/deposit.server");
+    return bookCrystalOption(p);
+  }
   const s = await import("./up17.server");
   if (p.kind === "hotel") return s.up17HotelBook(p);
   if (p.kind === "bus") return s.up17BusBook(p);

@@ -59,11 +59,35 @@ export const confirmCrystalReservation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => confirmInputSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { confirmCrystalBooking, recordCancellationPolicyAcceptance } = await import(
-      "./booking.server"
-    );
-    await recordCancellationPolicyAcceptance(context.supabase, data.bookingId, data.policyVersion);
-    return confirmCrystalBooking(context.supabase, data.bookingId, data.idempotencyKey);
+    // Online reservations are only sent to Crystal after a verified deposit
+    // payment (prepareCrystalDeposit → shared paid-booking engine). This
+    // endpoint can no longer create an unpaid supplier booking.
+    const { retrieveCrystalBooking } = await import("./booking.server");
+    void data.idempotencyKey;
+    const { booking } = await retrieveCrystalBooking(context.supabase, data.bookingId);
+    return {
+      booking,
+      confirmed: booking.status === "confirmed",
+      message: "Pay the deposit to send your reservation to Crystal.",
+    };
+  });
+
+/** Live FX-locked INR deposit intent for a held Crystal suite. */
+export const prepareCrystalDeposit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ bookingId: z.string().uuid(), policyVersion: z.string().trim().min(1).max(80) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { prepareCruiseDeposit } = await import("./deposit.server");
+    try {
+      return await prepareCruiseDeposit(context.supabase, context.userId, {
+        crystalBookingId: data.bookingId,
+        policyVersion: data.policyVersion,
+      });
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message.slice(0, 200) : "Could not prepare the deposit." };
+    }
   });
 
 export const getCrystalBookingDetail = createServerFn({ method: "POST" })

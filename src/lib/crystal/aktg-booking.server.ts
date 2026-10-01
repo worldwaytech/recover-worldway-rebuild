@@ -337,7 +337,10 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
   let lastStatus: number | undefined;
   let lastDetail = "";
 
-  while (attempts < MAX_ATTEMPTS) {
+  // Writes (hold, option, cancel…) are sent exactly once: a timeout or 5xx on a
+  // write is an uncertain outcome for staff to reconcile, never an auto-retry.
+  const maxAttempts = method === "GET" ? MAX_ATTEMPTS : 1;
+  while (attempts < maxAttempts) {
     attempts += 1;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -378,7 +381,7 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
     } finally {
       clearTimeout(timer);
     }
-    if (attempts < MAX_ATTEMPTS) await new Promise((r) => setTimeout(r, 400 * attempts));
+    if (attempts < maxAttempts) await new Promise((r) => setTimeout(r, 400 * attempts));
   }
 
   audit({
@@ -391,7 +394,15 @@ export async function bookingCall<T>(opts: CallOptions): Promise<T> {
     reference: opts.reference,
     detail: lastDetail,
   });
-  throw new Error(`Crystal booking ${opts.operation} failed: ${lastDetail}`);
+  throw new CrystalSupplierCallError(opts.operation, lastStatus ?? 0, `Crystal booking ${opts.operation} failed: ${lastDetail}`);
+}
+
+/** Supplier call failure with the HTTP status (0 = timeout/network). */
+export class CrystalSupplierCallError extends Error {
+  constructor(readonly operation: string, readonly status: number, message: string) {
+    super(message);
+    this.name = "CrystalSupplierCallError";
+  }
 }
 
 export interface SupplierBookingResult {
