@@ -250,7 +250,7 @@ export function bindLiveConnection(
   let task: AbortController | undefined;
   const pendingDelegations: Array<{
     event: ProviderEvent;
-    plan?: ReturnType<typeof planStudySchedule>;
+    plan?: ToolProgress;
   }> = [];
   let completedDelegation: (typeof pendingDelegations)[number] | undefined;
   const backendMessages: ModelMessage[] = [];
@@ -371,7 +371,7 @@ export function bindLiveConnection(
     restartTimer = setTimeout(() => void runDelegation(), 300);
   }
 
-  function deliverResult(delegationID: string, answer: string, plan?: ReturnType<typeof planStudySchedule>) {
+  function deliverResult(delegationID: string, answer: string, plan?: ToolProgress) {
     if (closing) return;
     if (gateway?.readyState !== 1) return stop();
     try {

@@ -39,13 +39,20 @@ const TOOLS: Record<string, { op: CommerceOp; description: string }> = {
   plan_trip: { op: "planTrip", description: "Build a live trip plan: flights out and back, hotels from the arrival date, optional tour selection (tour_ref from its tours list), optional stays, FX-converted totals." },
 };
 
-function commerceTools() {
+function commerceTools(onResult?: (name: string, ok: boolean) => void) {
   return Object.fromEntries(Object.entries(TOOLS).map(([name, t]) => [name, tool({
     description: t.description,
     inputSchema: CommerceSchemas[t.op] as any,
-    execute: async (input: unknown) => runCommerce(t.op, input),
+    execute: async (input: unknown) => {
+      try { const r = await runCommerce(t.op, input); onResult?.(name, true); return r; }
+      catch (e) { onResult?.(name, false); throw e; }
+    },
   })]));
 }
+
+/** Same read-only live commerce tools and rules for every Concierge channel (chat + voice). */
+export const conciergeTools = commerceTools;
+export const conciergeSystemPrompt = () => SYSTEM.replace("{TODAY}", new Date().toISOString().slice(0, 10));
 
 async function askBuiltin(message: string, history: ConciergeTurn[]): Promise<string> {
   const messages: ModelMessage[] = [
