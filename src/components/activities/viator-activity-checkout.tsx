@@ -128,7 +128,8 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(false);
-  const [, setFormLoaded] = useState(false);
+  const [formLoaded, setFormLoaded] = useState(false);
+  const submittingRef = useRef(false);
   const [session, setSession] = useState<{
     cartRef: string;
     accessToken: string;
@@ -306,6 +307,8 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     })();
     return () => {
       disposed = true;
+      setFormLoaded(false);
+      setFormReady(false);
       handlerRef.current?.unload?.();
       handlerRef.current = null;
     };
@@ -448,6 +451,8 @@ export function ViatorActivityCheckout(props: ActivityCheckoutProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment was not completed.");
       setPhase("paying");
+    } finally {
+      submittingRef.current = false;
     }
   }
 
