@@ -6,7 +6,7 @@ mock.module("@/lib/up17/booking.server", () => ({
 }));
 test("sandbox app-level", async () => {
   const { prepareViatorPaidBooking, bookViatorActivity, activityVoucherSummary } = await import("@/lib/viator/paid-booking.server");
-  const base = { productCode: "5516ST5", productTitle: "Sandbox test", travelDate: "2026-11-16", currency: "USD", paxMix: [{ ageBand: "ADULT", count: 2 }], productOptionCode: "TG2",
+  const base = { productCode: "5516ST5", productTitle: "Sandbox test", travelDate: "2026-11-15", currency: "USD", paxMix: [{ ageBand: "ADULT", count: 2 }], productOptionCode: "TG2",
     booker: { firstName: "Sandbox", lastName: "Tester", email: "worldwaytravelsgroup@gmail.com", phone: "+919999999999" },
     travellers: [{ firstName: "Sandbox", lastName: "Tester" }, { firstName: "Second", lastName: "Tester" }],
     bookingQuestionAnswers: [{ question: "WEIGHT", answer: "70", travelerNum: 1, unit: "kg" }, { question: "WEIGHT", answer: "72", travelerNum: 2, unit: "kg" }] };
