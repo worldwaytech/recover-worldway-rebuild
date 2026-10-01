@@ -81,6 +81,10 @@ export const Route = createFileRoute("/destinations/$region/$country/$destinatio
   component: DestinationPage,
 });
 
+function MissingError() {
+  return <Missing />;
+}
+
 function Missing() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-24 text-center">

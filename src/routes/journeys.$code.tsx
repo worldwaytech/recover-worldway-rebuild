@@ -61,6 +61,10 @@ export const Route = createFileRoute("/journeys/$code")({
   component: JourneyDetail,
 });
 
+function JourneyError() {
+  return <JourneyNotFound />;
+}
+
 function JourneyNotFound() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-24 text-center">
