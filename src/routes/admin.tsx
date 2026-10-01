@@ -65,6 +65,7 @@ const NAV: Nav[] = [
     ["/admin/journeys", "Journey console", Network],
     ["/admin/pricing", "Pricing & FX", CreditCard],
     ["/admin/travel-dna", "Travel DNA & AI", BadgeCheck],
+    ["/admin/intelligence", "Trip intelligence", Network],
   ]),
   ...G("API & Registry", [
     ["/admin/api", "API Management", KeyRound],
