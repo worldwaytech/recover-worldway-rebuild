@@ -189,7 +189,8 @@ export const getTourBookingGates = createServerFn({ method: "POST" })
     const cert = await certificationStatus();
     const kindGates = (k: "per_person" | "room") => bookingGates({ flagEnabled: tourBookingsEnabled(), contractComplete: contractComplete(countries), verifiedStaffBooking: cert[k].certified, certified: cert[k].certified });
     return {
-      gates: [...kindGates("per_person").map((g) => ({ ...g, gate: `Per-person tours · ${g.gate}` })), ...kindGates("room").map((g) => ({ ...g, gate: `Room-priced tours · ${g.gate}` }))],
+      gates: kindGates("per_person").filter((g) => g.kind === "live"),
+      evidenceStatus: (["per_person", "room"] as const).map((k) => ({ kind: k === "room" ? "Room-priced tours" : "Per-person tours", verified: cert[k].certified, at: cert[k].at })),
       certification: cert,
       evidence: { ...CONTRACT_EVIDENCE, partnerCountries: countries.length }, unverified: Object.values(UNVERIFIED),
     };

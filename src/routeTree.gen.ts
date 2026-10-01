@@ -217,6 +217,7 @@ import { Route as ApiPublicEgressIpRouteImport } from './routes/api/public/egres
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 import { Route as ApiPublicSupplierImageRouteImport } from './routes/api/public/supplier-image'
 import { Route as ApiPublicToursWebhookRouteImport } from './routes/api/public/tours-webhook'
+import { Route as ApiV1OpenapiDotjsonRouteImport } from './routes/api/v1/openapi[.]json'
 import { Route as BookKindSlugRouteImport } from './routes/book.$kind.$slug'
 import { Route as CrystalCruisesBookCodeRouteImport } from './routes/crystal-cruises.book.$code'
 import { Route as CrystalCruisesDestinationsIndexRouteImport } from './routes/crystal-cruises.destinations.index'
@@ -244,6 +245,7 @@ import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/
 import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/public/hooks/integration-sync'
 import { Route as ApiPublicHooksTourCatalogueSyncRouteImport } from './routes/api/public/hooks/tour-catalogue-sync'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
+import { Route as ApiV1CommerceOpRouteImport } from './routes/api/v1/commerce.$op'
 import { Route as AuthV1OauthAuthorizeRouteImport } from './routes/auth_.v1.oauth.authorize'
 import { Route as AuthV1OauthTokenRouteImport } from './routes/auth_.v1.oauth.token'
 import { Route as DestinationsRegionCountryIndexRouteImport } from './routes/destinations.$region.$country.index'
@@ -1300,6 +1302,11 @@ const ApiPublicToursWebhookRoute = ApiPublicToursWebhookRouteImport.update({
   path: '/api/public/tours-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1OpenapiDotjsonRoute = ApiV1OpenapiDotjsonRouteImport.update({
+  id: '/api/v1/openapi.json',
+  path: '/api/v1/openapi.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookKindSlugRoute = BookKindSlugRouteImport.update({
   id: '/book/$kind/$slug',
   path: '/book/$kind/$slug',
@@ -1449,6 +1456,11 @@ const ApiPublicPartnerFeedPartnerIdRoute =
     path: '/api/public/partner-feed/$partnerId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiV1CommerceOpRoute = ApiV1CommerceOpRouteImport.update({
+  id: '/api/v1/commerce/$op',
+  path: '/api/v1/commerce/$op',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthV1OauthAuthorizeRoute = AuthV1OauthAuthorizeRouteImport.update({
   id: '/auth_/v1/oauth/authorize',
   path: '/auth/v1/oauth/authorize',
@@ -1708,6 +1720,7 @@ export interface FileRoutesByFullPath {
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
+  '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/book/$code': typeof CrystalCruisesBookCodeRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
@@ -1735,6 +1748,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
+  '/api/v1/commerce/$op': typeof ApiV1CommerceOpRoute
   '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
@@ -1925,6 +1939,7 @@ export interface FileRoutesByTo {
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
+  '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/book/$code': typeof CrystalCruisesBookCodeRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
@@ -1951,6 +1966,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
+  '/api/v1/commerce/$op': typeof ApiV1CommerceOpRoute
   '/auth/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
@@ -2171,6 +2187,7 @@ export interface FileRoutesById {
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/api/public/supplier-image': typeof ApiPublicSupplierImageRoute
   '/api/public/tours-webhook': typeof ApiPublicToursWebhookRoute
+  '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/book/$kind/$slug': typeof BookKindSlugRoute
   '/crystal-cruises/book/$code': typeof CrystalCruisesBookCodeRoute
   '/crystal-cruises/destinations/$slug': typeof CrystalCruisesDestinationsSlugRoute
@@ -2198,6 +2215,7 @@ export interface FileRoutesById {
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
   '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
+  '/api/v1/commerce/$op': typeof ApiV1CommerceOpRoute
   '/auth_/v1/oauth/authorize': typeof AuthV1OauthAuthorizeRoute
   '/auth_/v1/oauth/token': typeof AuthV1OauthTokenRoute
   '/destinations/$region/$country/$destination': typeof DestinationsRegionCountryDestinationRoute
@@ -2419,6 +2437,7 @@ export interface FileRouteTypes {
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
+    | '/api/v1/openapi.json'
     | '/book/$kind/$slug'
     | '/crystal-cruises/book/$code'
     | '/crystal-cruises/destinations/$slug'
@@ -2446,6 +2465,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/integration-sync'
     | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
+    | '/api/v1/commerce/$op'
     | '/auth/v1/oauth/authorize'
     | '/auth/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
@@ -2636,6 +2656,7 @@ export interface FileRouteTypes {
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
+    | '/api/v1/openapi.json'
     | '/book/$kind/$slug'
     | '/crystal-cruises/book/$code'
     | '/crystal-cruises/destinations/$slug'
@@ -2662,6 +2683,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/integration-sync'
     | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
+    | '/api/v1/commerce/$op'
     | '/auth/v1/oauth/authorize'
     | '/auth/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
@@ -2881,6 +2903,7 @@ export interface FileRouteTypes {
     | '/api/public/razorpay-webhook'
     | '/api/public/supplier-image'
     | '/api/public/tours-webhook'
+    | '/api/v1/openapi.json'
     | '/book/$kind/$slug'
     | '/crystal-cruises/book/$code'
     | '/crystal-cruises/destinations/$slug'
@@ -2908,6 +2931,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/integration-sync'
     | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
+    | '/api/v1/commerce/$op'
     | '/auth_/v1/oauth/authorize'
     | '/auth_/v1/oauth/token'
     | '/destinations/$region/$country/$destination'
@@ -3002,6 +3026,7 @@ export interface RootRouteChildren {
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
   ApiPublicSupplierImageRoute: typeof ApiPublicSupplierImageRoute
   ApiPublicToursWebhookRoute: typeof ApiPublicToursWebhookRoute
+  ApiV1OpenapiDotjsonRoute: typeof ApiV1OpenapiDotjsonRoute
   BookKindSlugRoute: typeof BookKindSlugRoute
   MarketplaceGuideCountryRoute: typeof MarketplaceGuideCountryRoute
   MerchantBookingRefRoute: typeof MerchantBookingRefRoute
@@ -3017,6 +3042,7 @@ export interface RootRouteChildren {
   ApiPublicHooksIntegrationSyncRoute: typeof ApiPublicHooksIntegrationSyncRoute
   ApiPublicHooksTourCatalogueSyncRoute: typeof ApiPublicHooksTourCatalogueSyncRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
+  ApiV1CommerceOpRoute: typeof ApiV1CommerceOpRoute
   AuthV1OauthAuthorizeRoute: typeof AuthV1OauthAuthorizeRoute
   AuthV1OauthTokenRoute: typeof AuthV1OauthTokenRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -4484,6 +4510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicToursWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/openapi.json': {
+      id: '/api/v1/openapi.json'
+      path: '/api/v1/openapi.json'
+      fullPath: '/api/v1/openapi.json'
+      preLoaderRoute: typeof ApiV1OpenapiDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$kind/$slug': {
       id: '/book/$kind/$slug'
       path: '/book/$kind/$slug'
@@ -4671,6 +4704,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/partner-feed/$partnerId'
       fullPath: '/api/public/partner-feed/$partnerId'
       preLoaderRoute: typeof ApiPublicPartnerFeedPartnerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/commerce/$op': {
+      id: '/api/v1/commerce/$op'
+      path: '/api/v1/commerce/$op'
+      fullPath: '/api/v1/commerce/$op'
+      preLoaderRoute: typeof ApiV1CommerceOpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth_/v1/oauth/authorize': {
@@ -5403,6 +5443,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
   ApiPublicSupplierImageRoute: ApiPublicSupplierImageRoute,
   ApiPublicToursWebhookRoute: ApiPublicToursWebhookRoute,
+  ApiV1OpenapiDotjsonRoute: ApiV1OpenapiDotjsonRoute,
   BookKindSlugRoute: BookKindSlugRoute,
   MarketplaceGuideCountryRoute: MarketplaceGuideCountryRoute,
   MerchantBookingRefRoute: MerchantBookingRefRoute,
@@ -5420,6 +5461,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksIntegrationSyncRoute: ApiPublicHooksIntegrationSyncRoute,
   ApiPublicHooksTourCatalogueSyncRoute: ApiPublicHooksTourCatalogueSyncRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
+  ApiV1CommerceOpRoute: ApiV1CommerceOpRoute,
   AuthV1OauthAuthorizeRoute: AuthV1OauthAuthorizeRoute,
   AuthV1OauthTokenRoute: AuthV1OauthTokenRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

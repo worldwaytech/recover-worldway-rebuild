@@ -95,3 +95,52 @@ export const addPartnerMember = createServerFn({ method: "POST" })
     await audit("partner.member.add", { tenant: data.tenantId, user: prof.id, role: data.role });
     return { ok: true as const };
   });
+
+/** Rotate: mint a replacement key with the same label/scopes, then revoke the old one. Audited. */
+export const rotatePartnerKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ keyId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { db, audit } = await superAdmin(context);
+    const { data: old } = await db.from("partner_api_keys").select("id, tenant_id, label, scopes, expires_at, revoked_at").eq("id", data.keyId).maybeSingle();
+    if (!old || old.revoked_at) throw new Error("Key not found or already revoked");
+    const { mintKey } = await import("./partner-auth.server");
+    const k = mintKey();
+    const { data: row, error } = await db.from("partner_api_keys").insert({
+      tenant_id: old.tenant_id, label: old.label, key_prefix: k.prefix, key_hash: k.hash, scopes: old.scopes,
+      expires_at: old.expires_at ?? new Date(Date.now() + 365 * 86_400_000).toISOString(), created_by: context.userId,
+    }).select("id").single();
+    if (error) throw new Error("Could not rotate key");
+    await db.from("partner_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", old.id);
+    await audit("partner.key.rotate", { tenant: old.tenant_id, oldKey: old.id, newKey: row.id, prefix: k.prefix });
+    return { id: row.id as string, key: k.raw };
+  });
+
+export const setPartnerRateLimit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), rateLimitPerMinute: z.number().int().min(1).max(1000) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { db, audit } = await superAdmin(context);
+    await db.from("partner_tenants").update({ rate_limit_per_minute: data.rateLimitPerMinute }).eq("id", data.tenantId);
+    await audit("partner.rate_limit", data);
+    return { ok: true };
+  });
+
+/** Last 7 days of usage for one tenant, grouped by operation and status class. */
+export const getPartnerUsage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { db } = await superAdmin(context);
+    const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const { data: rows } = await db.from("partner_api_usage").select("operation, status, duration_ms, created_at").eq("tenant_id", data.tenantId).gte("created_at", since).order("created_at", { ascending: false }).limit(5000);
+    const byOp: Record<string, { calls: number; errors: number; totalMs: number }> = {};
+    for (const r of rows ?? []) {
+      const o = (byOp[r.operation] ??= { calls: 0, errors: 0, totalMs: 0 });
+      o.calls++; if (r.status >= 400) o.errors++; o.totalMs += r.duration_ms ?? 0;
+    }
+    return {
+      operations: Object.entries(byOp).map(([operation, v]) => ({ operation, calls: v.calls, errors: v.errors, avgMs: Math.round(v.totalMs / v.calls) })),
+      recent: (rows ?? []).slice(0, 25).map((r: any) => ({ at: r.created_at, operation: r.operation, status: r.status, ms: r.duration_ms })),
+    };
+  });
