@@ -51,6 +51,7 @@ export function getLiveConfig(): LiveConfig {
   const config: LiveConfig = {
     ...liveSettings,
     key: process.env["LOVABLE_API_KEY"] ?? "",
+    openingInstructions: "Start now in English. Greet the caller briefly as the Worldway Travels Group concierge and ask where and when they would like to travel, then listen.",
   };
   if ([config.baseURL, config.key, config.liveModel, config.backendModel].some((value) => !value)) {
     throw new Error("Missing Live relay configuration");
@@ -204,7 +205,7 @@ async function answerQuestion(
   if (failed || !completed) throw new Error("The backend response did not complete");
   const answer = await result.text;
   if (!answer.trim()) throw new Error("The backend response had no answer");
-  return answer;
+  return (await import("@/lib/confidentiality/redact")).redactText(answer);
 }
 
 function* commentaryChunks(content: string) {

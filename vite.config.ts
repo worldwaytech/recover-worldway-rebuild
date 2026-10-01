@@ -8,6 +8,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 import path from "path";
 import { loadEnv } from "vite";
+import { liveVoiceDev } from "./live-vite-plugin";
 
 // Server-only env for server routes (never added to the client bundle).
 Object.assign(process.env, loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), ""));
@@ -19,7 +20,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [mcpPlugin()],
+    plugins: [mcpPlugin(), liveVoiceDev()],
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
