@@ -262,10 +262,16 @@ export async function bookCab(
     throw new Error(error?.message ?? "Booking could not be created.");
   }
 
+  // TripJack requires agent identity on Booking; values are server-only secrets.
   const r = await tripjackCall<TripjackEnvelope<CabBookingResponseData>>(
     "cabs",
     "book",
-    input.request,
+    {
+      ...input.request,
+      agentId: process.env.TRIPJACK_AGENT_ID,
+      agentEmail: process.env.TRIPJACK_AGENT_EMAIL,
+      agentPhone: process.env.TRIPJACK_AGENT_PHONE,
+    },
   );
   const supplier = r.ok ? unwrap<CabBookingResponseData>(r.data) : undefined;
 
