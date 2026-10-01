@@ -36,7 +36,7 @@ function VoucherPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const b = q.data;
-  const v = b?.voucher;
+  const v = b?.contractualVoucher;
 
   async function onCancel() {
     if (!confirm("Cancel this transfer? Cancellation charges may apply per the policy shown.")) return;
@@ -79,7 +79,11 @@ function VoucherPage() {
                 <div className="mt-2 text-lg font-semibold">{money(v.totalAmount, v.currency)}</div>
               </div>
             </header>
-            <p className="rounded-md bg-muted p-3 text-sm font-medium">{v.payableStatement}</p>
+            <div className="rounded-md bg-muted p-3 text-sm">
+              <p className="font-semibold">{v.payableStatement}</p>
+              <p>HBX reference: <strong>{v.hbxReference ?? v.supplierReference}</strong></p>
+              {v.supplierLegal ? <p>{v.supplierLegal}</p> : null}
+            </div>
             {v.legs.map((l, i) => (
               <section key={i} className="space-y-2 border-t border-border/50 pt-4 text-sm">
                 <h2 className="text-base font-semibold">{l.serviceName}</h2>
@@ -93,9 +97,9 @@ function VoucherPage() {
                   {l.transport ? <div>Travel details: {l.transport}</div> : null}
                   {l.pickupAddress ? <div>Pickup address: {l.pickupAddress}</div> : null}
                 </div>
-                {l.checkPickup?.mustCheckPickupTime ? (
+                {l.checkPickup?.mustCheckPickupTime || l.checkPickup?.url ? (
                   <p className="rounded-md border border-primary/50 p-2">
-                    You must confirm your pickup time at <strong>{l.checkPickup.url}</strong>{" "}
+                    {l.checkPickup.mustCheckPickupTime ? "You must confirm your pickup time" : "Check your pickup time"} at <strong>{l.checkPickup.url || "www.checkpickup.com"}</strong>{" "}
                     {l.checkPickup.hoursBeforeConsulting ? `${l.checkPickup.hoursBeforeConsulting} hours before your service` : "before your service"}.
                   </p>
                 ) : null}

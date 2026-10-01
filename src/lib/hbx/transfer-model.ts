@@ -498,8 +498,12 @@ export interface TransferVoucherLeg {
 export interface TransferVoucher {
   worldwayReference: string;
   supplierReference: string;
+  /** HBX booking reference, shown on the voucher (contractual requirement). */
+  hbxReference: string;
   /** Mandatory HBX voucher wording (checklist 4.1). */
   payableStatement: string;
+  /** Supplier legal entity + VAT as returned by HBX, if any. */
+  supplierLegal: string | null;
   status: string;
   confirmationDate: string | null;
   leadPassenger: string;
@@ -529,11 +533,13 @@ export function buildTransferVoucher(
   issuedAt = new Date().toISOString(),
 ): TransferVoucher | null {
   if (booking.status !== "CONFIRMED") return null;
-  const supplier = booking.supplierName ?? "our local transfer partner";
+  const legal = [booking.supplierName, booking.supplierVat ? `VAT ${booking.supplierVat}` : null].filter(Boolean).join(" · ");
   return {
     worldwayReference,
     supplierReference: booking.reference,
-    payableStatement: `Bookable and payable by ${supplier}${booking.supplierVat ? ` (VAT ${booking.supplierVat})` : ""}. Reference: ${booking.reference}.`,
+    hbxReference: booking.reference,
+    payableStatement: "Bookable and Payable by HOTELBEDS",
+    supplierLegal: legal || null,
     status: booking.status,
     confirmationDate: booking.creationDate,
     leadPassenger: `${booking.holder.name} ${booking.holder.surname}`.trim(),
@@ -545,7 +551,6 @@ export function buildTransferVoucher(
     issuedAt,
     legs: booking.transfers.map((t) => {
       const addr = [t.pickup.address, t.pickup.zip, t.pickup.town].filter(Boolean).join(", ");
-      const tr = t.transferDetails[0];
       return {
         serviceName: `${t.transferType === "PRIVATE" ? "Private" : t.transferType === "SHARED" ? "Shared" : t.transferType} ${t.vehicle.name} ${t.category.name} transfer — ${t.pickup.fromName ?? ""} to ${t.pickup.toName ?? ""}`.replace(/\s+/g, " ").trim(),
         direction: t.direction,
@@ -561,7 +566,9 @@ export function buildTransferVoucher(
         checkPickup: t.pickup.checkPickup,
         paxDistribution: paxDistribution(t.paxes),
         details: t.details,
-        transport: tr ? `${tr.type} ${tr.code}${tr.companyName ? ` (${tr.companyName})` : ""}` : null,
+        transport: t.transferDetails.length
+          ? t.transferDetails.map((tr) => `${tr.type} ${tr.code}${tr.companyName ? ` (${tr.companyName})` : ""}${tr.direction ? ` · ${tr.direction}` : ""}`).join("; ")
+          : null,
         extras: t.extras,
         remarks: t.remarks.map((r) => r.description),
         cancellationPolicies: t.cancellationPolicies,

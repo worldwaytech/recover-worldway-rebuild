@@ -90,6 +90,10 @@ export async function sanitizeOutbound<T>(value: T, opt: SanitizeOptions = {}): 
       const obj = v as Record<string, unknown>;
       const out: Record<string, unknown> = {};
       for (const [k, val] of Object.entries(obj)) {
+        if (k === "contractualVoucher") {
+          out[k] = val; // confidentiality-exempt: HBX transfer voucher attribution (owner-only, contractual)
+          continue;
+        }
         if (isReviewAttribution(obj, k, val)) {
           out[k] = val; // confidentiality-exempt: contractual review attribution
           continue;
