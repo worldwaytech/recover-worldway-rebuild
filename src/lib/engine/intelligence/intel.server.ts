@@ -59,6 +59,26 @@ export async function contractedOffers(kind?: string): Promise<CanonicalOffer[]>
 
 export { mergeInventory };
 
+/**
+ * Contracted stays usable for one stay window: active, covering the dates, at the
+ * destination, and live-verified in the last 24h. They still pass the normal live
+ * revalidation before any proposal can be booked; a live duplicate always wins.
+ */
+export async function contractedStaysFor(place: string, checkin: string, checkout: string, currency: string): Promise<CanonicalOffer[]> {
+  try {
+    const sb = await admin();
+    const { data } = await sb.from("contracted_inventory").select("*").eq("active", true).eq("kind", "stay").ilike("place", place)
+      .lte("valid_from", checkin).gte("valid_to", checkout).gte("last_verified_at", new Date(Date.now() - 864e5).toISOString()).limit(20);
+    return (data ?? []).filter((r: any) => r.currency === currency).map((r: any) => ({
+      supplierKey: r.supplier_key, kind: "stay", externalId: r.external_id, title: r.title,
+      start: { at: `${checkin}T14:00:00Z`, timezone: r.timezone, place: r.place },
+      end: { at: `${checkout}T10:00:00Z`, timezone: r.timezone, place: r.place },
+      net: { amount: Number(r.net_amount), currency: r.currency }, refundable: r.refundable, quality: r.quality ?? undefined,
+      observedAt: r.last_verified_at,
+    })) as CanonicalOffer[];
+  } catch { return []; }
+}
+
 /** Scheduled recheck: bounded, rate-limited, never books or changes a journey. */
 export async function runScheduledRecheck(opts: { maxDecisions?: number; maxOffers?: number; minGapMin?: number } = {}) {
   const maxDecisions = opts.maxDecisions ?? 10, maxOffers = opts.maxOffers ?? 20, gap = opts.minGapMin ?? 30;

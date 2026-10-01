@@ -32,6 +32,7 @@ export async function assembleAndSave(userId: string, requirements: z.infer<type
     proposals: report.proposals.map((p) => ({ id: p.id, result: p.result, bookable: p.readiness.bookable })),
     registry: supplierRegistry(), learned: await intelSrv.loadLearning(), now: new Date().toISOString(),
     budget: requirements.budget?.currency === report.currency ? requirements.budget.amount : undefined,
+    marginFloorPercent: Number(process.env["INTEL_MARGIN_FLOOR_PERCENT"] ?? 100) || 100,
   });
   const svc = save ? await journeyServiceFor() : null;
   const proposals = [];
@@ -48,7 +49,7 @@ export async function assembleAndSave(userId: string, requirements: z.infer<type
       total: p.result.pricing?.total ?? null, currency: report.currency, explanation,
       components: p.result.graph.map((c) => ({ kind: c.kind, title: c.title, start: c.start, end: c.end, status: p.readiness.perComponent.find((x) => x.externalId === c.externalId)?.status ?? "LIVE" })),
       onRequest: p.onRequest, factors: p.result.factors,
-      intel: { label: pi.label, labelWhy: pi.labelWhy, confidence: pi.minConfidence, risks: pi.risks, channels: pi.channels.map((c) => ({ channel: c.channel, ready: c.ready, mode: c.mode })), needsRecheck: pi.recheckDue.length },
+      intel: { label: pi.label, labelWhy: pi.labelWhy, confidence: pi.minConfidence, risks: pi.risks, channels: pi.channels.map((c) => ({ channel: c.channel, ready: c.ready, mode: c.mode })), needsRecheck: pi.recheckDue.length, freshness: pi.recheckDue.length ? "needs recheck" : "live-checked", reasons: pi.evidence.flatMap((e) => e.reasons).filter((x, k, a) => a.indexOf(x) === k).slice(0, 4), withinBudget: pi.margin?.withinBudgetAtApproved ?? null },
     });
   }
   await intelSrv.persistDecisions(userId, decisions);

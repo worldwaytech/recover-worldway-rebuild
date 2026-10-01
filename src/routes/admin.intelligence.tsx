@@ -108,7 +108,7 @@ function ContractedPanel({ rows, onSaved, onVerify }: { rows: any[]; onSaved: ()
         <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={f.kind} onChange={set("kind")}>{["stay", "activity", "transfer", "flight", "cruise", "rail", "insurance"].map((k) => <option key={k}>{k}</option>)}</select>
         <Input placeholder="Partner product code" value={f.externalId} onChange={set("externalId")} required />
         <Input placeholder="Title" value={f.title} onChange={set("title")} required />
-        <Input placeholder="City / place" value={f.place} onChange={set("place")} required />
+        <Input placeholder="Destination code (e.g. JAI)" value={f.place} onChange={set("place")} required />
         <Input placeholder="Timezone" value={f.timezone} onChange={set("timezone")} required />
         <Input type="date" value={f.validFrom} onChange={set("validFrom")} required />
         <Input type="date" value={f.validTo} onChange={set("validTo")} required />

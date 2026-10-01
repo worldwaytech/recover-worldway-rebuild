@@ -22,6 +22,7 @@ import { Route as B2cRouteImport } from './routes/b2c'
 import { Route as BusesRouteImport } from './routes/buses'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ConciergeRouteImport } from './routes/concierge'
+import { Route as ConciergeVoiceRouteImport } from './routes/concierge-voice'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as CruisesRouteImport } from './routes/cruises'
@@ -321,6 +322,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const ConciergeRoute = ConciergeRouteImport.update({
   id: '/concierge',
   path: '/concierge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConciergeVoiceRoute = ConciergeVoiceRouteImport.update({
+  id: '/concierge-voice',
+  path: '/concierge-voice',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -1538,6 +1544,7 @@ export interface FileRoutesByFullPath {
   '/buses': typeof BusesRoute
   '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
+  '/concierge-voice': typeof ConciergeVoiceRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
@@ -1783,6 +1790,7 @@ export interface FileRoutesByTo {
   '/buses': typeof BusesRoute
   '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
+  '/concierge-voice': typeof ConciergeVoiceRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/executive': typeof ExecutiveRoute
@@ -2009,6 +2017,7 @@ export interface FileRoutesById {
   '/buses': typeof BusesRoute
   '/checkout': typeof CheckoutRoute
   '/concierge': typeof ConciergeRoute
+  '/concierge-voice': typeof ConciergeVoiceRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/cruises': typeof CruisesRouteWithChildren
@@ -2261,6 +2270,7 @@ export interface FileRouteTypes {
     | '/buses'
     | '/checkout'
     | '/concierge'
+    | '/concierge-voice'
     | '/contact'
     | '/cookies'
     | '/cruises'
@@ -2506,6 +2516,7 @@ export interface FileRouteTypes {
     | '/buses'
     | '/checkout'
     | '/concierge'
+    | '/concierge-voice'
     | '/contact'
     | '/cookies'
     | '/executive'
@@ -2731,6 +2742,7 @@ export interface FileRouteTypes {
     | '/buses'
     | '/checkout'
     | '/concierge'
+    | '/concierge-voice'
     | '/contact'
     | '/cookies'
     | '/cruises'
@@ -2982,6 +2994,7 @@ export interface RootRouteChildren {
   BusesRoute: typeof BusesRoute
   CheckoutRoute: typeof CheckoutRoute
   ConciergeRoute: typeof ConciergeRoute
+  ConciergeVoiceRoute: typeof ConciergeVoiceRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   CruisesRoute: typeof CruisesRouteWithChildren
@@ -3169,6 +3182,13 @@ declare module '@tanstack/react-router' {
       path: '/concierge'
       fullPath: '/concierge'
       preLoaderRoute: typeof ConciergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/concierge-voice': {
+      id: '/concierge-voice'
+      path: '/concierge-voice'
+      fullPath: '/concierge-voice'
+      preLoaderRoute: typeof ConciergeVoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -5415,6 +5435,7 @@ const rootRouteChildren: RootRouteChildren = {
   BusesRoute: BusesRoute,
   CheckoutRoute: CheckoutRoute,
   ConciergeRoute: ConciergeRoute,
+  ConciergeVoiceRoute: ConciergeVoiceRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   CruisesRoute: CruisesRouteWithChildren,

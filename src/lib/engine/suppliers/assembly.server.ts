@@ -177,7 +177,9 @@ export async function assembleLiveProposals(req: TripRequirements, opts: Assembl
   if (!tourCoversStay) for (const ci of checkIns) {
     if (departureDate <= ci) continue;
     const h = await searchHotelsCanonical(destIata, ci, departureDate, req.adults, currency);
-    stays.set(ci, h.offers);
+    const { contractedStaysFor, mergeInventory } = await import("../intelligence/intel.server");
+    const contracted = await contractedStaysFor(destIata, ci, departureDate, currency);
+    stays.set(ci, contracted.length ? mergeInventory(contracted, h.offers).map((x) => x.offer) : h.offers);
     liveHotels += h.liveCount;
     if (h.error) hotelErrors.push(h.error);
   }
