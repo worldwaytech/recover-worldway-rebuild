@@ -1,0 +1,1 @@
+- TripJack UAT calls go through the static-IP egress relay (src/lib/tripjack/relay.server.ts, HMAC-signed) only when TRIPJACK_RELAY_URL/SECRET are set; otherwise direct — transport-only, business logic untouched, because TripJack allow-lists one IPv4.
