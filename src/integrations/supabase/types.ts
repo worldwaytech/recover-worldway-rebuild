@@ -826,6 +826,72 @@ export type Database = {
         }
         Relationships: []
       }
+      contracted_inventory: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          external_id: string
+          id: string
+          kind: string
+          last_verified_at: string | null
+          net_amount: number
+          place: string
+          quality: number | null
+          refundable: boolean
+          supplier_key: string
+          timezone: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          valid_from: string
+          valid_to: string
+          verification_note: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency: string
+          external_id: string
+          id?: string
+          kind: string
+          last_verified_at?: string | null
+          net_amount: number
+          place: string
+          quality?: number | null
+          refundable?: boolean
+          supplier_key: string
+          timezone: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from: string
+          valid_to: string
+          verification_note?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          external_id?: string
+          id?: string
+          kind?: string
+          last_verified_at?: string | null
+          net_amount?: number
+          place?: string
+          quality?: number | null
+          refundable?: boolean
+          supplier_key?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string
+          valid_to?: string
+          verification_note?: string | null
+        }
+        Relationships: []
+      }
       cruisea_booking_documents: {
         Row: {
           booking_id: string
@@ -2130,6 +2196,129 @@ export type Database = {
             referencedColumns: ["provider_key"]
           },
         ]
+      }
+      intel_decisions: {
+        Row: {
+          bookable: boolean
+          channels: Json
+          constraints: Json
+          created_at: string
+          currency: string | null
+          evidence: Json
+          id: string
+          journey_id: string | null
+          label: string | null
+          last_rechecked_at: string | null
+          margin: Json | null
+          min_confidence: number | null
+          proposal_id: string
+          recheck_due: Json
+          recheck_status: string | null
+          risks: Json
+          score: number | null
+          total: number | null
+          user_id: string | null
+        }
+        Insert: {
+          bookable?: boolean
+          channels?: Json
+          constraints?: Json
+          created_at?: string
+          currency?: string | null
+          evidence?: Json
+          id?: string
+          journey_id?: string | null
+          label?: string | null
+          last_rechecked_at?: string | null
+          margin?: Json | null
+          min_confidence?: number | null
+          proposal_id: string
+          recheck_due?: Json
+          recheck_status?: string | null
+          risks?: Json
+          score?: number | null
+          total?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          bookable?: boolean
+          channels?: Json
+          constraints?: Json
+          created_at?: string
+          currency?: string | null
+          evidence?: Json
+          id?: string
+          journey_id?: string | null
+          label?: string | null
+          last_rechecked_at?: string | null
+          margin?: Json | null
+          min_confidence?: number | null
+          proposal_id?: string
+          recheck_due?: Json
+          recheck_status?: string | null
+          risks?: Json
+          score?: number | null
+          total?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      intel_outcomes: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          kind: string
+          ref: string | null
+          supplier_key: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          kind: string
+          ref?: string | null
+          supplier_key: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          kind?: string
+          ref?: string | null
+          supplier_key?: string
+        }
+        Relationships: []
+      }
+      intel_recheck_runs: {
+        Row: {
+          checked: number
+          failed: number
+          finished_at: string | null
+          id: string
+          note: string | null
+          skipped: number
+          started_at: string
+        }
+        Insert: {
+          checked?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          note?: string | null
+          skipped?: number
+          started_at?: string
+        }
+        Update: {
+          checked?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          note?: string | null
+          skipped?: number
+          started_at?: string
+        }
+        Relationships: []
       }
       journey_approvals: {
         Row: {

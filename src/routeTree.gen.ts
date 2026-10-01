@@ -96,6 +96,7 @@ import { Route as AdminCrmRouteImport } from './routes/admin.crm'
 import { Route as AdminCrystalRouteImport } from './routes/admin.crystal'
 import { Route as AdminHbxRouteImport } from './routes/admin.hbx'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
+import { Route as AdminIntelligenceRouteImport } from './routes/admin.intelligence'
 import { Route as AdminJourneysRouteImport } from './routes/admin.journeys'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
@@ -243,6 +244,7 @@ import { Route as ApiPublicHooksCruiseaHoldSweepRouteImport } from './routes/api
 import { Route as ApiPublicHooksCrystalHoldSweepRouteImport } from './routes/api/public/hooks/crystal-hold-sweep'
 import { Route as ApiPublicHooksHbxTransfersRefreshRouteImport } from './routes/api/public/hooks/hbx-transfers-refresh'
 import { Route as ApiPublicHooksIntegrationSyncRouteImport } from './routes/api/public/hooks/integration-sync'
+import { Route as ApiPublicHooksIntelRecheckRouteImport } from './routes/api/public/hooks/intel-recheck'
 import { Route as ApiPublicHooksTourCatalogueSyncRouteImport } from './routes/api/public/hooks/tour-catalogue-sync'
 import { Route as ApiPublicPartnerFeedPartnerIdRouteImport } from './routes/api/public/partner-feed.$partnerId'
 import { Route as ApiV1CommerceOpRouteImport } from './routes/api/v1/commerce.$op'
@@ -691,6 +693,11 @@ const AdminHbxRoute = AdminHbxRouteImport.update({
 const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIntelligenceRoute = AdminIntelligenceRouteImport.update({
+  id: '/intelligence',
+  path: '/intelligence',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminJourneysRoute = AdminJourneysRouteImport.update({
@@ -1444,6 +1451,12 @@ const ApiPublicHooksIntegrationSyncRoute =
     path: '/api/public/hooks/integration-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksIntelRecheckRoute =
+  ApiPublicHooksIntelRecheckRouteImport.update({
+    id: '/api/public/hooks/intel-recheck',
+    path: '/api/public/hooks/intel-recheck',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksTourCatalogueSyncRoute =
   ApiPublicHooksTourCatalogueSyncRouteImport.update({
     id: '/api/public/hooks/tour-catalogue-sync',
@@ -1596,6 +1609,7 @@ export interface FileRoutesByFullPath {
   '/admin/crystal': typeof AdminCrystalRoute
   '/admin/hbx': typeof AdminHbxRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/intelligence': typeof AdminIntelligenceRoute
   '/admin/journeys': typeof AdminJourneysRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
@@ -1746,6 +1760,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
+  '/api/public/hooks/intel-recheck': typeof ApiPublicHooksIntelRecheckRoute
   '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/api/v1/commerce/$op': typeof ApiV1CommerceOpRoute
@@ -1816,6 +1831,7 @@ export interface FileRoutesByTo {
   '/admin/crystal': typeof AdminCrystalRoute
   '/admin/hbx': typeof AdminHbxRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/intelligence': typeof AdminIntelligenceRoute
   '/admin/journeys': typeof AdminJourneysRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
@@ -1964,6 +1980,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
+  '/api/public/hooks/intel-recheck': typeof ApiPublicHooksIntelRecheckRoute
   '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/api/v1/commerce/$op': typeof ApiV1CommerceOpRoute
@@ -2063,6 +2080,7 @@ export interface FileRoutesById {
   '/admin/crystal': typeof AdminCrystalRoute
   '/admin/hbx': typeof AdminHbxRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/intelligence': typeof AdminIntelligenceRoute
   '/admin/journeys': typeof AdminJourneysRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
@@ -2213,6 +2231,7 @@ export interface FileRoutesById {
   '/api/public/hooks/crystal-hold-sweep': typeof ApiPublicHooksCrystalHoldSweepRoute
   '/api/public/hooks/hbx-transfers-refresh': typeof ApiPublicHooksHbxTransfersRefreshRoute
   '/api/public/hooks/integration-sync': typeof ApiPublicHooksIntegrationSyncRoute
+  '/api/public/hooks/intel-recheck': typeof ApiPublicHooksIntelRecheckRoute
   '/api/public/hooks/tour-catalogue-sync': typeof ApiPublicHooksTourCatalogueSyncRoute
   '/api/public/partner-feed/$partnerId': typeof ApiPublicPartnerFeedPartnerIdRoute
   '/api/v1/commerce/$op': typeof ApiV1CommerceOpRoute
@@ -2313,6 +2332,7 @@ export interface FileRouteTypes {
     | '/admin/crystal'
     | '/admin/hbx'
     | '/admin/integrations'
+    | '/admin/intelligence'
     | '/admin/journeys'
     | '/admin/kyc'
     | '/admin/operations'
@@ -2463,6 +2483,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
+    | '/api/public/hooks/intel-recheck'
     | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/api/v1/commerce/$op'
@@ -2533,6 +2554,7 @@ export interface FileRouteTypes {
     | '/admin/crystal'
     | '/admin/hbx'
     | '/admin/integrations'
+    | '/admin/intelligence'
     | '/admin/journeys'
     | '/admin/kyc'
     | '/admin/operations'
@@ -2681,6 +2703,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
+    | '/api/public/hooks/intel-recheck'
     | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/api/v1/commerce/$op'
@@ -2779,6 +2802,7 @@ export interface FileRouteTypes {
     | '/admin/crystal'
     | '/admin/hbx'
     | '/admin/integrations'
+    | '/admin/intelligence'
     | '/admin/journeys'
     | '/admin/kyc'
     | '/admin/operations'
@@ -2929,6 +2953,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/crystal-hold-sweep'
     | '/api/public/hooks/hbx-transfers-refresh'
     | '/api/public/hooks/integration-sync'
+    | '/api/public/hooks/intel-recheck'
     | '/api/public/hooks/tour-catalogue-sync'
     | '/api/public/partner-feed/$partnerId'
     | '/api/v1/commerce/$op'
@@ -3040,6 +3065,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCrystalHoldSweepRoute: typeof ApiPublicHooksCrystalHoldSweepRoute
   ApiPublicHooksHbxTransfersRefreshRoute: typeof ApiPublicHooksHbxTransfersRefreshRoute
   ApiPublicHooksIntegrationSyncRoute: typeof ApiPublicHooksIntegrationSyncRoute
+  ApiPublicHooksIntelRecheckRoute: typeof ApiPublicHooksIntelRecheckRoute
   ApiPublicHooksTourCatalogueSyncRoute: typeof ApiPublicHooksTourCatalogueSyncRoute
   ApiPublicPartnerFeedPartnerIdRoute: typeof ApiPublicPartnerFeedPartnerIdRoute
   ApiV1CommerceOpRoute: typeof ApiV1CommerceOpRoute
@@ -3661,6 +3687,13 @@ declare module '@tanstack/react-router' {
       path: '/integrations'
       fullPath: '/admin/integrations'
       preLoaderRoute: typeof AdminIntegrationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/intelligence': {
+      id: '/admin/intelligence'
+      path: '/intelligence'
+      fullPath: '/admin/intelligence'
+      preLoaderRoute: typeof AdminIntelligenceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/journeys': {
@@ -4692,6 +4725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksIntegrationSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/intel-recheck': {
+      id: '/api/public/hooks/intel-recheck'
+      path: '/api/public/hooks/intel-recheck'
+      fullPath: '/api/public/hooks/intel-recheck'
+      preLoaderRoute: typeof ApiPublicHooksIntelRecheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/tour-catalogue-sync': {
       id: '/api/public/hooks/tour-catalogue-sync'
       path: '/api/public/hooks/tour-catalogue-sync'
@@ -4840,6 +4880,7 @@ interface AdminRouteChildren {
   AdminCrystalRoute: typeof AdminCrystalRoute
   AdminHbxRoute: typeof AdminHbxRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
+  AdminIntelligenceRoute: typeof AdminIntelligenceRoute
   AdminJourneysRoute: typeof AdminJourneysRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
@@ -4888,6 +4929,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCrystalRoute: AdminCrystalRoute,
   AdminHbxRoute: AdminHbxRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
+  AdminIntelligenceRoute: AdminIntelligenceRoute,
   AdminJourneysRoute: AdminJourneysRoute,
   AdminKycRoute: AdminKycRoute,
   AdminOperationsRoute: AdminOperationsRoute,
@@ -5459,6 +5501,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksHbxTransfersRefreshRoute:
     ApiPublicHooksHbxTransfersRefreshRoute,
   ApiPublicHooksIntegrationSyncRoute: ApiPublicHooksIntegrationSyncRoute,
+  ApiPublicHooksIntelRecheckRoute: ApiPublicHooksIntelRecheckRoute,
   ApiPublicHooksTourCatalogueSyncRoute: ApiPublicHooksTourCatalogueSyncRoute,
   ApiPublicPartnerFeedPartnerIdRoute: ApiPublicPartnerFeedPartnerIdRoute,
   ApiV1CommerceOpRoute: ApiV1CommerceOpRoute,

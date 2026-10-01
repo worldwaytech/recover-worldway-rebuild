@@ -3,6 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normaliseConversation } from "@/lib/engine/intelligence/commerce";
 
 type Db = { from: (t: string) => any };
 
@@ -12,7 +13,15 @@ const Input = z.discriminatedUnion("type", [
   z.object({ type: z.literal("pdf"), base64: z.string().max(8_000_000) }),
   z.object({ type: z.literal("image"), base64: z.string().max(6_000_000), mediaType: z.enum(["image/png", "image/jpeg", "image/webp"]) }),
   z.object({ type: z.literal("url"), url: z.string().url().max(2000) }),
+  z.object({ type: z.literal("transcript"), source: z.enum(["whatsapp", "voice", "chat"]), text: z.string().min(1).max(60000) }),
 ]);
+
+/** WhatsApp exports / voice or chat transcripts → plain text for the existing request reader. */
+function normaliseInputs(inputs: z.infer<typeof Input>[]) {
+  return inputs.map((i) => i.type === "transcript"
+    ? { type: "text" as const, text: `${i.source === "whatsapp" ? "WhatsApp chat" : i.source === "voice" ? "Voice call transcript" : "Chat transcript"}:\n${normaliseConversation(i.text, 7800)}` }
+    : i);
+}
 
 async function loadDna(sb: Db) {
   const { data } = await sb.from("travel_dna").select("consent_preferences, consent_history, preferences").maybeSingle();
@@ -56,7 +65,7 @@ export const understandTripRequest = createServerFn({ method: "POST" })
     const context_ = `Today is ${new Date().toISOString().slice(0, 10)}.${refs.length ? ` Current journey component references: ${refs.join(", ")}.` : ""}`;
     let extracted;
     try {
-      extracted = await aiObject(intent.INTENT_SYSTEM, await toMessages(data.inputs as any, context_), intent.IntentSchema);
+      extracted = await aiObject(intent.INTENT_SYSTEM, await toMessages(normaliseInputs(data.inputs) as any, context_), intent.IntentSchema);
     } catch (e) {
       if (e instanceof AiUnavailableError) return { ok: false as const, error: e.message };
       throw e;
