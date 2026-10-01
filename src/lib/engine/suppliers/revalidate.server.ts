@@ -29,7 +29,7 @@ export function reconcile(o: CanonicalOffer, live: { found: boolean; net?: numbe
   };
 }
 
-async function liveCheck(o: CanonicalOffer): Promise<{ found: boolean; net?: number; currency?: string; reason?: string } | "not_live"> {
+async function liveCheck(o: CanonicalOffer, hotelSearches?: Map<string, Promise<any>>): Promise<{ found: boolean; net?: number; currency?: string; reason?: string } | "not_live"> {
   const reg = registrationFor(o.supplierKey);
   if (reg.readiness !== "production") return "not_live";
   if (o.kind === "flight") {
