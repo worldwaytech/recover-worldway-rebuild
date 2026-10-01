@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.checkout_fee_rules();

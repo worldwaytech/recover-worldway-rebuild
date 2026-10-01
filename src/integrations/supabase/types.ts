@@ -4409,15 +4409,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      checkout_fee_rules: {
-        Args: never
-        Returns: {
-          method: string
-          mode: string
-          product: string
-          service_fee_percent: number
-        }[]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
