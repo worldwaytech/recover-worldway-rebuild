@@ -47,7 +47,7 @@ export async function prepareCruiseDeposit(
 
   const { data: row } = await client
     .from("bookings")
-    .select("id, user_id, status, amount, currency, deposit_amount, supplier_reference, idempotency_key, details, title, reference, product_type")
+    .select("id, user_id, status, amount, currency, deposit_amount, supplier_reference, idempotency_key, details, title, reference, product_type, travel_date")
     .eq("id", input.crystalBookingId)
     .maybeSingle();
   if (!row || row.user_id !== userId || row.product_type !== "crystal_cruise") return { ok: false as const, error: "Reservation not found." };
@@ -100,7 +100,7 @@ export async function prepareCruiseDeposit(
       exchangeRate: currency === "INR" ? null : `1 ${currency} = ₹${rate.toFixed(4)}`,
       lead: [((d["guests"] as { firstName?: string; lastName?: string }[] | undefined)?.[0]?.firstName ?? ""), ((d["guests"] as { lastName?: string }[] | undefined)?.[0]?.lastName ?? "")].join(" ").trim() || null,
       guests: Number(d["guestCount"] ?? 0) || null,
-      departure: (d["departureDate"] as string | undefined) ?? null,
+      departure: (row.travel_date as string | null) ?? null,
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload: payload as any,
