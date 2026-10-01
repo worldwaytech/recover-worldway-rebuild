@@ -211,6 +211,9 @@ export async function confirmPayment(input: {
       status: payment.status,
       method: payment.method ?? null,
       amount: payment.amount,
+      // Actual gateway cost reported by Razorpay (absorbed by Worldway by default).
+      fee: typeof payment.fee === "number" ? payment.fee : null,
+      tax: typeof payment.tax === "number" ? payment.tax : null,
       currency: payment.currency,
     },
     verified: settled,

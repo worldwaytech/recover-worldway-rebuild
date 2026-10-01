@@ -19,6 +19,8 @@ export type TravelIntent = {
   email?: string;
   phone?: string;
   name?: string;
+  /** Present when a non-INR supplier price was converted at a locked live rate. */
+  fx?: { sourceCurrency: string; sourceAmount: number; rate: number } | null;
 };
 
 type Outcome = { confirmed: boolean; uncertain?: boolean; message: string | null; reference: string; bookingId: string };
@@ -91,6 +93,13 @@ export function TravelCheckout({ intent }: { intent: TravelIntent }) {
         <span className="text-muted-foreground">Total (live price)</span>
         <span className="font-serif text-2xl text-primary">{fmtMinor(intent.amountMinor, intent.currency)}</span>
       </div>
+      <ul className="space-y-1 border-y border-border py-2 text-xs">
+        {intent.fx ? (
+          <li className="flex justify-between gap-3"><span className="text-muted-foreground">Currency conversion</span><span className="text-right">{intent.fx.sourceCurrency} {intent.fx.sourceAmount.toLocaleString("en-IN")} at live rate {intent.fx.rate.toFixed(4)}, locked for this checkout</span></li>
+        ) : null}
+        <li className="flex justify-between gap-3"><span className="text-muted-foreground">Payment processing fee</span><span>₹0 · paid by Worldway</span></li>
+        <li className="flex justify-between gap-3 font-medium"><span>Total payable</span><span>{fmtMinor(intent.amountMinor, intent.currency)}</span></li>
+      </ul>
       {intent.priceChanged ? <p className="text-xs text-destructive">The price changed since your search. This is the current live price.</p> : null}
       <div className="grid gap-2 sm:grid-cols-2">
         <Button onClick={byWallet} disabled={locked || !enough}>

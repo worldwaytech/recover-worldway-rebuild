@@ -100,6 +100,7 @@ import { Route as AdminJourneysRouteImport } from './routes/admin.journeys'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
+import { Route as AdminPaymentFeesRouteImport } from './routes/admin.payment-fees'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
 import { Route as AdminRatehawkRouteImport } from './routes/admin.ratehawk'
@@ -708,6 +709,11 @@ const AdminOperationsRoute = AdminOperationsRouteImport.update({
 const AdminPartnersRoute = AdminPartnersRouteImport.update({
   id: '/partners',
   path: '/partners',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPaymentFeesRoute = AdminPaymentFeesRouteImport.update({
+  id: '/payment-fees',
+  path: '/payment-fees',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
@@ -1582,6 +1588,7 @@ export interface FileRoutesByFullPath {
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
+  '/admin/payment-fees': typeof AdminPaymentFeesRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/ratehawk': typeof AdminRatehawkRoute
@@ -1799,6 +1806,7 @@ export interface FileRoutesByTo {
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
+  '/admin/payment-fees': typeof AdminPaymentFeesRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/ratehawk': typeof AdminRatehawkRoute
@@ -2043,6 +2051,7 @@ export interface FileRoutesById {
   '/admin/kyc': typeof AdminKycRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/partners': typeof AdminPartnersRoute
+  '/admin/payment-fees': typeof AdminPaymentFeesRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/ratehawk': typeof AdminRatehawkRoute
@@ -2290,6 +2299,7 @@ export interface FileRouteTypes {
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
+    | '/admin/payment-fees'
     | '/admin/payments'
     | '/admin/pricing'
     | '/admin/ratehawk'
@@ -2507,6 +2517,7 @@ export interface FileRouteTypes {
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
+    | '/admin/payment-fees'
     | '/admin/payments'
     | '/admin/pricing'
     | '/admin/ratehawk'
@@ -2750,6 +2761,7 @@ export interface FileRouteTypes {
     | '/admin/kyc'
     | '/admin/operations'
     | '/admin/partners'
+    | '/admin/payment-fees'
     | '/admin/payments'
     | '/admin/pricing'
     | '/admin/ratehawk'
@@ -3651,6 +3663,13 @@ declare module '@tanstack/react-router' {
       path: '/partners'
       fullPath: '/admin/partners'
       preLoaderRoute: typeof AdminPartnersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/payment-fees': {
+      id: '/admin/payment-fees'
+      path: '/payment-fees'
+      fullPath: '/admin/payment-fees'
+      preLoaderRoute: typeof AdminPaymentFeesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/payments': {
@@ -4785,6 +4804,7 @@ interface AdminRouteChildren {
   AdminKycRoute: typeof AdminKycRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
+  AdminPaymentFeesRoute: typeof AdminPaymentFeesRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPricingRoute: typeof AdminPricingRoute
   AdminRatehawkRoute: typeof AdminRatehawkRoute
@@ -4832,6 +4852,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminKycRoute: AdminKycRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,
+  AdminPaymentFeesRoute: AdminPaymentFeesRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPricingRoute: AdminPricingRoute,
   AdminRatehawkRoute: AdminRatehawkRoute,
