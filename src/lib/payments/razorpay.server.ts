@@ -96,6 +96,9 @@ export type RazorpayPayment = {
   email?: string | null;
   contact?: string | null;
   captured?: boolean;
+  /** Gateway fee incl. tax, minor units — as reported by Razorpay. */
+  fee?: number | null;
+  tax?: number | null;
   error_description?: string | null;
 };
 

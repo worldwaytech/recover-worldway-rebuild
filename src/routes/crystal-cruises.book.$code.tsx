@@ -313,6 +313,7 @@ function BookPage() {
         depositSupplier: res.depositSupplier,
         supplierCurrency: res.supplierCurrency,
         fxRate: res.fxRate,
+        fx: res.supplierCurrency !== "INR" ? { sourceCurrency: res.supplierCurrency, sourceAmount: res.depositSupplier, rate: res.fxRate } : null,
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not prepare the deposit.");
