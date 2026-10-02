@@ -4,11 +4,29 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "bun.lock"
+      - "src/**"
+      - "app/**"
+      - "routes/**"
+      - "components/**"
+      - "Dockerfile"
+      - ".github/workflows/aws-container-build.yml"
   workflow_dispatch:
+
+concurrency:
+  group: worldway-aws-container-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,3 +40,5 @@ jobs:
           context: .
           push: false
           tags: worldwaytravelsgroup:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
