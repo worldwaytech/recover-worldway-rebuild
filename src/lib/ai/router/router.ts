@@ -4,6 +4,7 @@ import { MODELS, POLICIES, hasCapabilities, model, providerConfigured } from "./
 import { health as defaultHealth, type HealthBook } from "./health";
 import { classifyStatus, isRetryable, type FailureKind, type ModelSpec, type RouteDecision, type TaskKind } from "./types";
 import { emit, newCorrelationId } from "./telemetry";
+import { allowsAiCostTier, maxAiCostTier } from "./cost-policy";
 
 export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
@@ -28,6 +29,7 @@ export function route(task: TaskKind, deps: RouterDeps = {}, opts: { exclude?: s
     const why = opts.exclude?.includes(m.id) ? "already_failed"
       : !m.enabled ? "disabled"
       : !hasCapabilities(m, required) ? "missing_capability"
+      : !allowsAiCostTier(m.costTier, env) ? "cost_ceiling"
       : !providerConfigured(m.provider, env) ? "not_configured"
       : h.isOpen(m.id) ? "circuit_open"
       : h.overBudget(m.id, m.rpm) ? "over_budget" : null;
@@ -81,7 +83,7 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
 export function routerStatus(deps: RouterDeps = {}) {
   const h = deps.health ?? defaultHealth;
   const env = deps.env ?? process.env;
-  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
+  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, maxCostTier: maxAiCostTier(env), allowedByCostCeiling: allowsAiCostTier(m.costTier, env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
 }
 
 /** Human-readable routing explanation (admin/debug). */
