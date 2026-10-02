@@ -74,6 +74,6 @@ describe("Worldway travel agent context", () => {
       precedence: "current_request_over_memory" as const,
     };
     expect(applyTravelMemoryDefaults({ pace: "active" }, context).pace).toBe("active");
-    expect(applyTravelMemoryDefaults({}, context).luxuryLevel).toBe(5);
+    expect(applyTravelMemoryDefaults({} as Record<string, any>, context).luxuryLevel).toBe(5);
   });
 });
