@@ -1,0 +1,18 @@
+import { describe, expect, it } from "vitest";
+import { allowsAiCostTier, maxAiCostTier } from "../cost-policy";
+
+describe("AI cost policy", () => {
+  it("defaults to the current tier ceiling", () => {
+    expect(maxAiCostTier({})).toBe(3);
+    expect(allowsAiCostTier(3, {})).toBe(true);
+    expect(allowsAiCostTier(4, {})).toBe(false);
+  });
+
+  it("honors a configured ceiling and clamps invalid values", () => {
+    expect(maxAiCostTier({ WORLDWAY_AI_MAX_COST_TIER: "2" })).toBe(2);
+    expect(allowsAiCostTier(2, { WORLDWAY_AI_MAX_COST_TIER: "2" })).toBe(true);
+    expect(allowsAiCostTier(3, { WORLDWAY_AI_MAX_COST_TIER: "2" })).toBe(false);
+    expect(maxAiCostTier({ WORLDWAY_AI_MAX_COST_TIER: "99" })).toBe(5);
+    expect(maxAiCostTier({ WORLDWAY_AI_MAX_COST_TIER: "invalid" })).toBe(3);
+  });
+});
