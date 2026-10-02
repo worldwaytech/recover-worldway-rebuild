@@ -5,6 +5,7 @@ import type { z } from "zod";
 import { lovableProvider, ProviderNotConfiguredError } from "./router/adapters.server";
 import { DEFAULT_CHAT_MODEL } from "./router/registry";
 import { withRoute } from "./router/router";
+import { withInFlightDedupe } from "./router/request-dedupe";
 import { installTraceStore } from "./router/trace-store.server";
 import type { TaskKind } from "./router/types";
 
@@ -50,10 +51,12 @@ export async function aiObject<T>(system: string, messages: ModelMessage[], sche
 
 export async function aiText(system: string, messages: ModelMessage[], task: TaskKind = "explanation"): Promise<string> {
   try {
-    return await withRoute(task, async (m) => {
-      const result = streamText({ model: provider().responses(m.id), system, messages, maxRetries: 0, providerOptions: OPTS as never });
-      return (await result.text).trim();
-    });
+    return await withInFlightDedupe("ai-text", [task, system, messages], () =>
+      withRoute(task, async (m) => {
+        const result = streamText({ model: provider().responses(m.id), system, messages, maxRetries: 0, providerOptions: OPTS as never });
+        return (await result.text).trim();
+      }),
+    );
   } catch (e) {
     mapError(e);
   }
