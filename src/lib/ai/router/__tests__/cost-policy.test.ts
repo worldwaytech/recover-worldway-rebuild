@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowsAiCostTier, maxAiCostTier, maxAiRouteAttempts } from "../cost-policy";
+import { allowAiRequestAttempt, allowsAiCostTier, maxAiCostTier, maxAiRequestsPerMinute, maxAiRouteAttempts } from "../cost-policy";
 
 describe("AI cost policy", () => {
   it("defaults to the current tier ceiling", () => {
