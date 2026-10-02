@@ -102,10 +102,5 @@
     "typescript-eslint": "^8.56.1",
     "vitest": "^4.1.10",
     "ws": "^8.22.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "entities": "4.5.0"
-    }
   }
 }
