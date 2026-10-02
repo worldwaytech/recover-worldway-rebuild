@@ -158,33 +158,37 @@ export const lookupPartner = createServerFn({ method: "POST" })
 
 // -------- Search / quote / concierge (auth required) --------
 export const searchFlights = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => flightsSchema.parse(d))
-  .handler(async ({ data }) => {
-    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchFlights"), 60, 60);
+   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", context.userId, "searchFlights"), 60, 60);
     const { callPartner, toResolvedPartnerFlightPayload } = await import("./wwl.server");
     return callPartner("flights", await toResolvedPartnerFlightPayload(data));
   });
 
 export const searchHotels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => hotelsSchema.parse(d))
-  .handler(async ({ data }) => {
-    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchHotels"), 60, 60);
+   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", context.userId, "searchHotels"), 60, 60);
     const { callPartner, toPartnerHotelPayload } = await import("./wwl.server");
     return callPartner("hotels", toPartnerHotelPayload(data));
   });
 
 export const searchActivities = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => activitiesSchema.parse(d))
-  .handler(async ({ data }) => {
-    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchActivities"), 60, 60);
+   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", context.userId, "searchActivities"), 60, 60);
     const { callPartner } = await import("./wwl.server");
     return callPartner("activities", data);
   });
 
 export const searchTransfers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => transfersSchema.parse(d))
-  .handler(async ({ data }) => {
-    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchTransfers"), 60, 60);
+   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", context.userId, "searchTransfers"), 60, 60);
     const { callPartner, toPartnerTransferPayload } = await import("./wwl.server");
     return callPartner("transfers", toPartnerTransferPayload(data));
   });
@@ -217,9 +221,10 @@ export const buildTrip = createServerFn({ method: "POST" })
   });
 
 export const searchBuses = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => busesSchema.parse(d))
-  .handler(async ({ data }) => {
-    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchBuses"), 60, 60);
+   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", context.userId, "searchBuses"), 60, 60);
     const { callPartner } = await import("./wwl.server");
     return callPartner("buses", data);
   });
