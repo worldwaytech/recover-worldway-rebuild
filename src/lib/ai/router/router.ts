@@ -105,7 +105,7 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
 export function routerStatus(deps: RouterDeps = {}) {
   const h = deps.health ?? defaultHealth;
   const env = deps.env ?? process.env;
-  return { maxCostTier: maxAiCostTier(env), maxRouteAttempts: maxAiRouteAttempts(env), maxRequestsPerMinute: maxAiRequestsPerMinute(env), usage: usageSnapshot(), models: (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, allowedByCostCeiling: allowsAiCostTier(m.costTier, env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) })) };
+  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, maxCostTier: maxAiCostTier(env), allowedByCostCeiling: allowsAiCostTier(m.costTier, env), maxRouteAttempts: maxAiRouteAttempts(env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
 }
 
 /** Human-readable routing explanation (admin/debug). */
@@ -119,4 +119,15 @@ export function validateStructured<T>(schema: { safeParse: (v: unknown) => { suc
   const r = schema.safeParse(value);
   emit({ type: "model.call", correlationId, task, validation: r.success ? "passed" : "failed", outcome: r.success ? "valid_output" : "invalid_output" });
   return r.success ? r.data : null;
+}
+
+
+/** Metadata-only cost governance counters for staff diagnostics. */
+export function routerGovernanceStatus(env: Record<string, string | undefined> = process.env) {
+  return {
+    maxCostTier: maxAiCostTier(env),
+    maxRouteAttempts: maxAiRouteAttempts(env),
+    maxRequestsPerMinute: maxAiRequestsPerMinute(env),
+    usage: usageSnapshot(),
+  };
 }
