@@ -44,7 +44,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies with isolated transitive layout
-        run: npm install -g npm@12.2.0 && npm install --install-strategy=nested --no-audit --no-fund --package-lock=false
+        run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false
 
       - name: Build production application
         run: npm run build
