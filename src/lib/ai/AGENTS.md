@@ -5,3 +5,8 @@
 - Deterministic authority (src/lib/ai/safety/authority.ts): AI never sets price, availability, schedule, capability, eligibility, payment, refund or cancellation facts; engine values always win.
 - Untrusted supplier/web/tool content passes src/lib/ai/safety/content.ts before reaching the model; traces (router/telemetry.ts) carry ids, timings and outcomes only — no secrets, payment data or PII.
 - Agent runtime (src/lib/ai/runtime) is a typed foundation: plans are validated by the supervisor before execution; autonomousBooking is false by design.
+- AI traces persist to public.ai_traces via router/trace-store.server.ts (service role write, is_staff read, 90-day expires_at); staff read through src/lib/ai/traces.functions.ts — safe metadata only.
+- MCP tools call the Tool Fabric through tools/mcp-bridge.server.ts; the unified catalogue is tools/worldway-tools.server.ts — MCP is the protocol boundary, the fabric is the authority.
+- Request-reader output always passes safety/request-reader.ts guardIntent before use.
+- HOLD/BOOK/PAY/MODIFY/CANCEL/REFUND only via actions/proposals.ts: AI proposes with evidence, a real principal approves, a deterministic revalidator runs at execution time.
+- Agent runtime: Supervisor/Planner (runtime/supervisor.ts) run typed skills (runtime/skills.ts) for typed specialists (runtime/agents.ts); every plan passes runtime/plan-validation.ts first.
