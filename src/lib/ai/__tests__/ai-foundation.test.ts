@@ -62,7 +62,7 @@ describe("Model router", () => {
 describe("Tool fabric", () => {
   it("blocks high-risk tools without a deterministic grant and hides them from the model", async () => {
     const r = registry();
-    expect(authorize(r.get("book_x")!, ctx({ permission: "authenticated", scopes: ["booking:write"] }))).toEqual({ ok: false, reason: "high_risk_requires_deterministic_grant" });
+    expect(authorize(r.get("book_x")!, ctx({ permission: "authenticated", scopes: ["booking:write"], userId: "u1" }))).toEqual({ ok: false, reason: "high_risk_requires_deterministic_grant" });
     expect(r.visible(ctx()).map((t) => t.name)).toEqual(["search_x"]);
     await expect(r.invoke("book_x", { id: "1" }, ctx())).rejects.toBeInstanceOf(ToolDeniedError);
   });
