@@ -11,7 +11,9 @@ create table if not exists public.travel_memory (
   consent_scope text not null check (consent_scope in ('preferences','history')),
   expires_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint travel_memory_no_session check (memory_kind <> 'session'),
+  constraint travel_memory_inferred_source check (memory_kind <> 'inferred' or source = 'system_inference')
 );
 
 create unique index if not exists travel_memory_user_key_idx
@@ -34,13 +36,49 @@ create policy "Users read own travel memory"
 drop policy if exists "Users create own travel memory" on public.travel_memory;
 create policy "Users create own travel memory"
   on public.travel_memory for insert to authenticated
-  with check (auth.uid() = user_id);
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.travel_dna
+      where travel_dna.user_id = auth.uid()
+        and (
+          (travel_memory.consent_scope = 'preferences' and travel_dna.consent_preferences = true)
+          or
+          (travel_memory.consent_scope = 'history' and travel_dna.consent_history = true)
+        )
+    )
+  );
 
 drop policy if exists "Users update own travel memory" on public.travel_memory;
 create policy "Users update own travel memory"
   on public.travel_memory for update to authenticated
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.travel_dna
+      where travel_dna.user_id = auth.uid()
+        and (
+          (travel_memory.consent_scope = 'preferences' and travel_dna.consent_preferences = true)
+          or
+          (travel_memory.consent_scope = 'history' and travel_dna.consent_history = true)
+        )
+    )
+  )
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.travel_dna
+      where travel_dna.user_id = auth.uid()
+        and (
+          (travel_memory.consent_scope = 'preferences' and travel_dna.consent_preferences = true)
+          or
+          (travel_memory.consent_scope = 'history' and travel_dna.consent_history = true)
+        )
+    )
+  );
 
 drop policy if exists "Users delete own travel memory" on public.travel_memory;
 create policy "Users delete own travel memory"
