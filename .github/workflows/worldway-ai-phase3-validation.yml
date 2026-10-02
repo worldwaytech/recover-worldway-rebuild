@@ -1,0 +1,27 @@
+name: Worldway AI Phase 3 Validation
+
+on:
+  push:
+    branches:
+      - worldway-ai-phase3-github
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/lib/engine/intelligence/**"
+      - "src/lib/ai/runtime/**"
+      - "supabase/migrations/**"
+      - ".github/workflows/worldway-ai-phase3-validation.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/engine/intelligence/__tests__/travel-memory.test.ts
+      - run: bunx tsc --noEmit
