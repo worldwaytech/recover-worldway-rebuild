@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowsAiCostTier, maxAiCostTier } from "../cost-policy";
+import { allowsAiCostTier, maxAiCostTier, maxAiRouteAttempts } from "../cost-policy";
 
 describe("AI cost policy", () => {
   it("defaults to the current tier ceiling", () => {
@@ -14,5 +14,13 @@ describe("AI cost policy", () => {
     expect(allowsAiCostTier(3, { WORLDWAY_AI_MAX_COST_TIER: "2" })).toBe(false);
     expect(maxAiCostTier({ WORLDWAY_AI_MAX_COST_TIER: "99" })).toBe(5);
     expect(maxAiCostTier({ WORLDWAY_AI_MAX_COST_TIER: "invalid" })).toBe(3);
+  });
+
+  it("bounds provider attempts per logical request", () => {
+    expect(maxAiRouteAttempts({})).toBe(2);
+    expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "3" })).toBe(3);
+    expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "99" })).toBe(4);
+    expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "0" })).toBe(1);
+    expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "invalid" })).toBe(2);
   });
 });
