@@ -5,8 +5,8 @@ import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 import { supplierPrivacyMiddleware } from "./lib/confidentiality/privacy-middleware";
 
 const securityHeadersMiddleware = createMiddleware().server(async ({ request, next }) => {
-  const response = await next();
-  const headers = new Headers(response.headers);
+  const result = await next();
+  const headers = result.response.headers;
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "SAMEORIGIN");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -19,7 +19,7 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ request, ne
   if (path.startsWith("/auth") || path.startsWith("/api/") || path.startsWith("/.mcp/")) {
     headers.set("Cache-Control", "no-store");
   }
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  return result;
 });
 
 const errorMiddleware = createMiddleware().server(async ({ request, next }) => {
