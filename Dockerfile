@@ -5,10 +5,10 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-# The repository lockfile currently has dependency drift relative to package.json.
-# npm install reconciles the lockfile during the image build so deployment is not
-# blocked by a stale lockfile.
-RUN npm install --no-audit --no-fund
+# Resolve the dependency graph from package.json instead of allowing the stale
+# package-lock transitive tree to force an incompatible parse5/entities layout.
+# The lockfile is intentionally not rewritten inside the image build.
+RUN npm install --no-audit --no-fund --package-lock=false
 
 COPY . .
 
