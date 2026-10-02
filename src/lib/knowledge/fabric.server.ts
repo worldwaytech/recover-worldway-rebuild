@@ -28,6 +28,30 @@ export interface KnowledgeHit {
   provenance: Record<string, unknown>;
 }
 
+type KnowledgeDocumentRow = {
+  id: string;
+  title: string;
+  source_type: string;
+  canonical_url: string | null;
+  trust_tier: number;
+  status: string;
+  updated_at: string;
+};
+
+type KnowledgeChunkRow = {
+  id: string;
+  document_id: string;
+  content: string;
+};
+
+type KnowledgeEvidenceRow = {
+  chunk_id: string;
+  observed_at: string | null;
+  valid_until: string | null;
+  confidence: number | null;
+  provenance: Record<string, unknown> | null;
+};
+
 function contentHash(content: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
@@ -79,41 +103,45 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
   return { ...doc, chunkCount: chunks.length, contentHash: hash };
 }
 
-/**
- * Evidence-first retrieval. Results are ordered by lexical relevance, then
- * trust tier and freshness. This layer does not invent or rewrite source text.
- */
+/** Evidence-first retrieval. Results preserve source provenance and freshness. */
 export async function searchKnowledge(query: string, limit = 8): Promise<KnowledgeHit[]> {
   const q = z.string().trim().min(1).max(500).parse(query);
   const n = Math.min(20, Math.max(1, Math.trunc(limit)));
   const client = await db();
-  const { data: chunks, error } = await client
+  const { data: rawChunks, error } = await client
     .from("worldway_knowledge_chunks")
     .select("id,document_id,content")
     .textSearch("content_tsv", q, { type: "websearch", config: "simple" })
     .limit(n);
-  if (error || !chunks?.length) return [];
+  const chunks = (rawChunks ?? []) as KnowledgeChunkRow[];
+  if (error || !chunks.length) return [];
 
-  const documentIds = [...new Set(chunks.map((c: { document_id: string }) => c.document_id))];
-  const { data: docs } = await client
+  const documentIds = [...new Set(chunks.map((c: KnowledgeChunkRow) => c.document_id))];
+  const { data: rawDocs } = await client
     .from("worldway_knowledge_documents")
-    .select("id,title,source_type,canonical_url,trust_tier,status")
+    .select("id,title,source_type,canonical_url,trust_tier,status,updated_at")
     .in("id", documentIds)
     .in("status", ["active", "published"]);
+  const docs = (rawDocs ?? []) as KnowledgeDocumentRow[];
+  const docMap = new Map<string, KnowledgeDocumentRow>(
+    docs.map((d: KnowledgeDocumentRow) => [d.id, d]),
+  );
 
-  const docMap = new Map((docs ?? []).map((d: any) => [d.id, d]));
-  const chunkIds = chunks.map((c: any) => c.id);
-  const { data: evidence } = await client
+  const chunkIds = chunks.map((c: KnowledgeChunkRow) => c.id);
+  const { data: rawEvidence } = await client
     .from("worldway_knowledge_evidence")
     .select("chunk_id,observed_at,valid_until,confidence,provenance")
     .in("chunk_id", chunkIds)
     .order("observed_at", { ascending: false });
+  const evidence = (rawEvidence ?? []) as KnowledgeEvidenceRow[];
 
-  const evidenceMap = new Map<string, any>();
-  for (const e of evidence ?? []) if (e.chunk_id && !evidenceMap.has(e.chunk_id)) evidenceMap.set(e.chunk_id, e);
+  const evidenceMap = new Map<string, KnowledgeEvidenceRow>();
+  for (const e of evidence) {
+    if (e.chunk_id && !evidenceMap.has(e.chunk_id)) evidenceMap.set(e.chunk_id, e);
+  }
 
   return chunks
-    .map((c: any) => {
+    .map((c: KnowledgeChunkRow) => {
       const d = docMap.get(c.document_id);
       const e = evidenceMap.get(c.id);
       if (!d) return null;
@@ -125,10 +153,10 @@ export async function searchKnowledge(query: string, limit = 8): Promise<Knowled
         canonicalUrl: d.canonical_url,
         trustTier: d.trust_tier,
         content: c.content,
-        observedAt: e?.observed_at ?? d.updated_at ?? new Date(0).toISOString(),
+        observedAt: e?.observed_at ?? d.updated_at,
         validUntil: e?.valid_until ?? null,
         confidence: Number(e?.confidence ?? 0.5),
-        provenance: (e?.provenance ?? {}) as Record<string, unknown>,
+        provenance: e?.provenance ?? {},
       } satisfies KnowledgeHit;
     })
     .filter((x): x is KnowledgeHit => x !== null)
