@@ -61,7 +61,7 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
       fetched_at: new Date().toISOString(),
       metadata: data.metadata,
     }, { onConflict: "source_type,content_hash" })
-    .select("id,title,source_type,canonical_url,trust_tier,status")
+    .select("id,title,source_type,canonical_url,trust_tier,status,updated_at")
     .single();
   if (error || !doc) throw new Error("Knowledge document could not be stored");
 
