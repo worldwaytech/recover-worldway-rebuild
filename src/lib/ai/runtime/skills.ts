@@ -1,6 +1,6 @@
 import type { TaskKind } from "../router/types";
 import type { RiskLevel, ToolRegistry } from "../tools/fabric";
-import type { AgentContext, Skill } from "./runtime";
+import type { Skill } from "./runtime";
 
 export interface SkillDefinition {
   name: string;
@@ -12,26 +12,31 @@ export interface SkillDefinition {
   autonomous: false;
 }
 
+const SAFE_SKILL_RISKS: ReadonlySet<RiskLevel> = new Set(["READ","SEARCH","ANALYZE","SIMULATE","QUOTE"]);
+
 export const WORLDWAY_SKILLS: readonly SkillDefinition[] = [
-  ["travel-requirements","requirements","Extract and validate structured travel requirements."],
-  ["trip-planning","planning","Build and simulate a chronological trip plan."],
-  ["flight-analysis","planning","Analyze flight options using deterministic inventory."],
-  ["hotel-analysis","planning","Analyze hotel options using deterministic inventory."],
-  ["tour-analysis","planning","Analyze tour options and chronology."],
-  ["package-analysis","planning","Analyze complete package candidates."],
-  ["destination-intelligence","destination","Research and analyze destination intelligence."],
-  ["booking-readiness-audit","booking-readiness","Audit readiness without executing a booking."],
+  ["travel-requirements","intent_extraction","Extract and validate structured travel requirements."],
+  ["trip-planning","concierge_chat","Build and simulate a chronological trip plan."],
+  ["flight-analysis","concierge_chat","Analyze flight options using deterministic inventory."],
+  ["hotel-analysis","concierge_chat","Analyze hotel options using deterministic inventory."],
+  ["tour-analysis","concierge_chat","Analyze tour options and chronology."],
+  ["package-analysis","concierge_chat","Analyze complete package candidates."],
+  ["destination-intelligence","explanation","Research and analyze destination intelligence."],
+  ["booking-readiness-audit","concierge_chat","Audit readiness without executing a booking."],
 ].map(([name, task, description]) => ({
   name,
   version: "1.0.0",
   task: task as TaskKind,
   description,
   requiredTools: [],
-  allowedRisk: new Set<RiskLevel>(["READ","SEARCH","ANALYZE","SIMULATE","QUOTE"]),
+  allowedRisk: SAFE_SKILL_RISKS,
   autonomous: false as const,
 }));
 
-export function registerWorldwaySkills(registry: { register(s: Skill<any, any>): unknown }, implementations: Skill<any, any>[] = []) {
+export function registerWorldwaySkills(
+  registry: { register(s: Skill<any, any>): unknown },
+  implementations: Skill<any, any>[] = [],
+) {
   for (const skill of implementations) registry.register(skill);
   return registry;
 }
