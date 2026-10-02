@@ -3,6 +3,7 @@ name: Worldway Security + Knowledge Foundation Validation
 on:
   push:
     branches:
+      - main
       - worldway-security-phase4-foundation
   pull_request:
     branches:
@@ -15,6 +16,7 @@ on:
       - "src/start.ts"
       - "supabase/migrations/**"
       - ".github/workflows/worldway-security-knowledge-validation.yml"
+  workflow_dispatch:
 
 jobs:
   validate:
