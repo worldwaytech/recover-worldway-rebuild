@@ -1,6 +1,6 @@
 // Worldway Model Router — shared, pure types (no secrets, no I/O).
 
-export type ProviderId = "lovable" | "aethercore" | "google";
+export type ProviderId = "lovable" | "aethercore" | "google" | "openai";
 export type ModelCapability = "chat" | "tools" | "structured" | "reasoning" | "vision" | "pdf" | "voice" | "agent";
 export type TaskKind = "intent_extraction" | "explanation" | "concierge_chat" | "concierge_voice" | "document_ingest";
 

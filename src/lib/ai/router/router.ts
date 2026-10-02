@@ -69,11 +69,11 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
     } catch (e) {
       const kind = failureOf(e);
       h.failure(d.model.id, kind);
-      emit({ type: "model.failure", correlationId: cid, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: kind, meta: { task } });
+      emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: "error", errorCategory: kind });
       tried.push(d.model.id);
       if (!isRetryable(kind)) throw e;
       try { route(task, deps, { exclude: tried, correlationId: cid }); } catch { throw e; }
-      emit({ type: "model.fallback", correlationId: cid, model: d.model.id, reason: kind });
+      emit({ type: "model.fallback", correlationId: cid, task, model: d.model.id, reason: kind, fallback: true });
     }
   }
 }
@@ -82,4 +82,17 @@ export function routerStatus(deps: RouterDeps = {}) {
   const h = deps.health ?? defaultHealth;
   const env = deps.env ?? process.env;
   return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
+}
+
+/** Human-readable routing explanation (admin/debug). */
+export function explainRoute(d: RouteDecision): string {
+  const skipped = d.skipped.map((s) => `${s.model} (${s.why})`).join(", ");
+  return `Task ${d.task} → ${d.model.id} on ${d.model.provider}: ${d.reason}${skipped ? `; skipped ${skipped}` : ""}.`;
+}
+
+/** Structured-output validation at the router boundary; records the result in the trace. */
+export function validateStructured<T>(schema: { safeParse: (v: unknown) => { success: true; data: T } | { success: false } }, value: unknown, correlationId: string, task: TaskKind): T | null {
+  const r = schema.safeParse(value);
+  emit({ type: "model.call", correlationId, task, validation: r.success ? "passed" : "failed", outcome: r.success ? "valid_output" : "invalid_output" });
+  return r.success ? r.data : null;
 }

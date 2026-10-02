@@ -30,6 +30,14 @@ export async function aetherCoreAdapter() {
  * Google Gemini direct adapter — interface only. Disabled in the registry and
  * throws until credentials and an approved data-retention review exist.
  */
+/** Shared contract every direct provider adapter implements. */
+export interface TextAdapter { provider: ProviderId; configured(): boolean; generateText(system: string, prompt: string, signal?: AbortSignal): Promise<string> }
+
+/** OpenAI direct adapter — interface only; disabled until a key and approval exist. */
+export function openAiDirectAdapter(): TextAdapter {
+  return { provider: "openai", configured: () => !!process.env["OPENAI_API_KEY"], async generateText() { throw new ProviderNotConfiguredError("openai"); } };
+}
+
 export interface GeminiAdapter { generateText(system: string, prompt: string, signal?: AbortSignal): Promise<string> }
 export function geminiAdapter(): GeminiAdapter {
   return {

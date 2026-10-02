@@ -7,12 +7,15 @@ export const PROVIDERS: Record<ProviderId, ProviderSpec> = {
   lovable: { id: "lovable", label: "Lovable AI Gateway", requiredEnv: ["LOVABLE_API_KEY"], zeroRetention: true },
   aethercore: { id: "aethercore", label: "Worldway-AetherCore (Azure)", requiredEnv: ["AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET"], zeroRetention: true },
   // Adapter interface only — disabled until credentials and approval exist.
+  openai: { id: "openai", label: "OpenAI (direct)", requiredEnv: ["OPENAI_API_KEY"], zeroRetention: false },
   google: { id: "google", label: "Google Gemini (direct)", requiredEnv: ["GOOGLE_GEMINI_API_KEY"], zeroRetention: false },
 };
 
+// "openai" = direct OpenAI adapter interface; disabled, no secret required now.
 export const MODELS: ModelSpec[] = [
   { id: DEFAULT_CHAT_MODEL, provider: "lovable", capabilities: ["chat", "tools", "structured", "reasoning", "vision", "pdf"], costTier: 3, latencyMs: 4000, rpm: 120, enabled: true },
   { id: "aethercore/Worldway-AetherCore", provider: "aethercore", capabilities: ["chat", "agent"], costTier: 3, latencyMs: 8000, rpm: 60, enabled: true },
+  { id: "direct-openai:unassigned", provider: "openai", capabilities: ["chat", "tools", "structured"], costTier: 3, latencyMs: 4000, rpm: 60, enabled: false },
   { id: "direct-google:unassigned", provider: "google", capabilities: ["chat", "structured", "vision"], costTier: 2, latencyMs: 3000, rpm: 60, enabled: false },
 ];
 

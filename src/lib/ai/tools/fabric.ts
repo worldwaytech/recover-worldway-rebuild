@@ -15,8 +15,12 @@ export const HIGH_RISK: ReadonlySet<RiskLevel> = new Set(["HOLD", "MODIFY", "BOO
 export type Permission = "public" | "authenticated" | "staff" | "super_admin";
 export type Scope = "commerce:read" | "commerce:quote" | "journey:read" | "journey:simulate" | "booking:write" | "payment:write" | "admin";
 
+export type ExecutionContext = "concierge_chat" | "concierge_voice" | "mcp" | "partner_api" | "admin" | "agent_runtime";
+
 export interface ToolSpec<I = unknown, O = unknown> {
   name: string;
+  /** Stable semantic version of the tool contract. */
+  version: string;
   description: string;
   input: z.ZodType<I>;
   output?: z.ZodType<O>;
@@ -24,6 +28,12 @@ export interface ToolSpec<I = unknown, O = unknown> {
   permission: Permission;
   scopes: Scope[];
   audit: "none" | "trace" | "persist";
+  /** Contexts allowed to run the tool. */
+  contexts: ExecutionContext[];
+  requiresAuth: boolean;
+  timeoutMs: number;
+  /** Retries are only permitted for idempotent READ/SEARCH tools. */
+  retries: number;
   /** Output contains supplier/web content that must be treated as untrusted. */
   untrustedOutput?: boolean;
   execute: (input: I, ctx: ToolContext) => Promise<O>;
@@ -31,6 +41,8 @@ export interface ToolSpec<I = unknown, O = unknown> {
 
 export interface ToolContext {
   correlationId: string;
+  sessionId?: string;
+  context: ExecutionContext;
   principal: { permission: Permission; scopes: Scope[]; userId?: string | null };
   signal?: AbortSignal;
   /** Explicit, deterministic authorisation for high-risk tools (e.g. booking readiness). Phase 1: never granted to AI. */
@@ -45,6 +57,8 @@ const RANK: Record<Permission, number> = { public: 0, authenticated: 1, staff: 2
 
 export function authorize(spec: ToolSpec<any, any>, ctx: ToolContext): { ok: true } | { ok: false; reason: string } {
   if (!RISK_LEVELS.includes(spec.risk)) return { ok: false, reason: "unknown_risk" };
+  if (!spec.contexts.includes(ctx.context)) return { ok: false, reason: "context" };
+  if (spec.requiresAuth && !ctx.principal.userId) return { ok: false, reason: "authentication" };
   if (RANK[ctx.principal.permission] < RANK[spec.permission]) return { ok: false, reason: "permission" };
   if (!spec.scopes.every((s) => ctx.principal.scopes.includes(s))) return { ok: false, reason: "scope" };
   if (HIGH_RISK.has(spec.risk)) {
@@ -56,6 +70,8 @@ export function authorize(spec: ToolSpec<any, any>, ctx: ToolContext): { ok: tru
 export class ToolRegistry {
   private tools = new Map<string, ToolSpec<any, any>>();
   register<I, O>(spec: ToolSpec<I, O>) {
+    if (spec.retries > 0 && spec.risk !== "READ" && spec.risk !== "SEARCH") throw new Error(`Tool ${spec.name}: retries only allowed for READ/SEARCH`);
+    if (!/^\d+\.\d+\.\d+$/.test(spec.version)) throw new Error(`Tool ${spec.name}: invalid version`);
     if (this.tools.has(spec.name)) throw new Error(`Duplicate tool ${spec.name}`);
     if (!/^[a-z][a-z0-9_]{1,63}$/.test(spec.name)) throw new Error(`Invalid tool name ${spec.name}`);
     this.tools.set(spec.name, spec);
@@ -88,7 +104,7 @@ export class ToolRegistry {
     const t0 = Date.now();
     emit({ type: "tool.call", correlationId: ctx.correlationId, tool: name, risk: spec.risk });
     try {
-      let out = await spec.execute(parsed.data, ctx);
+      let out = await runWithPolicy(spec, parsed.data, ctx);
       if (spec.output) {
         const o = spec.output.safeParse(out);
         if (!o.success) throw new ToolDeniedError(name, "invalid_output");
@@ -119,4 +135,24 @@ export function validatePlan(reg: ToolRegistry, steps: PlanStep[], ctx: ToolCont
   });
   if (problems.length) emit({ type: "plan.rejected", correlationId: ctx.correlationId, reason: problems.join("|") });
   return { ok: problems.length === 0, problems };
+}
+
+async function runWithPolicy<I, O>(spec: ToolSpec<I, O>, input: I, ctx: ToolContext): Promise<O> {
+  let last: unknown;
+  for (let attempt = 0; attempt <= spec.retries; attempt++) {
+    const timeout = AbortSignal.timeout(spec.timeoutMs);
+    const signal = ctx.signal ? AbortSignal.any([ctx.signal, timeout]) : timeout;
+    try {
+      return await new Promise<O>((resolve, reject) => {
+        const onAbort = () => reject(Object.assign(new Error(ctx.signal?.aborted ? "cancelled" : "tool_timeout"), { name: ctx.signal?.aborted ? "AbortError" : "TimeoutError" }));
+        if (signal.aborted) return onAbort();
+        signal.addEventListener("abort", onAbort, { once: true });
+        spec.execute(input, { ...ctx, signal }).then(resolve, reject);
+      });
+    } catch (e) {
+      last = e;
+      if (ctx.signal?.aborted || e instanceof ToolDeniedError) throw e;
+    }
+  }
+  throw last;
 }
