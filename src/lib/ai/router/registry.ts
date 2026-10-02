@@ -13,7 +13,7 @@ export const PROVIDERS: Record<ProviderId, ProviderSpec> = {
 export const MODELS: ModelSpec[] = [
   { id: DEFAULT_CHAT_MODEL, provider: "lovable", capabilities: ["chat", "tools", "structured", "reasoning", "vision", "pdf"], costTier: 3, latencyMs: 4000, rpm: 120, enabled: true },
   { id: "aethercore/Worldway-AetherCore", provider: "aethercore", capabilities: ["chat", "agent"], costTier: 3, latencyMs: 8000, rpm: 60, enabled: true },
-  { id: "google/gemini-direct", provider: "google", capabilities: ["chat", "structured", "vision"], costTier: 2, latencyMs: 3000, rpm: 60, enabled: false },
+  { id: "direct-google:unassigned", provider: "google", capabilities: ["chat", "structured", "vision"], costTier: 2, latencyMs: 3000, rpm: 60, enabled: false },
 ];
 
 export const POLICIES: Record<TaskKind, RoutingPolicy> = {
