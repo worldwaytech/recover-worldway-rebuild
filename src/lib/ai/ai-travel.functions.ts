@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normaliseConversation } from "@/lib/engine/intelligence/commerce";
+import { consumeRateLimit, rateLimitKey } from "@/lib/security/rate-limit.server";
 
 type Db = { from: (t: string) => any };
 
@@ -49,6 +50,7 @@ export const understandTripRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ inputs: z.array(Input).min(1).max(6), journeyId: z.string().uuid().optional(), searchFlights: z.boolean().optional(), assemble: z.boolean().optional() }).parse(d))
   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("understand-trip", context.userId), 20, 60);
     const sb = context.supabase as unknown as Db;
     const [{ aiObject, AiUnavailableError }, { toMessages }, intent] = await Promise.all([import("./gateway.server"), import("./sources.server"), import("./intent")]);
     const dna = await loadDna(sb);
@@ -133,6 +135,7 @@ export const explainJourney = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ journeyId: z.string().uuid(), simulationId: z.string().uuid().optional() }).parse(d))
   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("explain-journey", context.userId), 60, 60);
     const sb = context.supabase as unknown as Db;
     const { data: j } = await sb.from("journeys").select("id, current_version, currency, state").eq("id", data.journeyId).maybeSingle();
     if (!j) throw new Error("Journey not found");

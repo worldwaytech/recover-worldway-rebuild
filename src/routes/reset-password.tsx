@@ -63,8 +63,8 @@ function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (password.length < 6) {
-      setErr("Use at least 6 characters.");
+    if (password.length < 12) {
+      setErr("Use at least 12 characters.");
       return;
     }
     if (password !== confirm) {
@@ -105,10 +105,10 @@ function ResetPasswordPage() {
               <Input
                 type="password"
                 required
-                minLength={6}
+                minLength={12}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder="At least 12 characters"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ function ResetPasswordPage() {
               <Input
                 type="password"
                 required
-                minLength={6}
+                minLength={12}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Repeat your new password"
