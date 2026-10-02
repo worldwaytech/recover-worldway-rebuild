@@ -69,7 +69,6 @@ const IDEMPOTENT: RatehawkOperation[] = [
   "searchHotels",
   "hotelPage",
   "hotelInfo",
-  "bookingStatus",
   "orderInfo",
 ];
 
