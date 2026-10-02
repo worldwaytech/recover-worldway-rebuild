@@ -10,13 +10,13 @@ import type { TaskKind } from "./router/types";
 
 // Model selection now goes through the Worldway Model Router (src/lib/ai/router).
 export const AI_MODEL = DEFAULT_CHAT_MODEL;
+installTraceStore();
 
 export class AiUnavailableError extends Error {
   constructor(message: string, public status?: number) { super(message); }
 }
 
 export function provider() {
-  installTraceStore();
   try { return lovableProvider(); }
   catch (e) { if (e instanceof ProviderNotConfiguredError) throw new AiUnavailableError("AI is not configured."); throw e; }
 }
