@@ -61,4 +61,19 @@ describe("AI router cost and attempt guards", () => {
     await expect(withRoute("explanation", call, deps)).rejects.toMatchObject({ status: 503 });
     expect(call).toHaveBeenCalledTimes(2);
   });
+
+  it("blocks additional provider attempts when the emergency request budget is exhausted", async () => {
+    const health = new HealthBook({ failureThreshold: 10, openMs: 30_000, windowMs: 60_000 });
+    const deps: RouterDeps = {
+      models: [primary],
+      health,
+      policies: { ...POLICIES, explanation: { ...POLICIES.explanation, preferred: [primary.id], fallback: [] } },
+      env: { LOVABLE_API_KEY: "test", WORLDWAY_AI_MAX_REQUESTS_PER_MINUTE: "1" },
+    };
+    const call = vi.fn(async () => "ok");
+
+    await expect(withRoute("explanation", call, deps)).resolves.toBe("ok");
+    await expect(withRoute("explanation", call, deps)).rejects.toThrow(/emergency request budget exceeded/);
+    expect(call).toHaveBeenCalledTimes(1);
+  });
 });
