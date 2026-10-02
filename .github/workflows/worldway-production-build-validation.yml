@@ -1,0 +1,53 @@
+name: Worldway Production Build Validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "bun.lock"
+      - "src/**"
+      - "app/**"
+      - "routes/**"
+      - "components/**"
+      - "Dockerfile"
+      - ".github/workflows/worldway-production-build-validation.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: worldway-production-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+
+      - name: Install dependencies from package.json
+        run: npm install --no-audit --no-fund --package-lock=false
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Verify Nitro production server
+        run: |
+          test -f .output/server/index.mjs
+          echo "Verified: .output/server/index.mjs exists."
+
+      - name: Run tests if present
+        run: npm run test --if-present
