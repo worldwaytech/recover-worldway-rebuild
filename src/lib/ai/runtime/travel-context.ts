@@ -58,7 +58,7 @@ export async function buildTravelAgentContext(db: Db, userId: string): Promise<T
  * supplied in the current request and never turns memory into commercial truth.
  */
 export function applyTravelMemoryDefaults<T extends Record<string, any>>(request: T, context: TravelAgentContext): T {
-  const out = { ...request } as T & Record<string, any>;
+  const out: Record<string, any> = { ...request };
   const prefs = context.explicitPreferences;
   if (out.luxuryLevel == null && typeof prefs.luxuryLevel === "number") out.luxuryLevel = prefs.luxuryLevel;
   if (out.pace == null && typeof prefs.pace === "string") out.pace = prefs.pace;
@@ -66,5 +66,5 @@ export function applyTravelMemoryDefaults<T extends Record<string, any>>(request
   if (out.prefersRefundable == null && typeof prefs.prefersRefundable === "boolean") out.prefersRefundable = prefs.prefersRefundable;
   if (Array.isArray(prefs.interests) && !Array.isArray(out.interests)) out.interests = [...prefs.interests];
   if (Array.isArray(prefs.avoid) && !Array.isArray(out.avoid)) out.avoid = [...prefs.avoid];
-  return out;
+  return out as T;
 }
