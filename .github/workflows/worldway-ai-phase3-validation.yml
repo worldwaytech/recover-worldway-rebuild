@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - "src/lib/engine/intelligence/**"
+      - "src/lib/ai/runtime/**"
       - "supabase/migrations/**"
       - ".github/workflows/worldway-ai-phase3-validation.yml"
 
