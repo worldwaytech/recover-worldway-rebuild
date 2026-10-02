@@ -12,6 +12,7 @@ export class NoRouteError extends Error {
 }
 
 export class AiEmergencyCircuitOpenError extends Error {
+  public readonly statusCode = 429;
   constructor(public task: TaskKind) { super(`AI emergency request ceiling reached for ${task}`); }
 }
 
