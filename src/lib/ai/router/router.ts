@@ -10,12 +10,6 @@ export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
 }
 
-export class AiRequestBudgetError extends Error {
-  constructor(public task: TaskKind, public maxAttempts: number) {
-    super(`AI route attempt budget exhausted for ${task}`);
-  }
-}
-
 export interface RouterDeps { health?: HealthBook; env?: Record<string, string | undefined>; models?: ModelSpec[] }
 
 function candidates(task: TaskKind, deps: RouterDeps, includeFallback: boolean) {
@@ -69,7 +63,7 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
   for (;;) {
     if (attempts >= maxAttempts) {
       emit({ type: "model.failure", correlationId: cid ?? newCorrelationId(), task, outcome: "no_route", errorCategory: "credits", meta: { reason: "request_attempt_ceiling", maxAttempts } });
-      throw new AiRequestBudgetError(task, maxAttempts);
+      throw new Error(`AI route attempt budget exhausted for ${task}`);
     }
     const d = route(task, deps, { exclude: tried, correlationId: cid });
     cid = d.correlationId;
@@ -88,7 +82,10 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
       emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: "error", errorCategory: kind, meta: { attempts, maxAttempts } });
       tried.push(d.model.id);
       if (!isRetryable(kind)) throw e;
-      if (attempts >= maxAttempts) throw e;
+      if (attempts >= maxAttempts) {
+        emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, outcome: "attempt_ceiling", errorCategory: kind, meta: { attempts, maxAttempts } });
+        throw e;
+      }
       try { route(task, deps, { exclude: tried, correlationId: cid }); } catch { throw e; }
       emit({ type: "model.fallback", correlationId: cid, task, model: d.model.id, reason: kind, fallback: true, meta: { attempts, maxAttempts } });
     }
