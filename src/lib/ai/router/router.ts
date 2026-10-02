@@ -5,9 +5,14 @@ import { health as defaultHealth, type HealthBook } from "./health";
 import { classifyStatus, isRetryable, type FailureKind, type ModelSpec, type RouteDecision, type TaskKind } from "./types";
 import { emit, newCorrelationId } from "./telemetry";
 import { allowsAiCostTier, maxAiCostTier, maxAiRouteAttempts } from "./cost-policy";
+import { allowAiAttempt, recordAiUsage } from "./usage-meter";
 
 export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
+}
+
+export class AiEmergencyCircuitOpenError extends Error {
+  constructor(public task: TaskKind) { super(`AI emergency request ceiling reached for ${task}`); }
 }
 
 export interface RouterDeps { health?: HealthBook; env?: Record<string, string | undefined>; models?: ModelSpec[]; policies?: typeof POLICIES }
@@ -63,19 +68,27 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
   for (;;) {
     const d = route(task, deps, { exclude: tried, correlationId: cid });
     cid = d.correlationId;
+    if (!allowAiAttempt(env)) {
+      emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, outcome: "emergency_circuit_open", meta: { attempts, maxAttempts } });
+      throw new AiEmergencyCircuitOpenError(task);
+    }
+
     const t0 = Date.now();
     attempts += 1;
+    recordAiUsage({ provider: d.model.provider, model: d.model.id, task, outcome: "started", costTier: d.model.costTier });
     h.start(d.model.id);
     try {
       const r = await call(d.model, d);
       const ms = Date.now() - t0;
       h.success(d.model.id, ms);
-      emit({ type: "model.call", correlationId: cid, model: d.model.id, provider: d.model.provider, ms, outcome: "ok", meta: { task, attempts } });
+      recordAiUsage({ provider: d.model.provider, model: d.model.id, task, outcome: "ok", costTier: d.model.costTier });
+      emit({ type: "model.call", correlationId: cid, model: d.model.id, provider: d.model.provider, ms, outcome: "ok", meta: { task, attempts, costTier: d.model.costTier } });
       return r;
     } catch (e) {
       const kind = failureOf(e);
       h.failure(d.model.id, kind);
-      emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: "error", errorCategory: kind, meta: { attempts, maxAttempts } });
+      recordAiUsage({ provider: d.model.provider, model: d.model.id, task, outcome: "error", costTier: d.model.costTier });
+      emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: "error", errorCategory: kind, meta: { attempts, maxAttempts, costTier: d.model.costTier } });
       tried.push(d.model.id);
       if (!isRetryable(kind)) throw e;
       if (attempts >= maxAttempts) {
@@ -83,6 +96,7 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
         throw e;
       }
       try { route(task, deps, { exclude: tried, correlationId: cid }); } catch { throw e; }
+      recordAiUsage({ provider: d.model.provider, model: d.model.id, task, outcome: "fallback", costTier: d.model.costTier });
       emit({ type: "model.fallback", correlationId: cid, task, model: d.model.id, reason: kind, fallback: true, meta: { attempts, maxAttempts } });
     }
   }
