@@ -165,13 +165,18 @@ export const RATEHAWK_MAX_BOOKING_STATUS_CALLS = 10;
 const CREATE_BOOKING_RETRYABLE_ERRORS = new Set(["double_booking_form", "duplicate_reservation", "unknown", "timeout"]);
 
 function isRetryableCreateBookingFailure(result: RatehawkResult<unknown>): boolean {
-  return CREATE_BOOKING_RETRYABLE_ERRORS.has(result.error?.code ?? "") ||
-    (result.meta.httpStatus != null && result.meta.httpStatus >= 500 && result.meta.httpStatus <= 599);
+  return !result.ok && (
+    CREATE_BOOKING_RETRYABLE_ERRORS.has(result.error.code) ||
+    (result.meta.httpStatus != null && result.meta.httpStatus >= 500 && result.meta.httpStatus <= 599)
+  );
 }
 
 function isTransientBookingStatusFailure(result: RatehawkResult<unknown>): boolean {
-  return result.error?.code === "timeout" || result.error?.code === "unknown" ||
-    (result.meta.httpStatus != null && result.meta.httpStatus >= 500 && result.meta.httpStatus <= 599);
+  return !result.ok && (
+    result.error.code === "timeout" ||
+    result.error.code === "unknown" ||
+    (result.meta.httpStatus != null && result.meta.httpStatus >= 500 && result.meta.httpStatus <= 599)
+  );
 }
 
 /** ETG v3: retry only documented transient/duplicate form failures, with a new partner_order_id. */
