@@ -17,6 +17,8 @@ export default defineTool({
     if (!email)
       return { content: [{ type: "text", text: "No email claim on token" }], isError: true };
     const { invokeViaFabric } = await import("@/lib/ai/tools/mcp-bridge.server");
-    return invokeViaFabric("wallet_transactions", { clientEmail: email, limit: Math.min(100, Math.max(1, limit ?? 20)) }, { authenticated: true, userId: email });
+    const result = await invokeViaFabric("wallet_transactions", { clientEmail: email, limit: Math.min(100, Math.max(1, limit ?? 20)) }, { authenticated: true, userId: email });
+    // Defence in depth: the fabric already sanitised; MCP output is sanitised again at the protocol edge.
+    return (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(result, { absolute: true });
   },
 });

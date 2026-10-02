@@ -17,6 +17,8 @@ export default defineTool({
   annotations: { readOnlyHint: true, openWorldHint: true },
   handler: async (input) => {
     const { invokeViaFabric } = await import("@/lib/ai/tools/mcp-bridge.server");
-    return invokeViaFabric("mcp_search_flights", input, { authenticated: false });
+    const result = await invokeViaFabric("mcp_search_flights", input, { authenticated: false });
+    // Defence in depth: the fabric already sanitised; MCP output is sanitised again at the protocol edge.
+    return (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(result, { absolute: true });
   },
 });
