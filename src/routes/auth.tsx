@@ -145,7 +145,7 @@ function AuthPage() {
           {mode === "signin" ? "Sign in" : "Create account"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Secure sign-in powered by Lovable Cloud. The first person to sign up becomes Super Admin.
+          Secure sign-in. New accounts start as client accounts; privileged roles are granted only through verified server-side administration.
         </p>
 
         <div className="mt-6 flex gap-2 rounded-full border border-border/60 p-1">
