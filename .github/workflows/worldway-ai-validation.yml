@@ -1,0 +1,25 @@
+name: Worldway AI Validation
+
+on:
+  push:
+    branches:
+      - worldway-ai-phase2-github
+  pull_request:
+    paths:
+      - "src/lib/ai/**"
+      - "supabase/migrations/**"
+      - "package.json"
+      - "bun.lock"
+
+jobs:
+  ai-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/ai/__tests__
+      - run: bunx tsc --noEmit
