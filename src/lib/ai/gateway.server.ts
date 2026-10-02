@@ -4,7 +4,7 @@ import { NoObjectGeneratedError, Output, streamText, type ModelMessage } from "a
 import type { z } from "zod";
 import { lovableProvider, ProviderNotConfiguredError } from "./router/adapters.server";
 import { DEFAULT_CHAT_MODEL } from "./router/registry";
-import { withRoute } from "./router/router";
+import { AiRequestBudgetError, withRoute } from "./router/router";
 import { withInFlightDedupe } from "./router/request-dedupe";
 import { installTraceStore } from "./router/trace-store.server";
 import type { TaskKind } from "./router/types";
@@ -27,7 +27,8 @@ const OPTS = {
 } as const;
 
 function mapError(e: unknown): never {
-  const status = (e as { statusCode?: number })?.statusCode;
+  if (e instanceof AiRequestBudgetError) throw new AiUnavailableError("AI is temporarily rate-limited. Please try again shortly.", 429);
+  const status = (e as { statusCode?: number; status?: number })?.statusCode ?? (e as { status?: number })?.status;
   if (status === 402) throw new AiUnavailableError("AI credits are exhausted for this workspace.", 402);
   if (status === 429) throw new AiUnavailableError("AI is busy right now. Please try again shortly.", 429);
   if (status === 403) throw new AiUnavailableError("AI access was denied for this request.", 403);
