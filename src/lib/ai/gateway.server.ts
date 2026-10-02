@@ -15,6 +15,7 @@ export class AiUnavailableError extends Error {
 }
 
 export function provider() {
+  void import("./router/trace-store.server").then((m) => m.installTraceStore()).catch(() => {});
   try { return lovableProvider(); }
   catch (e) { if (e instanceof ProviderNotConfiguredError) throw new AiUnavailableError("AI is not configured."); throw e; }
 }
