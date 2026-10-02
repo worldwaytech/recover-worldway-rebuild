@@ -47,6 +47,78 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_traces: {
+        Row: {
+          actor_id: string | null
+          cost_credits: number | null
+          created_at: string
+          error_category: string | null
+          event_type: string
+          expires_at: string
+          fallback: boolean
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          meta: Json
+          model: string | null
+          outcome: string | null
+          output_tokens: number | null
+          provider: string | null
+          request_id: string
+          session_id: string | null
+          task: string | null
+          tool_name: string | null
+          tool_risk: string | null
+          validation: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          cost_credits?: number | null
+          created_at?: string
+          error_category?: string | null
+          event_type: string
+          expires_at?: string
+          fallback?: boolean
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          meta?: Json
+          model?: string | null
+          outcome?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          request_id: string
+          session_id?: string | null
+          task?: string | null
+          tool_name?: string | null
+          tool_risk?: string | null
+          validation?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          cost_credits?: number | null
+          created_at?: string
+          error_category?: string | null
+          event_type?: string
+          expires_at?: string
+          fallback?: boolean
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          meta?: Json
+          model?: string | null
+          outcome?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          request_id?: string
+          session_id?: string | null
+          task?: string | null
+          tool_name?: string | null
+          tool_risk?: string | null
+          validation?: string | null
+        }
+        Relationships: []
+      }
       aktg_journeys: {
         Row: {
           card: Json

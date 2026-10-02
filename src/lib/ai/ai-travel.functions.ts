@@ -71,6 +71,11 @@ export const understandTripRequest = createServerFn({ method: "POST" })
       throw e;
     }
     if (!extracted) return { ok: false as const, error: "We couldn't understand that request. Please rephrase or add details." };
+    // Central safety boundary: no commercial facts, no injected text, refs must match the journey.
+    const { guardIntent } = await import("./safety/request-reader");
+    const guarded = guardIntent(extracted, refs);
+    if (!guarded.intent) return { ok: false as const, error: "We couldn't understand that request. Please rephrase or add details." };
+    extracted = guarded.intent;
 
     const req = intent.toRequirements(extracted, dna as any);
     const plans = intent.planEdits(extracted.edits, refs, version);

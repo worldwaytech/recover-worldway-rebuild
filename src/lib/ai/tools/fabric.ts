@@ -13,7 +13,7 @@ export const AI_ALLOWED_RISK: ReadonlySet<RiskLevel> = new Set(["READ", "SEARCH"
 export const HIGH_RISK: ReadonlySet<RiskLevel> = new Set(["HOLD", "MODIFY", "BOOK", "PAY", "CANCEL", "REFUND", "ADMIN"]);
 
 export type Permission = "public" | "authenticated" | "staff" | "super_admin";
-export type Scope = "commerce:read" | "commerce:quote" | "journey:read" | "journey:simulate" | "booking:write" | "payment:write" | "admin";
+export type Scope = "commerce:read" | "commerce:quote" | "journey:read" | "journey:simulate" | "booking:write" | "payment:write" | "wallet:read" | "admin";
 
 export type ExecutionContext = "concierge_chat" | "concierge_voice" | "mcp" | "partner_api" | "admin" | "agent_runtime";
 

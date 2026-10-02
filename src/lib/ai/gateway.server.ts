@@ -5,10 +5,12 @@ import type { z } from "zod";
 import { lovableProvider, ProviderNotConfiguredError } from "./router/adapters.server";
 import { DEFAULT_CHAT_MODEL } from "./router/registry";
 import { withRoute } from "./router/router";
+import { installTraceStore } from "./router/trace-store.server";
 import type { TaskKind } from "./router/types";
 
 // Model selection now goes through the Worldway Model Router (src/lib/ai/router).
 export const AI_MODEL = DEFAULT_CHAT_MODEL;
+installTraceStore();
 
 export class AiUnavailableError extends Error {
   constructor(message: string, public status?: number) { super(message); }

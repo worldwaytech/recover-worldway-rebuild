@@ -14,9 +14,9 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, openWorldHint: true },
   handler: async (input) => {
-    const { callPartner, toPartnerHotelPayload } = await import("@/lib/wwl.server");
-    const res = await callPartner("hotels", toPartnerHotelPayload(input));
-    const { externalToolResult } = await import("@/lib/confidentiality/redact");
-    return externalToolResult(await (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(res, { absolute: true }), !res.ok);
+    const { invokeViaFabric } = await import("@/lib/ai/tools/mcp-bridge.server");
+    const result = await invokeViaFabric("search_hotels", input, { authenticated: false });
+    // Defence in depth: the fabric already sanitised; MCP output is sanitised again at the protocol edge.
+    return (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(result, { absolute: true });
   },
 });
