@@ -61,10 +61,6 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
   let attempts = 0;
   let cid = correlationId;
   for (;;) {
-    if (attempts >= maxAttempts) {
-      emit({ type: "model.failure", correlationId: cid ?? newCorrelationId(), task, outcome: "no_route", errorCategory: "credits", meta: { reason: "request_attempt_ceiling", maxAttempts } });
-      throw new Error(`AI route attempt budget exhausted for ${task}`);
-    }
     const d = route(task, deps, { exclude: tried, correlationId: cid });
     cid = d.correlationId;
     const t0 = Date.now();
