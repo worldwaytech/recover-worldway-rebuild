@@ -5,10 +5,10 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-# Resolve the dependency graph from package.json instead of allowing the stale
-# package-lock transitive tree to force an incompatible parse5/entities layout.
-# The lockfile is intentionally not rewritten inside the image build.
-RUN npm install --no-audit --no-fund --package-lock=false
+# The repository has mixed transitive requirements for entities. Keep dependency
+# versions at their declared dependency scope instead of relying on npm hoisting.
+# package-lock is intentionally not rewritten during the image build.
+RUN npm install --install-strategy=nested --no-audit --no-fund --package-lock=false
 
 COPY . .
 
@@ -32,7 +32,6 @@ COPY --from=build /app/package.json ./package.json
 
 EXPOSE 3000
 
-# ECS can use this without requiring curl/wget in the image.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 USER node
