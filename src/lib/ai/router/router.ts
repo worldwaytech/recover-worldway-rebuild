@@ -7,7 +7,8 @@ import { emit, newCorrelationId } from "./telemetry";
 import { allowAiRequestAttempt, allowsAiCostTier, maxAiCostTier, maxAiRequestsPerMinute, maxAiRouteAttempts } from "./cost-policy";
 
 export class AiRequestBudgetError extends Error {
-  constructor(public maxRequestsPerMinute: number) { super(`AI emergency request budget exceeded (${maxRequestsPerMinute}/min)`); }
+  public readonly status = 429;
+  constructor(public maxRequestsPerMinute: number) { super(`AI emergency request budget exceeded (${maxRequestsPerMinute}/min)`); this.name = "AiRequestBudgetError"; }
 }
 
 export class NoRouteError extends Error {
