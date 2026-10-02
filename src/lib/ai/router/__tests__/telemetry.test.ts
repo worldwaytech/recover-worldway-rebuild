@@ -8,11 +8,11 @@ afterEach(() => {
 describe("AI telemetry hardening", () => {
   it("drops sensitive keys and bounds metadata", () => {
     const meta: Record<string, unknown> = {
-      password: "secret",
-      customerEmail: "customer@example.com",
       safe: "x".repeat(200),
     };
     for (let i = 0; i < 30; i++) meta[`field${i}`] = i;
+    meta.password = "secret";
+    meta.customerEmail = "customer@example.com";
 
     const out = scrubMeta(meta);
 
