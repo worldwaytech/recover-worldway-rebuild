@@ -68,6 +68,19 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
     const d = route(task, deps, { exclude: tried, correlationId: cid });
     cid = d.correlationId;
     const t0 = Date.now();
+    if (!allowAiRequestAttempt(env)) {
+      const maxRequestsPerMinute = maxAiRequestsPerMinute(env);
+      emit({
+        type: "model.failure",
+        correlationId: cid,
+        task,
+        model: d.model.id,
+        provider: d.model.provider,
+        outcome: "request_budget",
+        meta: { maxRequestsPerMinute },
+      });
+      throw new AiRequestBudgetError(maxRequestsPerMinute);
+    }
     attempts += 1;
     h.start(d.model.id);
     try {
