@@ -6,7 +6,11 @@ import { classifyStatus, isRetryable, type FailureKind, type ModelSpec, type Rou
 import { emit, newCorrelationId } from "./telemetry";
 import { allowAiRequestAttempt, allowsAiCostTier, maxAiCostTier, maxAiRequestsPerMinute, maxAiRouteAttempts } from "./cost-policy";
 
-export class AiRequestBudgetError extends Error {\n  constructor(public maxRequestsPerMinute: number) { super(`AI emergency request budget exceeded (${maxRequestsPerMinute}/min)`); }\n}\n\nexport class NoRouteError extends Error {
+export class AiRequestBudgetError extends Error {
+  constructor(public maxRequestsPerMinute: number) { super(`AI emergency request budget exceeded (${maxRequestsPerMinute}/min)`); }
+}
+
+export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
 }
 
