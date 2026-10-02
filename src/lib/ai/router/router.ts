@@ -10,10 +10,10 @@ export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
 }
 
-export interface RouterDeps { health?: HealthBook; env?: Record<string, string | undefined>; models?: ModelSpec[] }
+export interface RouterDeps { health?: HealthBook; env?: Record<string, string | undefined>; models?: ModelSpec[]; policies?: typeof POLICIES }
 
 function candidates(task: TaskKind, deps: RouterDeps, includeFallback: boolean) {
-  const p = POLICIES[task];
+  const p = (deps.policies ?? POLICIES)[task];
   const ids = includeFallback ? [...p.preferred, ...p.fallback] : p.preferred;
   const find = (id: string) => (deps.models ?? MODELS).find((m) => m.id === id) ?? model(id);
   return ids.map(find).filter((m): m is ModelSpec => !!m);
@@ -22,7 +22,7 @@ function candidates(task: TaskKind, deps: RouterDeps, includeFallback: boolean) 
 export function route(task: TaskKind, deps: RouterDeps = {}, opts: { exclude?: string[]; correlationId?: string; includeFallback?: boolean } = {}): RouteDecision {
   const h = deps.health ?? defaultHealth;
   const env = deps.env ?? process.env;
-  const required = POLICIES[task].required;
+  const required = (deps.policies ?? POLICIES)[task].required;
   const skipped: RouteDecision["skipped"] = [];
   const correlationId = opts.correlationId ?? newCorrelationId();
   for (const m of candidates(task, deps, opts.includeFallback ?? true)) {
