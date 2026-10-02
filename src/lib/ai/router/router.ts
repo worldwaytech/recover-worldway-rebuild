@@ -4,10 +4,16 @@ import { MODELS, POLICIES, hasCapabilities, model, providerConfigured } from "./
 import { health as defaultHealth, type HealthBook } from "./health";
 import { classifyStatus, isRetryable, type FailureKind, type ModelSpec, type RouteDecision, type TaskKind } from "./types";
 import { emit, newCorrelationId } from "./telemetry";
-import { allowsAiCostTier, maxAiCostTier } from "./cost-policy";
+import { allowsAiCostTier, maxAiCostTier, maxAiRouteAttempts } from "./cost-policy";
 
 export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
+}
+
+export class AiRequestBudgetError extends Error {
+  constructor(public task: TaskKind, public maxAttempts: number) {
+    super(`AI route attempt budget exhausted for ${task}`);
+  }
 }
 
 export interface RouterDeps { health?: HealthBook; env?: Record<string, string | undefined>; models?: ModelSpec[] }
@@ -50,32 +56,41 @@ export function failureOf(e: unknown): FailureKind {
 
 /**
  * Runs `call` on the routed model; on a retryable failure (429/5xx/timeout) it
- * tries the next eligible fallback model once each. Terminal failures (400/402/403…)
- * are rethrown immediately — never retried, never substituted.
+ * tries the next eligible fallback model once each, subject to the hard per-request
+ * attempt ceiling. Terminal failures (400/402/403…) are rethrown immediately.
  */
 export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: RouteDecision) => Promise<T>, deps: RouterDeps = {}, correlationId?: string): Promise<T> {
   const h = deps.health ?? defaultHealth;
+  const env = deps.env ?? process.env;
   const tried: string[] = [];
+  const maxAttempts = maxAiRouteAttempts(env);
+  let attempts = 0;
   let cid = correlationId;
   for (;;) {
+    if (attempts >= maxAttempts) {
+      emit({ type: "model.failure", correlationId: cid ?? newCorrelationId(), task, outcome: "no_route", errorCategory: "credits", meta: { reason: "request_attempt_ceiling", maxAttempts } });
+      throw new AiRequestBudgetError(task, maxAttempts);
+    }
     const d = route(task, deps, { exclude: tried, correlationId: cid });
     cid = d.correlationId;
     const t0 = Date.now();
+    attempts += 1;
     h.start(d.model.id);
     try {
       const r = await call(d.model, d);
       const ms = Date.now() - t0;
       h.success(d.model.id, ms);
-      emit({ type: "model.call", correlationId: cid, model: d.model.id, provider: d.model.provider, ms, outcome: "ok", meta: { task } });
+      emit({ type: "model.call", correlationId: cid, model: d.model.id, provider: d.model.provider, ms, outcome: "ok", meta: { task, attempts } });
       return r;
     } catch (e) {
       const kind = failureOf(e);
       h.failure(d.model.id, kind);
-      emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: "error", errorCategory: kind });
+      emit({ type: "model.failure", correlationId: cid, task, model: d.model.id, provider: d.model.provider, ms: Date.now() - t0, outcome: "error", errorCategory: kind, meta: { attempts, maxAttempts } });
       tried.push(d.model.id);
       if (!isRetryable(kind)) throw e;
+      if (attempts >= maxAttempts) throw e;
       try { route(task, deps, { exclude: tried, correlationId: cid }); } catch { throw e; }
-      emit({ type: "model.fallback", correlationId: cid, task, model: d.model.id, reason: kind, fallback: true });
+      emit({ type: "model.fallback", correlationId: cid, task, model: d.model.id, reason: kind, fallback: true, meta: { attempts, maxAttempts } });
     }
   }
 }
@@ -83,7 +98,7 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
 export function routerStatus(deps: RouterDeps = {}) {
   const h = deps.health ?? defaultHealth;
   const env = deps.env ?? process.env;
-  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, maxCostTier: maxAiCostTier(env), allowedByCostCeiling: allowsAiCostTier(m.costTier, env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
+  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, maxCostTier: maxAiCostTier(env), allowedByCostCeiling: allowsAiCostTier(m.costTier, env), maxRouteAttempts: maxAiRouteAttempts(env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
 }
 
 /** Human-readable routing explanation (admin/debug). */
