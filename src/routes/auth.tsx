@@ -209,10 +209,10 @@ function AuthPage() {
               id="auth-password"
               type="password"
               required
-              minLength={6}
+              minLength={12}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="At least 12 characters"
             />
           </div>
           {err && <p className="text-sm text-destructive">{err}</p>}
