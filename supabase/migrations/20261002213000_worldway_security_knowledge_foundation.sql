@@ -134,6 +134,38 @@ create policy "staff can read knowledge evidence"
   on public.worldway_knowledge_evidence for select to authenticated
   using (public.worldway_is_staff());
 
+
+
+create or replace function public.worldway_knowledge_chunks_tsv()
+returns trigger
+language plpgsql
+as $
+begin
+  new.content_tsv := to_tsvector('simple', coalesce(new.content, ''));
+  return new;
+end;
+$;
+
+drop trigger if exists worldway_knowledge_chunks_tsv_trigger on public.worldway_knowledge_chunks;
+create trigger worldway_knowledge_chunks_tsv_trigger
+before insert or update of content on public.worldway_knowledge_chunks
+for each row execute function public.worldway_knowledge_chunks_tsv();
+
+create or replace function public.worldway_knowledge_documents_touch()
+returns trigger
+language plpgsql
+as $
+begin
+  new.updated_at := now();
+  return new;
+end;
+$;
+
+drop trigger if exists worldway_knowledge_documents_touch_trigger on public.worldway_knowledge_documents;
+create trigger worldway_knowledge_documents_touch_trigger
+before update on public.worldway_knowledge_documents
+for each row execute function public.worldway_knowledge_documents_touch();
+
 create index if not exists worldway_knowledge_documents_status_idx
   on public.worldway_knowledge_documents(status, updated_at desc);
 create index if not exists worldway_knowledge_documents_source_idx
