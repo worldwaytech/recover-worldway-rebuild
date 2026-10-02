@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AuthCtx, PartnerResult, PartnerLookupResult, PartnerLookupRow } from "./wwl.server";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "./security/rate-limit.server";
 
 // Re-exports so existing imports (`@/lib/wwl.functions`) keep working.
 export { toPartnerHotelPayload } from "./wwl-adapters";
@@ -150,6 +151,7 @@ const lookupSchema = z
 export const lookupPartner = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => lookupSchema.parse(d))
   .handler(async ({ data }): Promise<PartnerLookupResult> => {
+    await consumeRateLimit(rateLimitKey("lookup", requestFingerprint(currentRequest())), 120, 60);
     const { callPartnerLookup } = await import("./wwl.server");
     return callPartnerLookup(data.kind, data.query, data.limit);
   });
@@ -158,6 +160,7 @@ export const lookupPartner = createServerFn({ method: "POST" })
 export const searchFlights = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => flightsSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchFlights"), 60, 60);
     const { callPartner, toResolvedPartnerFlightPayload } = await import("./wwl.server");
     return callPartner("flights", await toResolvedPartnerFlightPayload(data));
   });
@@ -165,6 +168,7 @@ export const searchFlights = createServerFn({ method: "POST" })
 export const searchHotels = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => hotelsSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchHotels"), 60, 60);
     const { callPartner, toPartnerHotelPayload } = await import("./wwl.server");
     return callPartner("hotels", toPartnerHotelPayload(data));
   });
@@ -172,6 +176,7 @@ export const searchHotels = createServerFn({ method: "POST" })
 export const searchActivities = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => activitiesSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchActivities"), 60, 60);
     const { callPartner } = await import("./wwl.server");
     return callPartner("activities", data);
   });
@@ -179,6 +184,7 @@ export const searchActivities = createServerFn({ method: "POST" })
 export const searchTransfers = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => transfersSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchTransfers"), 60, 60);
     const { callPartner, toPartnerTransferPayload } = await import("./wwl.server");
     return callPartner("transfers", toPartnerTransferPayload(data));
   });
@@ -213,6 +219,7 @@ export const buildTrip = createServerFn({ method: "POST" })
 export const searchBuses = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => busesSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("partner-search", requestFingerprint(currentRequest()), "searchBuses"), 60, 60);
     const { callPartner } = await import("./wwl.server");
     return callPartner("buses", data);
   });
@@ -229,6 +236,7 @@ export const conciergeChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => conciergeSchema.parse(d))
   .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("concierge", context.userId), 30, 60);
     await assertAiEntitlement(context);
     // Provider-agnostic Concierge: built-in AI + live Worldway commerce tools (or AetherCore via CONCIERGE_PROVIDER).
     const { askConcierge, ConciergeError } = await import("./ai/concierge.server");
