@@ -21,6 +21,11 @@ export class Planner {
     const out: { specialist: SpecialistConfig; skill: string }[] = [];
     for (const sp of specialists) for (const s of sp.skills) if (!seen.has(s) && out.length < limits.maxSkills) { seen.add(s); out.push({ specialist: sp, skill: s }); }
     return out;
+  /** Server-side convenience entrypoint: load consented memory before planning. */
+  async runWithTravelMemory(task: string, goal: SkillGoal, base: Omit<ToolContext, "correlationId" | "context" | "sessionId">, db: { from: (table: string) => any }, parent?: AbortSignal): Promise<SupervisorResult> {
+    if (!base.principal.userId) return this.run(task, goal, base, parent);
+    const travelContext = await buildTravelAgentContext(db, base.principal.userId);
+    return this.run(task, goal, base, parent, travelContext);
   }
 }
 
