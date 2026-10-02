@@ -82,6 +82,6 @@ describe("Worldway travel memory", () => {
     });
 
     const memories = await recallTravelMemory(d as any, "u");
-    expect(memories.map((m) => m.id)).toEqual(["m2"]);
+    expect(memories.map((m: { id: string }) => m.id)).toEqual(["m2"]);
   });
 });
