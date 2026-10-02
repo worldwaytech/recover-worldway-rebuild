@@ -17,6 +17,8 @@ export function commerceRegistry(): ToolRegistry {
   const reg = new ToolRegistry();
   for (const d of DEFS) reg.register({
     name: d.name, description: d.description, input: CommerceSchemas[d.op] as any,
+    version: "1.0.0", contexts: ["concierge_chat", "concierge_voice", "agent_runtime"], requiresAuth: false,
+    timeoutMs: 120_000, retries: 0, // supplier calls are never auto-retried by AI
     risk: d.risk, permission: "public", scopes: d.risk === "QUOTE" ? ["commerce:read", "commerce:quote"] : ["commerce:read"],
     audit: "trace", untrustedOutput: true,
     execute: async (input) => {
@@ -29,8 +31,8 @@ export function commerceRegistry(): ToolRegistry {
 }
 
 /** Concierge principal: public, read/quote only. Never has high-risk grants. */
-export function conciergeContext(correlationId = newCorrelationId(), signal?: AbortSignal): ToolContext {
-  return { correlationId, principal: { permission: "public", scopes: ["commerce:read", "commerce:quote"] }, signal };
+export function conciergeContext(correlationId = newCorrelationId(), signal?: AbortSignal, context: ToolContext["context"] = "concierge_chat"): ToolContext {
+  return { correlationId, context, principal: { permission: "public", scopes: ["commerce:read", "commerce:quote"] }, signal };
 }
 
 /** AI SDK tool set backed by the fabric (policy, schema, safety, audit on every call). */

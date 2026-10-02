@@ -7,7 +7,17 @@ export type TraceEventType =
 export interface TraceEvent {
   type: TraceEventType;
   correlationId: string;
+  sessionId?: string;
+  /** Opaque actor id (user uuid / "public" / "system") — never email or name. */
+  actor?: string;
+  task?: string;
   at: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  costCredits?: number;
+  validation?: "passed" | "failed" | "repaired" | "skipped";
+  errorCategory?: string;
+  fallback?: boolean;
   ms?: number;
   model?: string;
   provider?: string;

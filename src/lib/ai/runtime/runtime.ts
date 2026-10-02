@@ -52,8 +52,9 @@ export class SkillRegistry {
   list() { return [...this.skills.values()]; }
 }
 
-export function createSession(channel: AgentSession["channel"], userId: string | null = null, parent?: AbortSignal): AgentSession {
+export function createSession(channel: AgentSession["channel"], userId: string | null = null, parent?: AbortSignal, timeoutMs?: number): AgentSession {
   const abort = new AbortController();
+  if (timeoutMs) { const t = setTimeout(() => abort.abort(new Error("session_timeout")), timeoutMs); abort.signal.addEventListener("abort", () => clearTimeout(t), { once: true }); }
   if (parent) { if (parent.aborted) abort.abort(parent.reason); else parent.addEventListener("abort", () => abort.abort(parent.reason), { once: true }); }
   return { id: crypto.randomUUID(), correlationId: newCorrelationId(), channel, userId, startedAt: new Date().toISOString(), abort };
 }
