@@ -29,15 +29,19 @@ export interface TraceEvent {
 }
 
 const SECRETISH = /(key|secret|token|password|authorization|signature|card|cvv|cvc|pan|upi|email|phone|passport)/i;
+const MAX_CORRELATION_ID = 120;
+const MAX_REASON = 160;
+const MAX_META_KEYS = 24;
+const MAX_META_STRING = 80;
 
-/** Drops sensitive-named fields and truncates strings so traces can't leak data. */
+/** Drops sensitive-named fields and bounds all free-form trace metadata. */
 export function scrubMeta(meta?: Record<string, unknown>): TraceEvent["meta"] {
   if (!meta) return undefined;
   const out: Record<string, string | number | boolean | null> = {};
-  for (const [k, v] of Object.entries(meta)) {
+  for (const [k, v] of Object.entries(meta).slice(0, MAX_META_KEYS)) {
     if (SECRETISH.test(k)) continue;
-    if (v === null || typeof v === "number" || typeof v === "boolean") out[k] = v;
-    else if (typeof v === "string") out[k] = v.slice(0, 80);
+    if (v === null || typeof v === "number" || typeof v === "boolean") out[k.slice(0, 80)] = v;
+    else if (typeof v === "string") out[k.slice(0, 80)] = v.slice(0, MAX_META_STRING);
   }
   return out;
 }
@@ -47,9 +51,15 @@ const sinks = new Set<TraceSink>();
 export function addTraceSink(s: TraceSink) { sinks.add(s); return () => sinks.delete(s); }
 
 export function emit(e: Omit<TraceEvent, "at"> & { meta?: Record<string, unknown> }) {
-  const ev: TraceEvent = { ...e, at: new Date().toISOString(), meta: scrubMeta(e.meta) };
-  if (ev.reason) ev.reason = ev.reason.slice(0, 160);
+  const ev: TraceEvent = {
+    ...e,
+    correlationId: e.correlationId.slice(0, MAX_CORRELATION_ID),
+    at: new Date().toISOString(),
+    meta: scrubMeta(e.meta),
+  };
+  if (ev.reason) ev.reason = ev.reason.slice(0, MAX_REASON);
   for (const s of sinks) { try { s(ev); } catch { /* sinks never break calls */ } }
+  // Structured logs remain metadata-only. Aggregation/retention belongs to the sink.
   console.log(JSON.stringify({ svc: "ww-ai", ...ev }));
 }
 
