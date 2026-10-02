@@ -4,7 +4,12 @@ import { MODELS, POLICIES, hasCapabilities, model, providerConfigured } from "./
 import { health as defaultHealth, type HealthBook } from "./health";
 import { classifyStatus, isRetryable, type FailureKind, type ModelSpec, type RouteDecision, type TaskKind } from "./types";
 import { emit, newCorrelationId } from "./telemetry";
-import { allowsAiCostTier, maxAiCostTier, maxAiRouteAttempts } from "./cost-policy";
+import { allowAiRequestAttempt, allowsAiCostTier, maxAiCostTier, maxAiRequestsPerMinute, maxAiRouteAttempts } from "./cost-policy";
+
+export class AiRequestBudgetError extends Error {
+  public readonly status = 429;
+  constructor(public maxRequestsPerMinute: number) { super(`AI emergency request budget exceeded (${maxRequestsPerMinute}/min)`); this.name = "AiRequestBudgetError"; }
+}
 
 export class NoRouteError extends Error {
   constructor(public task: TaskKind, public skipped: RouteDecision["skipped"]) { super(`No healthy model for ${task}`); }
@@ -64,6 +69,19 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
     const d = route(task, deps, { exclude: tried, correlationId: cid });
     cid = d.correlationId;
     const t0 = Date.now();
+    if (!allowAiRequestAttempt(env)) {
+      const maxRequestsPerMinute = maxAiRequestsPerMinute(env);
+      emit({
+        type: "model.failure",
+        correlationId: cid,
+        task,
+        model: d.model.id,
+        provider: d.model.provider,
+        outcome: "request_budget",
+        meta: { maxRequestsPerMinute },
+      });
+      throw new AiRequestBudgetError(maxRequestsPerMinute);
+    }
     attempts += 1;
     h.start(d.model.id);
     try {
@@ -91,7 +109,7 @@ export async function withRoute<T>(task: TaskKind, call: (m: ModelSpec, d: Route
 export function routerStatus(deps: RouterDeps = {}) {
   const h = deps.health ?? defaultHealth;
   const env = deps.env ?? process.env;
-  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, maxCostTier: maxAiCostTier(env), allowedByCostCeiling: allowsAiCostTier(m.costTier, env), maxRouteAttempts: maxAiRouteAttempts(env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
+  return (deps.models ?? MODELS).map((m) => ({ id: m.id, provider: m.provider, enabled: m.enabled, configured: providerConfigured(m.provider, env), capabilities: m.capabilities, costTier: m.costTier, maxCostTier: maxAiCostTier(env), allowedByCostCeiling: allowsAiCostTier(m.costTier, env), maxRouteAttempts: maxAiRouteAttempts(env), maxRequestsPerMinute: maxAiRequestsPerMinute(env), latencyMs: m.latencyMs, rpm: m.rpm, health: h.snapshot(m.id) }));
 }
 
 /** Human-readable routing explanation (admin/debug). */

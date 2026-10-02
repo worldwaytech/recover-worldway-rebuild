@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowsAiCostTier, maxAiCostTier, maxAiRouteAttempts } from "../cost-policy";
+import { allowAiRequestAttempt, allowsAiCostTier, maxAiCostTier, maxAiRequestsPerMinute, maxAiRouteAttempts } from "../cost-policy";
 
 describe("AI cost policy", () => {
   it("defaults to the current tier ceiling", () => {
@@ -22,5 +22,18 @@ describe("AI cost policy", () => {
     expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "99" })).toBe(4);
     expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "0" })).toBe(1);
     expect(maxAiRouteAttempts({ WORLDWAY_AI_MAX_ROUTE_ATTEMPTS: "invalid" })).toBe(2);
+  });
+
+  it("defaults the emergency request budget to disabled and enforces configured limits", () => {
+    expect(maxAiRequestsPerMinute({})).toBe(0);
+    expect(allowAiRequestAttempt({})).toBe(true);
+
+    const env = { WORLDWAY_AI_MAX_REQUESTS_PER_MINUTE: "2" };
+    const now = Date.now() + 600_000;
+    expect(allowAiRequestAttempt(env, now)).toBe(true);
+    expect(allowAiRequestAttempt(env, now + 1)).toBe(true);
+    expect(allowAiRequestAttempt(env, now + 2)).toBe(false);
+    expect(allowAiRequestAttempt(env, now + 60_001)).toBe(true);
+    expect(maxAiRequestsPerMinute({ WORLDWAY_AI_MAX_REQUESTS_PER_MINUTE: "99999" })).toBe(10_000);
   });
 });
