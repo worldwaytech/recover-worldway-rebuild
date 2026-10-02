@@ -54,7 +54,7 @@ describe("High-risk action gate", () => {
     expect((await executeProposal(p, r, ctx(), ok)).ok).toBe(false); // not approved
     expect(() => approve(p, { userId: "ai", permission: "super_admin", isAi: true })).toThrow(/ai_cannot_approve/);
     const a = approve(p, { userId: "u1", permission: "authenticated" });
-    expect((await executeProposal(a, r, ctx(), no)).code).toMatch(/revalidation_failed/);
+    expect(((await executeProposal(a, r, ctx(), no)) as any).code).toMatch(/revalidation_failed/);
     expect(calls).toEqual([]);
     const done = await executeProposal(a, r, ctx(), ok);
     expect(done.ok).toBe(true); expect(calls).toEqual(["book_x"]);
