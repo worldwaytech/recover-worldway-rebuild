@@ -6,7 +6,7 @@ export const MemorySource = z.enum(["user","booking","interaction","system_infer
 
 const MemoryValue = z.record(z.string(), z.unknown());
 
-const BLOCKED = /\b(password|api[_ -]?key|secret|authorization|credit[_ -]?card|card[_ -]?number|cvv|cvc|upi|passport[_ -]?number|health|medical|diagnosis|religion|political|politics|sexual orientation|sex life)\b/i;
+const BLOCKED = /\b(password|api[_ -]?key|secret|authorization|credit[_ -]?card|payment[_ -]?card|card[_ -]?number|cvv|cvc|upi|passport[_ -]?number|health|medical|diagnosis|religion|political|politics|sexual orientation|sex life)\b/i;
 
 function assertSafeMemory(key: string, value: unknown) {
   const serialized = JSON.stringify({ key, value });
