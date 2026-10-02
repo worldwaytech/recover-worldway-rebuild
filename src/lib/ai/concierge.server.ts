@@ -2,9 +2,10 @@
 // CONCIERGE_PROVIDER=aethercore → Azure Foundry agent; anything else → built-in
 // Lovable AI with live Worldway commerce tools. The page and tools never change.
 // AI only chooses tools and phrases answers; every fact comes from tool results.
-import { stepCountIs, streamText, tool, type ModelMessage } from "ai";
-import { AI_MODEL, AiUnavailableError, provider } from "./gateway.server";
-import { CommerceSchemas, runCommerce, type CommerceOp } from "@/lib/commerce/commerce.server";
+import { stepCountIs, streamText, type ModelMessage } from "ai";
+import { AiUnavailableError, provider } from "./gateway.server";
+import { withRoute } from "./router/router";
+import { aiSdkTools, commerceRegistry, conciergeContext } from "./tools/commerce-tools.server";
 
 export interface ConciergeTurn { role: "user" | "assistant"; content: string }
 export interface ConciergeReply { reply: string; sessionId: string | null; conversationId: string | null; provider: "builtin" | "aethercore" }
@@ -31,23 +32,9 @@ RULES (strict):
 - Ask for missing essentials (dates, origin, travellers) briefly. Use YYYY-MM-DD for tool dates and IATA codes where known.
 - Be concise and warm; use short lists for options.`;
 
-const TOOLS: Record<string, { op: CommerceOp; description: string }> = {
-  search_flights: { op: "searchFlights", description: "Search live flights (one-way or return). Returns live fares." },
-  search_tours: { op: "searchTours", description: "Search the Worldway tour catalogue by keywords, city or country. 'from' prices are indicative." },
-  tour_availability: { op: "tourAvailability", description: "Live open dates and per-adult prices for a tour from a date." },
-  quote_tour: { op: "quoteTour", description: "Live total price for a tour on a date for a group. Use before stating any tour total." },
-  plan_trip: { op: "planTrip", description: "Build a live trip plan: flights out and back, hotels from the arrival date, optional tour selection (tour_ref from its tours list), optional stays, FX-converted totals." },
-};
-
-function commerceTools(onResult?: (name: string, ok: boolean) => void) {
-  return Object.fromEntries(Object.entries(TOOLS).map(([name, t]) => [name, tool({
-    description: t.description,
-    inputSchema: CommerceSchemas[t.op] as any,
-    execute: async (input: unknown) => {
-      try { const r = await runCommerce(t.op, input); onResult?.(name, true); return r; }
-      catch (e) { onResult?.(name, false); throw e; }
-    },
-  })]));
+// Tools come from the Worldway Tool Fabric (risk/permission/schema/safety/audit enforced).
+function commerceTools(onResult?: (name: string, ok: boolean) => void, signal?: AbortSignal) {
+  return aiSdkTools(commerceRegistry(), conciergeContext(undefined, signal), onResult);
 }
 
 /** Same read-only live commerce tools and rules for every Concierge channel (chat + voice). */
@@ -67,8 +54,9 @@ async function askBuiltin(message: string, history: ConciergeTurn[]): Promise<st
     },
   ];
   try {
+    return await withRoute("concierge_chat", async (m) => {
     const result = streamText({
-      model: provider().responses(AI_MODEL),
+      model: provider().responses(m.id),
       system: SYSTEM.replace("{TODAY}", new Date().toISOString().slice(0, 10)),
       messages,
       tools: commerceTools() as any,
@@ -77,6 +65,7 @@ async function askBuiltin(message: string, history: ConciergeTurn[]): Promise<st
       providerOptions: { openai: { store: false, forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] } } as never,
     });
     return (await result.text).trim();
+    });
   } catch (e) {
     if (e instanceof AiUnavailableError) throw new ConciergeError(e.message, e.status);
     const status = (e as { statusCode?: number })?.statusCode;

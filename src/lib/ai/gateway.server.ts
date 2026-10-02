@@ -1,26 +1,22 @@
 // Lovable AI Gateway (Responses) — server-only. Streams every call and consumes
 // the final result server-side. AI never supplies inventory, prices or schedules.
-import { createOpenAI } from "@ai-sdk/openai";
 import { NoObjectGeneratedError, Output, streamText, type ModelMessage } from "ai";
 import type { z } from "zod";
-import { createLovableAiGatewayRunIdFetch } from "./run-id.server";
+import { lovableProvider, ProviderNotConfiguredError } from "./router/adapters.server";
+import { DEFAULT_CHAT_MODEL } from "./router/registry";
+import { withRoute } from "./router/router";
+import type { TaskKind } from "./router/types";
 
-export const AI_MODEL = "openai/gpt-6-astra";
+// Model selection now goes through the Worldway Model Router (src/lib/ai/router).
+export const AI_MODEL = DEFAULT_CHAT_MODEL;
 
 export class AiUnavailableError extends Error {
   constructor(message: string, public status?: number) { super(message); }
 }
 
 export function provider() {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new AiUnavailableError("AI is not configured.");
-  const runIdFetch = createLovableAiGatewayRunIdFetch();
-  return createOpenAI({
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    apiKey,
-    headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-    fetch: runIdFetch.fetch,
-  });
+  try { return lovableProvider(); }
+  catch (e) { if (e instanceof ProviderNotConfiguredError) throw new AiUnavailableError("AI is not configured."); throw e; }
 }
 
 const OPTS = {
@@ -35,10 +31,12 @@ function mapError(e: unknown): never {
   throw new AiUnavailableError("AI could not process this request.", status);
 }
 
-export async function aiObject<T>(system: string, messages: ModelMessage[], schema: z.ZodType<T>): Promise<T | null> {
+export async function aiObject<T>(system: string, messages: ModelMessage[], schema: z.ZodType<T>, task: TaskKind = "intent_extraction"): Promise<T | null> {
   try {
-    const result = streamText({ model: provider().responses(AI_MODEL), system, messages, maxRetries: 0, output: Output.object({ schema }), providerOptions: OPTS as never });
+    return await withRoute(task, async (m) => {
+    const result = streamText({ model: provider().responses(m.id), system, messages, maxRetries: 0, output: Output.object({ schema }), providerOptions: OPTS as never });
     return (await result.output) as T;
+    });
   } catch (e) {
     if (NoObjectGeneratedError.isInstance(e)) {
       try { return schema.parse(JSON.parse(e.text ?? "")); } catch { return null; }
@@ -48,10 +46,12 @@ export async function aiObject<T>(system: string, messages: ModelMessage[], sche
   }
 }
 
-export async function aiText(system: string, messages: ModelMessage[]): Promise<string> {
+export async function aiText(system: string, messages: ModelMessage[], task: TaskKind = "explanation"): Promise<string> {
   try {
-    const result = streamText({ model: provider().responses(AI_MODEL), system, messages, maxRetries: 0, providerOptions: OPTS as never });
-    return (await result.text).trim();
+    return await withRoute(task, async (m) => {
+      const result = streamText({ model: provider().responses(m.id), system, messages, maxRetries: 0, providerOptions: OPTS as never });
+      return (await result.text).trim();
+    });
   } catch (e) {
     mapError(e);
   }
