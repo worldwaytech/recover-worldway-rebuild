@@ -3,7 +3,7 @@ FROM node:22-bookworm-slim AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 # The repository has mixed transitive requirements for entities. Use npm's nested
 # install strategy so incompatible transitive versions are not flattened together.
