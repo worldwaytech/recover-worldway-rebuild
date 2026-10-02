@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const MemoryKind = z.enum(["explicit","behavioral","journey","inferred","session"]);
 export const MemorySource = z.enum(["user","booking","interaction","system_inference"]);
@@ -16,12 +15,16 @@ function assertSafeMemory(key: string, value: unknown) {
 
 type Db = { from: (table: string) => any };
 
-async function consentFor(db: Db, userId: string, scope: "preferences" | "history") {
+async function consentFor(db: Db, userId: string) {
   const { data } = await db.from("travel_dna")
     .select("consent_preferences, consent_history")
     .eq("user_id", userId)
     .maybeSingle();
-  return scope === "preferences" ? data?.consent_preferences === true : data?.consent_history === true;
+
+  return {
+    preferences: data?.consent_preferences === true,
+    history: data?.consent_history === true,
+  };
 }
 
 export const rememberTravelMemory = async (
@@ -39,7 +42,8 @@ export const rememberTravelMemory = async (
   },
 ) => {
   assertSafeMemory(input.key, input.value);
-  if (!(await consentFor(db, userId, input.consentScope))) {
+  const consent = await consentFor(db, userId);
+  if (!consent[input.consentScope]) {
     throw new Error("memory_consent_required");
   }
   if (input.kind === "session") throw new Error("session_memory_is_not_persistent");
@@ -70,8 +74,10 @@ export const recallTravelMemory = async (
   options: { kind?: z.infer<typeof MemoryKind>; limit?: number } = {},
 ) => {
   const limit = Math.min(100, Math.max(1, options.limit ?? 50));
+  const consent = await consentFor(db, userId);
+
   let q = db.from("travel_memory")
-    .select("id,memory_kind,memory_key,value,confidence,source,source_ref,expires_at,created_at,updated_at")
+    .select("id,memory_kind,memory_key,value,confidence,source,source_ref,consent_scope,expires_at,created_at,updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(limit);
@@ -82,7 +88,10 @@ export const recallTravelMemory = async (
   if (error) throw new Error("Could not load travel memory.");
 
   const now = Date.now();
-  return (data ?? []).filter((m: { expires_at: string | null }) => !m.expires_at || Date.parse(m.expires_at) > now);
+  return (data ?? []).filter((m: { expires_at: string | null; consent_scope: "preferences" | "history" }) =>
+    (!m.expires_at || Date.parse(m.expires_at) > now) &&
+    consent[m.consent_scope] === true
+  );
 };
 
 export const forgetTravelMemory = async (db: Db, userId: string, id: string) => {
