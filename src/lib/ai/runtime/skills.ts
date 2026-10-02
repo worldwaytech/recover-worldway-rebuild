@@ -3,12 +3,15 @@
 import type { RiskLevel } from "../tools/fabric";
 import type { ValidatedStep } from "./plan-validation";
 import type { TripRequirements } from "@/lib/engine/types";
+import type { TravelAgentContext } from "./travel-context";
 
 export interface SkillGoal {
   requirements?: Partial<TripRequirements> & { checkIn?: string; checkOut?: string; cabin?: string };
   query?: string;
   country?: string;
   supplierKeys?: string[];
+  /** Consent-gated personalization context. Current request remains authoritative. */
+  travelContext?: TravelAgentContext;
 }
 
 export interface SkillDef {
@@ -32,7 +35,7 @@ export const SKILLS: SkillDef[] = [
       const r = g.requirements ?? {};
       const missing = (["origin", "departFrom", "returnBy", "adults"] as const).filter((k) => r[k] == null);
       if (!r.destinations?.length) missing.push("destinations" as never);
-      return { complete: missing.length === 0, missing };
+      return { complete: missing.length === 0, missing, personalization: g.travelContext ? { available: true, memoryCount: g.travelContext.memories.length, precedence: g.travelContext.precedence } : { available: false } };
     },
   },
   {
