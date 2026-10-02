@@ -8,7 +8,6 @@ export interface TraceEvent {
   type: TraceEventType;
   correlationId: string;
   sessionId?: string;
-  /** Opaque actor id (user uuid / "public" / "system") — never email or name. */
   actor?: string;
   task?: string;
   at: string;
@@ -30,7 +29,6 @@ export interface TraceEvent {
 
 const SECRETISH = /(key|secret|token|password|authorization|signature|card|cvv|cvc|pan|upi|email|phone|passport)/i;
 
-/** Drops sensitive-named fields and truncates strings so traces can't leak data. */
 export function scrubMeta(meta?: Record<string, unknown>): TraceEvent["meta"] {
   if (!meta) return undefined;
   const out: Record<string, string | number | boolean | null> = {};
@@ -49,10 +47,18 @@ export function addTraceSink(s: TraceSink) { sinks.add(s); return () => sinks.de
 export function emit(e: Omit<TraceEvent, "at"> & { meta?: Record<string, unknown> }) {
   const ev: TraceEvent = { ...e, at: new Date().toISOString(), meta: scrubMeta(e.meta) };
   if (ev.reason) ev.reason = ev.reason.slice(0, 160);
-  for (const s of sinks) { try { s(ev); } catch { /* sinks never break calls */ } }
+  for (const s of sinks) {
+    try { void s(ev); } catch { /* sinks never break calls */ }
+  }
   console.log(JSON.stringify({ svc: "ww-ai", ...ev }));
 }
 
 export function newCorrelationId(): string {
   return `wwai-${crypto.randomUUID()}`;
+}
+
+if (typeof window === "undefined") {
+  import("./trace-persistence.server")
+    .then(({ persistTraceEvent }) => addTraceSink((event) => { void persistTraceEvent(event); }))
+    .catch(() => undefined);
 }
