@@ -65,6 +65,8 @@ describe("RateHawk ETG certification retry guards", () => {
   it("retries duplicate/unknown booking-form failures with a new partner_order_id", async () => {
     mocked.ratehawkCall
       .mockResolvedValueOnce(supplierError("bookingForm", "double_booking_form"))
+      .mockResolvedValueOnce(supplierError("bookingForm", "duplicate_reservation"))
+      .mockResolvedValueOnce(supplierError("bookingForm", "timeout"))
       .mockResolvedValueOnce(supplierError("bookingForm", "unknown"))
       .mockResolvedValueOnce(ok("bookingForm", { payment_types: [] }));
 
@@ -75,8 +77,8 @@ describe("RateHawk ETG certification retry guards", () => {
     });
 
     expect(out.ok).toBe(true);
-    expect(out.attempts).toBe(3);
-    expect(mocked.ratehawkCall).toHaveBeenCalledTimes(3);
+    expect(out.attempts).toBe(5);
+    expect(mocked.ratehawkCall).toHaveBeenCalledTimes(5);
     const ids = mocked.ratehawkCall.mock.calls.map(([, body]) => String(body.partner_order_id));
     expect(new Set(ids).size).toBe(3);
     expect(out.partnerOrderId).toBe(ids[2]);
