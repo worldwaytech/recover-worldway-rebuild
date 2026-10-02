@@ -8,7 +8,7 @@ COPY package.json package-lock.json ./
 # The repository has mixed transitive requirements for entities. Keep dependency
 # versions at their declared dependency scope instead of relying on npm hoisting.
 # package-lock is intentionally not rewritten during the image build.
-RUN npm install -g npm@12.2.0 && npm install --install-strategy=nested --no-audit --no-fund --package-lock=false
+RUN npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false
 
 COPY . .
 
