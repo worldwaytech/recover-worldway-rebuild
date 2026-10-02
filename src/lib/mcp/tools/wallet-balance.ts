@@ -14,9 +14,7 @@ export default defineTool({
     if (!email) {
       return { content: [{ type: "text", text: "No email claim on token" }], isError: true };
     }
-    const { callPartner } = await import("@/lib/wwl.server");
-    const res = await callPartner("walletBalance", { clientEmail: email });
-    const { externalToolResult } = await import("@/lib/confidentiality/redact");
-    return externalToolResult(await (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(res, { absolute: true }), !res.ok);
+    const { invokeViaFabric } = await import("@/lib/ai/tools/mcp-bridge.server");
+    return invokeViaFabric("wallet_balance", { clientEmail: email }, { authenticated: true, userId: email });
   },
 });

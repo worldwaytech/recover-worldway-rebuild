@@ -16,16 +16,7 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, openWorldHint: true },
   handler: async (input) => {
-    const { searchFlightsViaEngine } = await import("@/lib/flights/flight-adapters.server");
-    const { outcomes: _routing, ...res } = await searchFlightsViaEngine({
-      origin: input.origin,
-      destination: input.destination,
-      depart_date: input.depart_date,
-      return_date: input.return_date,
-      passengers: input.passengers ?? 1,
-      cabin: input.cabin ?? "economy",
-    });
-    const { externalToolResult } = await import("@/lib/confidentiality/redact");
-    return externalToolResult(await (await import("@/lib/confidentiality/guard.server")).sanitizeOutbound(res, { absolute: true }), !res.ok);
+    const { invokeViaFabric } = await import("@/lib/ai/tools/mcp-bridge.server");
+    return invokeViaFabric("mcp_search_flights", input, { authenticated: false });
   },
 });
