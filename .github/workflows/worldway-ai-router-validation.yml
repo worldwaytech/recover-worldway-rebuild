@@ -1,0 +1,41 @@
+name: Worldway AI Router Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/lib/ai/router/**"
+      - "src/lib/ai/gateway.server.ts"
+      - ".github/workflows/worldway-ai-router-validation.yml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: worldway-ai-router-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run AI router tests
+        run: |
+          bunx vitest run             src/lib/ai/router/__tests__/cost-policy.test.ts             src/lib/ai/router/__tests__/router-cost-guard.test.ts             src/lib/ai/router/__tests__/telemetry.test.ts
+
+      - name: Type-check
+        run: bunx tsc --noEmit
