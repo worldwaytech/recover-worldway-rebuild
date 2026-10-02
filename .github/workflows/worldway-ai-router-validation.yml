@@ -35,7 +35,7 @@ jobs:
 
       - name: Run AI router tests
         run: |
-          bunx vitest run             src/lib/ai/router/__tests__/cost-policy.test.ts             src/lib/ai/router/__tests__/router-cost-guard.test.ts             src/lib/ai/router/__tests__/telemetry.test.ts
+          bunx vitest run             src/lib/ai/router/__tests__/cost-policy.test.ts             src/lib/ai/router/__tests__/router-cost-guard.test.ts             src/lib/ai/router/__tests__/telemetry.test.ts             src/lib/ai/router/__tests__/request-dedupe.test.ts             src/lib/ai/router/__tests__/usage-meter.test.ts
 
       - name: Type-check
         run: bunx tsc --noEmit
