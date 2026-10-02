@@ -1,0 +1,30 @@
+name: Worldway Security + Knowledge Foundation Validation
+
+on:
+  push:
+    branches:
+      - worldway-security-phase4-foundation
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/lib/security/**"
+      - "src/lib/knowledge/**"
+      - "src/lib/wwl.functions.ts"
+      - "src/lib/ai/ai-travel.functions.ts"
+      - "src/start.ts"
+      - "supabase/migrations/**"
+      - ".github/workflows/worldway-security-knowledge-validation.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/security/__tests__/rate-limit.test.ts
+      - run: bunx tsc --noEmit
