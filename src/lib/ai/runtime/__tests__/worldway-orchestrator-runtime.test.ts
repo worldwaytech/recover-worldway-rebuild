@@ -56,7 +56,7 @@ describe("Worldway specialist orchestration runtime", () => {
     const calls: unknown[] = [];
     const runtime = createWorldwayOrchestratorRuntime({
       tools: new ToolRegistry(),
-      model: { invoke: async (model, task, input, correlationId) => {
+      model: { router: { env: { LOVABLE_API_KEY: "test-key" } }, invoke: async (model, task, input, correlationId) => {
         calls.push({ model, task, input, correlationId });
         return { model: model.id, task, correlationId };
       } },
