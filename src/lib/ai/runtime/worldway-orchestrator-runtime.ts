@@ -32,6 +32,7 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
 
   const value = input as Record<string, unknown>;
   const contract = value.decisionContract;
+  if (task.decisionContractFrom && contract === undefined) throw new Error(`decision_contract_missing:${task.id}`);
   if (contract === undefined) return input;
 
   const acceptedDecisionKinds = task.acceptedDecisionKinds;
@@ -39,7 +40,7 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
 
   const validated = validateWorldwayDecisionContract(contract, {
     expectedCorrelationId: correlationId,
-    expectedSourceTaskId: task.id,
+    expectedSourceTaskId: task.decisionContractFrom ?? task.id,
     acceptedDecisionKinds,
   });
 
