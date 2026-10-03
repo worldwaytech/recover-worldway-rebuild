@@ -9,6 +9,7 @@ import {
   packageAlternatives, packageRisks, revalidationDue, type Constraint, type Evidence,
 } from "./commerce";
 import { optimiseMargin, type MarginResult } from "./margin";
+import { toMarginPricedComponents } from "../pricing";
 
 export interface EvaluateInput {
   proposals: { id: string; result: PipelinePackage; bookable: boolean }[];
@@ -60,7 +61,7 @@ export function evaluateProposals(i: EvaluateInput): ProposalIntel[] {
     const channels = channelReadiness({ ...p.result, bookable: p.bookable }, evidence);
     const total = p.result.pricing?.total ?? null;
     const constraints = evaluateConstraints(g, total, cs);
-    const margin = p.result.pricing ? optimiseMargin(p.result.pricing.lines, i.budget ?? null, i.marginFloorPercent ?? 100) : null;
+    const margin = p.result.pricing ? optimiseMargin(toMarginPricedComponents(p.result.pricing), i.budget ?? null, i.marginFloorPercent ?? 100) : null;
     const lab = labels.get(p.result.id);
     const b2c = channels.find((c) => c.channel === "b2c");
     return {
