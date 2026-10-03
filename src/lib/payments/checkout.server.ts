@@ -14,6 +14,7 @@ import {
   razorpayKeyId,
   verifyCheckoutSignature,
 } from "./razorpay.server";
+import { resolvePaymentAuthority, authorizePaymentRequest } from "./payment-authority.server";
 import {
   getPaymentByOrderId,
   insertPaymentRecord,
