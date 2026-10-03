@@ -15,6 +15,25 @@ import { mediaUrl } from "@/lib/media";
 
 const SITE = "https://worldwaytravelsgroup.com";
 
+function JourneyErrorComponent({ reset }: { reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="container-lux py-40 text-center">
+      <h1 className="font-serif text-4xl">Something went wrong</h1>
+      <button
+        type="button"
+        className="mt-6 underline"
+        onClick={() => {
+          reset();
+          void router.invalidate();
+        }}
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/all-journeys/$slug")({
   loader: async ({ params }) => {
     // 0) Synced A&K catalogue (active records merged over Worldway content; removed journeys hidden)
@@ -178,8 +197,7 @@ export const Route = createFileRoute("/all-journeys/$slug")({
       <h1 className="font-serif text-4xl">Journey not found</h1>
     </div>
   ),
-  errorComponent: ({ reset }) => {
-    const router = useRouter();
+  errorComponent: JourneyErrorComponent,
     return (
       <div className="container-lux py-40 text-center">
         <h1 className="font-serif text-4xl">Something went wrong</h1>
