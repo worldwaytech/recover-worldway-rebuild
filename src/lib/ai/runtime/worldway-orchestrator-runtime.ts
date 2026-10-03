@@ -10,6 +10,7 @@ import {
 import { SpecialistAgentRegistry } from "./specialist-agents";
 import { validateWorldwayDecisionContract } from "./decision-contract";
 import { projectDecisionContractToRankingProfile } from "../../engine/decision-contract-adapter";
+import { projectDecisionContractToPricingSignals } from "./decision-contract-pricing-adapter";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
@@ -51,6 +52,14 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
   if (!validated) throw new Error(`decision_contract_runtime_validation_failed:${task.id}`);
 
   const projection = task.metadata?.decisionContractProjection;
+  if (projection === "pricing") {
+    if (validated.decisionKind !== "recommendation") {
+      throw new Error(`decision_contract_pricing_projection_rejected:${task.id}`);
+    }
+    const pricingSignals = projectDecisionContractToPricingSignals(validated);
+    return { ...value, decisionContract: validated, pricingSignals };
+  }
+
   if (projection === "ranking") {
     if (validated.decisionKind !== "ranking" && validated.decisionKind !== "recommendation") {
       throw new Error(`decision_contract_ranking_projection_rejected:${task.id}`);
