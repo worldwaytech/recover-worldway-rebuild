@@ -87,6 +87,27 @@ describe("end-to-end package pipeline", () => {
     expect(luxury.find((p) => p.id === "reliable")!.bookable).toBe(true);
   });
 
+
+  it("consumes bounded pricing signals while preserving deterministic pricing policy", () => {
+    const candidate = { id: "dynamic-price", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z")] };
+    const policy = {
+      currency: "USD" as const,
+      channel: "customer_b2c" as const,
+      baseRule: { markupPercent: 10, commissionPercent: 0, serviceFee: 0 },
+      minimumMarginPercent: 5,
+      maxDynamicMarkupDeltaPercent: 10,
+    };
+    const baseline = runPackagePipeline({ ...base([candidate]), pricingPolicy: policy, pricingNow: "2026-10-03T00:00:00Z" });
+    const signaled = runPackagePipeline({
+      ...base([candidate]),
+      pricingPolicy: policy,
+      pricingSignalsFor: () => ({ demandIndex: 0.9, inventoryPressure: 0.9, conversionIndex: 0.9, leadTimeDays: 1 }),
+      pricingNow: "2026-10-03T00:00:00Z",
+    });
+    expect(signaled[0]!.pricing!.total).toBeGreaterThan(baseline[0]!.pricing!.total);
+    expect(signaled[0]!.pricing!.total).toBeLessThan(baseline[0]!.pricing!.total * 1.11);
+    expect(signaled[0]!.bookable).toBe(true);
+  });
   it("blocks a package that falls outside the requested trip window", () => {
     const lateReturn = { ...flight, externalId: "F-late", start: { ...flight.start, at: "2026-10-16T03:30:00Z" }, end: { ...flight.end, at: "2026-10-16T11:00:00Z" } };
     const out = runPackagePipeline(base([
