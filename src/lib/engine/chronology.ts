@@ -28,7 +28,6 @@ function haversineKm(a: LocalMoment, b: LocalMoment): number | null {
 }
 
 export const MIN_CONNECTION_MIN = 60;
-export const MIN_AIRPORT_TO_SERVICE_MIN = 90;
 const GROUND_KMH = 80;
 
 export interface ChronologicalTripGraph {
@@ -44,10 +43,6 @@ const transportKinds = new Set(["flight", "rail", "aviation", "cruise"]);
 
 function isTransport(c: NormalizedComponent): boolean {
   return transportKinds.has(c.kind);
-}
-
-function isContainedStayPair(a: NormalizedComponent, b: NormalizedComponent): boolean {
-  return a.kind === "stay" || b.kind === "stay" || a.kind === "insurance" || b.kind === "insurance";
 }
 
 /**
