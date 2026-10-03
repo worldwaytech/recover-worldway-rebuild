@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   createWorldwayDecisionContract,
-  isWorldwayDecisionContract,\n  validateWorldwayDecisionContract,
+  isWorldwayDecisionContract,
+  validateWorldwayDecisionContract,
 } from "../decision-contract";
 
 const evidence = [
@@ -34,7 +35,9 @@ describe("Worldway typed decision contract", () => {
       correlationId: "wwai-test",
       constraints: ["deterministic-only"],
     });
-    expect(contract?.evidence[0]).toEqual(evidence[0]);\n    expect(contract?.sourceTaskId).toBe("model-step");\n    expect(contract?.expiresAt).toBeDefined();
+    expect(contract?.evidence[0]).toEqual(evidence[0]);
+    expect(contract?.sourceTaskId).toBe("model-step");
+    expect(contract?.expiresAt).toBeDefined();
     expect(isWorldwayDecisionContract(contract)).toBe(true);
   });
 
