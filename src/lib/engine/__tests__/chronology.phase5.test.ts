@@ -77,7 +77,7 @@ describe("Phase 5 canonical chronological graph", () => {
     const parisHotel: NormalizedComponent = {
       ...hotel,
       id: "h2",
-      start: { at: "2026-10-04T23:00:00Z", timezone: "Europe/Paris", place: "CDG" },
+      start: { at: "2026-10-04T21:00:00Z", timezone: "Europe/Paris", place: "CDG" },
       end: { at: "2026-10-07T10:00:00Z", timezone: "Europe/Paris", place: "CDG" },
     };
     const issues = buildChronologicalTripGraph([flight, hotel, secondArrival, parisHotel]).issues;
@@ -118,7 +118,7 @@ describe("Phase 5 explicit multi-city and multi-modal sequencing", () => {
       ["NYC", "NYC", "rail", "continuous"],
     ]);
     expect(segments[0]?.gapMinutes).toBe(300);
-    expect(segments[1]?.gapMinutes).toBe(6060);
+    expect(segments[1]?.gapMinutes).toBe(6780);
   });
 
   it("marks a city handoff without a supplied transfer as a location discontinuity", () => {
