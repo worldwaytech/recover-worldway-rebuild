@@ -51,26 +51,26 @@ export function projectDecisionContractToPostBookingModification(
       continue;
     }
 
-    const dateMatch = /^postbooking\.modification\.date=(\\d{4}-\\d{2}-\\d{2})$/.exec(constraint);
+    const dateMatch = /^postbooking\.modification\.date=(\d{4}-\d{2}-\d{2})$/.exec(constraint);
     if (dateMatch) {
       changes.date = dateMatch[1]!;
       continue;
     }
 
-    const timeMatch = /^postbooking\.modification\.time=(\\d{2}:\\d{2})$/.exec(constraint);
+    const timeMatch = /^postbooking\.modification\.time=(\d{2}:\d{2})$/.exec(constraint);
     if (timeMatch) {
       changes.time = timeMatch[1]!;
       continue;
     }
 
-    const passengerMatch = /^postbooking\.modification\.passengerCount=(\\d{1,2})$/.exec(constraint);
+    const passengerMatch = /^postbooking\.modification\.passengerCount=(\d{1,2})$/.exec(constraint);
     if (passengerMatch) {
       const value = Number(passengerMatch[1]);
       if (value >= 1 && value <= 20) changes.passengerCount = value;
       continue;
     }
 
-    const notesMatch = /^postbooking\.modification\.notes=([^\\n]{1,500})$/.exec(constraint);
+    const notesMatch = /^postbooking\.modification\.notes=([^\n]{1,500})$/.exec(constraint);
     if (notesMatch) {
       changes.notes = notesMatch[1]!;
     }
