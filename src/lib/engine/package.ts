@@ -49,7 +49,7 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     const requirementCheck = checkTripRequirements(graph, profile);
     const orchestration = detectOrchestrationConflicts(graph, profile);
     const { pricing, error } = tryPrice(graph, input);
-    return { id: c.id, graph, chronology, rejected, pricing, priceError: error };
+    return { id: c.id, graph, chronology, requirementCheck, orchestration, rejected, pricing, priceError: error };
   });
   // Only priced packages have a comparable total; unpriced sort last and are never bookable.
   const ranked = rankPackages(
