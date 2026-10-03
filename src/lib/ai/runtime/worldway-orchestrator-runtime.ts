@@ -14,6 +14,7 @@ import { projectDecisionContractToPricingSignals } from "./decision-contract-pri
 import { projectDecisionContractToOrchestrationPreferences } from "./decision-contract-orchestration-adapter";
 import { applyOrchestrationPreferences } from "../../engine/orchestration";
 import { projectDecisionContractToBookingReadiness } from "./decision-contract-booking-readiness-adapter";
+import { projectDecisionContractToOptimizationProfile } from "./decision-contract-optimization-adapter";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
@@ -92,6 +93,14 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
       capabilityMap,
     );
     return { ...value, decisionContract: validated, bookingReadiness };
+  }
+
+  if (projection === "optimization") {
+    if (validated.decisionKind !== "ranking" && validated.decisionKind !== "recommendation") {
+      throw new Error(`decision_contract_optimization_projection_rejected:${task.id}`);
+    }
+    const optimizationProfile = projectDecisionContractToOptimizationProfile(validated);
+    return { ...value, decisionContract: validated, optimizationProfile };
   }
 
   if (projection === "ranking") {
