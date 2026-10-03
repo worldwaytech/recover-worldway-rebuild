@@ -237,7 +237,8 @@ export class WorldwayOrchestrator {
       return { ok: false, state: "blocked", correlationId, goal: request.goal, results: [], executedSteps: 0, toolCalls: 0, problems: ["autonomous_booking_must_remain_disabled"], trace: { correlationId, sessionId: context.sessionId, tasks: [], evidence: [] } };
     }
 
-    const results = new Map<string, TaskExecutionResult>();\n    const trace = new OrchestrationTraceCollector(correlationId, context.sessionId);
+    const results = new Map<string, TaskExecutionResult>();
+    const trace = new OrchestrationTraceCollector(correlationId, context.sessionId);
     const ordered = validation.order;
     let executedSteps = 0;
     let toolCalls = 0;
@@ -298,10 +299,14 @@ export class WorldwayOrchestrator {
         const result = task.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(task, context)
           : await this.executor.execute(task, context);
-        const finishedAt = new Date().toISOString();\n        results.set(task.id, { taskId: task.id, state: "completed", result, startedAt, finishedAt });\n        trace.taskFinished(task.id, "completed", finishedAt, result);
+        const finishedAt = new Date().toISOString();
+        results.set(task.id, { taskId: task.id, state: "completed", result, startedAt, finishedAt });
+        trace.taskFinished(task.id, "completed", finishedAt, result);
       } catch (error) {
         const state: TaskState = context.signal?.aborted ? "cancelled" : "failed";
-        const finishedAt = new Date().toISOString();\n        results.set(task.id, { taskId: task.id, state, error: errorText(error), startedAt, finishedAt });\n        trace.taskFinished(task.id, state, finishedAt);
+        const finishedAt = new Date().toISOString();
+        results.set(task.id, { taskId: task.id, state, error: errorText(error), startedAt, finishedAt });
+        trace.taskFinished(task.id, state, finishedAt);
         if (policy.failFast) {
           for (const remaining of ordered.slice(ordered.indexOf(task) + 1)) {
             results.set(remaining.id, { taskId: remaining.id, state: "skipped", error: `upstream_${state}` });
