@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "@/lib/security/rate-limit.server";
 
 const searchSchema = z.object({
   q: z.string().max(120).optional(),
@@ -22,6 +23,7 @@ const searchSchema = z.object({
 export const searchTourCatalogue = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => searchSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-search", requestFingerprint(currentRequest())), 60, 60);
     const { searchTours } = await import("./tours.server");
     return searchTours(data);
   });
@@ -37,6 +39,7 @@ export const getTourDossier = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-dossier", requestFingerprint(currentRequest())), 60, 60);
     const { getTourDetail } = await import("./tours.server");
     return getTourDetail(data.id, data.currency ?? "USD", data.fromDate);
   });
@@ -68,6 +71,7 @@ export const checkTourAvailability = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-availability", requestFingerprint(currentRequest())), 30, 60);
     const { checkDepartureAvailability } = await import("./tours.server");
     return checkDepartureAvailability(
       data.departureId,
@@ -78,6 +82,7 @@ export const checkTourAvailability = createServerFn({ method: "POST" })
   });
 
 export const reserveTourDeparture = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -103,7 +108,8 @@ export const reserveTourDeparture = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await consumeRateLimit(rateLimitKey("tour-reserve", context.userId), 10, 60);
     const { createTourBooking } = await import("./tours-booking.server");
     const { fallbackMessage } = await import("./tours-scope");
     const result = await createTourBooking(data);
