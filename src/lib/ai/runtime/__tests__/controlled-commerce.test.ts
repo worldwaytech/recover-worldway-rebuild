@@ -93,7 +93,6 @@ describe("Controlled Agentic Commerce", () => {
     const grant = store.toHighRiskGrant(pending.id, "user-action", true);
     expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness" });
   });
-  });
 
   it("expires approval before it can be consumed", () => {
     const store = new ControlledCommerceApprovalStore();
