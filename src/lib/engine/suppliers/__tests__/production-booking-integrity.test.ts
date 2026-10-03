@@ -5,7 +5,7 @@ import { SUPPLIER_CERTIFICATION_PLAN } from "../certification-plan";
 describe("production booking integrity gate", () => {
   it("never treats an uncertified production booking capability as certified", () => {
     for (const supplier of SUPPLIER_CATALOG) {
-      const productionBooking = supplier.grants.find(
+      const productionBooking = (supplier.grants ?? []).find(
         (grant) => grant.environment === "production" && grant.capability === "book",
       );
 
@@ -21,7 +21,7 @@ describe("production booking integrity gate", () => {
     for (const supplier of SUPPLIER_CATALOG) {
       if (supplier.readiness === "production") continue;
 
-      const certifiedProductionBooking = supplier.grants.some(
+      const certifiedProductionBooking = (supplier.grants ?? []).some(
         (grant) =>
           grant.environment === "production" &&
           grant.capability === "book" &&
