@@ -27,10 +27,10 @@ describe("Specialist Agent Framework", () => {
   it("requires a registered handler and explicit objective", async () => {
     const registry = new SpecialistAgentRegistry();
     const ctx = context();
-    const rejected = await registry.delegate({ id:"flight-plan", kind:"specialist", specialist:"flight_intelligence", input:{ objective:"Assess route" } }, context);
+    const rejected = await registry.delegate({ id:"flight-plan", kind:"specialist", specialist:"flight_intelligence", input:{ objective:"Assess route" } }, ctx);
     expect(rejected.reason).toBe("specialist_handler_not_registered");
     registry.register("flight_intelligence", { async handle(invocation) { return { mode:"plan", objective:invocation.objective }; } });
-    const completed = await registry.delegate({ id:"flight-plan", kind:"specialist", specialist:"flight_intelligence", input:{ objective:"Assess route" } }, context);
+    const completed = await registry.delegate({ id:"flight-plan", kind:"specialist", specialist:"flight_intelligence", input:{ objective:"Assess route" } }, ctx);
     expect(completed.state).toBe("completed");
   });
 
