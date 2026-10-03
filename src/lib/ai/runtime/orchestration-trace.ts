@@ -14,7 +14,7 @@ export interface OrchestrationEvidence {
 
 export interface OrchestrationTaskTrace {
   taskId: string;
-  kind: "tool" | "specialist" | "deterministic";
+  kind: "tool" | "specialist" | "deterministic" | "model";
   state: "running" | "completed" | "failed" | "blocked" | "cancelled" | "timed_out" | "skipped";
   startedAt?: string;
   finishedAt?: string;
