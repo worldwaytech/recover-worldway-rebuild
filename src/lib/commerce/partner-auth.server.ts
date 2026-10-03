@@ -7,7 +7,11 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { CommerceOp } from "./commerce.server";
 
-export const SCOPES = ["flights.search", "tours.read", "tours.quote", "trips.plan"] as const;
+export const SCOPES = [
+  "flights.search", "tours.read", "tours.quote", "trips.plan",
+  "catalog.read", "pricing.quote", "booking.read", "booking.write",
+  "payment.write", "wallet.read", "wallet.reserve",
+] as const;
 export type Scope = (typeof SCOPES)[number];
 
 export const OP_SCOPE: Record<CommerceOp, Scope> = {
