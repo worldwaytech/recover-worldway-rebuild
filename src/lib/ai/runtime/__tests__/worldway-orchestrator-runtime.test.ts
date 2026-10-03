@@ -170,6 +170,45 @@ describe("Worldway specialist orchestration runtime", () => {
     expect((result.results[0].result as Record<string, unknown>).rankingProfile).not.toHaveProperty("weights.unknown");
   });
 
+  it("consumes bounded orchestration preferences without changing hard requirements", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "orchestration preference decision",
+      tasks: [{
+        id: "decision-step",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "orchestration" },
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          orchestration: {
+            trip: { origin: "DEL", destinations: ["IST"], departFrom: "2026-10-20", returnBy: "2026-10-28", adults: 2, children: 0, luxuryLevel: 5, interests: [] },
+            requiredKinds: ["flight"],
+            preferredKinds: ["stay"],
+            optionalKinds: [],
+            insurance: "not-requested",
+            visa: "not-requested",
+          },
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "prefer experiences", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "orchestration:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "decision-step",
+            constraints: ["orchestration.prefer.kind.activity", "orchestration.prefer.kind.flight"],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    const output = result.results[0].result as Record<string, unknown>;
+    expect(output.orchestrationPreferences).toEqual({ preferredKinds: ["activity", "flight"] });
+    expect((output.orchestration as { requiredKinds: string[]; preferredKinds: string[] }).requiredKinds).toEqual(["flight"]);
+    expect((output.orchestration as { preferredKinds: string[] }).preferredKinds).toEqual(["stay", "activity", "flight"]);
+  });
+
   it("rejects legacy raw model decisions before deterministic execution", async () => {
     let executed = false;
     const runtime = createWorldwayOrchestratorRuntime({

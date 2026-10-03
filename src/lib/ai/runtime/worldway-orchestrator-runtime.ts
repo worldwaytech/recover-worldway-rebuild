@@ -12,6 +12,7 @@ import { validateWorldwayDecisionContract } from "./decision-contract";
 import { projectDecisionContractToRankingProfile } from "../../engine/decision-contract-adapter";
 import { projectDecisionContractToPricingSignals } from "./decision-contract-pricing-adapter";
 import { projectDecisionContractToOrchestrationPreferences } from "./decision-contract-orchestration-adapter";
+import { applyOrchestrationPreferences } from "../../engine/orchestration";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
@@ -58,7 +59,10 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
       throw new Error(`decision_contract_orchestration_projection_rejected:${task.id}`);
     }
     const orchestrationPreferences = projectDecisionContractToOrchestrationPreferences(validated);
-    return { ...value, decisionContract: validated, orchestrationPreferences };
+    const orchestration = value.orchestration && typeof value.orchestration === "object" && !Array.isArray(value.orchestration)
+      ? applyOrchestrationPreferences(value.orchestration as import("../../engine/orchestration").TripRequirementProfile, orchestrationPreferences)
+      : undefined;
+    return { ...value, decisionContract: validated, orchestrationPreferences, ...(orchestration ? { orchestration } : {}) };
   }
 
   if (projection === "pricing") {
