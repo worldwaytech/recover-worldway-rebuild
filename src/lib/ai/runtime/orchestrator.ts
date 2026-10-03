@@ -287,6 +287,7 @@ function validatedSpecialistSynthesis(task: OrchestrationTask, coordinatedTask: 
   const input = coordinatedTask.input as Record<string, unknown>;
   const synthesis = synthesizeSpecialistDecisions(input.specialistCoordination as never, { expectedCorrelationId: correlationId });
   if (!synthesis) throw new OrchestrationValidationError(`Specialist decision synthesis invalid for ${task.id}`);
+  if (synthesis.status !== "ready") throw new OrchestrationValidationError(`Specialist decision synthesis not executable for ${task.id}:${synthesis.status}`);
   return { ...coordinatedTask, input: { ...input, specialistSynthesis: synthesis } };
 }
 
