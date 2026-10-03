@@ -103,13 +103,12 @@ export function checkChronology(items: NormalizedComponent[]): AuditIssue[] {
 
   // Stay dates vs inbound arrival.
   for (const stay of sorted.filter((c) => c.kind === "stay")) {
-    const inbound = [...sorted]
-      .filter((c) =>
-        transport(c.kind) &&
-        c.end.place === stay.start.place &&
-        ms(c.end) <= ms(stay.start) + 36 * 3600_000,
-      )
-      .sort((x, y) => ms(y.end) - ms(x.end))[0];
+    const arrivals = [...sorted]
+      .filter((c) => transport(c.kind) && ms(c.end) <= ms(stay.start) + 36 * 3600_000)
+      .sort((x, y) => ms(y.end) - ms(x.end));
+    const inbound =
+      arrivals.find((c) => c.end.place === stay.start.place) ??
+      arrivals[0];
     if (inbound) {
       const need = requiredCheckInDate(inbound);
       const have = localDate(stay.start);
