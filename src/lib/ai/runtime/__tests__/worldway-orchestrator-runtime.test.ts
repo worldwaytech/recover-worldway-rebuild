@@ -1,24 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { ToolRegistry } from "../../tools/fabric";
+import { buildWorldwayOrchestrationContext } from "../context-bridge";
+import { EMPTY_TRAVELER_PROFILE, buildPersonalizationContext } from "../../../engine/intelligence/traveler-profile";
 import { createWorldwayOrchestratorRuntime } from "../worldway-orchestrator-runtime";
 
 function context() {
-  return {
-    sessionId: "session-test",
-    facts: {},
-    toolContext: {
-      correlationId: "wwai-test",
-      context: "agent_runtime" as const,
-      principal: { permission: "public" as const, scopes: [] },
+  const consent = { preferences: true, history: true };
+  return buildWorldwayOrchestrationContext({
+    base: {
+      sessionId: "session-test", facts: {},
+      toolContext: { correlationId: "wwai-test", context: "agent_runtime" as const, principal: { permission: "public" as const, scopes: [] } },
     },
-  };
+    traveller: {
+      travellerId: "traveller-test", consent,
+      profile: EMPTY_TRAVELER_PROFILE,
+      personalization: buildPersonalizationContext(EMPTY_TRAVELER_PROFILE, consent, []),
+      memories: [],
+    },
+  });
 }
 
 describe("Worldway specialist orchestration runtime", () => {
   it("routes specialist tasks through the bounded registry", async () => {
     const runtime = createWorldwayOrchestratorRuntime({ tools: new ToolRegistry() });
     runtime.specialists.register("destination_intelligence", {
-      handle: async (invocation) => ({ recommendation: "shoulder", objective: invocation.objective }),
+      handle: async (invocation, specialistContext) => ({
+        recommendation: "shoulder",
+        objective: invocation.objective,
+        travellerId: specialistContext.traveller.travellerId,
+        evidence: [{ source: "destination_knowledge", reference: "dest:ist:season", observedAt: "2026-10-03T00:00:00Z", confidence: 0.9 }],
+      }),
     });
 
     const result = await runtime.orchestrator.run({
@@ -35,8 +46,10 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(result.results[0].result).toMatchObject({
       specialist: "destination_intelligence",
       state: "completed",
-      output: { recommendation: "shoulder" },
+      output: { recommendation: "shoulder", travellerId: "traveller-test" },
+      evidence: [{ reference: "dest:ist:season" }],
     });
+    expect(result.trace.evidence[0].items[0].reference).toBe("dest:ist:season");
   });
 
   it("keeps specialist execution separate from Tool Fabric mutations", async () => {

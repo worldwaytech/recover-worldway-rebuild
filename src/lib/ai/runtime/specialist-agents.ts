@@ -1,3 +1,5 @@
+import type { WorldwayOrchestrationContext } from "./context-bridge";
+import { sanitizeOrchestrationEvidence, type OrchestrationEvidence } from "./orchestration-trace";
 import type { OrchestrationContext, OrchestrationTask, SpecialistDelegate } from "./orchestrator";
 
 export const SPECIALIST_AGENT_KEYS = [
@@ -50,6 +52,7 @@ export interface SpecialistResult {
   taskId: string;
   state: "completed" | "rejected";
   output?: unknown;
+  evidence?: OrchestrationEvidence[];
   reason?: string;
 }
 
@@ -61,7 +64,12 @@ export function validateSpecialistInvocation(invocation: SpecialistInvocation): 
 }
 
 export interface SpecialistHandler {
-  handle(invocation: SpecialistInvocation, context: OrchestrationContext): Promise<unknown>;
+  handle(invocation: SpecialistInvocation, context: WorldwayOrchestrationContext): Promise<unknown>;
+}
+
+function isWorldwayOrchestrationContext(context: OrchestrationContext): context is WorldwayOrchestrationContext {
+  const candidate = context as Partial<WorldwayOrchestrationContext>;
+  return Boolean(candidate.traveller && candidate.knowledge && candidate.precedence === "current_request_over_memory_over_knowledge");
 }
 
 export class SpecialistAgentRegistry implements SpecialistDelegate {
@@ -84,6 +92,9 @@ export class SpecialistAgentRegistry implements SpecialistDelegate {
     const specialist = task.specialist as SpecialistAgentKey;
     const handler = this.handlers.get(specialist);
     if (!handler) return { specialist, taskId: task.id, state: "rejected", reason: "specialist_handler_not_registered" };
+    if (!isWorldwayOrchestrationContext(context)) {
+      return { specialist, taskId: task.id, state: "rejected", reason: "worldway_context_required" };
+    }
     const input = task.input as { objective?: unknown } | undefined;
     const invocation = {
       specialist, taskId: task.id,
@@ -92,6 +103,10 @@ export class SpecialistAgentRegistry implements SpecialistDelegate {
     };
     const problems = validateSpecialistInvocation(invocation);
     if (problems.length) return { specialist, taskId: task.id, state: "rejected", reason: problems.join("|") };
-    return { specialist, taskId: task.id, state: "completed", output: await handler.handle(invocation, context) };
+    const output = await handler.handle(invocation, context);
+    const evidence = output && typeof output === "object"
+      ? sanitizeOrchestrationEvidence((output as Record<string, unknown>).evidence)
+      : [];
+    return { specialist, taskId: task.id, state: "completed", output, ...(evidence.length ? { evidence } : {}) };
   }
 }
