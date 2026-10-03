@@ -120,10 +120,80 @@ export function isSpecialistDecisionSynthesisContract(
 ): value is SpecialistDecisionSynthesisContract {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<SpecialistDecisionSynthesisContract>;
-  return candidate.contractVersion === "1.0"
-    && typeof candidate.correlationId === "string"
-    && Array.isArray(candidate.sourceTaskIds)
-    && Array.isArray(candidate.findings)
-    && Array.isArray(candidate.conflicts)
-    && ["ready", "conflicted", "insufficient_evidence"].includes(candidate.status ?? "");
+  if (
+    candidate.contractVersion !== "1.0"
+    || typeof candidate.correlationId !== "string"
+    || !candidate.correlationId.trim()
+    || !Array.isArray(candidate.sourceTaskIds)
+    || !Array.isArray(candidate.findings)
+    || !Array.isArray(candidate.conflicts)
+    || !["ready", "conflicted", "insufficient_evidence"].includes(candidate.status ?? "")
+    || !candidate.evidence
+    || !Array.isArray(candidate.evidence)
+    || candidate.evidence.length === 0
+    || candidate.evidenceCoverage === undefined
+  ) return false;
+
+  if (
+    candidate.sourceTaskIds.length === 0
+    || candidate.sourceTaskIds.length > MAX_FINDINGS
+    || candidate.sourceTaskIds.some((id) => typeof id !== "string" || !id.trim())
+    || candidate.findings.length !== candidate.sourceTaskIds.length
+    || candidate.conflicts.some((conflict) => {
+      if (!conflict || typeof conflict !== "object") return true;
+      const item = conflict as Partial<SpecialistSynthesisConflict>;
+      return !SYNTHESIS_FIELDS.includes(item.field as typeof SYNTHESIS_FIELDS[number])
+        || !Array.isArray(item.values)
+        || item.values.length < 2
+        || item.values.some((entry) =>
+          !entry
+          || typeof entry !== "object"
+          || typeof entry.taskId !== "string"
+          || typeof entry.specialist !== "string"
+          || typeof entry.value !== "string"
+          || !entry.taskId.trim()
+          || !entry.specialist.trim()
+          || !entry.value.trim()
+        );
+    })
+  ) return false;
+
+  for (const finding of candidate.findings) {
+    if (!finding || typeof finding !== "object") return false;
+    const item = finding as Partial<SpecialistSynthesisFinding>;
+    if (
+      typeof item.taskId !== "string"
+      || !item.taskId.trim()
+      || typeof item.specialist !== "string"
+      || !item.specialist.trim()
+      || !item.output
+      || typeof item.output !== "object"
+      || Array.isArray(item.output)
+      || !item.evidence
+      || !Array.isArray(item.evidence)
+      || !boundedObject(item.output)
+    ) return false;
+    if (!validEvidence(item.evidence, new Date())) return false;
+  }
+
+  const coverage = candidate.evidenceCoverage as SpecialistDecisionSynthesisContract["evidenceCoverage"];
+  if (
+    !Number.isInteger(coverage.members)
+    || !Number.isInteger(coverage.membersWithEvidence)
+    || !Number.isFinite(coverage.ratio)
+    || coverage.members !== candidate.findings.length
+    || coverage.membersWithEvidence < 0
+    || coverage.membersWithEvidence > coverage.members
+    || coverage.ratio < 0
+    || coverage.ratio > 1
+    || coverage.ratio !== coverage.membersWithEvidence / coverage.members
+  ) return false;
+
+  const aggregateEvidence = validEvidence(candidate.evidence, new Date());
+  if (!aggregateEvidence || aggregateEvidence.length === 0) return false;
+  if (candidate.status === "insufficient_evidence" && coverage.membersWithEvidence !== 0) return false;
+  if (candidate.status === "ready" && (candidate.conflicts.length > 0 || coverage.membersWithEvidence === 0)) return false;
+  if (candidate.status === "conflicted" && candidate.conflicts.length === 0) return false;
+
+  return true;
 }
