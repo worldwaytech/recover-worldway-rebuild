@@ -1,0 +1,19 @@
+name: Worldway Phase 14 Global Operations Security Trust
+
+on:
+  push:
+    branches: [main, phase-14-global-operations-security-trust]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test -- --run src/lib/security/__tests__/phase14-trust-policy.test.ts src/lib/ai/__tests__/ai-foundation.test.ts src/lib/ai/__tests__/ai-phase2.test.ts src/lib/engine/__tests__/phase9-booking-orchestration.test.ts src/lib/engine/__tests__/phase10-luxury-commerce.test.ts src/lib/engine/__tests__/phase11-experiences-marketplace.test.ts
