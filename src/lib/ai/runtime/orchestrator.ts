@@ -3,6 +3,7 @@
 // Planning-first: autonomous booking/payment/mutation remain disabled.
 
 import { emit, newCorrelationId } from "../router/telemetry";
+import { OrchestrationTraceCollector } from "./orchestration-trace";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
 export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic";
@@ -228,15 +229,15 @@ export class WorldwayOrchestrator {
 
     if (!validation.ok) {
       emit({ type: "plan.rejected", correlationId, sessionId: context.sessionId, reason: validation.problems.join("|") });
-      return { ok: false, state: "blocked", correlationId, goal: request.goal, results: [], executedSteps: 0, toolCalls: 0, problems: validation.problems };
+      return { ok: false, state: "blocked", correlationId, goal: request.goal, results: [], executedSteps: 0, toolCalls: 0, problems: validation.problems, trace: { correlationId, sessionId: context.sessionId, tasks: [], evidence: [] } };
     }
 
     // Phase 1/2 safety invariant: no autonomous booking/payment/mutation grant can enter orchestration.
     if (policy.autonomousBooking !== false) {
-      return { ok: false, state: "blocked", correlationId, goal: request.goal, results: [], executedSteps: 0, toolCalls: 0, problems: ["autonomous_booking_must_remain_disabled"] };
+      return { ok: false, state: "blocked", correlationId, goal: request.goal, results: [], executedSteps: 0, toolCalls: 0, problems: ["autonomous_booking_must_remain_disabled"], trace: { correlationId, sessionId: context.sessionId, tasks: [], evidence: [] } };
     }
 
-    const results = new Map<string, TaskExecutionResult>();
+    const results = new Map<string, TaskExecutionResult>();\n    const trace = new OrchestrationTraceCollector(correlationId, context.sessionId);
     const ordered = validation.order;
     let executedSteps = 0;
     let toolCalls = 0;
@@ -297,10 +298,10 @@ export class WorldwayOrchestrator {
         const result = task.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(task, context)
           : await this.executor.execute(task, context);
-        results.set(task.id, { taskId: task.id, state: "completed", result, startedAt, finishedAt: new Date().toISOString() });
+        const finishedAt = new Date().toISOString();\n        results.set(task.id, { taskId: task.id, state: "completed", result, startedAt, finishedAt });\n        trace.taskFinished(task.id, "completed", finishedAt, result);
       } catch (error) {
         const state: TaskState = context.signal?.aborted ? "cancelled" : "failed";
-        results.set(task.id, { taskId: task.id, state, error: errorText(error), startedAt, finishedAt: new Date().toISOString() });
+        const finishedAt = new Date().toISOString();\n        results.set(task.id, { taskId: task.id, state, error: errorText(error), startedAt, finishedAt });\n        trace.taskFinished(task.id, state, finishedAt);
         if (policy.failFast) {
           for (const remaining of ordered.slice(ordered.indexOf(task) + 1)) {
             results.set(remaining.id, { taskId: remaining.id, state: "skipped", error: `upstream_${state}` });
@@ -327,6 +328,6 @@ export class WorldwayOrchestrator {
       meta: { state, executedSteps, toolCalls },
     });
 
-    return { ok: state === "completed", state, correlationId, goal: request.goal, results: resultList, executedSteps, toolCalls, problems };
+    return { ok: state === "completed", state, correlationId, goal: request.goal, results: resultList, executedSteps, toolCalls, problems, trace: trace.snapshot() };
   }
 }
