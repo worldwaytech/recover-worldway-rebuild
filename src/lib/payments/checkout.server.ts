@@ -138,7 +138,27 @@ export async function openOrder(
 ) {
 
   const userId = await optionalUserId();
+  const authority = await resolvePaymentAuthority(userId);
+  const authorization = authorizePaymentRequest(authority, {
+    method: "razorpay",
+    amountMinor: input.amountMinor,
+    currency: input.currency,
+  });
+  if (!authorization.ok) throw new Error(authorization.error);
+  if (authorization.requiresApproval) {
+    throw new Error("This transaction requires account authorization before payment can be opened.");
+  }
+
   const receipt = receiptFor(input.purpose);
+  const paymentReference = {
+    ...(input.reference ?? {}),
+    payment_account_type: authority.accountType,
+    payment_policy_id: authority.policyId,
+    payment_tenant_id: authority.tenantId,
+    invoice_terms_days: authority.invoiceTermsDays,
+    credit_enabled: authority.creditEnabled,
+    credit_limit_minor: authority.creditLimitMinor,
+  };
 
   const order = await createRazorpayOrder({
     amountMinor: input.amountMinor,
@@ -161,7 +181,7 @@ export async function openOrder(
     description: input.description ?? null,
     customer_email: input.email ?? null,
     customer_phone: input.phone ?? null,
-    reference: input.reference ?? {},
+    reference: paymentReference,
   });
 
   return {
