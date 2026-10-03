@@ -129,6 +129,8 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     if (task.kind === "specialist" && !task.specialist) problems.push(`missing_specialist:${task.id}`);
     if (task.kind === "model" && !task.modelTask) problems.push(`missing_model_task:${task.id}`);
     if (task.handoffFrom && task.handoffFrom === task.id) problems.push(`self_handoff:${task.id}`);
+    if (task.handoffFrom && task.kind !== "deterministic") problems.push(`handoff_target_must_be_deterministic:${task.id}`);
+    if (task.handoffFrom && !(task.dependsOn ?? []).includes(task.handoffFrom)) problems.push(`handoff_must_depend_on_source:${task.id}->${task.handoffFrom}`);
   }
 
   for (const task of tasks) {
@@ -249,8 +251,9 @@ function errorText(error: unknown) {
   return error instanceof Error ? error.message.slice(0, 160) : "task_error";
 }
 
-function validatedModelHandoff(task: OrchestrationTask, source: TaskExecutionResult | undefined) {
+function validatedModelHandoff(task: OrchestrationTask, sourceTask: OrchestrationTask | undefined, source: TaskExecutionResult | undefined) {
   if (task.kind !== "deterministic" || !task.handoffFrom) return task;
+  if (!sourceTask || sourceTask.kind !== "model") throw new OrchestrationValidationError(`Model handoff source must be a model task for ${task.id}`);
   if (!source || source.state !== "completed" || !source.result || typeof source.result !== "object") {
     throw new OrchestrationValidationError(`Invalid model handoff source for ${task.id}`);
   }
@@ -347,7 +350,7 @@ export class WorldwayOrchestrator {
       executedSteps++;
 
       try {
-        const executionTask = validatedModelHandoff(task, task.handoffFrom ? results.get(task.handoffFrom) : undefined);
+        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined);
         const result = executionTask.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(executionTask, context)
           : await this.executor.execute(executionTask, context);
