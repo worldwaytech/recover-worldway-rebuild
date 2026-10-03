@@ -28,7 +28,10 @@ describe("Worldway Phase 13 personalization", () => {
 
   it("removes preference data when preference consent is absent", () => {
     const p = permittedTravelerProfile(
-      normalizeTravelerProfile({ favoriteDestinations: ["Istanbul"], budgetPattern: { typicalMax: 5000, currency: "EUR" } }),
+      normalizeTravelerProfile({
+        favoriteDestinations: ["Istanbul"],
+        budgetPattern: { typicalMax: 5000, currency: "EUR" },
+      }),
       { preferences: false, history: true },
     );
     expect(p.favoriteDestinations).toEqual([]);
@@ -40,8 +43,20 @@ describe("Worldway Phase 13 personalization", () => {
       normalizeTravelerProfile({ preferredAirlines: ["Carrier A"] }),
       { preferences: true, history: false },
       [
-        { key: "past_airline", value: { value: "Carrier B" }, confidence: 0.8, consent_scope: "history", memory_kind: "journey" },
-        { key: "pace", value: { value: "relaxed" }, confidence: 1, consent_scope: "preferences", memory_kind: "explicit" },
+        {
+          key: "past_airline",
+          value: { value: "Carrier B" },
+          confidence: 0.8,
+          consent_scope: "history",
+          memory_kind: "journey",
+        },
+        {
+          key: "pace",
+          value: { value: "relaxed" },
+          confidence: 1,
+          consent_scope: "preferences",
+          memory_kind: "explicit",
+        },
       ],
     );
     expect(c.signals.some(s => s.key === "past_airline")).toBe(false);
@@ -50,12 +65,15 @@ describe("Worldway Phase 13 personalization", () => {
 
   it("never overwrites explicit current-request values", () => {
     const c = buildPersonalizationContext(
-      normalizeTravelerProfile({ favoriteDestinations: ["Istanbul"], preferredAirlines: ["Carrier A"] }),
+      normalizeTravelerProfile({
+        favoriteDestinations: ["Istanbul"],
+        preferredAirlines: ["Carrier A"],
+      }),
       { preferences: true, history: true },
       [],
     );
     const out = applyPersonalizationDefaults(
-      { destination: "Paris", airline: "Carrier B" },
+      { destination: "Paris", airline: "Carrier B" } as Record<string, unknown>,
       c,
     );
     expect(out.destination).toBe("Paris");
@@ -68,13 +86,16 @@ describe("Worldway Phase 13 personalization", () => {
       { preferences: true, history: true },
       [],
     );
-    const out = applyPersonalizationDefaults({}, c);
+    const out = applyPersonalizationDefaults({} as Record<string, unknown>, c);
     expect(out.destination).toBeUndefined();
   });
 
   it("keeps feasibility dominant after personalization", () => {
     const c = buildPersonalizationContext(
-      normalizeTravelerProfile({ preferredHotels: ["Hotel A"], activityPreferences: ["museum"] }),
+      normalizeTravelerProfile({
+        preferredHotels: ["Hotel A"],
+        activityPreferences: ["museum"],
+      }),
       { preferences: true, history: true },
       [],
     );
