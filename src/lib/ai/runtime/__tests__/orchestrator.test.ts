@@ -84,8 +84,8 @@ describe("Worldway AI Orchestrator foundation", () => {
       context(),
     );
     expect(result.toolCalls).toBe(1);
-    expect(result.results.find((r) => r.taskId === "c")?.state).toBe("blocked");
-    expect(result.results.find((r) => r.taskId === "c")?.error).toBe("tool_call_budget_exceeded");
+    expect(result.results.find((r) => r.taskId === "task-c")?.state).toBe("blocked");
+    expect(result.results.find((r) => r.taskId === "task-c")?.error).toBe("tool_call_budget_exceeded");
   });
 
   it("routes tool tasks through Tool Fabric and preserves its authorization boundary", async () => {
