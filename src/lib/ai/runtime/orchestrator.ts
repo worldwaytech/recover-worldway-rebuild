@@ -252,7 +252,7 @@ function validatedModelHandoff(task: OrchestrationTask, sourceTask: Orchestratio
   const decisionKind = typeof value.decisionKind === "string" ? value.decisionKind : "recommendation";
   const contract = createWorldwayDecisionContract({
     decisionKind: decisionKind as WorldwayDecisionKind, decision: value.decision, confidence: value.confidence, evidence: value.evidence,
-    correlationId, sourceTaskId: source.id, constraints: value.constraints, expiresAt: value.expiresAt ?? new Date(Date.now() + 5 * 60_000).toISOString(),
+    correlationId, sourceTaskId: source.taskId, constraints: value.constraints, expiresAt: value.expiresAt ?? new Date(Date.now() + 5 * 60_000).toISOString(),
   });
   if (!contract) throw new OrchestrationValidationError(`Model handoff decision contract invalid for ${task.id}`);
   const validated = validateWorldwayDecisionContract(contract, { expectedCorrelationId: correlationId, expectedSourceTaskId: source.id, acceptedDecisionKinds: task.acceptedDecisionKinds });
