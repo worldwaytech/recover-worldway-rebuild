@@ -45,10 +45,42 @@ describe("end-to-end package pipeline", () => {
     const bad = out.find((p) => p.id === "pkg-date")!;
     expect(out[0]!.id).toBe("arrival");
     expect(good.graph.map((c) => c.kind)).toEqual(["flight", "transfer", "stay", "activity"]);
+    expect(good.journeySegments.map((s) => [s.fromPlace, s.toPlace, s.mode, s.continuity])).toEqual([
+      ["LHR", "LHR", "transfer", "continuous"],
+      ["LON", "LON", "activity", "continuous"],
+    ]);
+    expect(good.journeySegments[0]?.gapMinutes).toBe(60);
     expect(good.bookable).toBe(true);
     expect(good.pricing!.total).toBeGreaterThan(0);
     expect(bad.issues.some((i) => i.code === "hotel-date-mismatch")).toBe(true);
     expect(bad.bookable).toBe(false);
+  });
+
+  it("marks the deterministic Phase 7 optimized shortlist without removing ranked candidates", () => {
+    const candidates = [100, 120, 140, 160].map((amount, index) => ({
+      id: `opt-${index + 1}`,
+      offers: [
+        flight,
+        transfer,
+        { ...hotel("2026-10-11T14:00:00Z"), externalId: `H-opt-${index + 1}`, net: { amount, currency: "GBP" } },
+      ],
+    }));
+    const out = runPackagePipeline(base(candidates));
+    expect(out).toHaveLength(4);
+    expect(out.filter((p) => p.optimized)).toHaveLength(3);
+    expect(out.filter((p) => p.optimized).map((p) => p.id)).toEqual(["opt-1", "opt-2", "opt-3"]);
+    const disabled = runPackagePipeline({ ...base(candidates), optimization: { enabled: false } });
+    expect(disabled.every((p) => p.optimized)).toBe(true);
+  });
+
+  it("blocks a package that falls outside the requested trip window", () => {
+    const lateReturn = { ...flight, externalId: "F-late", start: { ...flight.start, at: "2026-10-16T03:30:00Z" }, end: { ...flight.end, at: "2026-10-16T11:00:00Z" } };
+    const out = runPackagePipeline(base([
+      { id: "late-return", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), lateReturn] },
+    ]));
+    const pkg = out[0]!;
+    expect(pkg.issues.some((i) => i.code === "outside-trip-window")).toBe(true);
+    expect(pkg.bookable).toBe(false);
   });
 
   it("blocks booking on FX/price failure", () => {
@@ -101,6 +133,22 @@ describe("capability control", () => {
     for (const s of SUPPLIER_CATALOG) for (const gr of s.grants ?? []) expect(["production", "uat", "sandbox"]).toContain(gr.environment);
   });
 });
+
+
+  it("propagates canonical chronology violations into package readiness", () => {
+    const overlappingActivity: CanonicalOffer = {
+      ...activity,
+      externalId: "A-overlap",
+      start: { ...activity.start, at: "2026-10-12T10:00:00Z" },
+      end: { ...activity.end, at: "2026-10-12T13:00:00Z" },
+    };
+    const out = runPackagePipeline(base([
+      { id: "chronology-invalid", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity, overlappingActivity] },
+    ]));
+    const pkg = out[0]!;
+    expect(pkg.issues.some((i) => i.code === "overlap")).toBe(true);
+    expect(pkg.bookable).toBe(false);
+  });
 
 describe("supplier health", () => {
   it("tracks errors/latency and marks a failing supplier down", async () => {

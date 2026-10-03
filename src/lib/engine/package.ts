@@ -1,10 +1,12 @@
 // Package pipeline — pure and deterministic:
 // Normalize → Trip Graph → Ranking → Package Audit → Pricing → Booking Readiness.
 // No supplier knowledge; AI never supplies availability, schedules or prices.
-import { sortChronologically } from "./chronology";
+import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically } from "./chronology";
+import { buildItinerary, checkTripRequirements, createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
+import { optimizePackageSet, type RankingProfile } from "./optimization";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
 
 export interface PackageCandidate {
@@ -19,12 +21,20 @@ export interface PipelineInput {
   currency: string;
   fx: FxTable;
   ruleFor: (c: NormalizedComponent) => PricingRule | null;
+  orchestration?: TripRequirementProfile;
+  ranking?: RankingProfile;
+  optimization?: { enabled?: boolean; limit?: number };
 }
 
 export interface PipelinePackage extends RankedPackage {
   graph: NormalizedComponent[];
+  /** Explicit multi-city / multi-modal sequence derived from the canonical graph. */
+  journeySegments: ReturnType<typeof buildJourneySegments>;
+  /** Phase 7 optimized shortlist membership. */
+  optimized: boolean;
   pricing: ReturnType<typeof pricePackage> | null;
   rejected: { externalId: string; reason: string }[];
+  itinerary: ReturnType<typeof buildItinerary>;
 }
 
 function tryPrice(items: NormalizedComponent[], i: PipelineInput) {
@@ -39,22 +49,46 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
   const built = input.candidates.map((c) => {
     const { components, rejected } = normalizeOffers(c.offers);
     const graph = sortChronologically(components);
+    const chronology = buildChronologicalTripGraph(graph);
+    const profile = input.orchestration ?? createTripRequirementProfile(input.requirements);
+    const requirementCheck = checkTripRequirements(graph, profile);
+    const orchestration = detectOrchestrationConflicts(graph, profile);
     const { pricing, error } = tryPrice(graph, input);
-    return { id: c.id, graph, rejected, pricing, priceError: error };
+    return { id: c.id, graph, chronology, requirementCheck, orchestration, rejected, pricing, priceError: error };
   });
   // Only priced packages have a comparable total; unpriced sort last and are never bookable.
+  const optimizationInputs = built.map((b) => ({ id: b.id, items: b.graph, total: b.pricing?.total ?? Number.MAX_SAFE_INTEGER }));
+  const optimizedIds = new Set(
+    input.optimization?.enabled === false
+      ? optimizationInputs.map((x) => x.id)
+      : optimizePackageSet(
+          optimizationInputs,
+          input.requirements,
+          input.registry,
+          input.optimization?.limit ?? 3,
+          input.ranking,
+        ).map((x) => x.id),
+  );
   const ranked = rankPackages(
-    built.map((b) => ({ id: b.id, items: b.graph, total: b.pricing?.total ?? Number.MAX_SAFE_INTEGER })),
+    optimizationInputs,
     input.requirements,
     input.registry,
+    input.ranking,
   );
   return ranked.map((r) => {
     const b = built.find((x) => x.id === r.id)!;
-    const issues: AuditIssue[] = [...r.issues];
+    const issues: AuditIssue[] = [
+      ...b.chronology.issues,
+      ...b.requirementCheck.missing.map((x) => ({ code: "missing-required-product" as const, severity: "error" as const, componentIds: [], message: x.reason }) satisfies AuditIssue),
+      ...b.requirementCheck.warnings.map((message) => ({ code: "document-requirement" as const, severity: "warning" as const, componentIds: [], message }) satisfies AuditIssue),
+      ...b.orchestration.map((x) => ({ code: x.code, severity: x.severity, componentIds: x.componentIds, message: x.message }) satisfies AuditIssue),
+      ...r.issues,
+    ];
     if (!b.pricing) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: b.priceError ?? "Price unavailable" });
     if (b.rejected.length) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: `${b.rejected.length} supplier result(s) could not be normalised.` });
-    const bookable = r.bookable && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
-    return { ...r, issues, bookable, graph: b.graph, pricing: b.pricing, rejected: b.rejected };
+    const orchestrationErrors = b.orchestration.some((x) => x.severity === "error") || b.requirementCheck.missing.length > 0;
+    const bookable = r.bookable && !orchestrationErrors && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
+    return { ...r, issues, bookable, optimized: optimizedIds.has(r.id), graph: b.graph, journeySegments: buildJourneySegments(b.graph), itinerary: buildItinerary(b.graph), pricing: b.pricing, rejected: b.rejected };
   });
 }
 

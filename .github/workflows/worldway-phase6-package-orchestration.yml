@@ -1,0 +1,33 @@
+name: Worldway Phase 6 Package Orchestration
+
+on:
+  pull_request:
+    paths:
+      - "src/lib/engine/orchestration.ts"
+      - "src/lib/engine/package.ts"
+      - "src/lib/engine/types.ts"
+      - "src/lib/engine/__tests__/phase6-orchestration.test.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/worldway-phase6-package-orchestration.yml"
+  push:
+    branches:
+      - phase-6-package-orchestration
+
+concurrency:
+  group: worldway-phase6-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test -- --run src/lib/engine/__tests__/chronology.phase5.test.ts src/lib/engine/__tests__/pipeline.test.ts src/lib/engine/__tests__/phase5-multicity.test.ts src/lib/engine/__tests__/phase6-orchestration.test.ts

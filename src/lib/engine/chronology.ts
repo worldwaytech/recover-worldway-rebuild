@@ -30,6 +30,23 @@ function haversineKm(a: LocalMoment, b: LocalMoment): number | null {
 export const MIN_CONNECTION_MIN = 60;
 const GROUND_KMH = 80;
 
+export interface ChronologicalTripGraph {
+  version: 1;
+  nodes: NormalizedComponent[];
+  edges: Array<{ from: string; to: string; gapMinutes: number }>;
+  destinationArrivalDate?: string;
+  /** Local arrival date for every destination/airport place reached by transport. */
+  arrivalDatesByPlace: Record<string, string>;
+  finalDepartureDate?: string;
+  issues: AuditIssue[];
+}
+
+const transportKinds = new Set(["flight", "rail", "aviation", "cruise"]);
+
+function isTransport(c: NormalizedComponent): boolean {
+  return transportKinds.has(c.kind);
+}
+
 /**
  * Hotel check-in must be the local arrival date of the inbound transport,
  * never the package or departure date.
@@ -51,13 +68,14 @@ export function checkChronology(items: NormalizedComponent[]): AuditIssue[] {
     }
   }
 
-  const transport = (k: string) => k === "flight" || k === "rail" || k === "aviation" || k === "cruise";
+  const transport = (k: string) => transportKinds.has(k);
 
   for (let i = 0; i < sorted.length; i++) {
     const a = sorted[i]!;
     for (let j = i + 1; j < sorted.length; j++) {
       const b = sorted[j]!;
-      // Stays legitimately overlap activities/transfers; people can't be on two moving things.
+      // Hotel stays contain destination activities/transfers, so overlap with a stay
+      // is expected. Two moving services may not overlap.
       const exclusive = (x: NormalizedComponent) => x.kind !== "stay" && x.kind !== "insurance";
       if (exclusive(a) && exclusive(b) && ms(b.start) < ms(a.end)) {
         issues.push({ code: "overlap", severity: "error", componentIds: [a.id, b.id], message: `${a.title} overlaps ${b.title}.` });
@@ -87,9 +105,12 @@ export function checkChronology(items: NormalizedComponent[]): AuditIssue[] {
 
   // Stay dates vs inbound arrival.
   for (const stay of sorted.filter((c) => c.kind === "stay")) {
-    const inbound = [...sorted]
+    const arrivals = [...sorted]
       .filter((c) => transport(c.kind) && ms(c.end) <= ms(stay.start) + 36 * 3600_000)
-      .sort((x, y) => ms(y.end) - ms(x.end))[0];
+      .sort((x, y) => ms(y.end) - ms(x.end));
+    const inbound =
+      arrivals.find((c) => c.end.place === stay.start.place) ??
+      arrivals[0];
     if (inbound) {
       const need = requiredCheckInDate(inbound);
       const have = localDate(stay.start);
@@ -99,4 +120,130 @@ export function checkChronology(items: NormalizedComponent[]): AuditIssue[] {
     }
   }
   return issues;
+}
+
+
+/**
+ * Build the canonical chronological graph used by downstream ranking, packaging
+ * and booking-readiness layers. The graph is deterministic and uses supplier
+ * instants as the source of truth.
+ */
+export function buildChronologicalTripGraph(items: NormalizedComponent[]): ChronologicalTripGraph {
+  const nodes = sortChronologically(items);
+  const issues = checkChronology(nodes);
+  const edges: Array<{ from: string; to: string; gapMinutes: number }> = [];
+
+  // Graph edges include stays because the canonical graph represents the
+  // complete itinerary. Insurance is non-temporal and therefore excluded.
+  const sequenced = nodes.filter((c) => c.kind !== "insurance");
+  for (let i = 0; i + 1 < sequenced.length; i += 1) {
+    const from = sequenced[i]!;
+    const to = sequenced[i + 1]!;
+    edges.push({
+      from: from.id,
+      to: to.id,
+      gapMinutes: Math.round((ms(to.start) - ms(from.end)) / 60000),
+    });
+  }
+
+  const firstDestinationArrival = nodes.find((c) => isTransport(c) && c.end.place !== c.start.place);
+  const lastReturn = [...nodes].reverse().find((c) => isTransport(c));
+  const arrivalDatesByPlace: Record<string, string> = {};
+  for (const c of nodes) {
+    if (isTransport(c) && c.end.place !== c.start.place) {
+      arrivalDatesByPlace[c.end.place] = localDate(c.end);
+    }
+  }
+
+  return {
+    version: 1,
+    nodes,
+    edges,
+    destinationArrivalDate: firstDestinationArrival ? requiredCheckInDate(firstDestinationArrival) : undefined,
+    arrivalDatesByPlace,
+    finalDepartureDate: lastReturn ? localDate(lastReturn.start) : undefined,
+    issues,
+  };
+}
+
+
+export type JourneyContinuity = "continuous" | "transfer-required" | "location-discontinuity";
+
+export interface JourneySegment {
+  index: number;
+  fromNodeId: string;
+  toNodeId: string;
+  mode: NormalizedComponent["kind"];
+  fromPlace: string;
+  toPlace: string;
+  startAt: string;
+  endAt: string;
+  gapMinutes: number;
+  continuity: JourneyContinuity;
+}
+
+/**
+ * Explicit multi-city / multi-modal sequencing derived only from normalized
+ * supplier timestamps and locations. No dates or transfers are invented.
+ */
+export function buildJourneySegments(items: NormalizedComponent[]): JourneySegment[] {
+  const moving = sortChronologically(items).filter((c) => c.kind !== "stay" && c.kind !== "insurance");
+  return moving.slice(0, -1).map((from, index) => {
+    const to = moving[index + 1]!;
+    const gapMinutes = Math.round((ms(to.start) - ms(from.end)) / 60000);
+    const samePlace = from.end.place === to.start.place;
+    const continuity: JourneyContinuity =
+      samePlace ? (from.kind === "transfer" || to.kind === "transfer" ? "continuous" : "continuous")
+      : to.kind === "transfer" ? "transfer-required"
+      : "location-discontinuity";
+    return {
+      index,
+      fromNodeId: from.id,
+      toNodeId: to.id,
+      mode: to.kind,
+      fromPlace: from.end.place,
+      toPlace: to.start.place,
+      startAt: from.end.at,
+      endAt: to.start.at,
+      gapMinutes,
+      continuity,
+    };
+  });
+}
+
+/** Convenience predicate for booking-readiness and package auditing. */
+export function checkTripWindow(
+  items: NormalizedComponent[],
+  requirements: { departFrom: string; returnBy: string },
+): AuditIssue[] {
+  const transport = items.filter((c) => transportKinds.has(c.kind)).sort((a, b) => ms(a.start) - ms(b.start));
+  if (!transport.length) return [];
+
+  const issues: AuditIssue[] = [];
+  const first = transport[0]!;
+  const last = transport[transport.length - 1]!;
+  const departureDate = localDate(first.start);
+  const finalDepartureDate = localDate(last.start);
+
+  if (departureDate < requirements.departFrom) {
+    issues.push({
+      code: "outside-trip-window",
+      severity: "error",
+      componentIds: [first.id],
+      message: `${first.title} departs on ${departureDate}, before the requested trip start ${requirements.departFrom}.`,
+    });
+  }
+  if (finalDepartureDate > requirements.returnBy) {
+    issues.push({
+      code: "outside-trip-window",
+      severity: "error",
+      componentIds: [last.id],
+      message: last.title + " departs on " + finalDepartureDate + ", after the requested return date " + requirements.returnBy + ".",
+    });
+  }
+  return issues;
+}
+
+export function chronologyIsValid(items: NormalizedComponent[]): boolean {
+  return checkChronology(items).every((issue) => issue.severity !== "error");
 }
