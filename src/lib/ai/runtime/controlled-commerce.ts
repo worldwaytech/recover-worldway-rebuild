@@ -65,7 +65,7 @@ export class ControlledCommerceApprovalStore {
   private readonly idempotency = new Map<string, string>();
 
   private idempotencyKey(principalUserId: string, key: string): string {
-    return `${principalUserId}:${key}`;
+    return JSON.stringify([principalUserId, key]);
   }
 
   request(input: CommerceApprovalRequest): CommerceApproval {
@@ -82,7 +82,16 @@ export class ControlledCommerceApprovalStore {
 
     if (existingId) {
       const existing = this.approvals.get(existingId);
-      if (existing) return { ...existing };
+      if (existing) {
+        if (
+          existing.tool !== tool ||
+          existing.action !== input.action ||
+          existing.quoteId !== quoteId
+        ) {
+          throw new CommerceApprovalError("idempotency_conflict");
+        }
+        return { ...existing };
+      }
     }
 
     const ttl = Math.max(1_000, Math.min(input.expiresInMs ?? 5 * 60_000, 15 * 60_000));
@@ -142,9 +151,13 @@ export class ControlledCommerceApprovalStore {
     return { ...approval };
   }
 
-  get(id: string): CommerceApproval | undefined {
+  get(id: string, principalUserId: string): CommerceApproval | undefined {
     const approval = this.approvals.get(id);
-    return approval ? { ...approval } : undefined;
+    if (!approval) return undefined;
+    if (approval.principalUserId !== principalUserId) {
+      throw new CommerceApprovalError("principal_mismatch");
+    }
+    return { ...approval };
   }
 
   toHighRiskGrant(
