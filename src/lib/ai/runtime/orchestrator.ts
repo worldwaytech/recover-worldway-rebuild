@@ -45,6 +45,8 @@ export interface OrchestrationTask {
   modelTask?: TaskKind;
   /** Explicit downstream handoff from one completed model task. */
   handoffFrom?: string;
+  /** Decision kinds this deterministic consumer explicitly accepts. */
+  acceptedDecisionKinds?: WorldwayDecisionKind[];
   metadata?: Record<string, string | number | boolean>;
 }
 
