@@ -10,13 +10,9 @@ import {
 type Db = { from: (table: string) => any };
 
 export interface TravelAgentContext {
-  /** Explicit Travel DNA is authoritative for explicit preferences. */
   explicitPreferences: Record<string, unknown>;
-  /** Structured Phase 13 traveler profile, consent-gated. */
   travelerProfile: TravelerProfile;
-  /** Deterministic personalization signals derived from consented context. */
   personalization: PersonalizationContext;
-  /** Consent-gated memories with provenance, confidence and expiry already enforced. */
   memories: Array<{
     id: string;
     kind: string;
@@ -28,7 +24,6 @@ export interface TravelAgentContext {
     expiresAt: string | null;
     consent_scope: "preferences" | "history";
   }>;
-  /** The current request always has precedence over remembered preferences. */
   precedence: "current_request_over_memory";
 }
 
@@ -77,12 +72,8 @@ export async function buildTravelAgentContext(db: Db, userId: string): Promise<T
   };
 }
 
-/**
- * Applies only safe preference defaults. It never replaces a value explicitly
- * supplied in the current request and never turns memory into commercial truth.
- */
 export function applyTravelMemoryDefaults<T extends Record<string, any>>(request: T, context: TravelAgentContext): T {
-  const out = applyPersonalizationDefaults({ ...request }, context.personalization);
+  const out: Record<string, any> = applyPersonalizationDefaults({ ...request }, context.personalization);
   const prefs = context.explicitPreferences;
   if (out.luxuryLevel == null && typeof prefs.luxuryLevel === "number") out.luxuryLevel = prefs.luxuryLevel;
   if (out.pace == null && typeof prefs.pace === "string") out.pace = prefs.pace;
