@@ -102,7 +102,7 @@ export function checkTripRequirements(
   const preferredMissing = profile.preferredKinds.filter((kind) => !present.has(kind));
   const warnings: string[] = [];
 
-  if (profile.insurance === "required" && !present.has("insurance"))
+  if (profile.insurance === "required" && !present.has("insurance") && !missing.some((x) => x.kind === "insurance"))
     missing.push({ kind: "insurance", reason: "Travel insurance was explicitly required." });
 
   if (profile.visa === "required") {
