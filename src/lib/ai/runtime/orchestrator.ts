@@ -6,7 +6,11 @@ import { emit, newCorrelationId } from "../router/telemetry";
 import { withRoute, type RouterDeps } from "../router/router";
 import type { ModelSpec, TaskKind } from "../router/types";
 import { OrchestrationTraceCollector } from "./orchestration-trace";
-import {\n  createWorldwayDecisionContract,\n  validateWorldwayDecisionContract,\n  type WorldwayDecisionKind,\n} from "./decision-contract";
+import {
+  createWorldwayDecisionContract,
+  validateWorldwayDecisionContract,
+  type WorldwayDecisionKind,
+} from "./decision-contract";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
 export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic" | "model";
@@ -337,7 +341,8 @@ export class WorldwayOrchestrator {
     const ordered = validation.order;
     let executedSteps = 0;
     let toolCalls = 0;
-    const started = Date.now();\n    const consumedModelHandoffs = new Set<string>();
+    const started = Date.now();
+    const consumedModelHandoffs = new Set<string>();
 
     emit({
       type: "policy.decision",
@@ -392,7 +397,13 @@ export class WorldwayOrchestrator {
       executedSteps++;
 
       try {
-        if (task.handoffFrom) {\n          if (consumedModelHandoffs.has(task.handoffFrom)) {\n            throw new OrchestrationValidationError(`Model decision replay rejected for ${task.id}`);\n          }\n          consumedModelHandoffs.add(task.handoffFrom);\n        }\n        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined, correlationId);
+        if (task.handoffFrom) {
+          if (consumedModelHandoffs.has(task.handoffFrom)) {
+            throw new OrchestrationValidationError(`Model decision replay rejected for ${task.id}`);
+          }
+          consumedModelHandoffs.add(task.handoffFrom);
+        }
+        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined, correlationId);
         const result = executionTask.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(executionTask, context)
           : await this.executor.execute(executionTask, context);
