@@ -146,6 +146,31 @@ describe("Worldway typed decision contract", () => {
     expect(contract?.evidence).toEqual(evidence);
   });
 
+  it("rejects a forged ready synthesis before deterministic binding", () => {
+    const synthesis = synthesizeSpecialistDecisions(buildSpecialistCoordinationEnvelope("wwai-test", [
+      { specialist: "flight_intelligence", taskId: "flight-step", state: "completed", output: { recommendation: "review" }, evidence },
+    ])!, { expectedCorrelationId: "wwai-test", now: new Date("2026-10-03T12:00:00Z") })!;
+
+    const forged = {
+      ...synthesis,
+      status: "ready" as const,
+      findings: [{ ...synthesis.findings[0], taskId: "" }],
+    };
+
+    const contract = bindSpecialistSynthesisToDecisionContract({
+      synthesis: forged,
+      decisionKind: "recommendation",
+      decision: "Use the deterministic itinerary",
+      confidence: 0.91,
+      correlationId: "wwai-test",
+      sourceTaskId: "decision-step",
+      acceptedDecisionKinds: ["recommendation"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    });
+
+    expect(contract).toBeNull();
+  });
+
   it("does not bind conflicted synthesis or infer a winner", () => {
     const synthesis = synthesizeSpecialistDecisions(buildSpecialistCoordinationEnvelope("wwai-test", [
       { specialist: "flight_intelligence", taskId: "flight-step", state: "completed", output: { recommendation: "keep" }, evidence },
