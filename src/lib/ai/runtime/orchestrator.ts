@@ -257,7 +257,14 @@ function validatedModelHandoff(task: OrchestrationTask, sourceTask: Orchestratio
   if (!contract) throw new OrchestrationValidationError(`Model handoff decision contract invalid for ${task.id}`);
   const validated = validateWorldwayDecisionContract(contract, { expectedCorrelationId: correlationId, expectedSourceTaskId: source.taskId, acceptedDecisionKinds: task.acceptedDecisionKinds });
   if (!validated) throw new OrchestrationValidationError(`Model handoff decision contract integrity check failed for ${task.id}`);
-  return { ...task, input: { ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}), modelDecision: validated } };
+  return {
+    ...task,
+    decisionContractFrom: source.taskId,
+    input: {
+      ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}),
+      decisionContract: validated,
+    },
+  };
 }
 
 function validatedSpecialistDecisionBinding(task: OrchestrationTask, executedTask: OrchestrationTask, result: unknown, correlationId: string): unknown {
