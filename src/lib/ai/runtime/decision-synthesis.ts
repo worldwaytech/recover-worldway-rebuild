@@ -33,6 +33,10 @@ export interface SpecialistDecisionSynthesisContract {
 
 const SYNTHESIS_FIELDS = ["recommendation", "classification", "routing"] as const;
 const MAX_FINDINGS = 10;
+function boundedObject(value: unknown): Record<string, unknown> | null {
+  return sanitizeSpecialistAdvisoryOutput(value);
+}
+
 function validEvidence(evidence: OrchestrationEvidence[], now: Date): OrchestrationEvidence[] | null {
   const sanitized = sanitizeOrchestrationEvidence(evidence);
   if (sanitized.length !== evidence.length) return null;
