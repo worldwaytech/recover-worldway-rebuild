@@ -138,6 +138,8 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     if (task.handoffFrom && task.handoffFrom === task.id) problems.push(`self_handoff:${task.id}`);
     if (task.handoffFrom && task.kind !== "deterministic") problems.push(`handoff_target_must_be_deterministic:${task.id}`);
     if (task.handoffFrom && !(task.dependsOn ?? []).includes(task.handoffFrom)) problems.push(`handoff_must_depend_on_source:${task.id}->${task.handoffFrom}`);
+    if (task.handoffFrom && !(task.acceptedDecisionKinds?.length)) problems.push(`handoff_missing_accepted_decision_kinds:${task.id}`);
+    if (task.acceptedDecisionKinds?.some((kind) => !["recommendation", "classification", "ranking", "routing", "explanation"].includes(kind))) problems.push(`invalid_decision_kind:${task.id}`);
   }
 
   for (const task of tasks) {
