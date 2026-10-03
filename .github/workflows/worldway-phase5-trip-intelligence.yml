@@ -26,6 +26,6 @@ jobs:
           node-version: 22
           cache: npm
       # Repository lockfile is currently not synchronized with package.json; use the same deterministic dependency strategy as production CI.
-      - run: npm install --no-audit --no-fund --package-lock=false
+      - run: npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
       - run: npm run typecheck
       - run: npm test -- --run src/lib/engine/__tests__/chronology.phase5.test.ts src/lib/engine/__tests__/pipeline.test.ts
