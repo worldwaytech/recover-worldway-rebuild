@@ -49,5 +49,11 @@ jobs:
           test -f .output/server/index.mjs
           echo "Verified: .output/server/index.mjs exists."
 
-      - name: Run tests if present
-        run: npm run test --if-present
+      - name: Type-check application
+        run: npm run typecheck
+
+      - name: Lint application
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
