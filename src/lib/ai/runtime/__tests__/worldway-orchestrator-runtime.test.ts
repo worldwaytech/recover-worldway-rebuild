@@ -171,6 +171,46 @@ describe("Worldway specialist orchestration runtime", () => {
     expect((result.results[0].result as Record<string, unknown>).rankingProfile).not.toHaveProperty("weights.unknown");
   });
 
+  it("projects only bounded optimization preferences into deterministic optimization input", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "optimization decision",
+      tasks: [{
+        id: "decision-step",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "optimization" },
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "prefer experiences", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "optimization:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "decision-step",
+            constraints: [
+              "optimization.weight.preference=1",
+              "optimization.preference.kind.activity=1",
+              "optimization.limit=1",
+              "optimization.select.package=preferred",
+              "optimization.weight.unknown=0.9",
+            ],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    const output = result.results[0].result as Record<string, any>;
+    expect(output.optimizationProfile).toEqual({
+      weights: { preference: 1 },
+      kindPreferences: { activity: 1 },
+    });
+    expect(output.optimizationProfile).not.toHaveProperty("limit");
+    expect(output.optimizationProfile).not.toHaveProperty("select");
+  });
+
   it("consumes bounded orchestration preferences without changing hard requirements", async () => {
     const runtime = createWorldwayOrchestratorRuntime({
       tools: new ToolRegistry(),
