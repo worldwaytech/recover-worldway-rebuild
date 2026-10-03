@@ -14,7 +14,13 @@ async function superAdmin(context: any) {
   return { db, audit };
 }
 
-const SCOPE = z.enum(["flights.search", "tours.read", "tours.quote", "trips.plan"]);
+const SCOPE = z.enum([
+  "flights.search", "tours.read", "tours.quote", "trips.plan",
+  "catalog.read", "pricing.quote", "booking.read", "booking.write",
+  "payment.write", "wallet.read", "wallet.reserve",
+]);
+const API_PRODUCT = z.enum(["flights", "hotels", "transfers", "activities", "tours", "cruises", "rail", "private_aviation", "concierge"]);
+const API_ACCESS_MODE = z.enum(["single_product", "multi_product", "full_catalogue"]);
 
 export const listPartnerTenants = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -23,7 +29,7 @@ export const listPartnerTenants = createServerFn({ method: "GET" })
     const since = new Date(Date.now() - 86_400_000).toISOString();
     const [t, k, m, u] = await Promise.all([
       db.from("partner_tenants").select("id, name, kind, status, rate_limit_per_minute, created_at").order("created_at", { ascending: false }),
-      db.from("partner_api_keys").select("id, tenant_id, label, key_prefix, scopes, expires_at, revoked_at, last_used_at, created_at").order("created_at", { ascending: false }),
+      db.from("partner_api_keys").select("id, tenant_id, label, key_prefix, scopes, api_products, api_access_mode, expires_at, revoked_at, last_used_at, created_at").order("created_at", { ascending: false }),
       db.from("partner_members").select("id, tenant_id, user_id, role"),
       db.from("partner_api_usage").select("tenant_id, status").gte("created_at", since).limit(10000),
     ]);
@@ -59,13 +65,25 @@ export const setPartnerStatus = createServerFn({ method: "POST" })
 
 export const createPartnerKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), label: z.string().trim().min(2).max(80), scopes: z.array(SCOPE).min(1), expiresInDays: z.number().int().min(1).max(730).default(365) }).parse(d))
+  .inputValidator((d: unknown) => z.object({
+    tenantId: z.string().uuid(),
+    label: z.string().trim().min(2).max(80),
+    scopes: z.array(SCOPE).min(1),
+    apiAccessMode: API_ACCESS_MODE.default("multi_product"),
+    apiProducts: z.array(API_PRODUCT).min(1).max(9),
+    expiresInDays: z.number().int().min(1).max(730).default(365),
+  }).superRefine((v, ctx) => {
+    if (v.apiAccessMode === "single_product" && v.apiProducts.length !== 1) ctx.addIssue({ code: "custom", path: ["apiProducts"], message: "single_product requires exactly one product" });
+    if (v.apiAccessMode === "full_catalogue" && v.apiProducts.length !== 9) ctx.addIssue({ code: "custom", path: ["apiProducts"], message: "full_catalogue requires all products" });
+    if (v.apiAccessMode === "multi_product" && v.apiProducts.length < 2) ctx.addIssue({ code: "custom", path: ["apiProducts"], message: "multi_product requires at least two products" });
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const { db, audit } = await superAdmin(context);
     const { mintKey } = await import("./partner-auth.server");
     const k = mintKey();
     const { data: row, error } = await db.from("partner_api_keys").insert({
       tenant_id: data.tenantId, label: data.label, key_prefix: k.prefix, key_hash: k.hash, scopes: data.scopes,
+      api_products: data.apiProducts, api_access_mode: data.apiAccessMode,
       expires_at: new Date(Date.now() + data.expiresInDays * 86_400_000).toISOString(), created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error("Could not create key");
@@ -102,12 +120,13 @@ export const rotatePartnerKey = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ keyId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { db, audit } = await superAdmin(context);
-    const { data: old } = await db.from("partner_api_keys").select("id, tenant_id, label, scopes, expires_at, revoked_at").eq("id", data.keyId).maybeSingle();
+    const { data: old } = await db.from("partner_api_keys").select("id, tenant_id, label, scopes, api_products, api_access_mode, expires_at, revoked_at").eq("id", data.keyId).maybeSingle();
     if (!old || old.revoked_at) throw new Error("Key not found or already revoked");
     const { mintKey } = await import("./partner-auth.server");
     const k = mintKey();
     const { data: row, error } = await db.from("partner_api_keys").insert({
       tenant_id: old.tenant_id, label: old.label, key_prefix: k.prefix, key_hash: k.hash, scopes: old.scopes,
+      api_products: old.api_products ?? [], api_access_mode: old.api_access_mode ?? "multi_product",
       expires_at: old.expires_at ?? new Date(Date.now() + 365 * 86_400_000).toISOString(), created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error("Could not rotate key");
