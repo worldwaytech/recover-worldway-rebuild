@@ -93,6 +93,94 @@ describe("Travel Knowledge Layer foundation", () => {
     expect(queryTravelKnowledge(merged, { subjectId: "dest-1", predicate: "score", includeInternal: true })[0].value).toBe(0.9);
   });
 
+
+
+  it("rejects malformed externally supplied facts instead of poisoning the snapshot", () => {
+    const snapshot = ingestTravelKnowledge({
+      destinationFacts: [
+        {
+          id: "bad",
+          entityType: "destination",
+          subjectId: "dest-1",
+          predicate: "confidence",
+          value: Number.NaN,
+          source: "destination_knowledge",
+          sensitivity: "public",
+          evidence: {
+            source: "destination_knowledge",
+            evidence: [],
+            observedAt: "not-a-date",
+            confidence: 2,
+          },
+        },
+      ],
+    });
+    expect(snapshot.facts).toHaveLength(0);
+  });
+
+  it("fails closed for invalid confidence query thresholds", () => {
+    const snapshot = ingestTravelKnowledge({
+      destinationFacts: [{
+        id: "dest-1:score",
+        entityType: "destination",
+        subjectId: "dest-1",
+        predicate: "score",
+        value: 0.8,
+        source: "destination_knowledge",
+        sensitivity: "public",
+        evidence: {
+          source: "destination_knowledge",
+          evidence: [],
+          observedAt: "2026-10-03T00:00:00.000Z",
+          confidence: 0.8,
+        },
+      }],
+    });
+    expect(queryTravelKnowledge(snapshot, { minConfidence: 2 })).toHaveLength(0);
+    expect(queryTravelKnowledge(snapshot, { minConfidence: Number.NaN })).toHaveLength(0);
+  });
+
+  it("prefers newer evidence when confidence ties during snapshot merge", () => {
+    const older = ingestTravelKnowledge({
+      destinationFacts: [{
+        id: "dest-1:status",
+        entityType: "destination",
+        subjectId: "dest-1",
+        predicate: "status",
+        value: "old",
+        source: "destination_knowledge",
+        sensitivity: "public",
+        evidence: {
+          source: "destination_knowledge",
+          evidence: [],
+          observedAt: "2026-10-01T00:00:00.000Z",
+          confidence: 0.9,
+        },
+      }],
+    });
+    const newer = ingestTravelKnowledge({
+      destinationFacts: [{
+        id: "dest-1:status",
+        entityType: "destination",
+        subjectId: "dest-1",
+        predicate: "status",
+        value: "new",
+        source: "destination_knowledge",
+        sensitivity: "public",
+        evidence: {
+          source: "destination_knowledge",
+          evidence: [],
+          observedAt: "2026-10-03T00:00:00.000Z",
+          confidence: 0.9,
+        },
+      }],
+    });
+    expect(queryTravelKnowledge(mergeKnowledgeSnapshots(older, newer), {
+      subjectId: "dest-1",
+      predicate: "status",
+    })[0].value).toBe("new");
+  });
+
   it("returns stable ordering", () => {
     const snapshot: KnowledgeSnapshot = {
       generatedAt: evidence[0].observedAt,
