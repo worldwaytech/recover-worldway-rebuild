@@ -210,7 +210,7 @@ function validatedSpecialistCoordination(task: OrchestrationTask, ordered: Orche
     const result = results.get(taskId);
     if (!sourceTask || sourceTask.kind !== "specialist" || !sourceTask.specialist || !result || result.state !== "completed" || !result.result || typeof result.result !== "object") throw new OrchestrationValidationError(`Invalid specialist coordination member for ${task.id}:${taskId}`);
     const value = result.result as Record<string, unknown>;
-    specialistResults.push({ specialist: sourceTask.specialist as SpecialistAgentKey, taskId, state: "completed" as const, output: value.output, evidence: sanitizeOrchestrationEvidence(value.evidence) });
+    specialistResults.push({ specialist: sourceTask.specialist as SpecialistAgentKey, taskId, state: "completed" as const, output: value.output, evidence: sanitizeOrchestrationEvidence(value.evidence, new Date(), { strictExpiry: false }) });
   }
   const envelope = buildSpecialistCoordinationEnvelope(correlationId, specialistResults);
   if (!envelope) throw new OrchestrationValidationError(`Specialist coordination envelope invalid for ${task.id}`);
