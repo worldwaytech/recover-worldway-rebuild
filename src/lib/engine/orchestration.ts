@@ -70,7 +70,7 @@ export function createTripRequirementProfile(
 /** Apply bounded preference hints without changing hard requirements or trip facts. */
 export function applyOrchestrationPreferences(
   profile: TripRequirementProfile,
-  preferences: Pick<TripRequirementProfile, "preferredKinds">,
+  preferences: Partial<Pick<TripRequirementProfile, "preferredKinds">>,
 ): TripRequirementProfile {
   return {
     ...profile,
