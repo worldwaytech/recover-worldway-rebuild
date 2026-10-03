@@ -28,7 +28,7 @@ const partner: PartnerProfile = {
     { product: "flights", percent: 5 },
   ],
   wallet: { enabled: true, currencies: ["INR", "USD"], allowReserve: true, allowCredit: true, creditLimit: 100000 },
-  storefront: { slug: "global-dmc", brandName: "Global DMC", host: "travel.global-dmc.com", primaryColor: "#112233" },
+  storefront: { slug: "global-dmc", brandName: "Global DMC", host: "travel.global-dmc.com", primaryColor: "#112233", enabled: true },
 };
 
 describe("Phase 12 partner commerce", () => {
