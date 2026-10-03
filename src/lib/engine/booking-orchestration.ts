@@ -107,6 +107,44 @@ export class BookingOrchestrator {
 
 export function bookingReadiness(components:readonly NormalizedComponent[],caps:ReadonlyMap<string,readonly SupplierCapability[]>) { const reasons:string[]=[]; for(const c of components){const x=caps.get(c.supplierKey)||[];if(!x.includes("revalidate")&&!x.includes("availability"))reasons.push(c.id+": supplier revalidation capability missing");if(!x.includes("book"))reasons.push(c.id+": supplier booking capability missing");} return {ready:reasons.length===0,reasons}; }
 
+export function postBookingModificationReadiness(
+  status: BookingStatus,
+  components: readonly BookingComponent[],
+  capabilities: ReadonlyMap<string, readonly SupplierCapability[]>,
+  requestedComponentIds: readonly string[],
+) {
+  const blockers: string[] = [];
+  if (status !== "Booked" && status !== "Ticketed") {
+    blockers.push("Booking must be Booked or Ticketed before modification.");
+  }
+
+  const requested = requestedComponentIds.length
+    ? [...new Set(requestedComponentIds)]
+    : components.map((component) => component.id);
+  const byId = new Map(components.map((component) => [component.id, component]));
+
+  for (const id of requested) {
+    const component = byId.get(id);
+    if (!component) {
+      blockers.push(id + ": booking component not found");
+      continue;
+    }
+    const caps = capabilities.get(component.supplierKey) ?? [];
+    if (!caps.includes("modify")) blockers.push(id + ": supplier modification capability missing");
+    if (!caps.includes("revalidate") && !caps.includes("availability")) {
+      blockers.push(id + ": supplier revalidation capability missing");
+    }
+  }
+
+  return {
+    ready: blockers.length === 0,
+    blockers,
+    requiresRevalidation: true as const,
+    requiresCommercialRequote: true as const,
+    requiresApproval: true as const,
+  };
+}
+
 export function bookingStateTransitions():Readonly<Record<BookingStatus,readonly BookingStatus[]>> { return NEXT; }
 
 export function isBookingCapabilityReady(capabilities:readonly SupplierCapability[],capability:SupplierCapability){return capabilities.includes(capability);}
