@@ -56,6 +56,29 @@ describe("Specialist Agent Framework", () => {
     expect(result.state).toBe("completed");
   });
 
+  it("rejects a forged Knowledge authority contract", async () => {
+    const registry = new SpecialistAgentRegistry().register("risk_trust", {
+      async handle() { return { recommendation: "should never run" }; },
+    });
+    const valid = context();
+    const forged = {
+      ...valid,
+      knowledge: {
+        ...valid.knowledge,
+        authority: "execution" as const,
+        executionAuthority: true as const,
+      },
+    };
+    const result = await registry.delegate({
+      id: "forged-context",
+      kind: "specialist",
+      specialist: "risk_trust",
+      input: { objective: "Assess trust" },
+    }, forged as never);
+    expect(result.state).toBe("rejected");
+    expect(result.reason).toBe("worldway_context_required");
+  });
+
   it("rejects an empty objective", async () => {
     const registry = new SpecialistAgentRegistry().register("risk_trust", { async handle() { return {}; } });
     const contextValue = context();
