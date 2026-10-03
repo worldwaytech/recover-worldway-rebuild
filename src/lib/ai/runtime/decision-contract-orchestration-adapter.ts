@@ -3,7 +3,7 @@ import type { WorldwayDecisionContract } from "./decision-contract";
 
 const ALLOWED = new Set<ComponentKind>([
   "flight", "stay", "activity", "transfer", "rail", "cruise", "aviation",
-  "insurance", "visa",
+  "insurance",
 ]);
 
 export interface WorldwayOrchestrationPreferences {
