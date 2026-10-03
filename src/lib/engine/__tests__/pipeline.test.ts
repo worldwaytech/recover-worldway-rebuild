@@ -163,7 +163,7 @@ describe("end-to-end package pipeline", () => {
     };
     const [pkg] = runPackagePipeline({ ...base([candidate]), orchestration: profile, ranking: { weights: { preference: 1 } } });
     expect(pkg!.requirementCheck.missing).toEqual([
-      { kind: "insurance", reason: "Required insurance component is missing." },
+      { kind: "insurance", reason: "Travel insurance was explicitly required." },
     ]);
     expect(pkg!.bookable).toBe(false);
   });
