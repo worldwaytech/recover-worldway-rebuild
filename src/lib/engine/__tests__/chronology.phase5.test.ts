@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChronologicalTripGraph, checkTripWindow, chronologyIsValid, localDate, requiredCheckInDate } from "../chronology";
+import { buildChronologicalTripGraph, buildJourneySegments, checkTripWindow, chronologyIsValid, localDate, requiredCheckInDate } from "../chronology";
 import type { NormalizedComponent } from "../types";
 
 const base = {
@@ -96,3 +96,50 @@ describe("Phase 5 canonical chronological graph", () => {
       expect(issues.map((i) => i.code)).toContain("outside-trip-window");
     });
   });
+
+
+describe("Phase 5 explicit multi-city and multi-modal sequencing", () => {
+  it("creates deterministic segments across flight, transfer, rail and second-city arrival", () => {
+    const transfer: NormalizedComponent = {
+      ...base,
+      id: "t1", kind: "transfer", supplierKey: "transfer", externalId: "T1", title: "JFK city transfer",
+      start: { at: "2026-09-29T14:00:00Z", timezone: "America/New_York", place: "JFK" },
+      end: { at: "2026-09-29T15:00:00Z", timezone: "America/New_York", place: "NYC" },
+    };
+    const rail: NormalizedComponent = {
+      ...base,
+      id: "r1", kind: "rail", supplierKey: "rail", externalId: "R1", title: "NYC-CDG rail connection",
+      start: { at: "2026-10-04T08:00:00Z", timezone: "America/New_York", place: "NYC" },
+      end: { at: "2026-10-04T18:00:00Z", timezone: "Europe/Paris", place: "CDG" },
+    };
+    const segments = buildJourneySegments([flight, transfer, hotel, rail]);
+    expect(segments.map((s) => [s.fromPlace, s.toPlace, s.mode, s.continuity])).toEqual([
+      ["JFK", "JFK", "transfer", "continuous"],
+      ["JFK", "NYC", "rail", "location-discontinuity"],
+    ]);
+    expect(segments[0]?.gapMinutes).toBe(300);
+    expect(segments[1]?.gapMinutes).toBe(2980);
+  });
+
+  it("marks a missing ground connection as transfer-required without inventing one", () => {
+    const transfer = {
+      ...hotel,
+      id: "t2",
+      kind: "transfer" as const,
+      title: "Airport transfer",
+      start: { at: "2026-09-29T14:00:00Z", timezone: "America/New_York", place: "JFK" },
+      end: { at: "2026-09-29T15:00:00Z", timezone: "America/New_York", place: "NYC" },
+    };
+    const activity = {
+      ...hotel,
+      id: "a2",
+      kind: "activity" as const,
+      title: "NYC activity",
+      start: { at: "2026-09-29T16:00:00Z", timezone: "America/New_York", place: "NYC" },
+      end: { at: "2026-09-29T18:00:00Z", timezone: "America/New_York", place: "NYC" },
+    };
+    const segments = buildJourneySegments([flight, transfer, activity]);
+    expect(segments[0]?.continuity).toBe("continuous");
+    expect(segments[1]?.continuity).toBe("continuous");
+  });
+});
