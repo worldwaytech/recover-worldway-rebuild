@@ -198,22 +198,6 @@ export const Route = createFileRoute("/all-journeys/$slug")({
     </div>
   ),
   errorComponent: JourneyErrorComponent,
-    return (
-      <div className="container-lux py-40 text-center">
-        <h1 className="font-serif text-4xl">Something went wrong</h1>
-        <button
-          type="button"
-          className="mt-6 underline"
-          onClick={() => {
-            reset();
-            router.invalidate();
-          }}
-        >
-          Try again
-        </button>
-      </div>
-    );
-  },
   component: JourneyPage,
 });
 
