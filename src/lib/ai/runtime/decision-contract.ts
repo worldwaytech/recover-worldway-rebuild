@@ -3,6 +3,7 @@
 
 import { sanitizeOrchestrationEvidence, type OrchestrationEvidence } from "./orchestration-trace";
 import { isSpecialistDecisionSynthesisContract, type SpecialistDecisionSynthesisContract } from "./decision-synthesis";
+import { findSupplierLeaks } from "../../confidentiality/redact";
 
 export type WorldwayDecisionKind =
   | "recommendation"
@@ -33,7 +34,7 @@ export interface DecisionContractValidationOptions {
 const MAX_DECISION = 240;
 const MAX_CONSTRAINTS = 16;
 const MAX_CONSTRAINT = 160;
-const DECISION_KINDS: readonly WorldwayDecisionKind[] = [
+const FORBIDDEN_DECISION_TERMS = /(?:\\b(?:execute|execution|mutate|mutation|booking|book|payment|pay|refund|cancel|suppliermutation|supplieraction|toolcall|credential|credentials|secret|secrets|highriskgrant)\\b)/i;\n\nfunction hasForbiddenDecisionContent(value: string): boolean {\n  return FORBIDDEN_DECISION_TERMS.test(value) || findSupplierLeaks(value).length > 0;\n}\n\nconst DECISION_KINDS: readonly WorldwayDecisionKind[] = [
   "recommendation", "classification", "ranking", "routing", "explanation",
 ];
 
@@ -49,7 +50,7 @@ export function createWorldwayDecisionContract(input: {
 }): WorldwayDecisionContract | null {
   if (!input.correlationId || typeof input.correlationId !== "string") return null;
   if (!input.sourceTaskId || typeof input.sourceTaskId !== "string") return null;
-  if (typeof input.decision !== "string" || !input.decision.trim()) return null;
+  if (typeof input.decision !== "string" || !input.decision.trim()) return null;\n  if (hasForbiddenDecisionContent(input.decision)) return null;
   if (typeof input.confidence !== "number" || !Number.isFinite(input.confidence)) return null;
 
   const evidence = sanitizeOrchestrationEvidence(input.evidence);
@@ -64,7 +65,7 @@ export function createWorldwayDecisionContract(input: {
     ? input.constraints
         .filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
         .slice(0, MAX_CONSTRAINTS)
-        .map((item) => item.trim().slice(0, MAX_CONSTRAINT))
+        .map((item) => item.trim().slice(0, MAX_CONSTRAINT))\n        .filter((item) => !hasForbiddenDecisionContent(item))
     : [];
 
   return {
@@ -88,7 +89,7 @@ export function isWorldwayDecisionContract(value: unknown): value is WorldwayDec
     && typeof candidate.decisionKind === "string"
     && DECISION_KINDS.includes(candidate.decisionKind as WorldwayDecisionKind)
     && typeof candidate.decision === "string"
-    && candidate.decision.trim().length > 0
+    && candidate.decision.trim().length > 0\n    && !hasForbiddenDecisionContent(candidate.decision)
     && candidate.decision.length <= MAX_DECISION
     && typeof candidate.confidence === "number"
     && Number.isFinite(candidate.confidence)
@@ -106,7 +107,7 @@ export function isWorldwayDecisionContract(value: unknown): value is WorldwayDec
       (constraint) =>
         typeof constraint === "string"
         && constraint.trim().length > 0
-        && constraint.length <= MAX_CONSTRAINT,
+        && constraint.length <= MAX_CONSTRAINT\n        && !hasForbiddenDecisionContent(constraint),
     )
     && typeof candidate.expiresAt === "string"
     && !Number.isNaN(Date.parse(candidate.expiresAt));
