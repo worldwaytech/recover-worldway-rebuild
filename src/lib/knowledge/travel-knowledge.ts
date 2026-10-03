@@ -83,6 +83,39 @@ const SOURCE_ORDER: KnowledgeSource[] = [
   "catalogue",
 ];
 
+const MAX_FACTS = 10000;
+const MAX_ID_LENGTH = 300;
+const MAX_PREDICATE_LENGTH = 200;
+
+function isValidTimestamp(value: string): boolean {
+  return Number.isFinite(Date.parse(value));
+}
+
+function validateFact(input: KnowledgeFact): KnowledgeFact | null {
+  if (!input.id || input.id.trim().length > MAX_ID_LENGTH) return null;
+  if (!input.subjectId || input.subjectId.trim().length > MAX_ID_LENGTH) return null;
+  if (!input.predicate || input.predicate.trim().length > MAX_PREDICATE_LENGTH) return null;
+  if (!SOURCE_ORDER.includes(input.source)) return null;
+  if (!isValidTimestamp(input.evidence.observedAt)) return null;
+  if (
+    input.evidence.expiresAt !== undefined &&
+    (!isValidTimestamp(input.evidence.expiresAt) ||
+      Date.parse(input.evidence.expiresAt) <= Date.parse(input.evidence.observedAt))
+  ) return null;
+  if (
+    !Number.isFinite(input.evidence.confidence) ||
+    input.evidence.confidence < 0 ||
+    input.evidence.confidence > 1
+  ) return null;
+  if (typeof input.value === "number" && !Number.isFinite(input.value)) return null;
+  return {
+    ...input,
+    id: input.id.trim(),
+    subjectId: input.subjectId.trim(),
+    predicate: input.predicate.trim(),
+  };
+}
+
 function evidenceFrom(
   source: KnowledgeSource,
   evidence: readonly EvidenceRef[],
@@ -231,7 +264,10 @@ export function ingestTravelKnowledge(input: KnowledgeIngestInput): KnowledgeSna
     }
   }
 
-  facts.push(...(input.destinationFacts ?? []));
+  for (const destinationFact of input.destinationFacts ?? []) {
+    const validated = validateFact(destinationFact);
+    if (validated) facts.push(validated);
+  }
 
   const deduped = new Map<string, KnowledgeFact>();
   for (const item of facts) {
@@ -241,7 +277,7 @@ export function ingestTravelKnowledge(input: KnowledgeIngestInput): KnowledgeSna
     }
   }
 
-  return buildSnapshot([...deduped.values()]);
+  return buildSnapshot([...deduped.values()].slice(0, MAX_FACTS));
 }
 
 export function queryTravelKnowledge(
@@ -249,12 +285,14 @@ export function queryTravelKnowledge(
   query: KnowledgeQuery = {},
 ): KnowledgeFact[] {
   const asOf = query.asOf?.getTime();
+  const minConfidence = query.minConfidence ?? 0;
+  if (!Number.isFinite(minConfidence) || minConfidence < 0 || minConfidence > 1) return [];
   return snapshot.facts
     .filter((item) => !query.subjectId || item.subjectId === query.subjectId)
     .filter((item) => !query.entityType || item.entityType === query.entityType)
     .filter((item) => !query.predicate || item.predicate === query.predicate)
     .filter((item) => query.includeInternal || item.sensitivity === "public")
-    .filter((item) => item.evidence.confidence >= (query.minConfidence ?? 0))
+    .filter((item) => item.evidence.confidence >= minConfidence)
     .filter((item) => {
       if (!asOf) return true;
       const observed = new Date(item.evidence.observedAt).getTime();
@@ -282,7 +320,14 @@ export function mergeKnowledgeSnapshots(...snapshots: readonly KnowledgeSnapshot
   for (const snapshot of snapshots) {
     for (const item of snapshot.facts) {
       const existing = byId.get(item.id);
-      if (!existing || item.evidence.confidence > existing.evidence.confidence) byId.set(item.id, item);
+      if (
+        !existing ||
+        item.evidence.confidence > existing.evidence.confidence ||
+        (
+          item.evidence.confidence === existing.evidence.confidence &&
+          Date.parse(item.evidence.observedAt) > Date.parse(existing.evidence.observedAt)
+        )
+      ) byId.set(item.id, item);
     }
   }
   return buildSnapshot([...byId.values()]);
