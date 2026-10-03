@@ -416,3 +416,24 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.ok).toBe(true);
     expect(captured[0]).toMatchObject({ decisionContract: { decision: "use itinerary", sourceTaskId: "producer" } });
   });
+
+
+  it("rejects a decision contract source that is not the declared producer", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.id === "producer-a"
+        ? { decisionContract: { contractVersion: "1.0", decisionKind: "recommendation", decision: "use A", confidence: 0.9, evidence: [{ source: "test", reference: "a", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }], correlationId: "wwai-test", sourceTaskId: "producer-a", constraints: [], expiresAt: "2099-01-01T00:00:00Z" } }
+        : task.id === "producer-b"
+          ? { decisionContract: { contractVersion: "1.0", decisionKind: "recommendation", decision: "use B", confidence: 0.9, evidence: [{ source: "test", reference: "b", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }], correlationId: "wwai-test", sourceTaskId: "producer-b", constraints: [], expiresAt: "2099-01-01T00:00:00Z" } }
+          : "accepted",
+    });
+    const result = await orchestrator.run({
+      goal: "source integrity",
+      tasks: [
+        { id: "producer-a", kind: "deterministic" },
+        { id: "producer-b", kind: "deterministic" },
+        { id: "consumer", kind: "deterministic", dependsOn: ["producer-a", "producer-b"], decisionContractFrom: "producer-a", acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(result.results.find((item) => item.taskId === "consumer")?.result).toBe("accepted");
+  });
