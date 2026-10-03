@@ -5,8 +5,8 @@ import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically 
 import { buildItinerary, checkTripRequirements, createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
+import { rankPackages, type RankedPackage } from "./ranking";
 import { optimizePackageSet, type RankingProfile } from "./optimization";
-import type { RankingProfile } from "./optimization";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
 
 export interface PackageCandidate {
