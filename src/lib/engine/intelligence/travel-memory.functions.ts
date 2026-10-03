@@ -31,7 +31,9 @@ export const saveAiTravelMemory = createServerFn({ method: "POST" })
 
 export const getAiTravelMemory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ kind: MemoryKind.optional(), limit: z.number().int().min(1).max(100).default(50) }).parse(d ?? {}))
+  .inputValidator((d: unknown) =>
+    z.object({ kind: MemoryKind.optional(), limit: z.number().int().min(1).max(100).default(50) }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => ({
     memories: await recallTravelMemory(context.supabase as any, context.userId, data),
   }));
@@ -50,11 +52,20 @@ export const updateTravelerProfile = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .maybeSingle();
 
+    const existingPreferences: Record<string, unknown> =
+      existing.data?.preferences && typeof existing.data.preferences === "object"
+        ? existing.data.preferences as Record<string, unknown>
+        : {};
+    const incomingProfile: Record<string, unknown> =
+      data.profile && typeof data.profile === "object"
+        ? data.profile as Record<string, unknown>
+        : {};
+
     const consentPreferences = data.consentPreferences ?? existing.data?.consent_preferences ?? false;
     const consentHistory = data.consentHistory ?? existing.data?.consent_history ?? false;
     const profile = normalizeTravelerProfile({
-      ...(existing.data?.preferences ?? {}),
-      ...(data.profile ?? {}),
+      ...existingPreferences,
+      ...incomingProfile,
     });
 
     const { data: row, error } = await context.supabase.from("travel_dna").upsert({
@@ -66,8 +77,9 @@ export const updateTravelerProfile = createServerFn({ method: "POST" })
     }).select().single();
 
     if (error) throw new Error("Could not update traveler profile.");
-    return { ok: true, profile: normalizeTravelerProfile(row?.preferences ?? profile), consent: {
-      preferences: consentPreferences,
-      history: consentHistory,
-    }};
+    return {
+      ok: true,
+      profile: normalizeTravelerProfile(row?.preferences ?? profile),
+      consent: { preferences: consentPreferences, history: consentHistory },
+    };
   });
