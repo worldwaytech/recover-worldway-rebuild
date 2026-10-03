@@ -2,7 +2,7 @@
 // Normalize → Trip Graph → Ranking → Package Audit → Pricing → Booking Readiness.
 // No supplier knowledge; AI never supplies availability, schedules or prices.
 import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically } from "./chronology";
-import { createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
+import { buildItinerary, createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
@@ -29,6 +29,7 @@ export interface PipelinePackage extends RankedPackage {
   journeySegments: ReturnType<typeof buildJourneySegments>;
   pricing: ReturnType<typeof pricePackage> | null;
   rejected: { externalId: string; reason: string }[];
+  itinerary: ReturnType<typeof buildItinerary>;
 }
 
 function tryPrice(items: NormalizedComponent[], i: PipelineInput) {
@@ -63,8 +64,9 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     ];
     if (!b.pricing) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: b.priceError ?? "Price unavailable" });
     if (b.rejected.length) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: `${b.rejected.length} supplier result(s) could not be normalised.` });
-    const bookable = r.bookable && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
-    return { ...r, issues, bookable, graph: b.graph, journeySegments: buildJourneySegments(b.graph), pricing: b.pricing, rejected: b.rejected };
+    const orchestrationErrors = b.orchestration.some((x) => x.severity === "error");
+    const bookable = r.bookable && !orchestrationErrors && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
+    return { ...r, issues, bookable, graph: b.graph, journeySegments: buildJourneySegments(b.graph), itinerary: buildItinerary(b.graph), pricing: b.pricing, rejected: b.rejected };
   });
 }
 
