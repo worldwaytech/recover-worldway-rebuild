@@ -34,6 +34,7 @@ import {
 } from "@/lib/viator/booking-questions";
 import { validatePaxMixAgainstBands } from "@/lib/viator/age-bands";
 import { buildActivityVoucher } from "@/lib/viator/voucher";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "@/lib/security/rate-limit.server";
 
 async function sha256Hex(value: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -92,6 +93,7 @@ export const resolveCheckoutRoute = createServerFn({ method: "POST" })
 export const holdViatorActivityCart = createServerFn({ method: "POST" })
   .inputValidator((data: HoldInputPayload) => data)
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("viator-hold", requestFingerprint(currentRequest())), 10, 60);
     const lines: CheckoutLine[] = data.lines?.length
       ? data.lines
       : [{ supplier: "viator", productKind: "activity" }];
@@ -265,6 +267,7 @@ export const bookViatorActivityCart = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("viator-book", requestFingerprint(currentRequest())), 10, 60);
     const { getActivityBooking, claimHoldForBooking, finaliseActivityBooking, releaseHoldClaim } =
       await import("@/lib/viator/activity-bookings.server");
 
@@ -534,6 +537,7 @@ export const viatorActivityBookingStatus = createServerFn({ method: "POST" })
     accessToken: typeof data?.accessToken === "string" ? data.accessToken.slice(0, 200) : undefined,
   }))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("viator-status", requestFingerprint(currentRequest())), 30, 60);
     const { getActivityBooking, finaliseActivityBooking } = await import(
       "@/lib/viator/activity-bookings.server"
     );
