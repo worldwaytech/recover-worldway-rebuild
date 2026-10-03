@@ -72,6 +72,15 @@ describe("Phase 12 partner commerce", () => {
     })).toThrow("Missing scope");
   });
 
+  it("supports single-product, multi-product and full-catalogue API entitlement models", () => {
+    const single = { apiAccessMode: "single_product" as const, apiProducts: ["hotels"] as const };
+    const multi = { apiAccessMode: "multi_product" as const, apiProducts: ["flights", "hotels", "tours"] as const };
+    const full = { apiAccessMode: "full_catalogue" as const, apiProducts: ["flights","hotels","transfers","activities","tours","cruises","rail","private_aviation","concierge"] as const };
+    expect(single.apiProducts).toHaveLength(1);
+    expect(multi.apiProducts).toEqual(expect.arrayContaining(["flights", "hotels", "tours"]));
+    expect(full.apiProducts).toHaveLength(9);
+  });
+
   it("gates partner wallet reservation by status, currency and policy", () => {
     expect(partnerWalletCanReserve(partner, "USD", 5000)).toBe(true);
     expect(partnerWalletCanReserve(partner, "EUR", 5000)).toBe(false);
