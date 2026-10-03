@@ -68,7 +68,8 @@ export interface SpecialistHandler {
 }
 
 function isWorldwayOrchestrationContext(context: OrchestrationContext): context is WorldwayOrchestrationContext {
-  return "traveller" in context && "knowledge" in context && context.precedence === "current_request_over_memory_over_knowledge";
+  const candidate = context as Partial<WorldwayOrchestrationContext>;
+  return Boolean(candidate.traveller && candidate.knowledge && candidate.precedence === "current_request_over_memory_over_knowledge");
 }
 
 export class SpecialistAgentRegistry implements SpecialistDelegate {
