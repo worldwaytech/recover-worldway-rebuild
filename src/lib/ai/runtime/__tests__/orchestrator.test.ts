@@ -370,3 +370,49 @@ describe("Worldway AI Orchestrator foundation", () => {
     });
     expect(result.problems).toContain("coordination_must_depend_on_member:decision-step->flight-step");
   });
+
+
+  it("requires deterministic decision consumers to declare a contract source", () => {
+    const result = validateOrchestrationRequest({
+      goal: "decision contract policy",
+      tasks: [
+        { id: "producer", kind: "deterministic" },
+        { id: "consumer", kind: "deterministic", dependsOn: ["producer"], decisionContractFrom: "producer" },
+      ],
+    });
+    expect(result.problems).toContain("decision_contract_missing_accepted_decision_kinds:consumer");
+  });
+
+  it("passes only a validated decision contract between deterministic tasks", async () => {
+    const captured: unknown[] = [];
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => {
+        if (task.id === "producer") {
+          return {
+            decisionContract: {
+              contractVersion: "1.0",
+              decisionKind: "recommendation",
+              decision: "use itinerary",
+              confidence: 0.9,
+              evidence: [{ source: "decision-test", reference: "contract:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+              correlationId: "wwai-test",
+              sourceTaskId: "producer",
+              constraints: [],
+              expiresAt: "2099-01-01T00:00:00Z",
+            },
+          };
+        }
+        captured.push(task.input);
+        return "accepted";
+      },
+    });
+    const result = await orchestrator.run({
+      goal: "decision contract handoff",
+      tasks: [
+        { id: "producer", kind: "deterministic" },
+        { id: "consumer", kind: "deterministic", dependsOn: ["producer"], decisionContractFrom: "producer", acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(captured[0]).toMatchObject({ decisionContract: { decision: "use itinerary", sourceTaskId: "producer" } });
+  });
