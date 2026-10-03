@@ -43,7 +43,7 @@ describe("Travel Knowledge Layer foundation", () => {
     expect(snapshot.sourceCounts.inventory_offer).toBe(2);
     expect(snapshot.sourceCounts.supplier_evidence).toBe(1);
 
-    const publicFacts = queryTravelKnowledge(snapshot, { subjectId: "dest-1" });
+    const publicFacts = queryTravelKnowledge(snapshot, { subjectId: "dest-1", includeInternal: true });
     expect(publicFacts.some((x) => x.predicate === "season" && x.value === "shoulder")).toBe(true);
   });
 
@@ -90,7 +90,7 @@ describe("Travel Knowledge Layer foundation", () => {
       }],
     });
     const merged = mergeKnowledgeSnapshots(low, high);
-    expect(queryTravelKnowledge(merged, { subjectId: "dest-1", predicate: "score" })[0].value).toBe(0.9);
+    expect(queryTravelKnowledge(merged, { subjectId: "dest-1", predicate: "score", includeInternal: true })[0].value).toBe(0.9);
   });
 
   it("returns stable ordering", () => {
