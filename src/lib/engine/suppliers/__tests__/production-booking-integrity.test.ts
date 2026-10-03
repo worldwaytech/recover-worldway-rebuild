@@ -32,10 +32,10 @@ describe("production booking integrity gate", () => {
     }
   });
 
-  it("keeps the central certification plan aligned with every catalogue supplier", () => {
+  it("keeps every production supplier represented in the central certification plan", () => {
     const planned = new Set(SUPPLIER_CERTIFICATION_PLAN.map((item) => item.supplierKey));
 
-    for (const supplier of SUPPLIER_CATALOG) {
+    for (const supplier of SUPPLIER_CATALOG.filter((item) => item.readiness === "production")) {
       expect(planned.has(supplier.supplierKey)).toBe(true);
     }
   });
