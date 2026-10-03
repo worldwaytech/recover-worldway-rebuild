@@ -115,31 +115,24 @@ describe("Phase 5 explicit multi-city and multi-modal sequencing", () => {
     const segments = buildJourneySegments([flight, transfer, hotel, rail]);
     expect(segments.map((s) => [s.fromPlace, s.toPlace, s.mode, s.continuity])).toEqual([
       ["JFK", "JFK", "transfer", "continuous"],
-      ["JFK", "NYC", "rail", "location-discontinuity"],
+      ["NYC", "NYC", "rail", "continuous"],
     ]);
     expect(segments[0]?.gapMinutes).toBe(300);
-    expect(segments[1]?.gapMinutes).toBe(2980);
+    expect(segments[1]?.gapMinutes).toBe(6060);
   });
 
-  it("marks a missing ground connection as transfer-required without inventing one", () => {
-    const transfer = {
-      ...hotel,
-      id: "t2",
-      kind: "transfer" as const,
-      title: "Airport transfer",
-      start: { at: "2026-09-29T14:00:00Z", timezone: "America/New_York", place: "JFK" },
-      end: { at: "2026-09-29T15:00:00Z", timezone: "America/New_York", place: "NYC" },
-    };
-    const activity = {
+  it("marks a city handoff without a supplied transfer as a location discontinuity", () => {
+    const activity: NormalizedComponent = {
       ...hotel,
       id: "a2",
-      kind: "activity" as const,
+      kind: "activity",
       title: "NYC activity",
       start: { at: "2026-09-29T16:00:00Z", timezone: "America/New_York", place: "NYC" },
       end: { at: "2026-09-29T18:00:00Z", timezone: "America/New_York", place: "NYC" },
     };
-    const segments = buildJourneySegments([flight, transfer, activity]);
-    expect(segments[0]?.continuity).toBe("continuous");
-    expect(segments[1]?.continuity).toBe("continuous");
+    const segments = buildJourneySegments([flight, activity]);
+    expect(segments[0]?.fromPlace).toBe("JFK");
+    expect(segments[0]?.toPlace).toBe("NYC");
+    expect(segments[0]?.continuity).toBe("location-discontinuity");
   });
 });
