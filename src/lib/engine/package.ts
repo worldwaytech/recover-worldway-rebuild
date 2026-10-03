@@ -5,7 +5,7 @@ import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically 
 import { buildItinerary, checkTripRequirements, createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
-import { rankPackages, type RankedPackage } from "./ranking";
+import { optimizePackageSet, type RankingProfile } from "./optimization";
 import type { RankingProfile } from "./optimization";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
 
@@ -23,12 +23,15 @@ export interface PipelineInput {
   ruleFor: (c: NormalizedComponent) => PricingRule | null;
   orchestration?: TripRequirementProfile;
   ranking?: RankingProfile;
+  optimization?: { enabled?: boolean; limit?: number };
 }
 
 export interface PipelinePackage extends RankedPackage {
   graph: NormalizedComponent[];
   /** Explicit multi-city / multi-modal sequence derived from the canonical graph. */
   journeySegments: ReturnType<typeof buildJourneySegments>;
+  /** Phase 7 optimized shortlist membership. */
+  optimized: boolean;
   pricing: ReturnType<typeof pricePackage> | null;
   rejected: { externalId: string; reason: string }[];
   itinerary: ReturnType<typeof buildItinerary>;
@@ -54,8 +57,20 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     return { id: c.id, graph, chronology, requirementCheck, orchestration, rejected, pricing, priceError: error };
   });
   // Only priced packages have a comparable total; unpriced sort last and are never bookable.
+  const optimizationInputs = built.map((b) => ({ id: b.id, items: b.graph, total: b.pricing?.total ?? Number.MAX_SAFE_INTEGER }));
+  const optimizedIds = new Set(
+    input.optimization?.enabled === false
+      ? optimizationInputs.map((x) => x.id)
+      : optimizePackageSet(
+          optimizationInputs,
+          input.requirements,
+          input.registry,
+          input.optimization?.limit ?? 3,
+          input.ranking,
+        ).map((x) => x.id),
+  );
   const ranked = rankPackages(
-    built.map((b) => ({ id: b.id, items: b.graph, total: b.pricing?.total ?? Number.MAX_SAFE_INTEGER })),
+    optimizationInputs,
     input.requirements,
     input.registry,
     input.ranking,
@@ -73,7 +88,7 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     if (b.rejected.length) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: `${b.rejected.length} supplier result(s) could not be normalised.` });
     const orchestrationErrors = b.orchestration.some((x) => x.severity === "error") || b.requirementCheck.missing.length > 0;
     const bookable = r.bookable && !orchestrationErrors && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
-    return { ...r, issues, bookable, graph: b.graph, journeySegments: buildJourneySegments(b.graph), itinerary: buildItinerary(b.graph), pricing: b.pricing, rejected: b.rejected };
+    return { ...r, issues, bookable, optimized: optimizedIds.has(r.id), graph: b.graph, journeySegments: buildJourneySegments(b.graph), itinerary: buildItinerary(b.graph), pricing: b.pricing, rejected: b.rejected };
   });
 }
 
