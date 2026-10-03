@@ -1,5 +1,11 @@
 # TripJack Cabs UAT Blocker Resolution Gate — 2026-10-03
 
+## Current TripJack UAT account record
+
+- Agency/User ID: `413369`
+- Agency name: Worldway Travels Group
+- UAT login/contact values are runtime-only server configuration and are not committed to the repository.
+
 ## Current finding
 
 Worldway already has the documented TripJack Cabs UAT integration, including:
