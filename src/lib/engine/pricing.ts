@@ -263,6 +263,26 @@ export function priceDynamicComponent(input: DynamicPricingInput): DynamicPriceQ
   };
 }
 
+export function toMarginPricedComponents(
+  pricing: ReturnType<typeof pricePackage> | ReturnType<typeof pricePackageDynamically>,
+): PricedComponent[] {
+  return pricing.lines.map((line) => {
+    if ("steps" in line) return line;
+    return {
+      componentId: line.componentId,
+      currency: line.currency,
+      customerPrice: line.customerPrice,
+      steps: [
+        { label: "Supplier net", amount: line.supplierCost },
+        { label: "Taxes & fees", amount: 0 },
+        { label: "Markup", amount: line.markup },
+        { label: "Commission", amount: line.commission },
+        { label: "Service fee", amount: line.channelFee },
+      ],
+    };
+  });
+}
+
 export function pricePackageDynamically(
   items: NormalizedComponent[],
   fx: FxTable,
