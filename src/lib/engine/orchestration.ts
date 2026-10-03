@@ -74,7 +74,7 @@ export function applyOrchestrationPreferences(
 ): TripRequirementProfile {
   return {
     ...profile,
-    preferredKinds: [...new Set([...profile.preferredKinds, ...preferences.preferredKinds])],
+    preferredKinds: [...new Set([...profile.preferredKinds, ...(preferences.preferredKinds ?? [])])],
   };
 }
 
