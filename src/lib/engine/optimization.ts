@@ -12,7 +12,20 @@ export function packageOptimizationMetrics(input:PackageOptimizationInput, req:T
  const geography=places.size?covered.size/places.size:1; const sorted=[...input.items].sort((a,b)=>Date.parse(a.start.at)-Date.parse(b.start.at)); const gaps:number[]=[]; for(let i=1;i<sorted.length;i++){const gap=(Date.parse(sorted[i]!.start.at)-Date.parse(sorted[i-1]!.end.at))/3600000;if(gap>=0)gaps.push(gap);} const time=gaps.length?gaps.reduce((s,g)=>s+Math.max(0,Math.min(1,1-Math.abs(g-2)/24)),0)/gaps.length:1;
  const net=input.items.reduce((s,c)=>s+c.net.amount,0); const marginAmount=input.marginAmount??Math.max(0,input.total-net); const margin=input.total>0?Math.max(0,Math.min(1,marginAmount/input.total)):0; const preference=input.items.length?input.items.reduce((s,c)=>s+componentPreference(c,profile),0)/input.items.length:0; void registry; return {geography,time,margin,preference};
 }
-export function rankComponents(components:NormalizedComponent[], req:TripRequirements, registry:Map<string,SupplierRegistration>, profile:RankingProfile={}):NormalizedComponent[] { const places=new Set(req.destinations.map(x=>x.toLowerCase())); const score=(c:NormalizedComponent)=>{const quality=(c.quality??3)/5;const luxury=1-Math.abs(quality*5-req.luxuryLevel)/5;const geography=places.size?Number(places.has(c.start.place.toLowerCase())||places.has(c.end.place.toLowerCase())):1;const reliability=registry.get(c.supplierKey)?.reliability??0;const preference=componentPreference(c,profile);return .30*luxury+.20*reliability+.20*geography+.30*preference;}; return [...components].sort((a,b)=>score(b)-score(a)); }
+export function rankComponents(components:NormalizedComponent[], req:TripRequirements, registry:Map<string,SupplierRegistration>, profile:RankingProfile={}):NormalizedComponent[] {
+ const places=new Set(req.destinations.map(x=>x.toLowerCase()));
+ const configured=profile.weights && ["luxury","reliability","geography","preference"].some((key)=>profile.weights?.[key as keyof RankingWeights] !== undefined);
+ const componentWeights=configured ? (()=>{const raw={luxury:Math.max(0,profile.weights?.luxury??0),reliability:Math.max(0,profile.weights?.reliability??0),geography:Math.max(0,profile.weights?.geography??0),preference:Math.max(0,profile.weights?.preference??0)};const total=Object.values(raw).reduce((s,v)=>s+v,0)||1;return {luxury:raw.luxury/total,reliability:raw.reliability/total,geography:raw.geography/total,preference:raw.preference/total};})():{luxury:.30,reliability:.20,geography:.20,preference:.30};
+ const score=(c:NormalizedComponent)=>{
+  const quality=(c.quality??3)/5;
+  const luxury=1-Math.abs(quality*5-req.luxuryLevel)/5;
+  const geography=places.size?Number(places.has(c.start.place.toLowerCase())||places.has(c.end.place.toLowerCase())):1;
+  const reliability=registry.get(c.supplierKey)?.reliability??0;
+  const preference=componentPreference(c,profile);
+  return componentWeights.luxury*luxury+componentWeights.reliability*reliability+componentWeights.geography*geography+componentWeights.preference*preference;
+ };
+ return [...components].sort((a,b)=>score(b)-score(a)||a.id.localeCompare(b.id));
+}
 export interface OptimizationObjective { key: "score" | "price" | "margin" | "geography" | "time" | "preference"; direction: "maximize" | "minimize"; }
 
 /** Deterministic Pareto frontier. A candidate is dominated only when another candidate
