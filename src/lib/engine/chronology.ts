@@ -158,6 +158,38 @@ export function buildChronologicalTripGraph(items: NormalizedComponent[]): Chron
 }
 
 /** Convenience predicate for booking-readiness and package auditing. */
+export function checkTripWindow(
+  items: NormalizedComponent[],
+  requirements: { departFrom: string; returnBy: string },
+): AuditIssue[] {
+  const transport = items.filter((c) => transportKinds.has(c.kind)).sort((a, b) => ms(a.start) - ms(b.start));
+  if (!transport.length) return [];
+
+  const issues: AuditIssue[] = [];
+  const first = transport[0]!;
+  const last = transport[transport.length - 1]!;
+  const departureDate = localDate(first.start);
+  const arrivalDate = localDate(last.end);
+
+  if (departureDate < requirements.departFrom) {
+    issues.push({
+      code: "outside-trip-window",
+      severity: "error",
+      componentIds: [first.id],
+      message: `${first.title} departs on ${departureDate}, before the requested trip start ${requirements.departFrom}.`,
+    });
+  }
+  if (arrivalDate > requirements.returnBy) {
+    issues.push({
+      code: "outside-trip-window",
+      severity: "error",
+      componentIds: [last.id],
+      message: `${last.title} arrives on ${arrivalDate}, after the requested trip end ${requirements.returnBy}.`,
+    });
+  }
+  return issues;
+}
+
 export function chronologyIsValid(items: NormalizedComponent[]): boolean {
   return checkChronology(items).every((issue) => issue.severity !== "error");
 }
