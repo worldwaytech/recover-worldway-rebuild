@@ -75,7 +75,7 @@ describe("Worldway typed decision contract", () => {
       correlationId: "wwai-test",
       sourceTaskId: "model-step",
       expiresAt: "2026-10-04T00:00:00Z",
-      constraints: ["booking.readiness.check=true"],
+      constraints: ["readiness.check=true"],
     })!;
 
     expect(isWorldwayDecisionContract({ ...base, confidence: 1.01 })).toBe(false);
@@ -118,7 +118,7 @@ describe("Worldway typed decision contract", () => {
       correlationId: "wwai-test",
       sourceTaskId: "model-step",
       expiresAt: "2026-10-04T00:00:00Z",
-      constraints: ["deterministic-only", "booking.readiness.check=true"],
+      constraints: ["deterministic-only", "supplierAction=confirmed"],
     });
     expect(unsafeConstraintContract).toBeNull();
 
