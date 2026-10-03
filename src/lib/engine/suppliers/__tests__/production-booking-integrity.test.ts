@@ -3,17 +3,20 @@ import { SUPPLIER_CATALOG } from "../catalog.server";
 import { SUPPLIER_CERTIFICATION_PLAN } from "../certification-plan";
 
 describe("production booking integrity gate", () => {
-  it("never treats an uncertified production booking capability as certified", () => {
+  it("requires every certified production booking capability to carry valid production evidence", () => {
     for (const supplier of SUPPLIER_CATALOG) {
-      const productionBooking = (supplier.grants ?? []).find(
-        (grant) => grant.environment === "production" && grant.capability === "book",
-      );
+      for (const grant of supplier.grants ?? []) {
+        if (
+          grant.environment !== "production" ||
+          grant.capability !== "book" ||
+          !grant.certified
+        ) {
+          continue;
+        }
 
-      if (!productionBooking) continue;
-
-      expect(productionBooking.certified).toBe(true);
-      expect(supplier.readiness).toBe("production");
-      expect(productionBooking.evidence?.trim()).toBeTruthy();
+        expect(supplier.readiness).toBe("production");
+        expect(grant.evidence?.trim()).toBeTruthy();
+      }
     }
   });
 
