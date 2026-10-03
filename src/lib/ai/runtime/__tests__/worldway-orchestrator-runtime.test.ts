@@ -211,6 +211,58 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(output.optimizationProfile).not.toHaveProperty("select");
   });
 
+  it("projects post-booking modification through the deterministic boundary", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const component = {
+      id: "flight-1",
+      kind: "flight" as const,
+      supplierKey: "air",
+      externalId: "F1",
+      title: "DEL-IST",
+      amount: 500,
+      currency: "USD",
+    };
+    const result = await runtime.orchestrator.run({
+      goal: "post-booking modification",
+      tasks: [{
+        id: "modify-step",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "post-booking-modification" },
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          bookingId: "WWB-t1-1",
+          bookingStatus: "Ticketed",
+          bookingComponents: [component],
+          supplierCapabilities: { air: ["modify", "revalidate"] },
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "move the flight", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "modify:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "modify-step",
+            constraints: [
+              "postbooking.modification.component=flight-1",
+              "postbooking.modification.date=2026-10-20",
+              "postbooking.modification.amount=999999",
+              "postbooking.modification.providerRef=unsafe",
+            ],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    const output = result.results[0].result as Record<string, any>;
+    expect(output.modificationIntent.componentIds).toEqual(["flight-1"]);
+    expect(output.modificationIntent.changes).toEqual({ date: "2026-10-20" });
+    expect(output.modificationIntent.readiness.ready).toBe(true);
+    expect(output.modificationIntent.requiresRevalidation).toBe(true);
+    expect(output.modificationIntent.requiresCommercialRequote).toBe(true);
+    expect(output.modificationIntent.requiresApproval).toBe(true);
+  });
+
   it("consumes bounded orchestration preferences without changing hard requirements", async () => {
     const runtime = createWorldwayOrchestratorRuntime({
       tools: new ToolRegistry(),
