@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BookingOrchestrator, type BookingActor, type BookingComponent, type PaymentAdapter, type PaymentIntent, type SupplierAdapter } from "../booking-orchestration";
+import { BookingOrchestrator, postBookingModificationReadiness, type BookingActor, type BookingComponent, type PaymentAdapter, type PaymentIntent, type SupplierAdapter } from "../booking-orchestration";
 
 const actor:BookingActor={tenantId:"t1",actorId:"u1",customerId:"c1",scopes:["booking:read","booking:write","payment:write","booking:cancel","booking:refund","booking:modify","booking:document","booking:notify"]};
 const component:BookingComponent={id:"flight-1",kind:"flight",supplierKey:"demo",externalId:"F1",title:"Demo flight",amount:100,currency:"USD"};
@@ -48,6 +48,33 @@ describe("Phase 9 booking orchestration",()=>{
     expect(cancelled.status).toBe("Refunded"); expect(cancelled.paymentStatus).toBe("refunded");
     expect(o.getEvents(actor,b.id).some(e=>e.type==="booking.cancelled")).toBe(true);
     expect(o.getEvents(actor,b.id).some(e=>e.type==="booking.refunded")).toBe(true);
+  });
+  it("keeps post-booking modification readiness deterministic and fail-closed",async()=>{
+    const o=new BookingOrchestrator([supplier()],[payment()]);
+    const b=await o.createAndBook(actor,input(),"razorpay");
+    const ready=postBookingModificationReadiness(
+      b.status,
+      [component],
+      new Map([["demo", supplier().capabilities]]),
+      ["flight-1"],
+    );
+    expect(ready.ready).toBe(true);
+    expect(ready.requiresRevalidation).toBe(true);
+    expect(ready.requiresCommercialRequote).toBe(true);
+    expect(ready.requiresApproval).toBe(true);
+
+    const blocked=postBookingModificationReadiness(
+      "Pending",
+      [component],
+      new Map([["demo", ["book"] as const]]),
+      ["flight-1"],
+    );
+    expect(blocked.ready).toBe(false);
+    expect(blocked.blockers).toEqual(expect.arrayContaining([
+      "Booking must be Booked or Ticketed before modification.",
+      "flight-1: supplier modification capability missing",
+      "flight-1: supplier revalidation capability missing",
+    ]));
   });
   it("requires fresh supplier validation and preserves the accepted price",async()=>{
     const s=supplier(); s.revalidate=async()=>({available:true,price:101,currency:"USD",priceVersion:"v2"});
