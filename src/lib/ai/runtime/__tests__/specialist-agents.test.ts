@@ -34,6 +34,28 @@ describe("Specialist Agent Framework", () => {
     expect(completed.state).toBe("completed");
   });
 
+  it("exposes Knowledge to specialists only as a frozen advisory context", async () => {
+    const registry = new SpecialistAgentRegistry().register("destination_intelligence", {
+      async handle(_invocation, specialistContext) {
+        expect(specialistContext.knowledge.authority).toBe("advisory_only");
+        expect(specialistContext.knowledge.executionAuthority).toBe(false);
+        expect(Object.isFrozen(specialistContext.knowledge)).toBe(true);
+        expect(Object.isFrozen(specialistContext.knowledge.facts)).toBe(true);
+        expect(() => {
+          (specialistContext.knowledge as unknown as { executionAuthority: boolean }).executionAuthority = true;
+        }).toThrow();
+        return { mode: "analyze", recommendation: "use advisory evidence" };
+      },
+    });
+    const result = await registry.delegate({
+      id: "destination-check",
+      kind: "specialist",
+      specialist: "destination_intelligence",
+      input: { objective: "Assess destination context" },
+    }, context());
+    expect(result.state).toBe("completed");
+  });
+
   it("rejects an empty objective", async () => {
     const registry = new SpecialistAgentRegistry().register("risk_trust", { async handle() { return {}; } });
     const contextValue = context();
