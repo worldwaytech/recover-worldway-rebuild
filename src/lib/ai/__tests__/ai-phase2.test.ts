@@ -58,6 +58,16 @@ describe("High-risk action gate", () => {
     expect(calls).toEqual([]);
     const done = await executeProposal(a, r, ctx(), ok);
     expect(done.ok).toBe(true); expect(calls).toEqual(["book_x"]);
+
+    const replay = await executeProposal(a, r, ctx(), ok);
+    expect(replay.ok).toBe(false);
+    expect((replay as any).code).toBe("already_executed");
+    expect(calls).toEqual(["book_x"]);
+
+    const cloned = { ...a, proposal_id: a.proposal_id };
+    const clonedReplay = await executeProposal(cloned, r, ctx(), ok);
+    expect(clonedReplay.ok).toBe(false);
+    expect((clonedReplay as any).code).toBe("already_executed");
   });
   it("refunds need staff and expired proposals never execute", async () => {
     const p = propose({ action: "REFUND", tool: "book_x", target: { kind: "x", id: "1" }, payload: { id: "1" }, rationale: "r", evidence });
