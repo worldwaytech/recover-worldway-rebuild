@@ -14,7 +14,13 @@ async function superAdmin(context: any) {
   return { db, audit };
 }
 
-const SCOPE = z.enum(["flights.search", "tours.read", "tours.quote", "trips.plan"]);
+const SCOPE = z.enum([
+  "flights.search", "tours.read", "tours.quote", "trips.plan",
+  "catalog.read", "pricing.quote", "booking.read", "booking.write",
+  "payment.write", "wallet.read", "wallet.reserve",
+]);
+const API_PRODUCT = z.enum(["flights", "hotels", "transfers", "activities", "tours", "cruises", "rail", "private_aviation", "concierge"]);
+const API_ACCESS_MODE = z.enum(["single_product", "multi_product", "full_catalogue"]);
 
 export const listPartnerTenants = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -23,7 +29,7 @@ export const listPartnerTenants = createServerFn({ method: "GET" })
     const since = new Date(Date.now() - 86_400_000).toISOString();
     const [t, k, m, u] = await Promise.all([
       db.from("partner_tenants").select("id, name, kind, status, rate_limit_per_minute, created_at").order("created_at", { ascending: false }),
-      db.from("partner_api_keys").select("id, tenant_id, label, key_prefix, scopes, expires_at, revoked_at, last_used_at, created_at").order("created_at", { ascending: false }),
+      db.from("partner_api_keys").select("id, tenant_id, label, key_prefix, scopes, api_products, api_access_mode, expires_at, revoked_at, last_used_at, created_at").order("created_at", { ascending: false }),
       db.from("partner_members").select("id, tenant_id, user_id, role"),
       db.from("partner_api_usage").select("tenant_id, status").gte("created_at", since).limit(10000),
     ]);
@@ -47,6 +53,86 @@ export const createPartnerTenant = createServerFn({ method: "POST" })
     return { id: row.id as string };
   });
 
+export const upsertPartnerStorefront = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    tenantId: z.string().uuid(),
+    slug: z.string().trim().regex(/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/),
+    host: z.string().trim().max(253).optional().nullable(),
+    brandName: z.string().trim().min(1).max(120),
+    tagline: z.string().trim().max(240).optional().nullable(),
+    logoUrl: z.string().url().max(2048).optional().nullable(),
+    heroImageUrl: z.string().url().max(2048).optional().nullable(),
+    primaryColor: z.string().regex(/^#[0-9a-f]{6}$/i).optional().nullable(),
+    accentColor: z.string().regex(/^#[0-9a-f]{6}$/i).optional().nullable(),
+    enabled: z.boolean().default(true),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { db, audit } = await superAdmin(context);
+    const host = data.host?.toLowerCase() || null;
+    const { error } = await db.from("partner_storefronts").upsert({
+      tenant_id: data.tenantId, slug: data.slug, host, brand_name: data.brandName,
+      tagline: data.tagline ?? null, logo_url: data.logoUrl ?? null, hero_image_url: data.heroImageUrl ?? null,
+      primary_color: data.primaryColor ?? null, accent_color: data.accentColor ?? null, enabled: data.enabled,
+    }, { onConflict: "tenant_id" });
+    if (error) throw new Error("Could not save storefront");
+    await audit("partner.storefront.upsert", { tenant: data.tenantId, slug: data.slug, host });
+    return { ok: true as const };
+  });
+
+export const setPartnerCatalogRules = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    tenantId: z.string().uuid(),
+    rules: z.array(z.object({
+      product: API_PRODUCT,
+      mode: z.enum(["allow", "deny"]),
+      category: z.string().trim().max(120).optional().nullable(),
+      externalIds: z.array(z.string().trim().min(1).max(200)).max(1000).default([]),
+      enabled: z.boolean().default(true),
+    })).max(500),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { db, audit } = await superAdmin(context);
+    await db.from("partner_catalog_rules").delete().eq("tenant_id", data.tenantId);
+    if (data.rules.length) {
+      const { error } = await db.from("partner_catalog_rules").insert(data.rules.map((r) => ({
+        tenant_id: data.tenantId, product: r.product, mode: r.mode, category: r.category ?? null,
+        external_ids: r.externalIds, enabled: r.enabled,
+      })));
+      if (error) throw new Error("Could not save catalogue rules");
+    }
+    await audit("partner.catalog_rules.replace", { tenant: data.tenantId, count: data.rules.length });
+    return { ok: true as const, count: data.rules.length };
+  });
+
+export const setPartnerCommissionRules = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    tenantId: z.string().uuid(),
+    rules: z.array(z.object({
+      product: API_PRODUCT,
+      percent: z.number().min(0).max(100),
+      fixedAmount: z.number().min(0).default(0),
+      currency: z.string().trim().length(3).optional().nullable(),
+      maximum: z.number().min(0).optional().nullable(),
+      enabled: z.boolean().default(true),
+    })).max(100),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { db, audit } = await superAdmin(context);
+    await db.from("partner_commission_rules").delete().eq("tenant_id", data.tenantId);
+    if (data.rules.length) {
+      const { error } = await db.from("partner_commission_rules").insert(data.rules.map((r) => ({
+        tenant_id: data.tenantId, product: r.product, percent: r.percent, fixed_amount: r.fixedAmount,
+        currency: r.currency?.toUpperCase() ?? null, maximum: r.maximum ?? null, enabled: r.enabled,
+      })));
+      if (error) throw new Error("Could not save commission rules");
+    }
+    await audit("partner.commission_rules.replace", { tenant: data.tenantId, count: data.rules.length });
+    return { ok: true as const, count: data.rules.length };
+  });
+
 export const setPartnerStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), status: z.enum(["active", "suspended"]) }).parse(d))
@@ -59,13 +145,25 @@ export const setPartnerStatus = createServerFn({ method: "POST" })
 
 export const createPartnerKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), label: z.string().trim().min(2).max(80), scopes: z.array(SCOPE).min(1), expiresInDays: z.number().int().min(1).max(730).default(365) }).parse(d))
+  .inputValidator((d: unknown) => z.object({
+    tenantId: z.string().uuid(),
+    label: z.string().trim().min(2).max(80),
+    scopes: z.array(SCOPE).min(1),
+    apiAccessMode: API_ACCESS_MODE.default("multi_product"),
+    apiProducts: z.array(API_PRODUCT).min(1).max(9),
+    expiresInDays: z.number().int().min(1).max(730).default(365),
+  }).superRefine((v, ctx) => {
+    if (v.apiAccessMode === "single_product" && v.apiProducts.length !== 1) ctx.addIssue({ code: "custom", path: ["apiProducts"], message: "single_product requires exactly one product" });
+    if (v.apiAccessMode === "full_catalogue" && v.apiProducts.length !== 9) ctx.addIssue({ code: "custom", path: ["apiProducts"], message: "full_catalogue requires all products" });
+    if (v.apiAccessMode === "multi_product" && v.apiProducts.length < 2) ctx.addIssue({ code: "custom", path: ["apiProducts"], message: "multi_product requires at least two products" });
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const { db, audit } = await superAdmin(context);
     const { mintKey } = await import("./partner-auth.server");
     const k = mintKey();
     const { data: row, error } = await db.from("partner_api_keys").insert({
       tenant_id: data.tenantId, label: data.label, key_prefix: k.prefix, key_hash: k.hash, scopes: data.scopes,
+      api_products: data.apiProducts, api_access_mode: data.apiAccessMode,
       expires_at: new Date(Date.now() + data.expiresInDays * 86_400_000).toISOString(), created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error("Could not create key");
@@ -102,12 +200,13 @@ export const rotatePartnerKey = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ keyId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { db, audit } = await superAdmin(context);
-    const { data: old } = await db.from("partner_api_keys").select("id, tenant_id, label, scopes, expires_at, revoked_at").eq("id", data.keyId).maybeSingle();
+    const { data: old } = await db.from("partner_api_keys").select("id, tenant_id, label, scopes, api_products, api_access_mode, expires_at, revoked_at").eq("id", data.keyId).maybeSingle();
     if (!old || old.revoked_at) throw new Error("Key not found or already revoked");
     const { mintKey } = await import("./partner-auth.server");
     const k = mintKey();
     const { data: row, error } = await db.from("partner_api_keys").insert({
       tenant_id: old.tenant_id, label: old.label, key_prefix: k.prefix, key_hash: k.hash, scopes: old.scopes,
+      api_products: old.api_products ?? [], api_access_mode: old.api_access_mode ?? "multi_product",
       expires_at: old.expires_at ?? new Date(Date.now() + 365 * 86_400_000).toISOString(), created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error("Could not rotate key");

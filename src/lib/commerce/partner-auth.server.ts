@@ -7,8 +7,19 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { CommerceOp } from "./commerce.server";
 
-export const SCOPES = ["flights.search", "tours.read", "tours.quote", "trips.plan"] as const;
+export const SCOPES = [
+  "flights.search", "tours.read", "tours.quote", "trips.plan",
+  "catalog.read", "pricing.quote", "booking.read", "booking.write",
+  "payment.write", "wallet.read", "wallet.reserve",
+] as const;
 export type Scope = (typeof SCOPES)[number];
+
+export const API_PRODUCTS = [
+  "flights", "hotels", "transfers", "activities", "tours", "cruises", "rail",
+  "private_aviation", "concierge",
+] as const;
+export type ApiProduct = (typeof API_PRODUCTS)[number];
+export type ApiAccessMode = "single_product" | "multi_product" | "full_catalogue";
 
 export const OP_SCOPE: Record<CommerceOp, Scope> = {
   searchFlights: "flights.search",
@@ -30,6 +41,8 @@ export interface PartnerPrincipal {
   keyId: string | null;
   userId: string | null;
   scopes: Scope[];
+  apiProducts: ApiProduct[];
+  apiAccessMode: ApiAccessMode;
   rateLimitPerMinute: number;
 }
 
@@ -72,13 +85,20 @@ export async function authenticatePartner(request: Request): Promise<PartnerPrin
   if (raw) {
     if (!/^wwk_live_[A-Za-z0-9_-]{43}$/.test(raw)) throw new PartnerAuthError(401, "Invalid API key");
     const h = hashKey(raw);
-    const { data: key } = await db.from("partner_api_keys").select("id, tenant_id, key_hash, scopes, expires_at, revoked_at").eq("key_hash", h).maybeSingle();
+    const { data: key } = await db.from("partner_api_keys").select("id, tenant_id, key_hash, scopes, api_products, api_access_mode, expires_at, revoked_at").eq("key_hash", h).maybeSingle();
     if (!key || !sameHash(key.key_hash, h)) throw new PartnerAuthError(401, "Invalid API key");
     if (key.revoked_at) throw new PartnerAuthError(401, "API key revoked");
     if (key.expires_at && Date.parse(key.expires_at) < Date.now()) throw new PartnerAuthError(401, "API key expired");
     const tenant = await activeTenant(db, key.tenant_id);
+    const apiProducts = (key.api_products ?? []).filter((p: string): p is ApiProduct => (API_PRODUCTS as readonly string[]).includes(p));
+    // Pre-entitlement keys were migrated with an empty product array. Treat those
+    // legacy credentials as full-catalogue so the entitlement migration is
+    // backward-compatible. New keys are always explicit.
+    const apiAccessMode = apiProducts.length === 0
+      ? "full_catalogue"
+      : (key.api_access_mode ?? (apiProducts.length === 1 ? "single_product" : "multi_product")) as ApiAccessMode;
     await db.from("partner_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);
-    return { tenantId: tenant.id, method: "api_key", keyId: key.id, userId: null, scopes: (key.scopes ?? []).filter((s: string): s is Scope => (SCOPES as readonly string[]).includes(s)), rateLimitPerMinute: tenant.rate_limit_per_minute };
+    return { tenantId: tenant.id, method: "api_key", keyId: key.id, userId: null, scopes: (key.scopes ?? []).filter((s: string): s is Scope => (SCOPES as readonly string[]).includes(s)), apiProducts, apiAccessMode, rateLimitPerMinute: tenant.rate_limit_per_minute };
   }
 
   if (bearer) {
@@ -91,7 +111,7 @@ export async function authenticatePartner(request: Request): Promise<PartnerPrin
     if (!rows?.length) throw new PartnerAuthError(403, "This account is not a member of a partner tenant");
     if (rows.length > 1) throw new PartnerAuthError(403, "Select a tenant with the X-Worldway-Tenant header");
     const tenant = await activeTenant(db, rows[0]!.tenant_id);
-    return { tenantId: tenant.id, method: "oauth", keyId: null, userId: u.user.id, scopes: ROLE_SCOPES[rows[0]!.role] ?? [], rateLimitPerMinute: tenant.rate_limit_per_minute };
+    return { tenantId: tenant.id, method: "oauth", keyId: null, userId: u.user.id, scopes: ROLE_SCOPES[rows[0]!.role] ?? [], apiProducts: [...API_PRODUCTS], apiAccessMode: "full_catalogue", rateLimitPerMinute: tenant.rate_limit_per_minute };
   }
 
   throw new PartnerAuthError(401, "Missing credentials");
@@ -104,8 +124,20 @@ async function activeTenant(db: any, id: string) {
   return t as { id: string; status: string; rate_limit_per_minute: number };
 }
 
+const OP_PRODUCT: Record<CommerceOp, ApiProduct> = {
+  searchFlights: "flights",
+  searchTours: "tours",
+  tourAvailability: "tours",
+  quoteTour: "tours",
+  planTrip: "concierge",
+};
+
 export function requireScope(p: PartnerPrincipal, op: CommerceOp) {
   if (!p.scopes.includes(OP_SCOPE[op])) throw new PartnerAuthError(403, `Missing scope ${OP_SCOPE[op]}`);
+  const product = OP_PRODUCT[op];
+  if (p.apiAccessMode !== "full_catalogue" && !p.apiProducts.includes(product)) {
+    throw new PartnerAuthError(403, `API product not licensed for this key: ${product}`);
+  }
 }
 
 export async function enforceRateLimit(p: PartnerPrincipal) {
