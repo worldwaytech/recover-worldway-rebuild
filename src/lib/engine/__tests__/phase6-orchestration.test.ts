@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildItinerary, checkTripRequirements, createTripRequirementProfile, detectOrchestrationConflicts } from "../orchestration";
+import { runPackagePipeline } from "../package";
+import { commercialRuleFor } from "../suppliers/commercial.server";
+import { supplierRegistry } from "../suppliers/catalog.server";
 import { toComponent } from "../normalize";
 import type { CanonicalOffer } from "../normalize";
 import type { TripRequirements } from "../types";
@@ -42,6 +45,23 @@ describe("Phase 6 intelligent orchestration", () => {
 
     expect(result.satisfied).toBe(false);
     expect(result.missing.map((x) => x.kind)).toEqual(["stay", "insurance"]);
+  });
+
+  it("hard-gates the package pipeline when an explicitly required product is absent", () => {
+    const flight = offer("flight", "F", "2026-10-10T08:00:00Z", "2026-10-10T12:00:00Z", "DEL", "IST");
+    const profile = createTripRequirementProfile(req, { requiredKinds: ["flight", "insurance"], insurance: "required" });
+    const [pkg] = runPackagePipeline({
+      requirements: req,
+      orchestration: profile,
+      candidates: [{ id: "REQ-1", offers: [flight] }],
+      registry: supplierRegistry(),
+      currency: "EUR",
+      fx: { EUR: 1 },
+      ruleFor: commercialRuleFor,
+    });
+
+    expect(pkg!.issues.some((x) => x.code === "missing-required-product" && x.severity === "error")).toBe(true);
+    expect(pkg!.bookable).toBe(false);
   });
 
   it("detects overlapping duplicate hotels and activities outside a stay", () => {
