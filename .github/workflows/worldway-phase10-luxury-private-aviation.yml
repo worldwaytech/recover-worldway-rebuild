@@ -1,0 +1,19 @@
+name: Worldway Phase 10 Luxury Private Aviation
+
+on:
+  push:
+    branches: [main, phase-10-luxury-private-aviation]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test -- --run src/lib/engine/__tests__/chronology.phase5.test.ts src/lib/engine/__tests__/pipeline.test.ts src/lib/engine/__tests__/phase5-multicity.test.ts src/lib/engine/__tests__/phase6-orchestration.test.ts src/lib/engine/__tests__/phase7-ranking.test.ts src/lib/engine/__tests__/phase8-pricing.test.ts src/lib/engine/__tests__/phase9-booking-orchestration.test.ts src/lib/engine/__tests__/phase10-luxury-commerce.test.ts
