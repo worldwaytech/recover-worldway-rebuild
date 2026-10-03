@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChronologicalTripGraph, chronologyIsValid, localDate, requiredCheckInDate } from "../chronology";
+import { buildChronologicalTripGraph, checkTripWindow, chronologyIsValid, localDate, requiredCheckInDate } from "../chronology";
 import type { NormalizedComponent } from "../types";
 
 const base = {
@@ -64,3 +64,16 @@ describe("Phase 5 canonical chronological graph", () => {
     })).toBe("2026-10-02");
   });
 });
+
+  describe("trip window", () => {
+    it("rejects transport that departs before the requested start", () => {
+      const issues = checkTripWindow([flight], { departFrom: "2026-09-29", returnBy: "2026-10-05" });
+      expect(issues.map((i) => i.code)).toContain("outside-trip-window");
+    });
+
+    it("rejects transport that arrives after the requested return date", () => {
+      const late = { ...flight, id: "late", end: { ...flight.end, at: "2026-10-06T09:00:00Z" } };
+      const issues = checkTripWindow([late], { departFrom: "2026-09-28", returnBy: "2026-10-05" });
+      expect(issues.map((i) => i.code)).toContain("outside-trip-window");
+    });
+  });
