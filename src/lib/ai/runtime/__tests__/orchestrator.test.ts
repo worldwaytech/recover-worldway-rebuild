@@ -181,7 +181,7 @@ describe("Worldway AI Orchestrator foundation", () => {
     const orchestrator = new WorldwayOrchestrator({
       execute: async (task) => {
         if (task.kind === "model") {
-          return { decisionKind: "recommendation", decision: "review", confidence: 0.92, constraints: ["deterministic-only"], evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
+          return { decisionKind: "recommendation", decision: "review", confidence: 0.92, constraints: ["deterministic-only"], expiresAt: "2099-01-01T00:00:00Z", evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
         }
         captured.push(task.input);
         return "accepted";
@@ -191,7 +191,7 @@ describe("Worldway AI Orchestrator foundation", () => {
       goal: "handoff",
       tasks: [
         { id: "model-step", kind: "model", modelTask: "concierge_chat" },
-        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step" },
+        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step", acceptedDecisionKinds: ["recommendation"] },
       ],
     }, context());
     expect(result.ok).toBe(true);
@@ -214,3 +214,33 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.results.find((r) => r.taskId === "deterministic-step")?.error).toContain("decision contract invalid");
   });
 });
+
+
+  it("rejects a handoff when the deterministic consumer does not declare decision kinds", () => {
+    const result = validateOrchestrationRequest({
+      goal: "handoff-policy",
+      tasks: [
+        { id: "model-step", kind: "model", modelTask: "concierge_chat" },
+        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step" },
+      ],
+    });
+    expect(result.problems).toContain("handoff_missing_accepted_decision_kinds:deterministic-step");
+  });
+
+  it("rejects replay of the same model decision into two deterministic consumers", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.kind === "model"
+        ? { decisionKind: "recommendation", decision: "review", confidence: 0.9, expiresAt: "2099-01-01T00:00:00Z", evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] }
+        : "accepted",
+    });
+    const result = await orchestrator.run({
+      goal: "replay",
+      tasks: [
+        { id: "model-step", kind: "model", modelTask: "concierge_chat" },
+        { id: "deterministic-a", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step", acceptedDecisionKinds: ["recommendation"] },
+        { id: "deterministic-b", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step", acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results.find((r) => r.taskId === "deterministic-b")?.error).toContain("replay rejected");
+  });
