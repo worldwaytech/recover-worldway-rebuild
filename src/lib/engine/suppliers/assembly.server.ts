@@ -232,7 +232,7 @@ async function assembleMultiCityLiveProposals(req: TripRequirements, opts: Assem
     arrivalDate,
     departureDate,
     proposals: final.proposals,
-    coverage: SUPPLIER_CATALOG.map((s) => ({ supplierKey: s.supplierKey, kinds: s.kinds, live: liveStatus(s), usedInAssembly: used.has(s.supplierKey), bookable: bookingBlockers(reg.get(s)).length === 0 })),
+    coverage: SUPPLIER_CATALOG.map((s) => ({ supplierKey: s.supplierKey, kinds: s.kinds, live: liveStatus(s), usedInAssembly: used.has(s.supplierKey), bookable: bookingBlockers(s).length === 0 })),
     sources: [
       { step: "outbound", count: out.offers.length, error: out.error },
       { step: "multi-city-transports", count: complete.length, error: complete.length ? null : "No chronological multi-city transport chain found" },
