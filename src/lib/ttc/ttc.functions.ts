@@ -22,7 +22,7 @@ export const getTtcCatalogueFacets = createServerFn({ method: "GET" }).handler(a
   return getTtcFacets();
 });
 
-async function assertStaff(context: { supabase: { rpc: Function }; userId: string }) {
+async function assertStaff(context: { supabase: { rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: boolean; error: unknown }> }; userId: string }) {
   const { data, error } = await context.supabase.rpc("is_staff", { _user_id: context.userId });
   if (error) throw new Error("Your permissions could not be verified.");
   if (!data) throw new Error("Forbidden");

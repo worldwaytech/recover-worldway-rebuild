@@ -25,9 +25,8 @@ export function projectDecisionContractToBookingReadiness(
     throw new Error("booking_readiness_projection_requires_recommendation");
   }
 
-  const check = contract.constraints.some((constraint) => constraint === "booking.readiness.check=true");
   return {
-    request: { check },
-    ...(check ? { readiness: bookingReadiness(components, capabilities) } : {}),
+    request: { check: true },
+    readiness: bookingReadiness(components, capabilities),
   };
 }

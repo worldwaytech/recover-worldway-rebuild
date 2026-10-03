@@ -393,7 +393,7 @@ export const bookViatorActivityCart = createServerFn({ method: "POST" })
       });
 
       let statuses = result.statuses;
-      let bookingRef = result.bookingRef ?? viatorBookingRef;
+      const bookingRef = result.bookingRef ?? viatorBookingRef;
       let voucherInfo = result.voucherInfo;
 
       if (!result.ok) {

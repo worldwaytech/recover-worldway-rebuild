@@ -122,7 +122,6 @@ export async function hbxMtlsRequest<T>(
 }
 
 function createHbxSignature(apiKey: string, secret: string): string {
-  const { createHash } = require("crypto") as typeof import("crypto");
   return createHash("sha256")
     .update(`${apiKey}${secret}${Math.floor(Date.now() / 1000)}`)
     .digest("hex");

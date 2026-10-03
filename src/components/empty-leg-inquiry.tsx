@@ -60,7 +60,7 @@ export function EmptyLegInquiry({
       try {
         const raw = localStorage.getItem("wwl.aviation.inquiries");
         const list = raw ? JSON.parse(raw) : [];
-        list.push({ ...payload, submittedAt: new Date().toISOString(), id: res.id });
+        list.push({ ...payload, submittedAt: new Date().toISOString() });
         localStorage.setItem("wwl.aviation.inquiries", JSON.stringify(list));
       } catch {
         /* ignore */
