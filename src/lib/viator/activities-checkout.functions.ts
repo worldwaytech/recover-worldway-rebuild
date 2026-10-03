@@ -537,6 +537,7 @@ export const viatorActivityBookingStatus = createServerFn({ method: "POST" })
     accessToken: typeof data?.accessToken === "string" ? data.accessToken.slice(0, 200) : undefined,
   }))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("viator-status", requestFingerprint(currentRequest())), 30, 60);
     const { getActivityBooking, finaliseActivityBooking } = await import(
       "@/lib/viator/activity-bookings.server"
     );
