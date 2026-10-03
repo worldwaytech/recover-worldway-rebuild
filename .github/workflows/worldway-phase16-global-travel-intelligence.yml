@@ -1,0 +1,20 @@
+name: Worldway Phase 16 Global Travel Commerce Intelligence Network
+
+on:
+  push:
+    branches: [main, phase-16-global-travel-commerce-intelligence-network, phase-16-post-phase15-consolidated]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test -- --run src/lib/engine/__tests__/phase16-global-travel-intelligence.test.ts src/lib/engine/__tests__/phase9-booking-orchestration.test.ts src/lib/engine/__tests__/phase10-luxury-commerce.test.ts src/lib/engine/__tests__/phase11-experiences-marketplace.test.ts src/lib/ai/__tests__/ai-foundation.test.ts src/lib/ai/__tests__/ai-phase2.test.ts
+      - run: npm run build
