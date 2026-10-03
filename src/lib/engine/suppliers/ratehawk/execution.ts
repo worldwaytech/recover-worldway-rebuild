@@ -1,8 +1,9 @@
 import type { RatehawkCertificationReport as SandboxReport } from "@/lib/ratehawk/types";
-import type {
-  RateHawkCertificationReport,
-  RateHawkCertificationStep,
-  RateHawkStepEvidence,
+import {
+  buildRateHawkCertificationReport,
+  type RateHawkCertificationReport,
+  type RateHawkCertificationStep,
+  type RateHawkStepEvidence,
 } from "./certification";
 
 const STEP_MAP: Readonly<Record<string, RateHawkCertificationStep>> = {
@@ -24,17 +25,10 @@ function mapStep(step: SandboxReport["steps"][number]): RateHawkStepEvidence | n
     step: mapped,
     passed: step.passed,
     environment: step.environment,
-    observedAt: SandboxReportTimestamp(step),
+    observedAt: new Date().toISOString(),
     detail: step.detail,
     ...(step.httpStatus != null ? { reference: `http:${step.httpStatus}` } : {}),
   };
-}
-
-function SandboxReportTimestamp(step: SandboxReport["steps"][number]): string {
-  // Sandbox runner steps do not carry individual timestamps. The bridge records
-  // the ingestion time rather than inventing an observation timestamp.
-  void step;
-  return new Date().toISOString();
 }
 
 /**
