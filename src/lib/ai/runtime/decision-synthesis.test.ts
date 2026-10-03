@@ -29,7 +29,7 @@ describe("context-aware specialist decision synthesis", () => {
         payment: { action: "charge", amount: 100 },
         nested: { booking: { execute: true }, safe: "kept" },
       },
-    ]), { expectedCorrelationId: "wwai-test" });
+    ])!, { expectedCorrelationId: "corr-synthesis-1" });
     expect(result?.status).toBe("ready");
     expect(result?.findings[0].output).toMatchObject({
       recommendation: "review",
