@@ -3,6 +3,7 @@ import { ToolRegistry } from "../../tools/fabric";
 import { buildWorldwayOrchestrationContext } from "../context-bridge";
 import { EMPTY_TRAVELER_PROFILE, buildPersonalizationContext } from "../../../engine/intelligence/traveler-profile";
 import { createWorldwayOrchestratorRuntime } from "../worldway-orchestrator-runtime";
+import type { NormalizedComponent } from "../../../engine/types";
 
 function context() {
   const consent = { preferences: true, history: true };
@@ -207,6 +208,51 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(output.orchestrationPreferences).toEqual({ preferredKinds: ["activity", "flight"] });
     expect((output.orchestration as { requiredKinds: string[]; preferredKinds: string[] }).requiredKinds).toEqual(["flight"]);
     expect((output.orchestration as { preferredKinds: string[] }).preferredKinds).toEqual(["stay", "activity", "flight"]);
+  });
+
+  it("uses the deterministic booking readiness engine without granting booking authority", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const component: NormalizedComponent = {
+      id: "flight-1",
+      kind: "flight",
+      supplierKey: "air",
+      externalId: "F1",
+      title: "DEL-IST",
+      net: { amount: 500, currency: "USD" },
+      taxes: { amount: 50, currency: "USD" },
+      cancellation: { refundable: true },
+      start: { at: "2026-10-20T05:00:00Z", timezone: "Asia/Kolkata", place: "DEL" },
+      end: { at: "2026-10-20T10:00:00Z", timezone: "Europe/Istanbul", place: "IST" },
+    };
+    const result = await runtime.orchestrator.run({
+      goal: "booking readiness",
+      tasks: [{
+        id: "booking-readiness",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "booking-readiness" },
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          bookingComponents: [component],
+          supplierCapabilities: { air: ["revalidate"] },
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "prepare booking readiness check", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "booking:readiness:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "booking-readiness",
+            constraints: ["booking.readiness.check=true", "booking.capability.book=true"],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    const output = result.results[0].result as Record<string, any>;
+    expect(output.bookingReadiness.request).toEqual({ check: true });
+    expect(output.bookingReadiness.readiness.ready).toBe(false);
+    expect(output.bookingReadiness.readiness.reasons).toContain("flight-1: supplier booking capability missing");
   });
 
   it("rejects legacy raw model decisions before deterministic execution", async () => {
