@@ -6,6 +6,7 @@ import { buildItinerary, checkTripRequirements, createTripRequirementProfile, de
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
+import type { RankingProfile } from "./optimization";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
 
 export interface PackageCandidate {
@@ -21,6 +22,7 @@ export interface PipelineInput {
   fx: FxTable;
   ruleFor: (c: NormalizedComponent) => PricingRule | null;
   orchestration?: TripRequirementProfile;
+  ranking?: RankingProfile;
 }
 
 export interface PipelinePackage extends RankedPackage {
@@ -56,6 +58,7 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     built.map((b) => ({ id: b.id, items: b.graph, total: b.pricing?.total ?? Number.MAX_SAFE_INTEGER })),
     input.requirements,
     input.registry,
+    input.ranking,
   );
   return ranked.map((r) => {
     const b = built.find((x) => x.id === r.id)!;
