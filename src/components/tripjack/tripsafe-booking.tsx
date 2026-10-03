@@ -159,7 +159,8 @@ export function TripsafeBooking({ enabled }: { enabled: boolean }) {
     try {
       const r = await book({ data: { idempotencyKey: idem, planName: selected.name, selection: selectionPayload() } });
       setDone({ reference: r.booking.reference, status: r.booking.status, message: r.message, policyIds: r.booking.policyIds });
-      r.booking.status === "failed" ? toast.error(r.message) : toast.success(r.message);
+      if (r.booking.status === "failed") toast.error(r.message);
+      else toast.success(r.message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Booking failed.");
     } finally {
