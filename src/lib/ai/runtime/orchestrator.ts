@@ -294,6 +294,7 @@ export class WorldwayOrchestrator {
 
       const startedAt = new Date().toISOString();
       results.set(task.id, { taskId: task.id, state: "running", startedAt });
+      trace.taskStarted(task.id, task.kind, startedAt);
       executedSteps++;
 
       try {
