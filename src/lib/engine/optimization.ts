@@ -38,11 +38,25 @@ export function paretoFrontier(candidates: PackageOptimizationInput[], req: Trip
   return scored.filter((x, i) => !scored.some((y, j) => i !== j && dominates(y, x))).map((x) => x.candidate).sort((a,b) => a.id.localeCompare(b.id));
 }
 
-/** Select a stable shortlist while preserving objective diversity. */
-export function optimizePackageSet(candidates: PackageOptimizationInput[], req: TripRequirements, registry: Map<string, SupplierRegistration>, limit = 3, profile: RankingProfile = {}): PackageOptimizationInput[] {
+/** Rank Pareto candidates with the same configurable optimization profile used by package ranking. */
+export function optimizationScore(candidate: PackageOptimizationInput, candidates: PackageOptimizationInput[], req: TripRequirements, registry: Map<string,SupplierRegistration>, profile: RankingProfile = {}): number {
+  const weights = resolveRankingWeights(profile);
+  const metrics = packageOptimizationMetrics(candidate, req, registry, profile);
+  const totals = candidates.map((x) => x.total);
+  const min = Math.min(...totals);
+  const max = Math.max(...totals);
+  const price = max === min ? 1 : 1 - (candidate.total - min) / (max - min);
+  return weights.price * price + weights.geography * metrics.geography + weights.time * metrics.time + weights.margin * metrics.margin + weights.preference * metrics.preference;
+}
+
+/** Select a stable shortlist while preserving Pareto objective diversity and ranking preferences. */
+export function optimizePackageSet(candidates: PackageOptimizationInput[], req: TripRequirements, registry: Map<string,SupplierRegistration>, limit = 3, profile: RankingProfile = {}): PackageOptimizationInput[] {
   if (limit <= 0 || !candidates.length) return [];
   const frontier = paretoFrontier(candidates, req, registry, profile);
-  const ranked = [...frontier].sort((a,b) => b.total === a.total ? a.id.localeCompare(b.id) : a.total - b.total);
+  const ranked = [...frontier].sort((a,b) => {
+    const delta = optimizationScore(b, candidates, req, registry, profile) - optimizationScore(a, candidates, req, registry, profile);
+    return Math.abs(delta) > 1e-12 ? delta : a.id.localeCompare(b.id);
+  });
   const selected = ranked.slice(0, limit);
   if (selected.length < limit) {
     for (const candidate of candidates.slice().sort((a,b) => a.id.localeCompare(b.id))) {
