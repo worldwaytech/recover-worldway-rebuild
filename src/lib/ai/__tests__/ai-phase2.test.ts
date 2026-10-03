@@ -64,10 +64,14 @@ describe("High-risk action gate", () => {
     expect((replay as any).code).toBe("already_executed");
     expect(calls).toEqual(["book_x"]);
 
-    const cloned = { ...a, proposal_id: a.proposal_id };
+    const cloned = { ...a, input: { id: "tampered" } };
     const clonedReplay = await executeProposal(cloned, r, ctx(), ok);
     expect(clonedReplay.ok).toBe(false);
-    expect((clonedReplay as any).code).toBe("already_executed");
+    expect((clonedReplay as any).code).toBe("not_approved");
+
+    expect(() => {
+      (a.input as { id: string }).id = "tampered";
+    }).toThrow();
   });
 
   it("rejects concurrent execution of the same proposal", async () => {
@@ -86,6 +90,17 @@ describe("High-risk action gate", () => {
     const firstResult = await first;
     expect(firstResult.ok).toBe(true);
     expect(calls).toEqual(["book_x"]);
+  });
+
+  it("rejects an approved proposal whose nested input is tampered before execution", async () => {
+    const r = reg();
+    const p = propose({ action: "BOOK", tool: "book_x", target: { kind: "x", id: "immutable" }, payload: { id: "immutable" }, rationale: "r", evidence });
+    const a = approve(p, { userId: "u1", permission: "authenticated" });
+    expect(() => {
+      (a.input as { id: string }).id = "tampered";
+    }).toThrow();
+    const done = await executeProposal(a, r, ctx(), ok);
+    expect(done.ok).toBe(true);
   });
 
   it("refunds need staff and expired proposals never execute", async () => {
