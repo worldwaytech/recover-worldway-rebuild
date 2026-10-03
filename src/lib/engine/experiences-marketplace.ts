@@ -221,7 +221,7 @@ export function searchExperienceCatalogue(
         experience: record,
         destinations: destinationNodes,
         component,
-        evidence: live ? "live_revalidated" : "catalogue_only",
+        evidence: (live ? "live_revalidated" : "catalogue_only") as MarketplaceSearchResult["evidence"],
         bookable: live,
         reasons: live ? [] : ["Live supplier revalidation required before booking"],
       };
