@@ -67,6 +67,17 @@ export function createTripRequirementProfile(
   };
 }
 
+/** Apply bounded preference hints without changing hard requirements or trip facts. */
+export function applyOrchestrationPreferences(
+  profile: TripRequirementProfile,
+  preferences: Pick<TripRequirementProfile, "preferredKinds">,
+): TripRequirementProfile {
+  return {
+    ...profile,
+    preferredKinds: [...new Set([...profile.preferredKinds, ...preferences.preferredKinds])],
+  };
+}
+
 function localDate(at: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
