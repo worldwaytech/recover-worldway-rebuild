@@ -3,7 +3,7 @@ import type { ComponentKind } from "../../engine/types";
 import type { RankingProfile, RankingWeights } from "../../engine/optimization";
 
 const COMPONENT_KINDS: readonly ComponentKind[] = [
-  "flight", "stay", "activity", "transfer", "rail", "cruise", "aviation", "insurance", "visa",
+  "flight", "stay", "activity", "transfer", "rail", "cruise", "aviation", "insurance",
 ];
 
 const WEIGHT_KEYS: readonly (keyof RankingWeights)[] = [
