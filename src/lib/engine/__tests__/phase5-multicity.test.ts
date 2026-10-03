@@ -110,7 +110,7 @@ describe("Phase 5 multi-city intelligence", () => {
     expect(graph.arrivalDatesByPlace["AUH-CITY"]).toBe("2026-10-13");
     expect(graph.arrivalDatesByPlace["MCT-PORT"]).toBe("2026-10-17");
     expect(graph.finalDepartureDate).toBe("2026-10-18");
-    expect(segments.map((x) => x.mode)).toEqual(["transfer", "rail", "aviation"]);
+    expect(segments.map((x) => x.mode)).toEqual(["transfer", "rail", "cruise", "aviation"]);
     expect(segments.every((x) => x.gapMinutes >= 0)).toBe(true);
   });
 });
