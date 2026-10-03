@@ -302,6 +302,93 @@ describe("Worldway specialist orchestration runtime", () => {
     expect((output.orchestration as { preferredKinds: string[] }).preferredKinds).toEqual(["stay", "activity", "flight"]);
   });
 
+  it("keeps pricing advisory signals bounded and rejects authority-shaped fields", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "pricing boundary",
+      tasks: [{
+        id: "pricing-step",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "pricing" },
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "pricing guidance", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "pricing:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "pricing-step",
+            constraints: [
+              "pricing.signal.demandIndex=0.8",
+              "pricing.signal.inventoryPressure=1",
+              "pricing.signal.leadTimeDays=30",
+              "pricing.amount=1",
+              "pricing.currency=INR",
+              "pricing.finalQuote=999",
+            ],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    const output = result.results[0].result as Record<string, any>;
+    expect(output.pricingSignals).toEqual({
+      demandIndex: 0.8,
+      inventoryPressure: 1,
+      leadTimeDays: 30,
+    });
+    expect(output.pricingSignals).not.toHaveProperty("amount");
+    expect(output.pricingSignals).not.toHaveProperty("finalQuote");
+    expect(output.pricingSignals).not.toHaveProperty("currency");
+  });
+
+  it("keeps orchestration preferences additive and cannot alter hard requirements", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "orchestration boundary",
+      tasks: [{
+        id: "orchestration-step",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "orchestration" },
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          orchestration: {
+            trip: { origin: "DEL", destinations: ["IST"], departFrom: "2026-10-20", returnBy: "2026-10-28", adults: 2, children: 0, luxuryLevel: 5, interests: [] },
+            requiredKinds: ["flight"],
+            preferredKinds: ["stay"],
+            optionalKinds: [],
+            insurance: "not-requested",
+            visa: "not-requested",
+          },
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "preference guidance", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "orchestration:authority:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "orchestration-step",
+            constraints: [
+              "orchestration.prefer.kind.activity",
+              "orchestration.required.kind.cruise",
+              "orchestration.insurance.required=true",
+            ],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    const output = result.results[0].result as Record<string, any>;
+    expect(output.orchestration.requiredKinds).toEqual(["flight"]);
+    expect(output.orchestration.preferredKinds).toEqual(["stay", "activity"]);
+    expect(output.orchestration.insurance).toBe("not-requested");
+    expect(output.orchestration).not.toHaveProperty("requiredKinds.1");
+  });
+
   it("uses the deterministic booking readiness engine without granting booking authority", async () => {
     const runtime = createWorldwayOrchestratorRuntime({
       tools: new ToolRegistry(),
