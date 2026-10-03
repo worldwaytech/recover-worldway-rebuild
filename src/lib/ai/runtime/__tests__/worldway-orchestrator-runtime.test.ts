@@ -56,9 +56,9 @@ describe("Worldway specialist orchestration runtime", () => {
     const calls: unknown[] = [];
     const runtime = createWorldwayOrchestratorRuntime({
       tools: new ToolRegistry(),
-      model: { run: async (task, input, correlationId) => {
-        calls.push({ task, input, correlationId });
-        return { model: "routed", task, correlationId };
+      model: { invoke: async (model, task, input, correlationId) => {
+        calls.push({ model, task, input, correlationId });
+        return { model: model.id, task, correlationId };
       } },
     });
 
@@ -70,7 +70,7 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(result.ok).toBe(true);
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({ task: "concierge_chat", input: { prompt: "analyse itinerary" }, correlationId: "wwai-test" });
-    expect(result.results[0].result).toMatchObject({ model: "routed", task: "concierge_chat" });
+    expect(result.results[0].result).toMatchObject({ task: "concierge_chat", correlationId: "wwai-test" });
   });
 
   it("blocks model tasks when the routed model boundary is not configured", async () => {
