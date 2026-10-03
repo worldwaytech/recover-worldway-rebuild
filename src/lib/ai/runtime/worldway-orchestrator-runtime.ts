@@ -15,6 +15,7 @@ import { projectDecisionContractToOrchestrationPreferences } from "./decision-co
 import { applyOrchestrationPreferences } from "../../engine/orchestration";
 import { projectDecisionContractToBookingReadiness } from "./decision-contract-booking-readiness-adapter";
 import { projectDecisionContractToOptimizationProfile } from "./decision-contract-optimization-adapter";
+import { projectDecisionContractToPostBookingModification } from "./decision-contract-post-booking-modification-adapter";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
@@ -101,6 +102,36 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
     }
     const optimizationProfile = projectDecisionContractToOptimizationProfile(validated);
     return { ...value, decisionContract: validated, optimizationProfile };
+  }
+
+  if (projection === "post-booking-modification") {
+    if (validated.decisionKind !== "recommendation") {
+      throw new Error(`decision_contract_post_booking_modification_projection_rejected:${task.id}`);
+    }
+    const bookingId = value.bookingId;
+    const bookingStatus = value.bookingStatus;
+    const components = value.bookingComponents;
+    const capabilities = value.supplierCapabilities;
+    if (
+      typeof bookingId !== "string"
+      || typeof bookingStatus !== "string"
+      || !Array.isArray(components)
+      || !capabilities
+      || typeof capabilities !== "object"
+      || Array.isArray(capabilities)
+    ) {
+      throw new Error(`post_booking_modification_inputs_missing:${task.id}`);
+    }
+    const capabilityMap = new Map<string, readonly import("../../engine/types").SupplierCapability[]>(
+      Object.entries(capabilities as Record<string, readonly import("../../engine/types").SupplierCapability[]>),
+    );
+    const modificationIntent = projectDecisionContractToPostBookingModification(validated, {
+      bookingId,
+      bookingStatus: bookingStatus as import("../../engine/booking-orchestration").BookingStatus,
+      components: components as import("../../engine/booking-orchestration").BookingComponent[],
+      capabilities: capabilityMap,
+    });
+    return { ...value, decisionContract: validated, modificationIntent };
   }
 
   if (projection === "ranking") {
