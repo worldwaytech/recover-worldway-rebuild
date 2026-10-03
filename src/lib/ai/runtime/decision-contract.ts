@@ -2,7 +2,7 @@
 // Only bounded, validated decisions with sanitized provenance may cross this boundary.
 
 import { sanitizeOrchestrationEvidence, type OrchestrationEvidence } from "./orchestration-trace";
-import type { SpecialistDecisionSynthesisContract } from "./decision-synthesis";
+import { isSpecialistDecisionSynthesisContract, type SpecialistDecisionSynthesisContract } from "./decision-synthesis";
 
 export type WorldwayDecisionKind =
   | "recommendation"
@@ -156,6 +156,7 @@ export function bindSpecialistSynthesisToDecisionContract(input: {
   now?: Date;
 }): WorldwayDecisionContract | null {
   const synthesis = input.synthesis;
+  if (!isSpecialistDecisionSynthesisContract(synthesis)) return null;
   if (synthesis.status !== "ready") return null;
   if (synthesis.correlationId !== input.correlationId) return null;
   if (!synthesis.sourceTaskIds.length || synthesis.findings.length !== synthesis.sourceTaskIds.length) return null;
