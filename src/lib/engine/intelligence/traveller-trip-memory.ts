@@ -3,7 +3,7 @@
 // Persistence remains in the existing Phase-13 travel_dna/travel_memory stores.
 // This layer is deterministic and contains no booking/payment authority.\n// Current requests remain authoritative over remembered trip facts.
 
-import type { PersonalizationContext, TravelerProfile } from "../engine/intelligence/traveler-profile";
+import type { PersonalizationContext, TravelerProfile } from "./traveler-profile";
 
 export type MemoryPrecedence = "current_request_over_memory";
 
