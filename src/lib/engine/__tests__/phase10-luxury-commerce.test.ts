@@ -1,0 +1,14 @@
+import {describe,expect,it} from "vitest";
+import {assessHighValueRisk,compareAircraft,composeLuxuryPackage,selectEmptyLegs,validateAviationLeg,type AircraftProfile,type AviationLeg,type LuxuryCandidate,type LuxuryCommerceRequest} from "../luxury-commerce";
+import type {TripRequirements} from "../types";
+const req:TripRequirements={origin:"DEL",destinations:["DXB"],departFrom:"2026-10-20",returnBy:"2026-10-25",adults:2,children:0,luxuryLevel:5,interests:[],budget:{amount:100000,currency:"USD"}};
+const aircraft:AircraftProfile={id:"gulfstream-g650",manufacturer:"Gulfstream",model:"G650",category:"ultra_long_range",seats:14,rangeNm:7000,operatorKey:"operator-a"};
+const leg:AviationLeg={id:"empty-1",type:"empty_leg",aircraft,origin:"DEL",destination:"DXB",departureAt:"2026-10-20T05:00:00Z",arrivalAt:"2026-10-20T10:00:00Z",price:{amount:30000,currency:"USD"},availabilityExpiresAt:"2026-10-19T00:00:00Z"};
+const request:LuxuryCommerceRequest={requirements:req,services:{privateAviation:true,chauffeur:true},preferredAircraftCategories:["ultra_long_range"]};
+describe("Phase 10 luxury commerce",()=>{
+ it("compares aircraft deterministically and exposes empty-leg economics",()=>{const result=compareAircraft([leg],request);expect(result[0]?.emptyLeg).toBe(true);expect(result[0]?.pricePerSeat.amount).toBeCloseTo(30000/14);});
+ it("filters expired or repositioning empty legs",()=>{expect(selectEmptyLegs([leg],"2026-10-18T00:00:00Z")).toHaveLength(1);expect(selectEmptyLegs([leg],"2026-10-20T00:00:00Z")).toHaveLength(0);});
+ it("requires enhanced review for high-value private aviation",()=>{expect(assessHighValueRisk({amount:50000,currency:"USD"},{privateAviation:true})).toBe("enhanced_review");});
+ it("builds luxury package but requires human review for high-value commerce",()=>{const candidates:LuxuryCandidate[]=[{id:"jet",kind:"private_jet",title:"Private jet",price:{amount:50000,currency:"USD"},quality:5,exclusivity:5,serviceLevel:5,supplierKey:"jetco",refundable:true,bookable:true},{id:"chauffeur",kind:"chauffeur",title:"Chauffeur",price:{amount:1000,currency:"USD"},quality:5,exclusivity:4,serviceLevel:5,supplierKey:"cars",refundable:true,bookable:true}];const p=composeLuxuryPackage(request,candidates);expect(p.candidates.map(x=>x.kind)).toEqual(["private_jet","chauffeur"]);expect(p.requiresHumanReview).toBe(true);expect(p.bookable).toBe(false);});
+ it("rejects invalid aviation timing and repositioning",()=>{expect(validateAviationLeg({...leg,arrivalAt:leg.departureAt},"2026-10-01T00:00:00Z")).toContain("arrival must follow departure");expect(validateAviationLeg({...leg,repositioningRequired:true},"2026-10-01T00:00:00Z")).toContain("empty leg requires repositioning");});
+});
