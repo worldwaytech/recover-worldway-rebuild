@@ -4,13 +4,13 @@ import { queryTravelKnowledge } from "../../knowledge/travel-knowledge";
 const MAX_AI_KNOWLEDGE_FACTS = 200;
 
 export interface WorldwayKnowledgeContext {
-  contractVersion: "1.0";
-  generatedAt: string;
-  facts: readonly KnowledgeFact[];
-  sourceCounts: KnowledgeSnapshot["sourceCounts"];
-  query: KnowledgeQuery;
-  authority: "advisory_only";
-  executionAuthority: false;
+  readonly contractVersion: "1.0";
+  readonly generatedAt: string;
+  readonly facts: readonly KnowledgeFact[];
+  readonly sourceCounts: KnowledgeSnapshot["sourceCounts"];
+  readonly query: KnowledgeQuery;
+  readonly authority: "advisory_only";
+  readonly executionAuthority: false;
 }
 
 function readonlyFact(fact: KnowledgeFact): KnowledgeFact {
