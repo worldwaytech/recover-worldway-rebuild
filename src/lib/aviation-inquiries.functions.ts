@@ -58,7 +58,7 @@ export const submitAviationInquiry = createServerFn({ method: "POST" })
         };
       };
     };
-    const { data: inserted, error } = await client
+    const { error } = await client
       .from("aviation_inquiries")
       .insert(row)
       .select("id")
