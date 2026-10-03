@@ -28,6 +28,28 @@ describe("Controlled Agentic Commerce", () => {
     expect(second.id).toBe(first.id);
   });
 
+  it("does not share idempotency records across principals", () => {
+    const store = new ControlledCommerceApprovalStore();
+    const first = store.request({
+      tool: "book_trip",
+      action: "BOOK",
+      quoteId: "quote-1",
+      idempotencyKey: "shared-looking-key",
+      principalUserId: "user-1",
+    });
+    const other = store.request({
+      tool: "book_trip",
+      action: "BOOK",
+      quoteId: "quote-2",
+      idempotencyKey: "shared-looking-key",
+      principalUserId: "user-2",
+    });
+
+    expect(other.id).not.toBe(first.id);
+    expect(other.principalUserId).toBe("user-2");
+    expect(other.quoteId).toBe("quote-2");
+  });
+
   it("requires the same principal to approve and consume", () => {
     const store = new ControlledCommerceApprovalStore();
     const pending = store.request({
