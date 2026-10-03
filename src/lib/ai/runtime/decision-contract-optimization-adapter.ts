@@ -1,7 +1,7 @@
 import type { WorldwayDecisionContract } from "./decision-contract";
-import type { RankingProfile, RankingWeights } from "../../engine/optimization";
+import type { ComponentKind } from "../../engine/types";\nimport type { RankingProfile, RankingWeights } from "../../engine/optimization";
 
-const WEIGHT_KEYS: readonly (keyof RankingWeights)[] = [
+const COMPONENT_KINDS: readonly ComponentKind[] = ["flight", "stay", "activity", "transfer", "rail", "cruise", "aviation", "insurance", "visa"];\n\nconst WEIGHT_KEYS: readonly (keyof RankingWeights)[] = [
   "feasibility", "luxury", "price", "budget", "flexibility",
   "reliability", "geography", "time", "margin", "preference",
 ];
@@ -18,7 +18,7 @@ export function projectDecisionContractToOptimizationProfile(
     throw new Error("decision_contract_not_optimization_compatible");
   }
 
-  const weights: Partial<RankingWeights> = {};
+  const weights: Partial<RankingWeights> = {};\n  const kindPreferences: Partial<Record<ComponentKind, number>> = {};
   for (const rawConstraint of contract.constraints) {
     const match = /^optimization\.weight\.([A-Za-z]+)=([0-9]+(?:\.[0-9]+)?)$/.exec(rawConstraint.trim());
     if (!match) continue;
@@ -29,5 +29,5 @@ export function projectDecisionContractToOptimizationProfile(
     weights[key] = value;
   }
 
-  return Object.keys(weights).length ? { weights } : {};
+  return Object.keys(weights).length || Object.keys(kindPreferences).length\n    ? { ...(Object.keys(weights).length ? { weights } : {}), ...(Object.keys(kindPreferences).length ? { kindPreferences } : {}) }\n    : {};
 }
