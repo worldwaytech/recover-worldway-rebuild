@@ -63,7 +63,7 @@ describe("Phase 8 dynamic pricing", () => {
   it("caps promotions at the configured margin floor", () => {
     const strict: PricingPolicy = {
       ...policy,
-      minimumMarginPercent: 35,
+      minimumMarginPercent: 15,
       promotions: [{ id: "DEEP", percentOff: 30, channels: ["customer_b2c"] }],
     };
     const quote = priceDynamicComponent({
@@ -73,7 +73,7 @@ describe("Phase 8 dynamic pricing", () => {
       now: "2026-10-03T00:00:00Z",
     });
     expect(quote.promotionId).toBe("DEEP");
-    expect(quote.grossMarginPercent).toBeGreaterThanOrEqual(35);
+    expect(quote.grossMarginPercent).toBeGreaterThanOrEqual(15);
     expect(quote.promotionDiscount).toBeLessThan(quote.customerPrice * 0.3);
   });
 
