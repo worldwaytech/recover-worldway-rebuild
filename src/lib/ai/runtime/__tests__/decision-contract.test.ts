@@ -66,6 +66,28 @@ describe("Worldway typed decision contract", () => {
     })).toBe(false);
   });
 
+  it("rejects structurally unsafe contracts before adapter consumption", () => {
+    const base = createWorldwayDecisionContract({
+      decisionKind: "recommendation",
+      decision: "review",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+      constraints: ["booking.readiness.check=true"],
+    })!;
+
+    expect(isWorldwayDecisionContract({ ...base, confidence: 1.01 })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, confidence: -0.01 })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, constraints: [123] })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, constraints: ["x".repeat(161)] })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, decision: "x".repeat(241) })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, decisionKind: "unexpected" })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, correlationId: "   " })).toBe(false);
+    expect(isWorldwayDecisionContract({ ...base, sourceTaskId: "" })).toBe(false);
+  });
+
   it("accepts only a live contract bound to the active orchestration and source task", () => {
     const contract = createWorldwayDecisionContract({
       decisionKind: "recommendation", decision: "review", confidence: 0.9, evidence,
