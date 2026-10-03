@@ -205,7 +205,7 @@ async function answerQuestion(
   if (failed || !completed) throw new Error("The backend response did not complete");
   const answer = await result.text;
   if (!answer.trim()) throw new Error("The backend response had no answer");
-  return (await import("@/lib/confidentiality/redact")).redactText(answer);
+  return (await import("./ai/safety/customer-output")).sanitizeCustomerAiReply(answer);
 }
 
 function* commentaryChunks(content: string) {
