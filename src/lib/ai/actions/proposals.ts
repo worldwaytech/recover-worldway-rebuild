@@ -104,7 +104,7 @@ export async function executeProposal(p: ActionProposal, reg: ToolRegistry, ctx:
   if (!v.ok) return fail(`revalidation_failed:${v.blockers.join(",")}`, { deterministic_validation: v, approval_state: "failed" });
   executingProposalIds.add(p.proposal_id);
   try {
-    const result = await reg.invoke(p.tool, p.input, { ...ctx, highRiskGrant: { tool: p.tool, action: p.action, grantedBy: p.action === "REFUND" ? "staff_approval" : "booking_readiness" } });
+    const result = await reg.invoke(p.tool, p.input, { ...ctx, highRiskGrant: { tool: p.tool, action: p.action, grantedBy: p.action === "REFUND" ? "staff_approval" : "booking_readiness", principalUserId: ctx.principal.userId ?? "", expiresAt: p.expires_at } });
     executedProposalIds.add(p.proposal_id);
     return { ok: true as const, result, proposal: { ...p, deterministic_validation: v, approval_state: "executed" as const } };
   } catch {

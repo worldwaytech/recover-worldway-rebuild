@@ -46,7 +46,7 @@ export interface ToolContext {
   principal: { permission: Permission; scopes: Scope[]; userId?: string | null };
   signal?: AbortSignal;
   /** Explicit, deterministic authorisation for high-risk tools (e.g. booking readiness). Phase 1: never granted to AI. */
-  highRiskGrant?: { tool: string; action: RiskLevel; grantedBy: "booking_readiness" | "staff_approval" };
+  highRiskGrant?: { tool: string; action: RiskLevel; grantedBy: "booking_readiness" | "staff_approval"; principalUserId: string; expiresAt: string };
 }
 
 export class ToolDeniedError extends Error {
@@ -63,6 +63,8 @@ export function authorize(spec: ToolSpec<any, any>, ctx: ToolContext): { ok: tru
   if (!spec.scopes.every((s) => ctx.principal.scopes.includes(s))) return { ok: false, reason: "scope" };
   if (HIGH_RISK.has(spec.risk)) {
     if (!ctx.highRiskGrant || ctx.highRiskGrant.tool !== spec.name || ctx.highRiskGrant.action !== spec.risk) return { ok: false, reason: "high_risk_grant_mismatch" };
+    if (!ctx.principal.userId || ctx.highRiskGrant.principalUserId !== ctx.principal.userId) return { ok: false, reason: "high_risk_grant_principal_mismatch" };
+    if (!Number.isFinite(Date.parse(ctx.highRiskGrant.expiresAt)) || Date.parse(ctx.highRiskGrant.expiresAt) <= Date.now()) return { ok: false, reason: "high_risk_grant_expired" };
   } else if (!AI_ALLOWED_RISK.has(spec.risk)) return { ok: false, reason: "risk_not_allowed" };
   return { ok: true };
 }

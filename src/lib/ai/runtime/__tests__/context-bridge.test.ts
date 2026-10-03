@@ -11,7 +11,7 @@ function base() {
       correlationId: "corr-1",
       context: "agent_runtime" as const,
       principal: { permission: "public" as const, scopes: [] },
-      highRiskGrant: { tool: "pay_trip", grantedBy: "staff_approval" as const },
+      highRiskGrant: { tool: "pay_trip", action: "PAY" as const, grantedBy: "staff_approval" as const, principalUserId: "u1", expiresAt: "2099-01-01T00:00:00.000Z" },
     },
   };
 }

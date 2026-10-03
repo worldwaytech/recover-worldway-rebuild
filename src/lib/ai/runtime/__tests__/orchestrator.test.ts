@@ -120,7 +120,7 @@ describe("Worldway AI Orchestrator foundation", () => {
     await orchestrator.run({
       goal: "safe",
       tasks: [{ id: "read", kind: "tool", tool: "read_value", input: { value: "x" } }],
-    }, { ...context(), toolContext: { ...context().toolContext, highRiskGrant: { tool: "read_value", grantedBy: "staff_approval" } } });
+    }, { ...context(), toolContext: { ...context().toolContext, highRiskGrant: { tool: "read_value", action: "READ", grantedBy: "staff_approval", principalUserId: "u1", expiresAt: "2099-01-01T00:00:00.000Z" } } });
 
     expect(captured).toEqual([undefined]);
     execute.mockRestore();

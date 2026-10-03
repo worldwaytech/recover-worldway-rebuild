@@ -103,7 +103,7 @@ describe("Controlled Agentic Commerce", () => {
       .toThrow("booking_readiness_required");
 
     const grant = store.toHighRiskGrant(pending.id, "user-2", true);
-    expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness" });
+    expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness", principalUserId: "user-2", expiresAt: expect.any(String) });
 
     const consumed = store.consume(pending.id, "user-2");
     expect(consumed.status).toBe("consumed");
@@ -124,7 +124,7 @@ describe("Controlled Agentic Commerce", () => {
     store.approve(pending.id, "user-action");
 
     const grant = store.toHighRiskGrant(pending.id, "user-action", true);
-    expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness" });
+    expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness", principalUserId: "user-action", expiresAt: expect.any(String) });
   });
 
   it("expires approval before it can be consumed", () => {
