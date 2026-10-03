@@ -42,4 +42,19 @@ describe("production booking integrity gate", () => {
       expect(planned.has(supplier.supplierKey)).toBe(true);
     }
   });
+  it("rejects contradictory certification grants and duplicate capability/environment records", () => {
+    for (const supplier of SUPPLIER_CATALOG) {
+      const seen = new Set<string>();
+      for (const grant of supplier.grants ?? []) {
+        const key = `${grant.environment}:${grant.capability}`;
+        expect(seen.has(key)).toBe(false);
+        seen.add(key);
+
+        if (grant.certified) {
+          expect(grant.evidence?.trim()).toBeTruthy();
+          expect(supplier.readiness).toBe(grant.environment);
+        }
+      }
+    }
+  });
 });
