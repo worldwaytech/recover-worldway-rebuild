@@ -58,18 +58,21 @@ describe("Phase 8 dynamic pricing", () => {
     expect(quote.audit).toContain("promotion:WELCOME10");
   });
 
-  it("rejects promotions that breach the configured margin floor", () => {
+  it("caps promotions at the configured margin floor", () => {
     const strict: PricingPolicy = {
       ...policy,
       minimumMarginPercent: 35,
       promotions: [{ id: "DEEP", percentOff: 30, channels: ["customer_b2c"] }],
     };
-    expect(() => priceDynamicComponent({
+    const quote = priceDynamicComponent({
       component,
       fx: { EUR: 1.1 },
       policy: strict,
       now: "2026-10-03T00:00:00Z",
-    })).toThrow(/minimum margin violated/);
+    });
+    expect(quote.promotionId).toBe("DEEP");
+    expect(quote.grossMarginPercent).toBeGreaterThanOrEqual(35);
+    expect(quote.promotionDiscount).toBeLessThan(quote.customerPrice * 0.3);
   });
 
   it("produces auditable package revenue metrics", () => {
