@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { optimizePackageSet, packageOptimizationMetrics, paretoFrontier, rankComponents, resolveRankingWeights } from "../optimization";
+import { optimizePackageSet, optimizationScore, packageOptimizationMetrics, paretoFrontier, rankComponents, resolveRankingWeights } from "../optimization";
 import { rankPackages } from "../ranking";
 import type { NormalizedComponent, SupplierRegistration, TripRequirements } from "../types";
 
@@ -15,5 +15,6 @@ describe("Phase 7 ranking and optimization",()=>{
 })
  it("builds a deterministic Pareto frontier",()=>{const a={id:"a",items:[c("a1","s1","stay","Museum stay")],total:100,marginAmount:30};const b={id:"b",items:[c("b1","s1","stay","Generic stay","IST")],total:120,marginAmount:40};const frontier=paretoFrontier([a,b],req,reg,{interests:["museum"]});expect(frontier.map(x=>x.id).sort()).toEqual(["a","b"]);});
  it("exposes Pareto optimization on ranked packages",()=>{const a={id:"a",items:[c("a1","s1","stay","Museum stay")],total:100,marginAmount:30};const b={id:"b",items:[c("b1","s1","stay","Generic stay")],total:120,marginAmount:40};const ranked=rankPackages([a,b],req,reg,{interests:["museum"]});expect(ranked.every(x=>x.optimizationMetrics)).toBe(true);expect(ranked.filter(x=>x.paretoOptimal).map(x=>x.id).sort()).toEqual(["a","b"]);});
+ it("uses the ranking profile when ordering the optimized shortlist",()=>{const items=[{id:"cheap",items:[c("cheap1","s1","stay","Generic stay")],total:100,marginAmount:5},{id:"preferred",items:[c("preferred1","s1","stay","Museum stay")],total:160,marginAmount:20}];const profile={interests:["museum"],weights:{preference:0.8,price:0.1,geography:0.05,time:0.025,margin:0.025}};expect(optimizationScore(items[1],items,req,reg,profile)).toBeGreaterThan(optimizationScore(items[0],items,req,reg,profile));expect(optimizePackageSet(items,req,reg,1,profile).map(x=>x.id)).toEqual(["preferred"]);});
  it("returns a stable optimized shortlist",()=>{const items=[1,2,3,4].map(n=>({id:"p"+n,items:[c("p"+n,"s1","stay",n===1?"Museum stay":"Stay "+n)],total:100+n*10,marginAmount:n*5}));const selected=optimizePackageSet(items,req,reg,3,{interests:["museum"]});expect(selected).toHaveLength(3);expect(new Set(selected.map(x=>x.id)).size).toBe(3);});
 ;
