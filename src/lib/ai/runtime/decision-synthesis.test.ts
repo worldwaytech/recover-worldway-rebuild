@@ -106,3 +106,47 @@ describe("context-aware specialist decision synthesis", () => {
     expect(source).toBeNull();
   });
 });
+
+
+describe("specialist synthesis boundary hardening", () => {
+  it("rejects forged nested findings and invalid coverage", () => {
+    const base = synthesizeSpecialistDecisions(envelope([
+      { recommendation: "keep" },
+    ])!, { expectedCorrelationId: "corr-synthesis-1" })!;
+    expect(isSpecialistDecisionSynthesisContract({
+      ...base,
+      findings: [{ ...base.findings[0], taskId: "" }],
+    })).toBe(false);
+    expect(isSpecialistDecisionSynthesisContract({
+      ...base,
+      evidenceCoverage: { ...base.evidenceCoverage, ratio: 0 },
+    })).toBe(false);
+  });
+
+  it("rejects forged conflicts without competing values", () => {
+    const base = synthesizeSpecialistDecisions(envelope([
+      { recommendation: "keep" },
+      { recommendation: "reject" },
+    ])!, { expectedCorrelationId: "corr-synthesis-1" })!;
+    expect(isSpecialistDecisionSynthesisContract({
+      ...base,
+      conflicts: [{ field: "recommendation", values: [] }],
+    })).toBe(false);
+  });
+
+  it("rejects forged coordination members before synthesis", () => {
+    const forged = {
+      contractVersion: "1.0",
+      correlationId: "corr-synthesis-1",
+      members: [{
+        taskId: "",
+        specialist: "flight_intelligence",
+        output: { recommendation: "keep" },
+        evidence: evidence("ref-1"),
+      }],
+    };
+    expect(isSpecialistDecisionSynthesisContract(
+      synthesizeSpecialistDecisions(forged as never, { expectedCorrelationId: "corr-synthesis-1" }),
+    )).toBe(false);
+  });
+});
