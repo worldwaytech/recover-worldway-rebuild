@@ -50,6 +50,39 @@ describe("Controlled Agentic Commerce", () => {
     expect(other.quoteId).toBe("quote-2");
   });
 
+  it("rejects idempotency reuse for a different commerce request", () => {
+    const store = new ControlledCommerceApprovalStore();
+    store.request({
+      tool: "book_trip",
+      action: "BOOK",
+      quoteId: "quote-original",
+      idempotencyKey: "idem-conflict",
+      principalUserId: "user-conflict",
+    });
+
+    expect(() => store.request({
+      tool: "pay_trip",
+      action: "PAY",
+      quoteId: "quote-different",
+      idempotencyKey: "idem-conflict",
+      principalUserId: "user-conflict",
+    })).toThrow("idempotency_conflict");
+  });
+
+  it("does not expose an approval to another principal", () => {
+    const store = new ControlledCommerceApprovalStore();
+    const pending = store.request({
+      tool: "book_trip",
+      action: "BOOK",
+      quoteId: "quote-private",
+      idempotencyKey: "idem-private",
+      principalUserId: "owner",
+    });
+
+    expect(() => store.get(pending.id, "other")).toThrow("principal_mismatch");
+    expect(store.get(pending.id, "owner")?.quoteId).toBe("quote-private");
+  });
+
   it("requires the same principal to approve and consume", () => {
     const store = new ControlledCommerceApprovalStore();
     const pending = store.request({
