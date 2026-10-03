@@ -41,6 +41,9 @@ export type Revalidator = (p: ActionProposal) => Promise<DeterministicValidation
 
 export class ProposalError extends Error { constructor(public code: string) { super(code); } }
 
+const executedProposalIds = new Set<string>();
+const executingProposalIds = new Set<string>();
+
 export function propose(input: { action: GatedAction; tool: string; target: { kind: string; id: string }; payload: unknown; rationale: string; evidence: ActionProposal["evidence"]; ttlMs?: number; createdBy?: ActionProposal["created_by"] }, now = Date.now()): ActionProposal {
   if (!GATED_ACTIONS.includes(input.action)) throw new ProposalError("not_gated_action");
   if (!input.evidence.length || !input.evidence.every((e) => EvidenceSchema.safeParse(e).success)) throw new ProposalError("missing_evidence");
@@ -75,13 +78,19 @@ export async function executeProposal(p: ActionProposal, reg: ToolRegistry, ctx:
   const spec = reg.get(p.tool);
   if (!spec) return fail("unknown_tool");
   if (spec.risk !== (p.action as RiskLevel)) return fail("risk_mismatch");
+  if (executedProposalIds.has(p.proposal_id)) return fail("already_executed");
+  if (executingProposalIds.has(p.proposal_id)) return fail("execution_in_progress");
   const v = await revalidate(p);
   if (!v.ok) return fail(`revalidation_failed:${v.blockers.join(",")}`, { deterministic_validation: v, approval_state: "failed" });
+  executingProposalIds.add(p.proposal_id);
   try {
     const result = await reg.invoke(p.tool, p.input, { ...ctx, highRiskGrant: { tool: p.tool, action: p.action, grantedBy: p.action === "REFUND" ? "staff_approval" : "booking_readiness" } });
+    executedProposalIds.add(p.proposal_id);
     return { ok: true as const, result, proposal: { ...p, deterministic_validation: v, approval_state: "executed" as const } };
   } catch {
     return fail("execution_failed", { deterministic_validation: v, approval_state: "failed" });
+  } finally {
+    executingProposalIds.delete(p.proposal_id);
   }
 }
 
