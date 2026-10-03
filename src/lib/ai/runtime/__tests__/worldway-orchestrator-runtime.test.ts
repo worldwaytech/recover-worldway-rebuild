@@ -139,6 +139,37 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(result.results[0].result).toMatchObject({ decisionContract: { decision: "use itinerary", sourceTaskId: "decision-step" } });
   });
 
+  it("projects a validated ranking decision contract into bounded engine ranking input", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => task.input,
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "ranking decision",
+      tasks: [{
+        id: "decision-step",
+        kind: "deterministic",
+        metadata: { decisionContractProjection: "ranking" },
+        acceptedDecisionKinds: ["ranking"],
+        input: {
+          decisionContract: {
+            contractVersion: "1.0", decisionKind: "ranking", decision: "rank luxury options", confidence: 0.9,
+            evidence: [{ source: "runtime-test", reference: "ranking:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test", sourceTaskId: "decision-step",
+            constraints: ["ranking.weight.luxury=0.8", "ranking.weight.price=1", "ranking.weight.unknown=0.9"],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    expect(result.results[0].result).toMatchObject({
+      rankingProfile: { weights: { luxury: 0.8, price: 1 } },
+    });
+    expect((result.results[0].result as Record<string, unknown>).rankingProfile).not.toHaveProperty("weights.unknown");
+  });
+
   it("rejects legacy raw model decisions before deterministic execution", async () => {
     let executed = false;
     const runtime = createWorldwayOrchestratorRuntime({
