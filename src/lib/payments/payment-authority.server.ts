@@ -84,7 +84,7 @@ export async function resolvePaymentAuthority(userId?: string | null): Promise<P
   const resolvedUserId = userId ?? await optionalUserId();
   if (!resolvedUserId) return { ...DEFAULT_POLICY, userId: null, tenantId: null };
 
-  const sb = await db();
+  const sb = (await db()) as any;
   const accountType = await roleFor(resolvedUserId);
   const tenantId = await tenantFor(resolvedUserId);
 
