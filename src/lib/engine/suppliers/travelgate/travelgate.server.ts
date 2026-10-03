@@ -1,4 +1,4 @@
-import type { CanonicalOffer } from "../normalize";
+import type { CanonicalOffer } from "../../normalize";
 import { localToInstant, airportTz } from "../live-search.server";
 
 export interface TravelgateHotelOption {
