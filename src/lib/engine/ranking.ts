@@ -1,5 +1,5 @@
 // Explainable ranking of complete packages + booking-readiness gate.
-import { checkChronology } from "./chronology";
+import { checkChronology, checkTripWindow } from "./chronology";
 import { bookingBlockers } from "./capabilities";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
 
@@ -46,7 +46,7 @@ export function rankPackages(
   const max = Math.max(...totals);
   return candidates
     .map((c) => {
-      const issues = auditPackage(c.items, registry);
+      const issues = [...auditPackage(c.items, registry), ...checkTripWindow(c.items, req)];
       const errors = issues.filter((i) => i.severity === "error").length;
       const quality = avg(c.items.map((i) => (i.quality ?? 3) / 5));
       const luxuryFit = 1 - Math.abs(quality * 5 - req.luxuryLevel) / 5;
