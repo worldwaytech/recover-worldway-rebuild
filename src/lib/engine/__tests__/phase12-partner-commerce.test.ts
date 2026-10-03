@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  requireScope,
+  PartnerAuthError,
   assertPartnerActive,
   calculatePartnerPrice,
   commissionFor,
@@ -79,6 +81,21 @@ describe("Phase 12 partner commerce", () => {
     expect(single.apiProducts).toHaveLength(1);
     expect(multi.apiProducts).toEqual(expect.arrayContaining(["flights", "hotels", "tours"]));
     expect(full.apiProducts).toHaveLength(9);
+  });
+
+  it("enforces API product entitlements independently from operation scopes", () => {
+    const base = {
+      tenantId: "tenant-001",
+      method: "api_key" as const,
+      keyId: "key-1",
+      userId: null,
+      scopes: ["flights.search", "tours.read"] as const,
+      rateLimitPerMinute: 60,
+    };
+    expect(() => requireScope({ ...base, apiProducts: ["flights"], apiAccessMode: "single_product" }, "searchFlights")).not.toThrow();
+    expect(() => requireScope({ ...base, apiProducts: ["flights"], apiAccessMode: "single_product" }, "searchTours")).toThrow(PartnerAuthError);
+    expect(() => requireScope({ ...base, apiProducts: ["flights", "tours"], apiAccessMode: "multi_product" }, "searchTours")).not.toThrow();
+    expect(() => requireScope({ ...base, apiProducts: [], apiAccessMode: "full_catalogue" }, "searchTours")).not.toThrow();
   });
 
   it("gates partner wallet reservation by status, currency and policy", () => {
