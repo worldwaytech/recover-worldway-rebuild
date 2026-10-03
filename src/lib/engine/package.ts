@@ -4,7 +4,7 @@
 import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically } from "./chronology";
 import { buildItinerary, checkTripRequirements, createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
-import { pricePackage, type FxTable, type PricingRule } from "./pricing";
+import { pricePackage, pricePackageDynamically, type FxTable, type PricingPolicy, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
 import { optimizePackageSet, type RankingProfile } from "./optimization";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
@@ -21,6 +21,11 @@ export interface PipelineInput {
   currency: string;
   fx: FxTable;
   ruleFor: (c: NormalizedComponent) => PricingRule | null;
+  /** Phase 8 bounded dynamic commercial policy. When present it supersedes ruleFor for pricing. */
+  pricingPolicy?: PricingPolicy;
+  /** Optional deterministic/AI-derived demand signals, bounded by pricingPolicy. */
+  pricingSignalsFor?: (c: NormalizedComponent) => Parameters<typeof pricePackageDynamically>[3] extends ((x: NormalizedComponent) => infer R) ? R : never;
+  pricingNow?: string;
   orchestration?: TripRequirementProfile;
   ranking?: RankingProfile;
   optimization?: { enabled?: boolean; limit?: number };
@@ -32,13 +37,19 @@ export interface PipelinePackage extends RankedPackage {
   journeySegments: ReturnType<typeof buildJourneySegments>;
   /** Phase 7 optimized shortlist membership. */
   optimized: boolean;
-  pricing: ReturnType<typeof pricePackage> | null;
+  pricing: ReturnType<typeof pricePackage> | ReturnType<typeof pricePackageDynamically> | null;
   rejected: { externalId: string; reason: string }[];
   itinerary: ReturnType<typeof buildItinerary>;
 }
 
 function tryPrice(items: NormalizedComponent[], i: PipelineInput) {
   try {
+    if (i.pricingPolicy) {
+      return {
+        pricing: pricePackageDynamically(items, i.fx, i.pricingPolicy, i.pricingSignalsFor, i.pricingNow),
+        error: null as string | null,
+      };
+    }
     return { pricing: pricePackage(items, i.currency, i.fx, i.ruleFor), error: null as string | null };
   } catch (e) {
     return { pricing: null, error: e instanceof Error ? e.message : "pricing failed" };
@@ -56,7 +67,6 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     const { pricing, error } = tryPrice(graph, input);
     return { id: c.id, graph, chronology, requirementCheck, orchestration, rejected, pricing, priceError: error };
   });
-  // Only priced packages have a comparable total; unpriced sort last and are never bookable.
   const optimizationInputs = built.map((b) => ({ id: b.id, items: b.graph, total: b.pricing?.total ?? Number.MAX_SAFE_INTEGER }));
   const optimizedIds = new Set(
     input.optimization?.enabled === false
