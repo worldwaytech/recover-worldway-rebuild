@@ -55,6 +55,7 @@ export const getTourDepartureList = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-departures", requestFingerprint(currentRequest())), 60, 60);
     const { getTourDepartures } = await import("./tours.server");
     return getTourDepartures(data.id, data.currency ?? "USD", data.fromDate);
   });
@@ -196,6 +197,7 @@ export const getTourReservation = createServerFn({ method: "POST" })
 export const getTourDepartureRequirements = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ departureId: z.string().max(30) }).parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-requirements", requestFingerprint(currentRequest())), 60, 60);
     const { getDepartureRequirements, getTourCancellationTerms } = await import(
       "./tours-booking.server"
     );
@@ -242,6 +244,7 @@ export const getTourDealsList = createServerFn({ method: "POST" })
     z.object({ limit: z.number().int().min(1).max(24).optional() }).parse(d ?? {}),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-deals", requestFingerprint(currentRequest())), 60, 60);
     const { getTourDeals } = await import("./tours-taxonomy.server");
     return getTourDeals(data.limit ?? 12);
   });
@@ -251,6 +254,7 @@ export const getTourDeparture = createServerFn({ method: "POST" })
     z.object({ departureId: z.string().max(30), currency: z.string().max(3).optional() }).parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-departure", requestFingerprint(currentRequest())), 60, 60);
     const { getDepartureDetail } = await import("./tours.server");
     return getDepartureDetail(data.departureId, data.currency ?? "USD");
   });
@@ -266,6 +270,7 @@ export const getRelatedTours = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("tour-related", requestFingerprint(currentRequest())), 60, 60);
     const { getSimilarTours } = await import("./tours.server");
     return getSimilarTours(data.id, data.currency ?? "USD", data.limit ?? 3);
   });
