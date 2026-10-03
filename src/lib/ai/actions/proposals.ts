@@ -43,6 +43,17 @@ export class ProposalError extends Error { constructor(public code: string) { su
 
 const executedProposalIds = new Set<string>();
 const executingProposalIds = new Set<string>();
+const approvedProposalRefs = new WeakSet<ActionProposal>();
+
+function freezeSnapshot<T>(value: T, seen = new WeakSet<object>()): T {
+  if (value === null || typeof value !== "object") return value;
+  if (seen.has(value as object)) return value;
+  seen.add(value as object);
+  for (const child of Object.values(value as Record<string, unknown>)) {
+    if (child && typeof child === "object") freezeSnapshot(child, seen);
+  }
+  return Object.freeze(value);
+}
 
 export function propose(input: { action: GatedAction; tool: string; target: { kind: string; id: string }; payload: unknown; rationale: string; evidence: ActionProposal["evidence"]; ttlMs?: number; createdBy?: ActionProposal["created_by"] }, now = Date.now()): ActionProposal {
   if (!GATED_ACTIONS.includes(input.action)) throw new ProposalError("not_gated_action");
@@ -61,7 +72,16 @@ export function approve(p: ActionProposal, approver: { userId: string; permissio
   if (p.approval_state !== "pending") throw new ProposalError(`not_pending:${p.approval_state}`);
   if (Date.parse(p.expires_at) <= now) return { ...p, approval_state: "expired" };
   if (RANK[approver.permission] < RANK[p.required_permission]) throw new ProposalError("insufficient_permission");
-  return { ...p, approval_state: "approved", approved_by: approver.userId };
+  const approved = freezeSnapshot({
+    ...p,
+    target: structuredClone(p.target),
+    input: structuredClone(p.input),
+    evidence: structuredClone(p.evidence),
+    approval_state: "approved" as const,
+    approved_by: approver.userId,
+  });
+  approvedProposalRefs.add(approved);
+  return approved;
 }
 
 /**
@@ -73,7 +93,7 @@ export async function executeProposal(p: ActionProposal, reg: ToolRegistry, ctx:
     emit({ type: "policy.decision", correlationId: ctx.correlationId, tool: p.tool, risk: p.action, outcome: "proposal_blocked", reason: code });
     return { ok: false as const, code, proposal: { ...p, ...extra } };
   };
-  if (p.approval_state !== "approved" || !p.approved_by) return fail("not_approved");
+  if (p.approval_state !== "approved" || !p.approved_by || !approvedProposalRefs.has(p)) return fail("not_approved");
   if (Date.parse(p.expires_at) <= now) return fail("expired", { approval_state: "expired" });
   const spec = reg.get(p.tool);
   if (!spec) return fail("unknown_tool");
