@@ -65,9 +65,10 @@ describe("Phase 5 multi-city intelligence", () => {
     ]);
     expect(proposal!.result.issues.some((x) => x.code === "hotel-date-mismatch")).toBe(false);
     expect(proposal!.result.issues.some((x) => x.code === "outside-trip-window")).toBe(false);
-    expect(proposal!.result.journeySegments.map((x) => x.fromPlace + ">" + x.toPlace)).toEqual([
-      "LHR>CDG", "CDG>FCO", "FCO>ATH", "ATH>LHR",
-    ]);
+    expect(proposal!.result.graph
+      .filter((x) => x.kind === "flight")
+      .map((x) => x.start.place + ">" + x.end.place))
+      .toEqual(["LHR>CDG", "CDG>FCO", "FCO>ATH", "ATH>LHR"]);
   });
 
   it("hard-gates a multi-city package when a city hotel uses the wrong local arrival date", () => {
