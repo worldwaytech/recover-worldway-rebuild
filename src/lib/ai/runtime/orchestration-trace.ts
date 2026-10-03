@@ -24,8 +24,10 @@ export interface OrchestrationTaskTrace {
 const OPAQUE_REF = /^[A-Za-z0-9._:-]{1,160}$/;
 const MAX_EVIDENCE = 32;
 const MAX_SOURCE = 80;
+const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 
-export function sanitizeOrchestrationEvidence(input: unknown): OrchestrationEvidence[] {
+export function sanitizeOrchestrationEvidence(input: unknown, now: Date = new Date()): OrchestrationEvidence[] {
+  if (!Number.isFinite(now.getTime())) return [];
   if (!Array.isArray(input)) return [];
   const out: OrchestrationEvidence[] = [];
   for (const item of input.slice(0, MAX_EVIDENCE)) {
@@ -36,7 +38,13 @@ export function sanitizeOrchestrationEvidence(input: unknown): OrchestrationEvid
     const observedAt = typeof value.observedAt === "string" ? value.observedAt : "";
     const confidence = typeof value.confidence === "number" ? value.confidence : NaN;
     if (!source || !OPAQUE_REF.test(reference) || !Number.isFinite(confidence) || !observedAt) continue;
+    const observedMs = Date.parse(observedAt);
+    if (!Number.isFinite(observedMs) || observedMs > now.getTime() + MAX_FUTURE_SKEW_MS) continue;
     const expiresAt = typeof value.expiresAt === "string" ? value.expiresAt : undefined;
+    if (expiresAt) {
+      const expiresMs = Date.parse(expiresAt);
+      if (!Number.isFinite(expiresMs) || expiresMs <= observedMs) continue;
+    }
     out.push({
       source: source.slice(0, MAX_SOURCE),
       reference,
