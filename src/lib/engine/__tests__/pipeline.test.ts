@@ -52,7 +52,7 @@ describe("end-to-end package pipeline", () => {
   });
 
   it("blocks a package that falls outside the requested trip window", () => {
-    const lateReturn = { ...flight, externalId: "F-late", end: { ...flight.end, at: "2026-10-16T03:30:00Z" } };
+    const lateReturn = { ...flight, externalId: "F-late", start: { ...flight.start, at: "2026-10-16T03:30:00Z" }, end: { ...flight.end, at: "2026-10-16T11:00:00Z" } };
     const out = runPackagePipeline(base([
       { id: "late-return", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), lateReturn] },
     ]));
