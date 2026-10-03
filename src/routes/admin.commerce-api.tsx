@@ -111,7 +111,7 @@ function TenantCard({ t, onKey, onRevoke, onRotate, onLimit, onStatus, onMember 
           {t.keys.map((k: any) => (
             <div key={k.id} className="flex flex-wrap items-center gap-2 border-b py-1">
               <code className="text-xs">{k.key_prefix}…</code><span>{k.label}</span>
-              <span className="text-xs text-muted-foreground">{k.scopes.join(", ")}</span>
+              <span className="text-xs text-muted-foreground">{k.api_access_mode ?? "legacy"} · {(k.api_products ?? []).join(", ") || "legacy entitlement"} · scopes: {k.scopes.join(", ")}</span>
               <span className="text-xs text-muted-foreground">{k.revoked_at ? "revoked" : k.expires_at ? `expires ${new Date(k.expires_at).toLocaleDateString()}` : ""}{k.last_used_at ? ` · used ${new Date(k.last_used_at).toLocaleString()}` : " · never used"}</span>
               {!k.revoked_at && <Button size="sm" variant="ghost" onClick={() => onRotate(k.id)}>Rotate</Button>}
               {!k.revoked_at && <Button size="sm" variant="ghost" onClick={() => onRevoke(k.id)}>Revoke</Button>}
