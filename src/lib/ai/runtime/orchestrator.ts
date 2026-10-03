@@ -207,7 +207,7 @@ export class SpecialistTaskExecutor implements TaskExecutor {
 
 
 export interface ValidatedModelOutput {
-  output: unknown;
+  output: Record<string, unknown>;
   /** Opaque provenance references that justify the accepted model output. */
   evidence: unknown[];
 }
@@ -229,7 +229,7 @@ export class RoutedModelTaskExecutor implements TaskExecutor {
       const raw = await this.options.invoke(model, task.modelTask!, task.input, ctx.correlationId);
       const validated = this.options.validateOutput(task.modelTask!, raw, ctx.correlationId);
       if (validated === null) throw new OrchestrationValidationError(`Model output validation failed for ${task.id}`);
-      return { ...validated.output as object, evidence: validated.evidence };
+      return { ...validated.output, evidence: validated.evidence };
     }, this.options.router, ctx.correlationId);
   }
 }
