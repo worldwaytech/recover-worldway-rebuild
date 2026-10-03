@@ -110,6 +110,18 @@ describe("Worldway typed decision contract", () => {
       constraints: ["supplierAction=confirmed"],
     })).toBeNull();
 
+    const unsafeConstraintContract = createWorldwayDecisionContract({
+      decisionKind: "recommendation",
+      decision: "Use the validated itinerary",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+      constraints: ["deterministic-only", "booking.readiness.check=true"],
+    });
+    expect(unsafeConstraintContract).toBeNull();
+
     const safe = createWorldwayDecisionContract({
       decisionKind: "ranking",
       decision: "Prioritize the validated itinerary",
