@@ -2,6 +2,7 @@
 // Normalize → Trip Graph → Ranking → Package Audit → Pricing → Booking Readiness.
 // No supplier knowledge; AI never supplies availability, schedules or prices.
 import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically } from "./chronology";
+import { createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
@@ -19,6 +20,7 @@ export interface PipelineInput {
   currency: string;
   fx: FxTable;
   ruleFor: (c: NormalizedComponent) => PricingRule | null;
+  orchestration?: TripRequirementProfile;
 }
 
 export interface PipelinePackage extends RankedPackage {
@@ -42,6 +44,7 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     const { components, rejected } = normalizeOffers(c.offers);
     const graph = sortChronologically(components);
     const chronology = buildChronologicalTripGraph(graph);
+    const orchestration = detectOrchestrationConflicts(graph, input.orchestration ?? createTripRequirementProfile(input.requirements));
     const { pricing, error } = tryPrice(graph, input);
     return { id: c.id, graph, chronology, rejected, pricing, priceError: error };
   });
@@ -53,7 +56,11 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
   );
   return ranked.map((r) => {
     const b = built.find((x) => x.id === r.id)!;
-    const issues: AuditIssue[] = [...b.chronology.issues, ...r.issues];
+    const issues: AuditIssue[] = [
+      ...b.chronology.issues,
+      ...b.orchestration.map((x) => ({ code: x.code, severity: x.severity, componentIds: x.componentIds, message: x.message }) satisfies AuditIssue),
+      ...r.issues,
+    ];
     if (!b.pricing) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: b.priceError ?? "Price unavailable" });
     if (b.rejected.length) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: `${b.rejected.length} supplier result(s) could not be normalised.` });
     const bookable = r.bookable && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
