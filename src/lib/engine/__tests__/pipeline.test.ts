@@ -79,11 +79,11 @@ describe("end-to-end package pipeline", () => {
       { id: "reliable", offers: [flight, transfer, { ...hotel("2026-10-11T14:00:00Z", "low"), externalId: "H-reliable", quality: 3 }] },
     ];
     const reliabilityRegistry = new Map(reg).set("low", { ...prod("low", "stay"), reliability: 0.1 });
-    const luxury = runPackagePipeline({ ...base(candidates), ranking: { weights: { luxury: 1 } } });
-    const defaulted = runPackagePipeline({ ...base(candidates), registry: reliabilityRegistry, ranking: { weights: { reliability: 1 } } });
+    const luxury = runPackagePipeline({ ...base(candidates), registry: reliabilityRegistry, ranking: { weights: { luxury: 1 } } });
+    const reliabilityWeighted = runPackagePipeline({ ...base(candidates), registry: reliabilityRegistry, ranking: { weights: { reliability: 1 } } });
     expect(luxury[0]!.id).toBe("luxury");
-    expect(defaulted[0]!.id).toBe("luxury");
-    expect(defaulted.find((p) => p.id === "reliable")!.bookable).toBe(true);
+    expect(reliabilityWeighted[0]!.id).toBe("luxury");
+    expect(reliabilityWeighted.find((p) => p.id === "reliable")!.bookable).toBe(true);
     expect(luxury.find((p) => p.id === "reliable")!.bookable).toBe(true);
   });
 
