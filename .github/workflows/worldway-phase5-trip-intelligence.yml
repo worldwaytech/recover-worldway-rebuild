@@ -8,7 +8,7 @@ on:
       - "src/lib/engine/package.ts"
       - "src/lib/engine/types.ts"
       - "src/lib/engine/suppliers/assembly.server.ts"
-      - "src/lib/engine/__tests__/pipeline.test.ts"
+      - "src/lib/engine/__tests__/pipeline.test.ts src/lib/engine/__tests__/phase5-multicity.test.ts"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/worldway-phase5-trip-intelligence.yml"
