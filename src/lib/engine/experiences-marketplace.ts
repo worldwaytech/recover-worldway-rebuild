@@ -64,8 +64,10 @@ export interface ExperienceSearchRequest {
 export interface MarketplaceSyncSnapshot {
   supplierKey: string;
   observedAt: string;
-  uniqueExperienceCount: number;
-  destinationLinkCount: number;
+  expectedUniqueExperienceCount: number;
+  observedUniqueExperienceCount: number;
+  expectedDestinationLinkCount: number;
+  observedDestinationLinkCount: number;
   pages?: number;
   pageSize?: number;
 }
