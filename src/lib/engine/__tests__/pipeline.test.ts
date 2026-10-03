@@ -114,7 +114,7 @@ describe("end-to-end package pipeline", () => {
       offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity],
     };
     const profile = {
-      requirements: base([candidate]).requirements,
+      trip: base([candidate]).requirements,
       requiredKinds: ["flight" as const],
       preferredKinds: ["activity" as const],
       optionalKinds: [],
@@ -142,8 +142,7 @@ describe("end-to-end package pipeline", () => {
     expect(pkg.optimized).toBe(true);
     expect(pkg.pricing).not.toBeNull();
     expect(pkg.pricing!.total).toBeGreaterThan(0);
-    expect(pkg.requirementCheck.missing).toEqual([]);
-    expect(pkg.requirementCheck.preferredMissing).toEqual([]);
+    expect(pkg.issues.some((issue) => issue.code === "missing-required-product")).toBe(false);
     expect(pkg.graph.map((item) => item.kind)).toEqual(["flight", "transfer", "stay", "activity"]);
     expect(pkg.itinerary.length).toBeGreaterThan(0);
   });
@@ -154,7 +153,7 @@ describe("end-to-end package pipeline", () => {
       offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity],
     };
     const profile = {
-      requirements: base([candidate]).requirements,
+      trip: base([candidate]).requirements,
       requiredKinds: ["flight" as const, "insurance" as const],
       preferredKinds: ["activity" as const],
       optionalKinds: [],
@@ -162,9 +161,7 @@ describe("end-to-end package pipeline", () => {
       visa: "not-requested" as const,
     };
     const [pkg] = runPackagePipeline({ ...base([candidate]), orchestration: profile, ranking: { weights: { preference: 1 } } });
-    expect(pkg!.requirementCheck.missing).toEqual([
-      { kind: "insurance", reason: "Travel insurance was explicitly required." },
-    ]);
+    expect(pkg!.issues.some((issue) => issue.code === "missing-required-product" && issue.message === "Travel insurance was explicitly required.")).toBe(true);
     expect(pkg!.bookable).toBe(false);
   });
 
