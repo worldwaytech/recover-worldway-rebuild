@@ -1,7 +1,7 @@
 // Worldway Traveller + Trip Memory foundation.
 // Post-Phase-16 Upgrade 3: a unified, consent-aware context envelope.
 // Persistence remains in the existing Phase-13 travel_dna/travel_memory stores.
-// This layer is deterministic and contains no booking/payment authority.
+// This layer is deterministic and contains no booking/payment authority.\n// Current requests remain authoritative over remembered trip facts.
 
 import type { PersonalizationContext, TravelerProfile } from "../engine/intelligence/traveler-profile";
 
