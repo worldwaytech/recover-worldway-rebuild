@@ -2,7 +2,7 @@
 
 export type TraceEventType =
   | "model.route" | "model.call" | "model.fallback" | "model.failure"
-  | "tool.call" | "tool.denied" | "tool.result" | "policy.decision" | "safety.flag" | "authority.violation" | "plan.rejected";
+  | "tool.call" | "tool.denied" | "tool.result" | "policy.decision" | "safety.flag" | "authority.violation" | "plan.rejected" | "orchestration.task" | "orchestration.evidence";
 
 export interface TraceEvent {
   type: TraceEventType;

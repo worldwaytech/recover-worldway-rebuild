@@ -158,4 +158,21 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.results.find((r) => r.taskId === "first")?.state).toBe("failed");
     expect(result.results.find((r) => r.taskId === "second")?.state).toBe("blocked");
   });
+  it("returns an auditable task trace with bounded provenance", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async () => ({
+        value: "ok",
+        evidence: [{ source: "travel-graph", reference: "edge:ist:123", observedAt: "2026-10-03T00:00:00Z", confidence: 0.9 }],
+      }),
+    });
+    const result = await orchestrator.run({
+      goal: "trace",
+      tasks: [{ id: "inspect", kind: "deterministic" }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    expect(result.trace.tasks[0]).toMatchObject({ taskId: "inspect", state: "completed", evidenceCount: 1 });
+    expect(result.trace.evidence[0].items[0].reference).toBe("edge:ist:123");
+  });
+
 });
