@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { rankKnowledgeHits } from "./retrieval-ranking";
 
 const DocumentInput = z.object({
   sourceType: z.enum(["official", "supplier", "worldway", "web", "document", "regulatory"]),
@@ -107,12 +108,13 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
 export async function searchKnowledge(query: string, limit = 8): Promise<KnowledgeHit[]> {
   const q = z.string().trim().min(1).max(500).parse(query);
   const n = Math.min(20, Math.max(1, Math.trunc(limit)));
+  const candidateLimit = Math.min(50, Math.max(n, n * 3));
   const client = await db();
   const { data: rawChunks, error } = await client
     .from("worldway_knowledge_chunks")
     .select("id,document_id,content")
     .textSearch("content_tsv", q, { type: "websearch", config: "simple" })
-    .limit(n);
+    .limit(candidateLimit);
   const chunks = (rawChunks ?? []) as KnowledgeChunkRow[];
   if (error || !chunks.length) return [];
 
@@ -140,7 +142,7 @@ export async function searchKnowledge(query: string, limit = 8): Promise<Knowled
     if (e.chunk_id && !evidenceMap.has(e.chunk_id)) evidenceMap.set(e.chunk_id, e);
   }
 
-  return chunks
+  const ranked = chunks
     .map((c: KnowledgeChunkRow) => {
       const d = docMap.get(c.document_id);
       const e = evidenceMap.get(c.id);
@@ -161,6 +163,8 @@ export async function searchKnowledge(query: string, limit = 8): Promise<Knowled
     })
     .filter((x): x is KnowledgeHit => x !== null)
     .filter((x) => !x.validUntil || Date.parse(x.validUntil) > Date.now());
+
+  return rankKnowledgeHits(ranked).slice(0, n);
 }
 
 export function isKnowledgeFresh(validUntil: string | null, now = Date.now()): boolean {
