@@ -51,13 +51,15 @@ export async function checkTripjackConnectivity(): Promise<SuiteConnectivity[]> 
   const cabs = await tripjackCall<unknown>("cabs", "location-search", { input: "igi" });
   const cabsResult: SuiteConnectivity = cabs.ok
     ? { suite: "cabs", state: "LIVE", httpStatus: 200, detail: "Location Search responded with JSON.", correlationId: cabs.correlationId, checkedAt }
-    : cabs.error.kind === "invalid-response" || cabs.error.status === 404 || cabs.error.status === 403
+    : cabs.error.kind === "invalid-response" || [401, 403, 404, 503].includes(cabs.error.status ?? 0)
       ? {
           suite: "cabs",
           state: "SUPPLIER-SIDE BLOCKED",
           httpStatus: cabs.error.status ?? null,
           detail:
-            "Cabs UAT endpoint is not reachable with this key (HTTP 404 / non-JSON). TripJack must enable the Cabs product on the API key and whitelist the server egress IP. Not bypassed.",
+            cabs.error.status === 503
+              ? "Cabs UAT Location Search returned HTTP 503. Worldway has a documented endpoint and relay path; supplier/egress access remains blocked until TripJack confirms the Cabs UAT product is enabled for this key and the calling egress IP is allow-listed."
+              : "Cabs UAT endpoint is not reachable with this key. TripJack must enable the Cabs product on the API key and/or whitelist the server egress IP. Not bypassed.",
           correlationId: cabs.correlationId,
           checkedAt,
         }
