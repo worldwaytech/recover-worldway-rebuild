@@ -44,8 +44,11 @@ describe("Controlled Agentic Commerce", () => {
     const approved = store.approve(pending.id, "user-2");
     expect(approved.status).toBe("approved");
 
-    const grant = store.toHighRiskGrant(pending.id, "user-2");
-    expect(grant).toEqual({ tool: "pay_trip", grantedBy: "staff_approval" });
+    expect(() => store.toHighRiskGrant(pending.id, "user-2", false))
+      .toThrow("booking_readiness_required");
+
+    const grant = store.toHighRiskGrant(pending.id, "user-2", true);
+    expect(grant).toEqual({ tool: "pay_trip", grantedBy: "booking_readiness" });
 
     const consumed = store.consume(pending.id, "user-2");
     expect(consumed.status).toBe("consumed");
