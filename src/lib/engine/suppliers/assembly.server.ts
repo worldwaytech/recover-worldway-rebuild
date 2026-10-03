@@ -86,6 +86,155 @@ function onRequestFor(offers: CanonicalOffer[], extra: OnRequestItem[]): Classif
   return items.map((i) => ({ ...i, status: "ON_REQUEST" as const }));
 }
 
+
+export interface MultiCityJourney {
+  transports: CanonicalOffer[];
+  stays: CanonicalOffer[];
+}
+
+/**
+ * Deterministic multi-city proposal constructor. It never invents a city date:
+ * each next-city transport is anchored to an actual preceding arrival and the
+ * supplier's published departure timestamp.
+ */
+export function combineMultiCity(
+  req: TripRequirements,
+  journeys: MultiCityJourney[],
+  currency: string,
+  onRequest: OnRequestItem[],
+  fx: FxTable = { [currency]: 1 },
+) {
+  const candidates = journeys.map((j, i) => ({
+    id: "MC" + (i + 1),
+    offers: [...j.transports, ...j.stays],
+  }));
+  return runCandidates(req, candidates, currency, onRequest, new Map(), fx);
+}
+
+async function searchFlightsForDates(
+  origin: string,
+  destination: string,
+  dates: string[],
+  passengers: number,
+  cabin: "economy" | "business",
+) {
+  const results = await Promise.all(
+    [...new Set(dates)].map((date) =>
+      searchFlightsCanonical(origin, destination, date, passengers, cabin)
+        .catch(() => ({ offers: [], error: "Flight search unavailable", query: undefined }))
+    ),
+  );
+  return results.flatMap((r) => r.offers);
+}
+
+async function assembleMultiCityLiveProposals(req: TripRequirements, opts: AssemblyOptions): Promise<AssemblyReport> {
+  const cabin = req.luxuryLevel >= 5 ? "business" : "economy";
+  const pax = req.adults + req.children;
+  const destinations = req.destinations;
+  const first = destinations[0]!;
+  const last = destinations[destinations.length - 1]!;
+  const out = await searchFlightsCanonical(req.origin, first, req.departFrom, pax, cabin);
+  const back = await searchFlightsCanonical(last, req.origin, req.returnBy, pax, cabin);
+  const currency = out.offers[0]?.net.currency ?? back.offers[0]?.net.currency ?? "INR";
+  const arrivalDate = out.offers[0] ? localDateIn(out.offers[0].end.at, out.offers[0].end.timezone) : null;
+  const departureDate = back.offers[0] ? localDateIn(back.offers[0].start.at, back.offers[0].start.timezone) : req.returnBy;
+
+  let frontier = out.offers.slice(0, 3).map((transport) => ({ transports: [transport] }));
+  for (let i = 0; i < destinations.length - 1 && frontier.length; i += 1) {
+    const from = destinations[i]!;
+    const to = destinations[i + 1]!;
+    const dates = frontier.flatMap((x) => {
+      const arrival = x.transports.at(-1)!;
+      const start = new Date(Date.parse(arrival.end.at));
+      const values: string[] = [];
+      for (let d = 0; d < 7; d += 1) {
+        const day = new Date(start);
+        day.setUTCDate(day.getUTCDate() + d);
+        const iso = day.toISOString().slice(0, 10);
+        if (iso < req.returnBy) values.push(iso);
+      }
+      return values;
+    });
+    const flights = await searchFlightsForDates(from, to, dates, pax, cabin);
+    const next: { transports: CanonicalOffer[] }[] = [];
+    for (const state of frontier) {
+      const previous = state.transports.at(-1)!;
+      const candidates = flights
+        .filter((f) => Date.parse(f.start.at) > Date.parse(previous.end.at) && Date.parse(f.end.at) < Date.parse(back.offers[0]?.start.at ?? "9999-12-31T23:59:59Z"))
+        .sort((a, b) => Date.parse(a.start.at) - Date.parse(b.start.at))
+        .slice(0, 2);
+      for (const flight of candidates) next.push({ transports: [...state.transports, flight] });
+    }
+    frontier = next.slice(0, 12);
+  }
+
+  const complete = frontier.flatMap((state) => back.offers
+    .filter((r) => Date.parse(r.start.at) > Date.parse(state.transports.at(-1)!.end.at))
+    .slice(0, 2)
+    .map((r) => ({ ...state, transports: [...state.transports, r] })));
+
+  const stayQueries = new Map<string, { city: string; checkin: string; checkout: string }>();
+  for (const state of complete) {
+    for (let i = 0; i < destinations.length; i += 1) {
+      const arrival = state.transports[i]!;
+      const onward = state.transports[i + 1]!;
+      const checkin = localDateIn(arrival.end.at, arrival.end.timezone);
+      const checkout = localDateIn(onward.start.at, onward.start.timezone);
+      if (checkout > checkin) {
+        const key = destinations[i] + "|" + checkin + "|" + checkout;
+        stayQueries.set(key, { city: destinations[i]!, checkin, checkout });
+      }
+    }
+  }
+
+  const stayMap = new Map<string, CanonicalOffer[]>();
+  await Promise.all([...stayQueries.values()].map(async (q) => {
+    const h = await searchHotelsCanonical(q.city, q.checkin, q.checkout, req.adults);
+    stayMap.set(q.city + "|" + q.checkin + "|" + q.checkout, h.offers);
+  }));
+
+  const journeys: MultiCityJourney[] = complete.map((state) => ({
+    transports: state.transports,
+    stays: destinations.flatMap((city, i) => {
+      const arrival = state.transports[i]!;
+      const onward = state.transports[i + 1]!;
+      const checkin = localDateIn(arrival.end.at, arrival.end.timezone);
+      const checkout = localDateIn(onward.start.at, onward.start.timezone);
+      return checkout > checkin ? (stayMap.get(city + "|" + checkin + "|" + checkout) ?? []).slice(0, 2) : [];
+    }),
+  }));
+
+  const { approvedFx } = await import("./fx.server");
+  const allOffers = journeys.flatMap((j) => [...j.transports, ...j.stays]);
+  const fxr = await approvedFx(currency, [...new Set(allOffers.map((o) => o.net.currency))]);
+  const extra: OnRequestItem[] = [
+    { kind: "transfer", title: "Inter-city and airport transfers", reason: "Ground transport must be confirmed against the final chronological itinerary.", indicativeFrom: null, ref: "multi-city-transfer" },
+    { kind: "insurance", title: "Travel insurance", reason: "Insurance supplier is not production-certified.", indicativeFrom: null, ref: "insurance" },
+  ];
+  const ranked = journeys.length ? combineMultiCity(req, journeys, currency, extra, fxr.table) : [];
+  const shortlist = ranked.slice(0, 3);
+  const { revalidateOffers } = await import("./revalidate.server");
+  const final = shortlist.length ? await revalidateProposals(req, shortlist, currency, extra, revalidateOffers, fxr.table) : { proposals: [], revalidation: [] };
+  const used = new Set(final.proposals.flatMap((p) => p.offers.map((o) => o.supplierKey)));
+  const reg = supplierRegistry();
+  return {
+    currency,
+    fx: fxr.audit,
+    optionalStays: [],
+    tours: [],
+    selectedTour: null,
+    arrivalDate,
+    departureDate,
+    proposals: final.proposals,
+    coverage: SUPPLIER_CATALOG.map((s) => ({ supplierKey: s.supplierKey, kinds: s.kinds, live: liveStatus(s), usedInAssembly: used.has(s.supplierKey), bookable: bookingBlockers(reg.get(s)).length === 0 })),
+    sources: [
+      { step: "outbound", count: out.offers.length, error: out.error },
+      { step: "multi-city-transports", count: complete.length, error: complete.length ? null : "No chronological multi-city transport chain found" },
+      { step: "return", count: back.offers.length, error: back.error },
+    ],
+  };
+}
+
 /** Pure combination + pipeline step (tested without network). */
 export function combine(req: TripRequirements, outbound: CanonicalOffer[], stays: Map<string, CanonicalOffer[]>, inbound: CanonicalOffer[], currency: string, onRequest: OnRequestItem[], cruises: CanonicalOffer[] = [], fx: FxTable = { [currency]: 1 }, fixed: CanonicalOffer[] = []) {
   const candidates: { id: string; offers: CanonicalOffer[] }[] = [];
@@ -138,6 +287,7 @@ const CRUISE_INTEREST = /cruise|voyage|sail/i;
 export interface AssemblyOptions { tourRef?: string; tourQuery?: string }
 
 export async function assembleLiveProposals(req: TripRequirements, opts: AssemblyOptions = {}): Promise<AssemblyReport> {
+  if (req.destinations.length > 1) return assembleMultiCityLiveProposals(req, opts);
   const cabin = req.luxuryLevel >= 5 ? "business" : "economy";
   const pax = req.adults + req.children;
   const dest = req.destinations[0]!;
