@@ -1,0 +1,31 @@
+name: Worldway Phase 8 Dynamic Pricing Revenue
+on:
+  push:
+    branches: [phase-8-dynamic-pricing-revenue]
+  pull_request:
+    paths:
+      - 'src/lib/engine/pricing.ts'
+      - 'src/lib/engine/package.ts'
+      - 'src/lib/engine/__tests__/phase8-pricing.test.ts'
+      - 'src/lib/engine/__tests__/phase7-ranking.test.ts'
+      - 'src/lib/engine/__tests__/phase6-orchestration.test.ts'
+      - 'src/lib/engine/__tests__/phase5-multicity.test.ts'
+      - 'src/lib/engine/__tests__/chronology.phase5.test.ts'
+      - 'src/lib/engine/__tests__/pipeline.test.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/worldway-phase8-dynamic-pricing.yml'
+concurrency:
+  group: worldway-phase8-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test -- --run src/lib/engine/__tests__/chronology.phase5.test.ts src/lib/engine/__tests__/pipeline.test.ts src/lib/engine/__tests__/phase5-multicity.test.ts src/lib/engine/__tests__/phase6-orchestration.test.ts src/lib/engine/__tests__/phase7-ranking.test.ts src/lib/engine/__tests__/phase8-pricing.test.ts
