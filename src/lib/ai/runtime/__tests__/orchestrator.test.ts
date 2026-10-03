@@ -244,3 +244,48 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.ok).toBe(false);
     expect(result.results.find((r) => r.taskId === "deterministic-b")?.error).toContain("replay rejected");
   });
+
+
+  it("passes only a bounded specialist coordination envelope to deterministic consumers", async () => {
+    const captured: unknown[] = [];
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => {
+        if (task.kind === "specialist") {
+          return {
+            specialist: task.specialist,
+            taskId: task.id,
+            state: "completed",
+            output: { assessment: task.id },
+            evidence: [{ source: "specialist-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+          };
+        }
+        captured.push(task.input);
+        return "accepted";
+      },
+    });
+    const result = await orchestrator.run({
+      goal: "coordinate specialists",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess flights" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess hotels" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    const input = captured[0] as Record<string, unknown>;
+    const envelope = input.specialistCoordination as Record<string, unknown>;
+    expect(envelope.contractVersion).toBe("1.0");
+    expect(envelope.correlationId).toBe(result.correlationId);
+    expect((envelope.members as unknown[]).length).toBe(2);
+  });
+
+  it("rejects specialist coordination that bypasses dependency declaration", () => {
+    const result = validateOrchestrationRequest({
+      goal: "invalid coordination",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", coordinationFrom: ["flight-step"] },
+      ],
+    });
+    expect(result.problems).toContain("coordination_must_depend_on_member:decision-step->flight-step");
+  });

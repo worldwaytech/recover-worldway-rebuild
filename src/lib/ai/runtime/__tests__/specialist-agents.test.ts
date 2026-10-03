@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SPECIALIST_AGENT_DEFINITIONS, SPECIALIST_AGENT_KEYS, SpecialistAgentRegistry } from "../specialist-agents";
+import { buildSpecialistCoordinationEnvelope, SPECIALIST_AGENT_DEFINITIONS, SPECIALIST_AGENT_KEYS, SpecialistAgentRegistry } from "../specialist-agents";
 import { buildWorldwayOrchestrationContext } from "../context-bridge";
 import { EMPTY_TRAVELER_PROFILE, buildPersonalizationContext } from "../../../engine/intelligence/traveler-profile";
 
@@ -47,3 +47,26 @@ describe("Specialist Agent Framework", () => {
     await expect(registry.delegate({ id:"x", kind:"specialist", specialist:"unknown" as never, input:{ objective:"x" } }, contextValue)).rejects.toThrow("unknown_specialist");
   });
 });
+
+
+  it("builds a bounded coordination envelope with correlation binding", () => {
+    const envelope = buildSpecialistCoordinationEnvelope("corr-test", [
+      {
+        specialist: "flight_intelligence",
+        taskId: "flight-step",
+        state: "completed",
+        output: { recommendation: "review" },
+        evidence: [{ source: "test", reference: "flight-step", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+      },
+      {
+        specialist: "hotel_intelligence",
+        taskId: "hotel-step",
+        state: "completed",
+        output: { recommendation: "review" },
+        evidence: [{ source: "test", reference: "hotel-step", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+      },
+    ]);
+    expect(envelope?.contractVersion).toBe("1.0");
+    expect(envelope?.correlationId).toBe("corr-test");
+    expect(envelope?.members).toHaveLength(2);
+  });

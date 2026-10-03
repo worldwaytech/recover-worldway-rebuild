@@ -110,3 +110,56 @@ export class SpecialistAgentRegistry implements SpecialistDelegate {
     return { specialist, taskId: task.id, state: "completed", output, ...(evidence.length ? { evidence } : {}) };
   }
 }
+
+
+export interface SpecialistCoordinationMember {
+  taskId: string;
+  specialist: SpecialistAgentKey;
+  output: unknown;
+  evidence: OrchestrationEvidence[];
+}
+
+export interface SpecialistCoordinationEnvelope {
+  contractVersion: "1.0";
+  correlationId: string;
+  members: SpecialistCoordinationMember[];
+}
+
+const MAX_COORDINATION_MEMBERS = 10;
+const MAX_COORDINATION_OUTPUT_BYTES = 16_000;
+
+function boundedOutput(value: unknown): unknown {
+  try {
+    const serialized = JSON.stringify(value);
+    if (!serialized || serialized.length > MAX_COORDINATION_OUTPUT_BYTES) return null;
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+export function buildSpecialistCoordinationEnvelope(
+  correlationId: string,
+  results: readonly SpecialistResult[],
+): SpecialistCoordinationEnvelope | null {
+  if (!correlationId || results.length === 0 || results.length > MAX_COORDINATION_MEMBERS) return null;
+  const members: SpecialistCoordinationMember[] = [];
+  for (const result of results) {
+    if (result.state !== "completed") return null;
+    const output = boundedOutput(result.output);
+    if (output === null) return null;
+    const evidence = sanitizeOrchestrationEvidence(result.evidence ?? []);
+    members.push({ taskId: result.taskId, specialist: result.specialist, output, evidence });
+  }
+  return { contractVersion: "1.0", correlationId, members };
+}
+
+export function isSpecialistCoordinationEnvelope(value: unknown): value is SpecialistCoordinationEnvelope {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<SpecialistCoordinationEnvelope>;
+  return candidate.contractVersion === "1.0"
+    && typeof candidate.correlationId === "string"
+    && Array.isArray(candidate.members)
+    && candidate.members.length > 0
+    && candidate.members.length <= MAX_COORDINATION_MEMBERS;
+}

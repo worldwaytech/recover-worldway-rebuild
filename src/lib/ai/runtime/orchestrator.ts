@@ -12,6 +12,8 @@ import {
   type WorldwayDecisionKind,
 } from "./decision-contract";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
+import { buildSpecialistCoordinationEnvelope, type SpecialistAgentKey } from "./specialist-agents";
+import { sanitizeOrchestrationEvidence } from "./orchestration-trace";
 
 export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic" | "model";
 
@@ -47,6 +49,7 @@ export interface OrchestrationTask {
   handoffFrom?: string;
   /** Decision kinds this deterministic consumer explicitly accepts. */
   acceptedDecisionKinds?: WorldwayDecisionKind[];
+  coordinationFrom?: string[];
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -140,6 +143,7 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     if (task.handoffFrom && !(task.dependsOn ?? []).includes(task.handoffFrom)) problems.push(`handoff_must_depend_on_source:${task.id}->${task.handoffFrom}`);
     if (task.handoffFrom && !(task.acceptedDecisionKinds?.length)) problems.push(`handoff_missing_accepted_decision_kinds:${task.id}`);
     if (task.acceptedDecisionKinds?.some((kind) => !["recommendation", "classification", "ranking", "routing", "explanation"].includes(kind))) problems.push(`invalid_decision_kind:${task.id}`);
+    if (task.coordinationFrom?.length) { if (task.kind !== "deterministic") problems.push(`coordination_target_must_be_deterministic:${task.id}`); if (task.coordinationFrom.length > 10) problems.push(`coordination_member_limit:${task.id}`); if (task.coordinationFrom.includes(task.id)) problems.push(`coordination_self_reference:${task.id}`); for (const member of task.coordinationFrom) if (!(task.dependsOn ?? []).includes(member)) problems.push(`coordination_must_depend_on_member:${task.id}->${member}`); }
   }
 
   for (const task of tasks) {
@@ -260,6 +264,20 @@ function errorText(error: unknown) {
   return error instanceof Error ? error.message.slice(0, 160) : "task_error";
 }
 
+function validatedSpecialistCoordination(task: OrchestrationTask, ordered: OrchestrationTask[], results: Map<string, TaskExecutionResult>, correlationId: string): OrchestrationTask {
+  if (task.kind !== "deterministic" || !task.coordinationFrom?.length) return task;
+  const specialistResults = [];
+  for (const taskId of task.coordinationFrom) {
+    const sourceTask = ordered.find((candidate) => candidate.id === taskId);
+    const result = results.get(taskId);
+    if (!sourceTask || sourceTask.kind !== "specialist" || !sourceTask.specialist || !result || result.state !== "completed" || !result.result || typeof result.result !== "object") throw new OrchestrationValidationError(`Invalid specialist coordination member for ${task.id}:${taskId}`);
+    const value = result.result as Record<string, unknown>;
+    specialistResults.push({ specialist: sourceTask.specialist as SpecialistAgentKey, taskId, state: "completed" as const, output: value.output, evidence: sanitizeOrchestrationEvidence(value.evidence) });
+  }
+  const envelope = buildSpecialistCoordinationEnvelope(correlationId, specialistResults);
+  if (!envelope) throw new OrchestrationValidationError(`Specialist coordination envelope invalid for ${task.id}`);
+  return { ...task, input: { ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}), specialistCoordination: envelope } };
+}
 function validatedModelHandoff(
   task: OrchestrationTask,
   sourceTask: OrchestrationTask | undefined,
@@ -407,7 +425,8 @@ export class WorldwayOrchestrator {
           }
           consumedModelHandoffs.add(task.handoffFrom);
         }
-        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined, correlationId);
+        const coordinatedTask = validatedSpecialistCoordination(task, ordered, results, correlationId);
+        const executionTask = validatedModelHandoff(coordinatedTask, coordinatedTask.handoffFrom ? ordered.find((candidate) => candidate.id === coordinatedTask.handoffFrom) : undefined, coordinatedTask.handoffFrom ? results.get(coordinatedTask.handoffFrom) : undefined, correlationId);
         const result = executionTask.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(executionTask, context)
           : await this.executor.execute(executionTask, context);
