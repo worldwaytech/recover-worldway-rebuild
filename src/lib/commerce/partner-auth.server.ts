@@ -91,7 +91,12 @@ export async function authenticatePartner(request: Request): Promise<PartnerPrin
     if (key.expires_at && Date.parse(key.expires_at) < Date.now()) throw new PartnerAuthError(401, "API key expired");
     const tenant = await activeTenant(db, key.tenant_id);
     const apiProducts = (key.api_products ?? []).filter((p: string): p is ApiProduct => (API_PRODUCTS as readonly string[]).includes(p));
-    const apiAccessMode = (key.api_access_mode ?? (apiProducts.length === 1 ? "single_product" : apiProducts.length > 1 ? "multi_product" : "full_catalogue")) as ApiAccessMode;
+    // Pre-entitlement keys were migrated with an empty product array. Treat those
+    // legacy credentials as full-catalogue so the entitlement migration is
+    // backward-compatible. New keys are always explicit.
+    const apiAccessMode = apiProducts.length === 0
+      ? "full_catalogue"
+      : (key.api_access_mode ?? (apiProducts.length === 1 ? "single_product" : "multi_product")) as ApiAccessMode;
     await db.from("partner_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);
     return { tenantId: tenant.id, method: "api_key", keyId: key.id, userId: null, scopes: (key.scopes ?? []).filter((s: string): s is Scope => (SCOPES as readonly string[]).includes(s)), apiProducts, apiAccessMode, rateLimitPerMinute: tenant.rate_limit_per_minute };
   }
