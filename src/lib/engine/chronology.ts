@@ -176,7 +176,7 @@ export function checkTripWindow(
   const first = transport[0]!;
   const last = transport[transport.length - 1]!;
   const departureDate = localDate(first.start);
-  const arrivalDate = localDate(last.end);
+  const finalDepartureDate = localDate(last.start);
 
   if (departureDate < requirements.departFrom) {
     issues.push({
@@ -186,12 +186,12 @@ export function checkTripWindow(
       message: `${first.title} departs on ${departureDate}, before the requested trip start ${requirements.departFrom}.`,
     });
   }
-  if (arrivalDate > requirements.returnBy) {
+  if (finalDepartureDate > requirements.returnBy) {
     issues.push({
       code: "outside-trip-window",
       severity: "error",
       componentIds: [last.id],
-      message: `${last.title} arrives on ${arrivalDate}, after the requested trip end ${requirements.returnBy}.`,
+      message: last.title + " departs on " + finalDepartureDate + ", after the requested return date " + requirements.returnBy + ".",
     });
   }
   return issues;
