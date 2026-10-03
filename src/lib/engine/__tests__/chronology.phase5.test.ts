@@ -33,6 +33,7 @@ describe("Phase 5 canonical chronological graph", () => {
     expect(graph.nodes.map((n) => n.id)).toEqual(["f1", "h1"]);
     expect(graph.edges[0]).toEqual({ from: "f1", to: "h1", gapMinutes: 600 });
     expect(graph.destinationArrivalDate).toBe("2026-09-29");
+    expect(graph.arrivalDatesByPlace).toEqual({ JFK: "2026-09-29" });
     expect(graph.issues).toEqual([]);
   });
 
