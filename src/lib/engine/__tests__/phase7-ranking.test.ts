@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import { packageOptimizationMetrics, rankComponents, resolveRankingWeights } from "../optimization";
+import { rankPackages } from "../ranking";
+import type { NormalizedComponent, SupplierRegistration, TripRequirements } from "../types";
+
+const req:TripRequirements={origin:"DEL",destinations:["IST"],departFrom:"2026-10-10",returnBy:"2026-10-20",adults:2,children:0,luxuryLevel:5,interests:["museum"]};
+const reg=new Map<string,SupplierRegistration>([["s1",{supplierKey:"s1",kinds:["flight","stay","activity"],capabilities:["search","revalidate","book"],readiness:"production",reliability:0.95}],["s2",{supplierKey:"s2",kinds:["flight","stay","activity"],capabilities:["search","revalidate","book"],readiness:"production",reliability:0.6}]]);
+const c=(id:string,supplierKey:string,kind:NormalizedComponent["kind"],title:string,place="IST"):NormalizedComponent=>({id,kind,supplierKey,externalId:id,title,start:{at:"2026-10-11T10:00:00Z",timezone:"Europe/Istanbul",place},end:{at:"2026-10-11T12:00:00Z",timezone:"Europe/Istanbul",place},net:{amount:100,currency:"EUR"},taxes:{amount:10,currency:"EUR"},cancellation:{refundable:true},quality:5,revalidatedAt:"2026-10-03T00:00:00Z"});
+
+describe("Phase 7 ranking and optimization",()=>{
+ it("normalizes ranking weights",()=>{const w=resolveRankingWeights({weights:{price:2,margin:0}});expect(Object.values(w).reduce((a,b)=>a+b,0)).toBeCloseTo(1);expect(w.price).toBeGreaterThan(w.margin);});
+ it("ranks complete packages using geography, time, margin and preference",()=>{const good=[c("g1","s1","stay","Luxury museum stay")];const weak=[c("g2","s2","stay","Generic stay","PAR")];const a=rankPackages([{id:"good",items:good,total:1000,marginAmount:200},{id:"weak",items:weak,total:900,marginAmount:20}],req,reg,{interests:["museum"]});expect(a[0]?.id).toBe("good");expect(a[0]?.factors.map(x=>x.factor)).toEqual(["Itinerary feasibility","Quality / luxury fit","Price","Within budget","Cancellation flexibility","Supplier reliability","Geographic fit","Time / convenience","Commercial margin","Customer preference fit"]);});
+ it("supports component-level ranking without exposing supplier identity",()=>{const ranked=rankComponents([c("a","s2","activity","City museum visit"),c("b","s1","activity","City transfer")],req,reg,{interests:["museum"]});expect(ranked[0]?.id).toBe("a");});
+ it("computes deterministic optimization metrics",()=>{const m=packageOptimizationMetrics({id:"x",items:[c("x1","s1","stay","Museum stay")],total:200,marginAmount:50},req,reg,{interests:["museum"]});expect(m.geography).toBe(1);expect(m.margin).toBe(0.25);expect(m.preference).toBeGreaterThan(0.5);});
+});
