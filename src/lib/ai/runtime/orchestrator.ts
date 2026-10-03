@@ -89,6 +89,7 @@ export interface OrchestrationResult {
   executedSteps: number;
   toolCalls: number;
   problems: string[];
+  trace: ReturnType<OrchestrationTraceCollector["snapshot"]>;
 }
 
 export interface SpecialistDelegate {
