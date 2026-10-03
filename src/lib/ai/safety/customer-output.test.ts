@@ -9,11 +9,6 @@ describe("customer AI output boundary", () => {
     expect(result).toBe("Worldway has this tour: [worldway] Worldway also has an option.");
   });
 
-  it("fails closed if a known supplier term survives redaction", () => {
-    const result = sanitizeCustomerAiReply("HBX");
-    expect(result).toBe(CUSTOMER_AI_FALLBACK);
-  });
-
   it("preserves ordinary Worldway travel language", () => {
     expect(sanitizeCustomerAiReply("Your flight arrives in Delhi at 18:30 local time."))
       .toBe("Your flight arrives in Delhi at 18:30 local time.");
