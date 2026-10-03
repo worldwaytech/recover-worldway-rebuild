@@ -18,6 +18,15 @@ describe("Supplier certification plan", () => {
     ].sort());
   });
 
+
+
+  it("does not treat TravelShop certification evidence as a customer-booking blocker", () => {
+    const travelshop = certificationPlanFor("travelshop");
+    expect(travelshop.currentReadiness).toBe("production");
+    expect(travelshop.nextStep).toBe("maintain_current_scope");
+    expect(travelshop.promotionBlocker).toContain("No customer-booking blocker");
+    expect(travelshop.promotionBlocker).toContain("Paid booking evidence remains certification evidence");
+  });
   it("fails closed for unknown suppliers", () => {
     expect(() => certificationPlanFor("unknown")).toThrow("Certification plan not found");
   });

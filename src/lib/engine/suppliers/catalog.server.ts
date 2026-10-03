@@ -32,7 +32,7 @@ export const SUPPLIER_CATALOG: SupplierRegistration[] = [
   entry("gadventures", ["activity"], "uat", 0.7, g("uat", false, "Certification evidence gaps", "search", "availability", "price", "book")),
   entry("travelshop", ["activity"], "production", 0.85, [
     ...g("production", true, "Full live catalogue sync 8,345/8,345 tours; live availability + price verified 30 Sep 2026", "search", "availability", "price"),
-    ...g("production", false, "Switch on (30 Sep 2026); contract partly verified (partner country ids missing); no verified paid production booking — not certified", "book"),
+    ...g("production", false, "Production Pay & Book enabled; live contract, live price/availability, verified payment and room validation remain mandatory. Paid production booking is certification evidence and does not block customer booking.", "book"),
   ]),
   entry("ttc", ["activity"], "uat", 0.6, g("production", false, "Catalogue synced from website; no booking API credentials", "search")),
   entry("hbx-hotels", ["stay"], "uat", 0.8, g("uat", false, "Certification audit open; mTLS certificate missing", "search", "availability", "price", "prebook", "book", "cancel")),
