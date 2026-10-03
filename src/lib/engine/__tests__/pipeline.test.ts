@@ -51,6 +51,16 @@ describe("end-to-end package pipeline", () => {
     expect(bad.bookable).toBe(false);
   });
 
+  it("blocks a package that falls outside the requested trip window", () => {
+    const lateReturn = { ...flight, externalId: "F-late", end: { ...flight.end, at: "2026-10-16T03:30:00Z" } };
+    const out = runPackagePipeline(base([
+      { id: "late-return", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), lateReturn] },
+    ]));
+    const pkg = out[0]!;
+    expect(pkg.issues.some((i) => i.code === "outside-trip-window")).toBe(true);
+    expect(pkg.bookable).toBe(false);
+  });
+
   it("blocks booking on FX/price failure", () => {
     const [p] = runPackagePipeline(base([{ id: "x", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z")] }], { USD: 1 }));
     expect(p!.pricing).toBeNull();
