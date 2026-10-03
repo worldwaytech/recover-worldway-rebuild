@@ -35,6 +35,8 @@ export interface ChronologicalTripGraph {
   nodes: NormalizedComponent[];
   edges: Array<{ from: string; to: string; gapMinutes: number }>;
   destinationArrivalDate?: string;
+  /** Local arrival date for every destination/airport place reached by transport. */
+  arrivalDatesByPlace: Record<string, string>;
   finalDepartureDate?: string;
   issues: AuditIssue[];
 }
@@ -144,12 +146,19 @@ export function buildChronologicalTripGraph(items: NormalizedComponent[]): Chron
 
   const firstDestinationArrival = nodes.find((c) => isTransport(c) && c.end.place !== c.start.place);
   const lastReturn = [...nodes].reverse().find((c) => isTransport(c));
+  const arrivalDatesByPlace: Record<string, string> = {};
+  for (const c of nodes) {
+    if (isTransport(c) && c.end.place !== c.start.place) {
+      arrivalDatesByPlace[c.end.place] = localDate(c.end);
+    }
+  }
 
   return {
     version: 1,
     nodes,
     edges,
     destinationArrivalDate: firstDestinationArrival ? requiredCheckInDate(firstDestinationArrival) : undefined,
+    arrivalDatesByPlace,
     finalDepartureDate: lastReturn ? localDate(lastReturn.start) : undefined,
     issues,
   };
