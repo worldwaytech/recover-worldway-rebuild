@@ -28,7 +28,7 @@ export interface PipelineInput {
   pricingNow?: string;
   orchestration?: TripRequirementProfile;
   ranking?: RankingProfile;
-  optimization?: { enabled?: boolean; limit?: number };
+  optimization?: { enabled?: boolean; limit?: number; profile?: RankingProfile };
 }
 
 export interface PipelinePackage extends RankedPackage {
