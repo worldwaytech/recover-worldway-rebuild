@@ -2,8 +2,9 @@
 // Post-Phase-16 Upgrade 3: a unified, consent-aware context envelope.
 // Persistence remains in the existing Phase-13 travel_dna/travel_memory stores.
 // This layer is deterministic and contains no booking/payment authority.
+// Current requests remain authoritative over remembered trip facts.
 
-import type { PersonalizationContext, TravelerProfile } from "../engine/intelligence/traveler-profile";
+import type { PersonalizationContext, TravelerProfile } from "./traveler-profile";
 
 export type MemoryPrecedence = "current_request_over_memory";
 
@@ -40,10 +41,7 @@ export interface TravellerMemoryRecord {
 
 export interface TravellerTripContext {
   travellerId: string;
-  consent: {
-    preferences: boolean;
-    history: boolean;
-  };
+  consent: { preferences: boolean; history: boolean };
   profile: TravelerProfile;
   personalization: PersonalizationContext;
   memories: readonly TravellerMemoryRecord[];
@@ -83,22 +81,19 @@ export function normalizeTripMemory(input: TripMemory): TripMemory {
   }
   if (!input.tripId.trim()) throw new Error("trip_id_required");
 
-  const facts = input.facts
-    .filter((fact) => fact.key.trim())
-    .map((fact) => ({
-      ...fact,
-      key: fact.key.trim().slice(0, 120),
-      confidence: normalizeConfidence(fact.confidence),
-    }))
-    .sort((a, b) => a.key.localeCompare(b.key));
-
   return {
     ...input,
     tripId: input.tripId.trim().slice(0, 120),
     origin: input.origin?.trim() || undefined,
     destinations: normalizeDestinations(input.destinations),
-    facts,
-    updatedAt: input.updatedAt,
+    facts: input.facts
+      .filter((fact) => fact.key.trim())
+      .map((fact) => ({
+        ...fact,
+        key: fact.key.trim().slice(0, 120),
+        confidence: normalizeConfidence(fact.confidence),
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key)),
   };
 }
 
@@ -107,8 +102,6 @@ export function applyCurrentTripRequest(
   request: CurrentTripRequest,
 ): TravellerTripContext {
   const current = context.activeTrip;
-  if (!current && !request.tripId) return context;
-
   const tripId = request.tripId ?? current?.tripId;
   if (!tripId) return context;
 
@@ -117,29 +110,29 @@ export function applyCurrentTripRequest(
   );
 
   for (const [key, value] of Object.entries(request.facts ?? {})) {
-    const previous = mergedFacts.get(key);
     mergedFacts.set(key, {
       key,
       value,
       confidence: 1,
       source: "user",
       observedAt: new Date().toISOString(),
-      ...(previous ? {} : {}),
     });
   }
 
-  const next: TripMemory = normalizeTripMemory({
-    tripId,
-    status: current?.status ?? "planning",
-    origin: request.origin ?? current?.origin,
-    destinations: normalizeDestinations(request.destinations ?? current?.destinations ?? []),
-    arrivalDate: request.arrivalDate ?? current?.arrivalDate,
-    departureDate: request.departureDate ?? current?.departureDate,
-    facts: [...mergedFacts.values()],
-    updatedAt: new Date().toISOString(),
-  });
-
-  return { ...context, activeTrip: next, precedence: "current_request_over_memory" };
+  return {
+    ...context,
+    activeTrip: normalizeTripMemory({
+      tripId,
+      status: current?.status ?? "planning",
+      origin: request.origin ?? current?.origin,
+      destinations: request.destinations ?? current?.destinations ?? [],
+      arrivalDate: request.arrivalDate ?? current?.arrivalDate,
+      departureDate: request.departureDate ?? current?.departureDate,
+      facts: [...mergedFacts.values()],
+      updatedAt: new Date().toISOString(),
+    }),
+    precedence: "current_request_over_memory",
+  };
 }
 
 export function buildTravellerTripContext(input: {
@@ -150,32 +143,22 @@ export function buildTravellerTripContext(input: {
   memories: readonly TravellerMemoryRecord[];
   activeTrip?: TripMemory;
 }): TravellerTripContext {
-  const permittedMemories = input.memories.filter(
-    (memory) => input.consent[memory.consentScope] === true,
-  );
-
   return {
     travellerId: input.travellerId,
     consent: { ...input.consent },
     profile: input.profile,
     personalization: input.personalization,
-    memories: permittedMemories,
+    memories: input.memories.filter((memory) => input.consent[memory.consentScope] === true),
     activeTrip: input.activeTrip ? normalizeTripMemory(input.activeTrip) : undefined,
     precedence: "current_request_over_memory",
     generatedAt: new Date().toISOString(),
   };
 }
 
-export function rememberTripFact(
-  trip: TripMemory,
-  fact: TripMemoryFact,
-): TripMemory {
+export function rememberTripFact(trip: TripMemory, fact: TripMemoryFact): TripMemory {
   return normalizeTripMemory({
     ...trip,
-    facts: [...trip.facts.filter((existing) => existing.key !== fact.key), {
-      ...fact,
-      confidence: normalizeConfidence(fact.confidence),
-    }],
+    facts: [...trip.facts.filter((existing) => existing.key !== fact.key), fact],
     updatedAt: new Date().toISOString(),
   });
 }
