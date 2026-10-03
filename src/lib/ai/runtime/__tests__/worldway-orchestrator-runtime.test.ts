@@ -420,7 +420,7 @@ describe("Worldway specialist orchestration runtime", () => {
             contractVersion: "1.0", decisionKind: "recommendation", decision: "prepare booking readiness check", confidence: 0.9,
             evidence: [{ source: "runtime-test", reference: "booking:readiness:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
             correlationId: "wwai-test", sourceTaskId: "booking-readiness",
-            constraints: ["booking.readiness.check=true"],
+            constraints: [],
             expiresAt: "2099-01-01T00:00:00Z",
           },
         },
