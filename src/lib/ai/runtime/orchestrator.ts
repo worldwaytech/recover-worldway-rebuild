@@ -6,6 +6,7 @@ import { emit, newCorrelationId } from "../router/telemetry";
 import { withRoute, type RouterDeps } from "../router/router";
 import type { ModelSpec, TaskKind } from "../router/types";
 import { OrchestrationTraceCollector } from "./orchestration-trace";
+import { createWorldwayDecisionContract } from "./decision-contract";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
 export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic" | "model";
@@ -251,17 +252,42 @@ function errorText(error: unknown) {
   return error instanceof Error ? error.message.slice(0, 160) : "task_error";
 }
 
-function validatedModelHandoff(task: OrchestrationTask, sourceTask: OrchestrationTask | undefined, source: TaskExecutionResult | undefined) {
+function validatedModelHandoff(
+  task: OrchestrationTask,
+  sourceTask: OrchestrationTask | undefined,
+  source: TaskExecutionResult | undefined,
+  correlationId: string,
+): OrchestrationTask {
   if (task.kind !== "deterministic" || !task.handoffFrom) return task;
-  if (!sourceTask || sourceTask.kind !== "model") throw new OrchestrationValidationError(`Model handoff source must be a model task for ${task.id}`);
+  if (!sourceTask || sourceTask.kind !== "model") {
+    throw new OrchestrationValidationError(`Model handoff source must be a model task for ${task.id}`);
+  }
   if (!source || source.state !== "completed" || !source.result || typeof source.result !== "object") {
     throw new OrchestrationValidationError(`Invalid model handoff source for ${task.id}`);
   }
+
   const value = source.result as Record<string, unknown>;
-  if (!Array.isArray(value.evidence) || value.evidence.length === 0) {
-    throw new OrchestrationValidationError(`Model handoff lacks provenance for ${task.id}`);
+  const contract = createWorldwayDecisionContract({
+    decisionKind: value.decisionKind ?? "recommendation",
+    decision: value.decision,
+    confidence: value.confidence,
+    evidence: value.evidence,
+    correlationId,
+    constraints: value.constraints,
+    expiresAt: value.expiresAt,
+  });
+
+  if (!contract) {
+    throw new OrchestrationValidationError(`Model handoff decision contract invalid for ${task.id}`);
   }
-  return { ...task, input: { ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}), modelHandoff: value } };
+
+  return {
+    ...task,
+    input: {
+      ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}),
+      modelDecision: contract,
+    },
+  };
 }
 
 export class WorldwayOrchestrator {
@@ -350,7 +376,7 @@ export class WorldwayOrchestrator {
       executedSteps++;
 
       try {
-        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined);
+        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined, correlationId);
         const result = executionTask.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(executionTask, context)
           : await this.executor.execute(executionTask, context);
