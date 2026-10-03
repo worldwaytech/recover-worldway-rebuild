@@ -142,7 +142,7 @@ export function buildSpecialistCoordinationEnvelope(
     if (result.state !== "completed") return null;
     const output = boundedOutput(result.output);
     if (!output) return null;
-    const evidence = sanitizeOrchestrationEvidence(result.evidence ?? []);
+    const evidence = sanitizeOrchestrationEvidence(result.evidence ?? [], new Date(), { strictExpiry: false });
     members.push({ taskId: result.taskId, specialist: result.specialist, output, evidence });
   }
   return { contractVersion: "1.0", correlationId, members };
