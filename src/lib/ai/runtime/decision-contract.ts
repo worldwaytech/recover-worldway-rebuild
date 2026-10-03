@@ -68,13 +68,16 @@ export function createWorldwayDecisionContract(input: {
     : undefined;
   if (!expiresAt || Number.isNaN(Date.parse(expiresAt))) return null;
 
-  const constraints = Array.isArray(input.constraints)
+  const rawConstraints = Array.isArray(input.constraints)
     ? input.constraints
         .filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
         .slice(0, MAX_CONSTRAINTS)
         .map((item) => item.trim().slice(0, MAX_CONSTRAINT))
-        .filter((item) => !hasForbiddenDecisionContent(item))
     : [];
+
+  if (rawConstraints.some(hasForbiddenDecisionContent)) return null;
+
+  const constraints = rawConstraints;
 
   return {
     contractVersion: "1.0",
