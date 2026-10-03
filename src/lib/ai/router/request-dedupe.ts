@@ -26,7 +26,12 @@ export function withInFlightDedupe<T>(namespace: string, parts: unknown[], fn: (
 
   if (inFlight.size >= MAX_IN_FLIGHT) return fn();
 
-  const promise = Promise.resolve().then(fn);
+  let promise: Promise<T>;
+  try {
+    promise = Promise.resolve(fn());
+  } catch (error) {
+    promise = Promise.reject(error);
+  }
   inFlight.set(digest, promise);
 
   void promise.finally(() => {
