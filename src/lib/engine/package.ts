@@ -28,7 +28,7 @@ export interface PipelineInput {
   pricingNow?: string;
   orchestration?: TripRequirementProfile;
   ranking?: RankingProfile;
-  optimization?: { enabled?: boolean; limit?: number };
+  optimization?: { enabled?: boolean; limit?: number; profile?: RankingProfile };
 }
 
 export interface PipelinePackage extends RankedPackage {
@@ -76,14 +76,14 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
           input.requirements,
           input.registry,
           input.optimization?.limit ?? 3,
-          input.ranking,
+          input.optimization?.profile ?? input.ranking,
         ).map((x) => x.id),
   );
   const ranked = rankPackages(
     optimizationInputs,
     input.requirements,
     input.registry,
-    input.ranking,
+    input.optimization?.profile ?? input.ranking,
   );
   return ranked.map((r) => {
     const b = built.find((x) => x.id === r.id)!;

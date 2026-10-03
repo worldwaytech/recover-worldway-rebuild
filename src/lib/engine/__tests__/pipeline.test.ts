@@ -73,6 +73,52 @@ describe("end-to-end package pipeline", () => {
     expect(disabled.every((p) => p.optimized)).toBe(true);
   });
 
+  it("consumes a bounded optimization profile while keeping deterministic selection and booking authority", () => {
+    const candidates = [
+      {
+        id: "a-standard",
+        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), { ...activity, externalId: "A-standard", title: "Standard Tour" }],
+      },
+      {
+        id: "z-preferred",
+        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), { ...activity, externalId: "A-preferred", title: "Preferred Activity" }],
+      },
+    ];
+    const out = runPackagePipeline({
+      ...base(candidates),
+      optimization: {
+        limit: 1,
+        profile: { weights: { preference: 1 }, kindPreferences: { activity: 1 }, interests: ["preferred"] },
+      },
+    });
+    expect(out).toHaveLength(2);
+    expect(out.find((p) => p.id === "z-preferred")!.optimized).toBe(true);
+    expect(out.find((p) => p.id === "a-standard")!.optimized).toBe(false);
+    expect(out.every((p) => p.bookable)).toBe(true);
+
+    const blocked = runPackagePipeline({
+      ...base([{
+        id: "blocked",
+        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity],
+      }]),
+      optimization: {
+        limit: 1,
+        profile: { weights: { preference: 1 }, kindPreferences: { activity: 1 } },
+      },
+      orchestration: {
+        trip: base(candidates).requirements,
+        requiredKinds: ["flight", "insurance"],
+        preferredKinds: ["activity"],
+        optionalKinds: [],
+        insurance: "required",
+        visa: "not-requested",
+      },
+    });
+    expect(blocked[0]!.optimized).toBe(true);
+    expect(blocked[0]!.bookable).toBe(false);
+    expect(blocked[0]!.issues.some((issue) => issue.code === "missing-required-product" && /insurance/i.test(issue.message))).toBe(true);
+  });
+
   it("consumes bounded ranking profile without changing deterministic booking authority", () => {
     const candidates = [
       { id: "luxury", offers: [flight, transfer, { ...hotel("2026-10-11T14:00:00Z"), externalId: "H-luxury", quality: 5 }] },
