@@ -65,6 +65,24 @@ describe("Phase 5 canonical chronological graph", () => {
   });
 });
 
+  it("matches each hotel to the transport arriving in that hotel city", () => {
+    const secondArrival: NormalizedComponent = {
+      ...flight,
+      id: "f2",
+      title: "JFK-CDG",
+      start: { at: "2026-10-04T14:00:00Z", timezone: "America/New_York", place: "JFK" },
+      end: { at: "2026-10-04T21:00:00Z", timezone: "Europe/Paris", place: "CDG" },
+    };
+    const parisHotel: NormalizedComponent = {
+      ...hotel,
+      id: "h2",
+      start: { at: "2026-10-04T23:00:00Z", timezone: "Europe/Paris", place: "CDG" },
+      end: { at: "2026-10-07T10:00:00Z", timezone: "Europe/Paris", place: "CDG" },
+    };
+    const issues = buildChronologicalTripGraph([flight, hotel, secondArrival, parisHotel]).issues;
+    expect(issues.some((i) => i.code === "hotel-date-mismatch" && i.componentIds.includes("h2"))).toBe(false);
+  });
+
   describe("trip window", () => {
     it("rejects transport that departs before the requested start", () => {
       const issues = checkTripWindow([flight], { departFrom: "2026-09-29", returnBy: "2026-10-05" });
