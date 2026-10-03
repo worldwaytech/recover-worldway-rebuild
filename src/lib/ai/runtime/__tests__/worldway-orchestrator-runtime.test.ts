@@ -364,6 +364,40 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(result.results[0].error).toContain("raw_model_decision_rejected");
   });
 
+  it("rejects malformed structurally unsafe contracts before deterministic execution", async () => {
+    let executed = false;
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => { executed = true; return task.input; },
+    });
+
+    const result = await runtime.orchestrator.run({
+      goal: "malformed decision",
+      tasks: [{
+        id: "decision-step",
+        kind: "deterministic",
+        acceptedDecisionKinds: ["recommendation"],
+        input: {
+          decisionContract: {
+            contractVersion: "1.0",
+            decisionKind: "recommendation",
+            decision: "use itinerary",
+            confidence: 9,
+            evidence: [{ source: "runtime-test", reference: "decision:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+            correlationId: "wwai-test",
+            sourceTaskId: "decision-step",
+            constraints: [123],
+            expiresAt: "2099-01-01T00:00:00Z",
+          },
+        },
+      }],
+    }, context());
+
+    expect(result.ok).toBe(false);
+    expect(executed).toBe(false);
+    expect(result.results[0].error).toContain("decision_contract_runtime_validation_failed");
+  });
+
   it("rejects an expired or mismatched decision contract before deterministic execution", async () => {
     let executed = false;
     const runtime = createWorldwayOrchestratorRuntime({
