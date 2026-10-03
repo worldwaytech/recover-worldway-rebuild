@@ -179,6 +179,8 @@ export class ControlledCommerceApprovalStore {
       tool: approval.tool,
       action: riskFor(approval.action),
       grantedBy: "booking_readiness",
+      principalUserId: approval.principalUserId,
+      expiresAt: approval.expiresAt,
     };
   }
 
