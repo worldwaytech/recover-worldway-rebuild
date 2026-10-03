@@ -36,7 +36,8 @@ export function EmptyLegInquiry({
     setErr(null);
     const f = new FormData(e.currentTarget);
     const paxRaw = f.get("passengers");
-    const paxNum = typeof paxRaw === "string" && paxRaw.trim() !== "" ? Number(paxRaw) : undefined;
+    const paxNum =
+      typeof paxRaw === "string" && paxRaw.trim() !== "" ? Number(paxRaw) : undefined;
     const payload = {
       intent,
       legId: leg?.id,
@@ -57,10 +58,11 @@ export function EmptyLegInquiry({
         return;
       }
       // Best-effort local record so users see their submission if they revisit.
+      // The server intentionally does not expose its internal database ID.
       try {
         const raw = localStorage.getItem("wwl.aviation.inquiries");
         const list = raw ? JSON.parse(raw) : [];
-        list.push({ ...payload, submittedAt: new Date().toISOString(), id: res.id });
+        list.push({ ...payload, submittedAt: new Date().toISOString() });
         localStorage.setItem("wwl.aviation.inquiries", JSON.stringify(list));
       } catch {
         /* ignore */
