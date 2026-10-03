@@ -1,7 +1,7 @@
 // Package pipeline — pure and deterministic:
 // Normalize → Trip Graph → Ranking → Package Audit → Pricing → Booking Readiness.
 // No supplier knowledge; AI never supplies availability, schedules or prices.
-import { buildChronologicalTripGraph, sortChronologically } from "./chronology";
+import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically } from "./chronology";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
@@ -23,6 +23,8 @@ export interface PipelineInput {
 
 export interface PipelinePackage extends RankedPackage {
   graph: NormalizedComponent[];
+  /** Explicit multi-city / multi-modal sequence derived from the canonical graph. */
+  journeySegments: ReturnType<typeof buildJourneySegments>;
   pricing: ReturnType<typeof pricePackage> | null;
   rejected: { externalId: string; reason: string }[];
 }
@@ -55,7 +57,7 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
     if (!b.pricing) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: b.priceError ?? "Price unavailable" });
     if (b.rejected.length) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: `${b.rejected.length} supplier result(s) could not be normalised.` });
     const bookable = r.bookable && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
-    return { ...r, issues, bookable, graph: b.graph, pricing: b.pricing, rejected: b.rejected };
+    return { ...r, issues, bookable, graph: b.graph, journeySegments: buildJourneySegments(b.graph), pricing: b.pricing, rejected: b.rejected };
   });
 }
 
