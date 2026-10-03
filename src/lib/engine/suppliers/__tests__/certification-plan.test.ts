@@ -12,8 +12,8 @@ describe("Supplier certification plan", () => {
 
   it("captures every supplier requiring a post-phase16 action", () => {
     expect(SUPPLIER_CERTIFICATION_PLAN.map((item) => item.supplierKey)).toEqual([
-      "viator-merchant", "tripsafe", "crystal", "travelgate", "travelshop", "ratehawk", "gadventures", "hbx-hotels", "hbx-transfers", "ttc",
-      "viator-affiliate", "up17", "airiq", "tripjack-cabs", "private-aviation",
+      "viator-merchant", "tripsafe", "crystal", "travelgate", "travelshop", "ratehawk", "gadventures", "hbx-hotels", "hbx-transfers",
+      "ttc", "viator-affiliate", "up17", "airiq", "tripjack-cabs", "private-aviation",
       "skyaccess", "amadeus",
     ]);
   });
