@@ -88,7 +88,7 @@ describe("Phase 12 partner commerce", () => {
       method: "api_key" as const,
       keyId: "key-1",
       userId: null,
-      scopes: ["flights.search", "tours.read"] as const,
+      scopes: ["flights.search", "tours.read"],
       rateLimitPerMinute: 60,
     };
     expect(() => requireScope({ ...base, apiProducts: ["flights"], apiAccessMode: "single_product" }, "searchFlights")).not.toThrow();
