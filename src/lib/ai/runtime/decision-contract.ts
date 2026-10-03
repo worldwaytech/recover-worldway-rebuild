@@ -2,6 +2,7 @@
 // Only bounded, validated decisions with sanitized provenance may cross this boundary.
 
 import { sanitizeOrchestrationEvidence, type OrchestrationEvidence } from "./orchestration-trace";
+import type { SpecialistDecisionSynthesisContract } from "./decision-synthesis";
 
 export type WorldwayDecisionKind =
   | "recommendation"
@@ -123,4 +124,45 @@ export function validateWorldwayDecisionContract(
   }
 
   return value;
+}
+
+export function bindSpecialistSynthesisToDecisionContract(input: {
+  synthesis: SpecialistDecisionSynthesisContract;
+  decisionKind: WorldwayDecisionKind;
+  decision: unknown;
+  confidence: unknown;
+  correlationId: string;
+  sourceTaskId: string;
+  acceptedDecisionKinds: readonly WorldwayDecisionKind[];
+  constraints?: unknown;
+  expiresAt?: unknown;
+  now?: Date;
+}): WorldwayDecisionContract | null {
+  const synthesis = input.synthesis;
+  if (synthesis.status !== "ready") return null;
+  if (synthesis.correlationId !== input.correlationId) return null;
+  if (!synthesis.sourceTaskIds.length || synthesis.findings.length !== synthesis.sourceTaskIds.length) return null;
+  if (synthesis.conflicts.length > 0 || synthesis.evidence.length === 0) return null;
+  if (synthesis.evidenceCoverage.members !== synthesis.findings.length) return null;
+  if (synthesis.evidenceCoverage.membersWithEvidence !== synthesis.findings.filter((finding) => finding.evidence.length > 0).length) return null;
+  if (!input.acceptedDecisionKinds.includes(input.decisionKind)) return null;
+
+  const contract = createWorldwayDecisionContract({
+    decisionKind: input.decisionKind,
+    decision: input.decision,
+    confidence: input.confidence,
+    evidence: synthesis.evidence,
+    correlationId: input.correlationId,
+    sourceTaskId: input.sourceTaskId,
+    constraints: input.constraints,
+    expiresAt: input.expiresAt ?? new Date((input.now ?? new Date()).getTime() + 5 * 60_000).toISOString(),
+  });
+  if (!contract) return null;
+
+  return validateWorldwayDecisionContract(contract, {
+    expectedCorrelationId: input.correlationId,
+    expectedSourceTaskId: input.sourceTaskId,
+    acceptedDecisionKinds: input.acceptedDecisionKinds,
+    now: input.now,
+  });
 }

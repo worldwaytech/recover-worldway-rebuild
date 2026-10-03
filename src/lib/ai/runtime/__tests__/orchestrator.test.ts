@@ -213,7 +213,90 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.results.find((r) => r.taskId === "deterministic-step")?.state).toBe("failed");
     expect(result.results.find((r) => r.taskId === "deterministic-step")?.error).toContain("decision contract invalid");
   });
+  it("synthesizes coordinated specialists before deterministic execution", async () => {
+    const captured: unknown[] = [];
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => {
+        if (task.kind === "specialist") {
+          return { specialist: task.specialist, output: { recommendation: task.id === "flight-step" ? "keep" : "keep" }, evidence: [{ source: "synthesis-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
+        }
+        captured.push(task.input);
+        return task.kind === "deterministic"
+          ? { decisionKind: "recommendation", decision: "use deterministic itinerary", confidence: 0.9, expiresAt: "2099-01-01T00:00:00Z" }
+          : "accepted";
+      },
+    });
+    const result = await orchestrator.run({
+      goal: "synthesize",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true, acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(captured[0]).toMatchObject({ specialistSynthesis: { contractVersion: "1.0", status: "ready", correlationId: "wwai-test" } });
+  });
+
+  it("fails closed when coordinated specialist findings conflict", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.kind === "specialist"
+        ? { output: { recommendation: task.id === "flight-step" ? "keep" : "reject" }, evidence: [{ source: "conflict-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] }
+        : "must-not-run",
+    });
+    const result = await orchestrator.run({
+      goal: "conflict",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true, acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results.find((item) => item.taskId === "decision-step")?.state).toBe("failed");
+    expect(result.results.find((item) => item.taskId === "decision-step")?.error).toContain("not executable");
+  });
+
+  it("binds deterministic output to the unified decision contract after specialist synthesis", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.kind === "specialist"
+        ? { output: { recommendation: "review" }, evidence: [{ source: "binding-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] }
+        : { decisionKind: "recommendation", decision: "use deterministic itinerary", confidence: 0.93, expiresAt: "2099-01-01T00:00:00Z" },
+    });
+    const result = await orchestrator.run({
+      goal: "bind synthesis",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true, acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(result.results.find((item) => item.taskId === "decision-step")?.result).toMatchObject({
+      decisionContract: { contractVersion: "1.0", decisionKind: "recommendation", decision: "use deterministic itinerary", sourceTaskId: "decision-step", correlationId: "wwai-test" },
+    });
+  });
+
+  it("fails closed when synthesis decision output is incomplete", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.kind === "specialist"
+        ? { output: { recommendation: "review" }, evidence: [{ source: "binding-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] }
+        : { decisionKind: "recommendation" },
+    });
+    const result = await orchestrator.run({
+      goal: "invalid binding",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true, acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results.find((item) => item.taskId === "decision-step")?.error).toContain("decision contract invalid");
+  });
+
 });
+
 
 
   it("rejects a handoff when the deterministic consumer does not declare decision kinds", () => {
@@ -288,4 +371,71 @@ describe("Worldway AI Orchestrator foundation", () => {
       ],
     });
     expect(result.problems).toContain("coordination_must_depend_on_member:decision-step->flight-step");
+  });
+
+
+  it("requires deterministic decision consumers to declare a contract source", () => {
+    const result = validateOrchestrationRequest({
+      goal: "decision contract policy",
+      tasks: [
+        { id: "producer", kind: "deterministic" },
+        { id: "consumer", kind: "deterministic", dependsOn: ["producer"], decisionContractFrom: "producer" },
+      ],
+    });
+    expect(result.problems).toContain("decision_contract_missing_accepted_decision_kinds:consumer");
+  });
+
+  it("passes only a validated decision contract between deterministic tasks", async () => {
+    const captured: unknown[] = [];
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => {
+        if (task.id === "producer") {
+          return {
+            decisionContract: {
+              contractVersion: "1.0",
+              decisionKind: "recommendation",
+              decision: "use itinerary",
+              confidence: 0.9,
+              evidence: [{ source: "decision-test", reference: "contract:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+              correlationId: "wwai-test",
+              sourceTaskId: "producer",
+              constraints: [],
+              expiresAt: "2099-01-01T00:00:00Z",
+            },
+          };
+        }
+        captured.push(task.input);
+        return "accepted";
+      },
+    });
+    const result = await orchestrator.run({
+      goal: "decision contract handoff",
+      tasks: [
+        { id: "producer", kind: "deterministic" },
+        { id: "consumer", kind: "deterministic", dependsOn: ["producer"], decisionContractFrom: "producer", acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(captured[0]).toMatchObject({ decisionContract: { decision: "use itinerary", sourceTaskId: "producer" } });
+  });
+
+
+  it("rejects a decision contract source that is not the declared producer", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.id === "producer-a"
+        ? { decisionContract: { contractVersion: "1.0", decisionKind: "recommendation", decision: "use A", confidence: 0.9, evidence: [{ source: "test", reference: "a", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }], correlationId: "wwai-test", sourceTaskId: "producer-b", constraints: [], expiresAt: "2099-01-01T00:00:00Z" } }
+        : task.id === "producer-b"
+          ? { decisionContract: { contractVersion: "1.0", decisionKind: "recommendation", decision: "use B", confidence: 0.9, evidence: [{ source: "test", reference: "b", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }], correlationId: "wwai-test", sourceTaskId: "producer-b", constraints: [], expiresAt: "2099-01-01T00:00:00Z" } }
+          : "accepted",
+    });
+    const result = await orchestrator.run({
+      goal: "source integrity",
+      tasks: [
+        { id: "producer-a", kind: "deterministic" },
+        { id: "producer-b", kind: "deterministic" },
+        { id: "consumer", kind: "deterministic", dependsOn: ["producer-a", "producer-b"], decisionContractFrom: "producer-a", acceptedDecisionKinds: ["recommendation"] },
+      ],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results.find((item) => item.taskId === "consumer")?.error).toContain("Decision contract handoff validation failed");
   });

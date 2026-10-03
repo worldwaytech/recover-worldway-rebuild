@@ -1,43 +1,33 @@
 import { describe, expect, it } from "vitest";
 import {
+  bindSpecialistSynthesisToDecisionContract,
   createWorldwayDecisionContract,
   isWorldwayDecisionContract,
   validateWorldwayDecisionContract,
 } from "../decision-contract";
+import { buildSpecialistCoordinationEnvelope } from "../specialist-agents";
+import { synthesizeSpecialistDecisions } from "../decision-synthesis";
 
-const evidence = [
-  {
-    source: "travel-graph",
-    reference: "edge:ist:123",
-    observedAt: "2026-10-03T00:00:00Z",
-    confidence: 0.9,
-    expiresAt: "2026-10-04T00:00:00Z",
-  },
-];
+const evidence = [{
+  source: "travel-graph",
+  reference: "edge:ist:123",
+  observedAt: "2026-10-03T00:00:00Z",
+  confidence: 0.9,
+  expiresAt: "2026-10-04T00:00:00Z",
+}];
 
 describe("Worldway typed decision contract", () => {
   it("creates a bounded provenance-backed contract", () => {
     const contract = createWorldwayDecisionContract({
-      decisionKind: "recommendation",
-      decision: "Use the validated itinerary",
-      confidence: 0.94,
-      evidence,
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
-      constraints: ["deterministic-only"],
+      decisionKind: "recommendation", decision: "Use the validated itinerary", confidence: 0.94,
+      evidence, correlationId: "wwai-test", sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z", constraints: ["deterministic-only"],
     });
-
     expect(contract).not.toBeNull();
     expect(contract).toMatchObject({
-      contractVersion: "1.0",
-      decisionKind: "recommendation",
-      decision: "Use the validated itinerary",
-      confidence: 0.94,
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
-      constraints: ["deterministic-only"],
+      contractVersion: "1.0", decisionKind: "recommendation", decision: "Use the validated itinerary",
+      confidence: 0.94, correlationId: "wwai-test", sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z", constraints: ["deterministic-only"],
     });
     expect(contract?.evidence[0]).toEqual(evidence[0]);
     expect(contract?.sourceTaskId).toBe("model-step");
@@ -47,41 +37,22 @@ describe("Worldway typed decision contract", () => {
 
   it("fails closed without provenance or a usable decision", () => {
     expect(createWorldwayDecisionContract({
-      decisionKind: "recommendation",
-      decision: "Use it",
-      confidence: 0.8,
-      evidence: [],
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
+      decisionKind: "recommendation", decision: "Use it", confidence: 0.8, evidence: [],
+      correlationId: "wwai-test", sourceTaskId: "model-step", expiresAt: "2026-10-04T00:00:00Z",
     })).toBeNull();
-
     expect(createWorldwayDecisionContract({
-      decisionKind: "recommendation",
-      decision: "",
-      confidence: 0.8,
-      evidence,
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
+      decisionKind: "recommendation", decision: "", confidence: 0.8, evidence,
+      correlationId: "wwai-test", sourceTaskId: "model-step", expiresAt: "2026-10-04T00:00:00Z",
     })).toBeNull();
   });
 
   it("sanitizes evidence and bounds decision metadata", () => {
     const contract = createWorldwayDecisionContract({
-      decisionKind: "ranking",
-      decision: "  choose option A  ",
-      confidence: 7,
-      evidence: [
-        ...evidence,
-        { source: "ignored", reference: "not valid ref!", observedAt: "2026-10-03T00:00:00Z", confidence: 0.5 },
-      ],
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
+      decisionKind: "ranking", decision: "  choose option A  ", confidence: 7,
+      evidence: [...evidence, { source: "ignored", reference: "not valid ref!", observedAt: "2026-10-03T00:00:00Z", confidence: 0.5 }],
+      correlationId: "wwai-test", sourceTaskId: "model-step", expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["  first  ", 123, "", "  second  "],
     });
-
     expect(contract?.decision).toBe("choose option A");
     expect(contract?.confidence).toBe(1);
     expect(contract?.evidence).toHaveLength(1);
@@ -90,81 +61,80 @@ describe("Worldway typed decision contract", () => {
 
   it("rejects structurally incomplete contracts", () => {
     expect(isWorldwayDecisionContract({
-      contractVersion: "1.0",
-      decisionKind: "recommendation",
-      decision: "ok",
-      confidence: 0.8,
-      evidence: [],
-      correlationId: "wwai-test",
-      constraints: [],
+      contractVersion: "1.0", decisionKind: "recommendation", decision: "ok",
+      confidence: 0.8, evidence: [], correlationId: "wwai-test", constraints: [],
     })).toBe(false);
   });
-});
-
 
   it("accepts only a live contract bound to the active orchestration and source task", () => {
     const contract = createWorldwayDecisionContract({
-      decisionKind: "recommendation",
-      decision: "review",
-      confidence: 0.9,
-      evidence,
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
+      decisionKind: "recommendation", decision: "review", confidence: 0.9, evidence,
+      correlationId: "wwai-test", sourceTaskId: "model-step", expiresAt: "2026-10-04T00:00:00Z",
     });
     expect(validateWorldwayDecisionContract(contract, {
-      expectedCorrelationId: "wwai-test",
-      expectedSourceTaskId: "model-step",
-      acceptedDecisionKinds: ["recommendation"],
-      now: new Date("2026-10-03T12:00:00Z"),
+      expectedCorrelationId: "wwai-test", expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["recommendation"], now: new Date("2026-10-03T12:00:00Z"),
     })).toEqual(contract);
   });
 
   it("rejects replay, expiry, unsupported decision kinds, and malformed provenance", () => {
     const base = {
-      decisionKind: "recommendation" as const,
-      decision: "review",
-      confidence: 0.9,
-      evidence,
-      correlationId: "wwai-test",
-      sourceTaskId: "model-step",
-      expiresAt: "2026-10-04T00:00:00Z",
+      decisionKind: "recommendation" as const, decision: "review", confidence: 0.9, evidence,
+      correlationId: "wwai-test", sourceTaskId: "model-step", expiresAt: "2026-10-04T00:00:00Z",
     };
     const contract = createWorldwayDecisionContract(base);
     expect(validateWorldwayDecisionContract(contract, {
-      expectedCorrelationId: "other-correlation",
-      expectedSourceTaskId: "model-step",
-      acceptedDecisionKinds: ["recommendation"],
-      now: new Date("2026-10-03T12:00:00Z"),
+      expectedCorrelationId: "other-correlation", expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["recommendation"], now: new Date("2026-10-03T12:00:00Z"),
     })).toBeNull();
     expect(validateWorldwayDecisionContract(contract, {
-      expectedCorrelationId: "wwai-test",
-      expectedSourceTaskId: "other-model",
-      acceptedDecisionKinds: ["recommendation"],
-      now: new Date("2026-10-03T12:00:00Z"),
+      expectedCorrelationId: "wwai-test", expectedSourceTaskId: "other-model",
+      acceptedDecisionKinds: ["recommendation"], now: new Date("2026-10-03T12:00:00Z"),
     })).toBeNull();
     expect(validateWorldwayDecisionContract(contract, {
-      expectedCorrelationId: "wwai-test",
-      expectedSourceTaskId: "model-step",
-      acceptedDecisionKinds: ["ranking"],
-      now: new Date("2026-10-03T12:00:00Z"),
+      expectedCorrelationId: "wwai-test", expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["ranking"], now: new Date("2026-10-03T12:00:00Z"),
     })).toBeNull();
-    expect(validateWorldwayDecisionContract(
-      { ...contract!, expiresAt: "2026-10-03T11:59:59Z" },
-      {
-        expectedCorrelationId: "wwai-test",
-        expectedSourceTaskId: "model-step",
-        acceptedDecisionKinds: ["recommendation"],
-        now: new Date("2026-10-03T12:00:00Z"),
-      },
-    )).toBeNull();
-    expect(validateWorldwayDecisionContract(
-      { ...contract!, evidence: [{ ...evidence[0], reference: "bad reference!" }] },
-      {
-        expectedCorrelationId: "wwai-test",
-        expectedSourceTaskId: "model-step",
-        acceptedDecisionKinds: ["recommendation"],
-        now: new Date("2026-10-03T12:00:00Z"),
-      },
-    )).toBeNull();
+    expect(validateWorldwayDecisionContract({ ...contract!, expiresAt: "2026-10-03T11:59:59Z" }, {
+      expectedCorrelationId: "wwai-test", expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["recommendation"], now: new Date("2026-10-03T12:00:00Z"),
+    })).toBeNull();
+    expect(validateWorldwayDecisionContract({ ...contract!, evidence: [{ ...evidence[0], reference: "bad reference!" }] }, {
+      expectedCorrelationId: "wwai-test", expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["recommendation"], now: new Date("2026-10-03T12:00:00Z"),
+    })).toBeNull();
   });
+
+  it("binds ready specialist synthesis into the existing decision contract", () => {
+    const synthesis = synthesizeSpecialistDecisions(buildSpecialistCoordinationEnvelope("wwai-test", [
+      { specialist: "flight_intelligence", taskId: "flight-step", state: "completed", output: { recommendation: "review" }, evidence },
+      { specialist: "hotel_intelligence", taskId: "hotel-step", state: "completed", output: { recommendation: "review" }, evidence },
+    ])!, { expectedCorrelationId: "wwai-test", now: new Date("2026-10-03T12:00:00Z") })!;
+
+    const contract = bindSpecialistSynthesisToDecisionContract({
+      synthesis, decisionKind: "recommendation", decision: "Use the deterministic itinerary", confidence: 0.91,
+      correlationId: "wwai-test", sourceTaskId: "decision-step", acceptedDecisionKinds: ["recommendation"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    });
+
+    expect(contract).toMatchObject({
+      contractVersion: "1.0", decisionKind: "recommendation", decision: "Use the deterministic itinerary",
+      correlationId: "wwai-test", sourceTaskId: "decision-step",
+    });
+    expect(contract?.evidence).toEqual(evidence);
+  });
+
+  it("does not bind conflicted synthesis or infer a winner", () => {
+    const synthesis = synthesizeSpecialistDecisions(buildSpecialistCoordinationEnvelope("wwai-test", [
+      { specialist: "flight_intelligence", taskId: "flight-step", state: "completed", output: { recommendation: "keep" }, evidence },
+      { specialist: "hotel_intelligence", taskId: "hotel-step", state: "completed", output: { recommendation: "reject" }, evidence },
+    ])!, { expectedCorrelationId: "wwai-test", now: new Date("2026-10-03T12:00:00Z") })!;
+
+    const contract = bindSpecialistSynthesisToDecisionContract({
+      synthesis: synthesis!, decisionKind: "recommendation", decision: "keep", confidence: 0.9,
+      correlationId: "wwai-test", sourceTaskId: "decision-step", acceptedDecisionKinds: ["recommendation"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    });
+    expect(contract).toBeNull();
+  });
+});

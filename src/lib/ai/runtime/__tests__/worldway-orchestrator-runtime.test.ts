@@ -123,4 +123,41 @@ describe("Worldway specialist orchestration runtime", () => {
       output: { readiness: "review_only" },
     });
   });
+  it("accepts only a validated decision contract at the deterministic runtime boundary", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({ tools: new ToolRegistry(), deterministic: async (task) => task.input });
+    const result = await runtime.orchestrator.run({
+      goal: "validated decision",
+      tasks: [{ id: "decision-step", kind: "deterministic", acceptedDecisionKinds: ["recommendation"], input: {
+        decisionContract: {
+          contractVersion: "1.0", decisionKind: "recommendation", decision: "use itinerary", confidence: 0.9,
+          evidence: [{ source: "runtime-test", reference: "decision:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+          correlationId: "wwai-test", sourceTaskId: "decision-step", constraints: [], expiresAt: "2099-01-01T00:00:00Z",
+        },
+      }}],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(result.results[0].result).toMatchObject({ decisionContract: { decision: "use itinerary", sourceTaskId: "decision-step" } });
+  });
+
+  it("rejects an expired or mismatched decision contract before deterministic execution", async () => {
+    let executed = false;
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => { executed = true; return task.input; },
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "invalid decision",
+      tasks: [{ id: "decision-step", kind: "deterministic", acceptedDecisionKinds: ["recommendation"], input: {
+        decisionContract: {
+          contractVersion: "1.0", decisionKind: "recommendation", decision: "use itinerary", confidence: 0.9,
+          evidence: [{ source: "runtime-test", reference: "decision:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+          correlationId: "wrong-correlation", sourceTaskId: "decision-step", constraints: [], expiresAt: "2020-01-01T00:00:00Z",
+        },
+      }}],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(executed).toBe(false);
+    expect(result.results[0].error).toContain("decision_contract_runtime_validation_failed");
+  });
+
 });

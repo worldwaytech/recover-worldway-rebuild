@@ -111,11 +111,10 @@ export class SpecialistAgentRegistry implements SpecialistDelegate {
   }
 }
 
-
 export interface SpecialistCoordinationMember {
   taskId: string;
   specialist: SpecialistAgentKey;
-  output: unknown;
+  output: Record<string, unknown>;
   evidence: OrchestrationEvidence[];
 }
 
@@ -128,11 +127,12 @@ export interface SpecialistCoordinationEnvelope {
 const MAX_COORDINATION_MEMBERS = 10;
 const MAX_COORDINATION_OUTPUT_BYTES = 16_000;
 
-function boundedOutput(value: unknown): unknown {
+function boundedOutput(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   try {
     const serialized = JSON.stringify(value);
     if (!serialized || serialized.length > MAX_COORDINATION_OUTPUT_BYTES) return null;
-    return value;
+    return value as Record<string, unknown>;
   } catch {
     return null;
   }
@@ -147,7 +147,7 @@ export function buildSpecialistCoordinationEnvelope(
   for (const result of results) {
     if (result.state !== "completed") return null;
     const output = boundedOutput(result.output);
-    if (output === null) return null;
+    if (!output) return null;
     const evidence = sanitizeOrchestrationEvidence(result.evidence ?? []);
     members.push({ taskId: result.taskId, specialist: result.specialist, output, evidence });
   }
