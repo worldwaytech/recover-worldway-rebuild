@@ -5,7 +5,7 @@
 // so tenant isolation is enforced by the database.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
-import { tripjackCall } from "./client.server";
+import { tripjackAgentCredentialStatus, tripjackCall } from "./client.server";
 import {
   TRIPJACK_CAB_PRODUCT_TYPE,
   TRIPJACK_CAB_SUPPLIER,
@@ -250,6 +250,15 @@ export async function bookCab(
   const existing = await findByIdempotency(client, input.idempotencyKey);
   if (existing) {
     return { booking: toCabRecord(existing), replay: true, message: "Existing booking returned." };
+  }
+
+  // Stop safely before any booking row or supplier write if the TripJack
+  // agent profile is incomplete. This prevents supplier-side "id must not be null"
+  // failures caused by missing server configuration.
+  const agentProfile = tripjackAgentCredentialStatus();
+  if (!agentProfile.configured) {
+    const missing = [...agentProfile.missing, ...agentProfile.invalid];
+    throw new Error(`TripJack agent profile is incomplete. Configure: ${missing.join(", ")}`);
   }
 
   // Stop safely before any booking row or supplier write if auth is unavailable.
