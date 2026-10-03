@@ -1,5 +1,6 @@
 import {
   DeterministicTaskExecutor,
+  RoutedModelTaskExecutor,
   SpecialistTaskExecutor,
   ToolFabricTaskExecutor,
   WorldwayOrchestrator,
@@ -16,6 +17,10 @@ export interface WorldwayOrchestratorRuntime {
 
 export interface WorldwayOrchestratorRuntimeOptions {
   tools: ToolRegistry;
+  /** Optional routed model execution. Provider/model selection stays inside the existing router. */
+  model?: {
+    run: (task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
+  };
   deterministic?: (task: OrchestrationTask, context: Parameters<TaskExecutor["execute"]>[1]) => Promise<unknown>;
 }
 
@@ -32,6 +37,7 @@ export function createWorldwayOrchestratorRuntime(
   const specialists = new SpecialistAgentRegistry();
   const toolExecutor = new ToolFabricTaskExecutor(options.tools);
   const specialistExecutor = new SpecialistTaskExecutor(specialists);
+  const modelExecutor = options.model ? new RoutedModelTaskExecutor(options.model) : undefined;
   const deterministicExecutor = new DeterministicTaskExecutor(
     options.deterministic ?? (async (task) => task.input),
   );
@@ -39,6 +45,10 @@ export function createWorldwayOrchestratorRuntime(
   const executor: TaskExecutor = {
     async execute(task, context) {
       if (task.kind === "specialist") return specialistExecutor.execute(task, context);
+      if (task.kind === "model") {
+        if (!modelExecutor) throw new Error("model_executor_not_configured");
+        return modelExecutor.execute(task, context);
+      }
       if (task.kind === "deterministic") return deterministicExecutor.execute(task, context);
       return toolExecutor.execute(task, context);
     },
