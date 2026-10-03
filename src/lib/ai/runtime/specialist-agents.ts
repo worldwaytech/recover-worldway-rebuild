@@ -161,9 +161,27 @@ export function buildSpecialistCoordinationEnvelope(
 export function isSpecialistCoordinationEnvelope(value: unknown): value is SpecialistCoordinationEnvelope {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<SpecialistCoordinationEnvelope>;
-  return candidate.contractVersion === "1.0"
-    && typeof candidate.correlationId === "string"
-    && Array.isArray(candidate.members)
-    && candidate.members.length > 0
-    && candidate.members.length <= MAX_COORDINATION_MEMBERS;
+  if (
+    candidate.contractVersion !== "1.0"
+    || typeof candidate.correlationId !== "string"
+    || !candidate.correlationId.trim()
+    || !Array.isArray(candidate.members)
+    || candidate.members.length === 0
+    || candidate.members.length > MAX_COORDINATION_MEMBERS
+  ) return false;
+
+  return candidate.members.every((member) => {
+    if (!member || typeof member !== "object") return false;
+    const item = member as Partial<SpecialistCoordinationMember>;
+    return typeof item.taskId === "string"
+      && Boolean(item.taskId.trim())
+      && typeof item.specialist === "string"
+      && SPECIALIST_AGENT_KEYS.includes(item.specialist as SpecialistAgentKey)
+      && Boolean(item.output)
+      && typeof item.output === "object"
+      && !Array.isArray(item.output)
+      && Boolean(boundedOutput(item.output))
+      && Array.isArray(item.evidence)
+      && sanitizeOrchestrationEvidence(item.evidence, new Date(), { strictExpiry: false }).length === item.evidence.length;
+  });
 }
