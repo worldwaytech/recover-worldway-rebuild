@@ -70,6 +70,7 @@ export function synthesizeSpecialistDecisions(
 
   const findings: SpecialistSynthesisFinding[] = [];
   const allEvidence: OrchestrationEvidence[] = [];
+  const evidenceKeys = new Set<string>();
 
   for (const member of envelope.members) {
     const output = boundedObject(member.output);
@@ -77,7 +78,13 @@ export function synthesizeSpecialistDecisions(
     const evidence = validEvidence(member.evidence, now);
     if (!evidence) return null;
     findings.push({ taskId: member.taskId, specialist: member.specialist, output, evidence });
-    allEvidence.push(...evidence);
+    for (const item of evidence) {
+      const key = JSON.stringify([item.source, item.reference, item.observedAt, item.confidence, item.expiresAt ?? null]);
+      if (!evidenceKeys.has(key)) {
+        evidenceKeys.add(key);
+        allEvidence.push(item);
+      }
+    }
   }
 
   const conflicts: SpecialistSynthesisConflict[] = [];
