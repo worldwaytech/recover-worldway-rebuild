@@ -58,7 +58,36 @@ describe("High-risk action gate", () => {
     expect(calls).toEqual([]);
     const done = await executeProposal(a, r, ctx(), ok);
     expect(done.ok).toBe(true); expect(calls).toEqual(["book_x"]);
+
+    const replay = await executeProposal(a, r, ctx(), ok);
+    expect(replay.ok).toBe(false);
+    expect((replay as any).code).toBe("already_executed");
+    expect(calls).toEqual(["book_x"]);
+
+    const cloned = { ...a, proposal_id: a.proposal_id };
+    const clonedReplay = await executeProposal(cloned, r, ctx(), ok);
+    expect(clonedReplay.ok).toBe(false);
+    expect((clonedReplay as any).code).toBe("already_executed");
   });
+
+  it("rejects concurrent execution of the same proposal", async () => {
+    const calls: string[] = [];
+    const r = reg(calls);
+    const p = approve(propose({ action: "BOOK", tool: "book_x", target: { kind: "x", id: "concurrent" }, payload: { id: "concurrent" }, rationale: "r", evidence }), { userId: "u1", permission: "authenticated" });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const slow: Revalidator = async () => { await gate; return { ok: true, checkedAt: "", checks: ["booking_readiness"], blockers: [] }; };
+    const first = executeProposal(p, r, ctx(), slow);
+    await Promise.resolve();
+    const second = await executeProposal(p, r, ctx(), slow);
+    expect(second.ok).toBe(false);
+    expect((second as any).code).toBe("execution_in_progress");
+    release();
+    const firstResult = await first;
+    expect(firstResult.ok).toBe(true);
+    expect(calls).toEqual(["book_x"]);
+  });
+
   it("refunds need staff and expired proposals never execute", async () => {
     const p = propose({ action: "REFUND", tool: "book_x", target: { kind: "x", id: "1" }, payload: { id: "1" }, rationale: "r", evidence });
     expect(() => approve(p, { userId: "u1", permission: "authenticated" })).toThrow(/insufficient_permission/);
