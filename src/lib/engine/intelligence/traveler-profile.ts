@@ -19,7 +19,7 @@ export const TravelerProfile = z.object({
   })).max(30).default([]),
   importantTravelDates: z.array(z.object({
     label: z.string().min(1).max(100),
-    monthDay: z.string().regex(/^\\d{2}-\\d{2}$/),
+    monthDay: z.string().regex(/^\d{2}-\d{2}$/),
   })).max(30).default([]),
   loyaltyPrograms: z.array(z.object({
     program: z.string().min(1).max(120),
@@ -28,7 +28,6 @@ export const TravelerProfile = z.object({
 });
 
 export type TravelerProfile = z.infer<typeof TravelerProfile>;
-
 export const EMPTY_TRAVELER_PROFILE: TravelerProfile = TravelerProfile.parse({});
 
 const normalizeList = (values: string[]) =>
@@ -63,11 +62,10 @@ export interface PersonalizationContext {
   consent: { preferences: boolean; history: boolean };
 }
 
-/**
- * Memory is used only to personalize selection/structure. It never changes
- * supplier availability, inventory truth, payment state, or commercial price.
- */
-export function permittedTravelerProfile(profile: TravelerProfile, consent: { preferences: boolean; history: boolean }): TravelerProfile {
+export function permittedTravelerProfile(
+  profile: TravelerProfile,
+  consent: { preferences: boolean; history: boolean },
+): TravelerProfile {
   if (!consent.preferences) {
     return { ...EMPTY_TRAVELER_PROFILE, budgetPattern: undefined };
   }
@@ -77,7 +75,13 @@ export function permittedTravelerProfile(profile: TravelerProfile, consent: { pr
 export function buildPersonalizationContext(
   profile: TravelerProfile,
   consent: { preferences: boolean; history: boolean },
-  memories: Array<{ key: string; value: Record<string, unknown>; confidence?: number; consent_scope: "preferences" | "history"; memory_kind: string }>,
+  memories: Array<{
+    key: string;
+    value: Record<string, unknown>;
+    confidence?: number;
+    consent_scope: "preferences" | "history";
+    memory_kind: string;
+  }>,
 ): PersonalizationContext {
   const permitted = permittedTravelerProfile(profile, consent);
   const signals: PersonalizationSignal[] = [];
@@ -90,50 +94,44 @@ export function buildPersonalizationContext(
       key: memory.key,
       value: raw,
       confidence: Math.max(0, Math.min(1, Number(memory.confidence ?? 1))),
-      source: memory.consent_scope === "history" ? "history" : memory.memory_kind === "behavioral" ? "behavioral" : "explicit",
+      source:
+        memory.consent_scope === "history"
+          ? "history"
+          : memory.memory_kind === "behavioral"
+            ? "behavioral"
+            : "explicit",
     });
   }
 
-  for (const destination of permitted.favoriteDestinations) {
+  for (const destination of permitted.favoriteDestinations)
     signals.push({ key: "favorite_destination", value: destination, confidence: 1, source: "explicit" });
-  }
-  for (const airline of permitted.preferredAirlines) {
+  for (const airline of permitted.preferredAirlines)
     signals.push({ key: "preferred_airline", value: airline, confidence: 1, source: "explicit" });
-  }
-  for (const hotel of permitted.preferredHotels) {
+  for (const hotel of permitted.preferredHotels)
     signals.push({ key: "preferred_hotel", value: hotel, confidence: 1, source: "explicit" });
-  }
-  for (const dietary of permitted.dietaryPreferences) {
+  for (const dietary of permitted.dietaryPreferences)
     signals.push({ key: "dietary_preference", value: dietary, confidence: 1, source: "explicit" });
-  }
-  for (const room of permitted.roomPreferences) {
+  for (const room of permitted.roomPreferences)
     signals.push({ key: "room_preference", value: room, confidence: 1, source: "explicit" });
-  }
-  for (const activity of permitted.activityPreferences) {
+  for (const activity of permitted.activityPreferences)
     signals.push({ key: "activity_preference", value: activity, confidence: 1, source: "explicit" });
-  }
-  for (const companion of permitted.companions) {
+  for (const companion of permitted.companions)
     signals.push({ key: "companion_pattern", value: companion.relation + ":" + companion.count, confidence: 1, source: "explicit" });
-  }
-  for (const loyalty of permitted.loyaltyPrograms) {
+  for (const loyalty of permitted.loyaltyPrograms)
     signals.push({ key: "loyalty_program", value: loyalty.program, confidence: 1, source: "explicit" });
-  }
-  for (const date of permitted.importantTravelDates) {
+  for (const date of permitted.importantTravelDates)
     signals.push({ key: "important_travel_date", value: date.label + ":" + date.monthDay, confidence: 1, source: "explicit" });
-  }
-  if (permitted.budgetPattern?.typicalMax != null) {
+  if (permitted.budgetPattern?.typicalMax != null)
     signals.push({ key: "budget_pattern_max", value: permitted.budgetPattern.typicalMax, confidence: 1, source: "explicit" });
-  }
 
   return { profile: permitted, signals, consent };
 }
 
-/** Current request values must win over personalized defaults. */
 export function applyPersonalizationDefaults<T extends Record<string, unknown>>(
   request: T,
   context: PersonalizationContext,
 ): T {
-  const out = { ...request };
+  const out: Record<string, unknown> = { ...request };
   const p = context.profile;
 
   if (out.destination == null && p.favoriteDestinations.length === 1) out.destination = p.favoriteDestinations[0];
@@ -141,24 +139,23 @@ export function applyPersonalizationDefaults<T extends Record<string, unknown>>(
   if (out.hotel == null && p.preferredHotels.length === 1) out.hotel = p.preferredHotels[0];
   if (out.dietaryPreference == null && p.dietaryPreferences.length === 1) out.dietaryPreference = p.dietaryPreferences[0];
   if (out.roomPreference == null && p.roomPreferences.length === 1) out.roomPreference = p.roomPreferences[0];
-  if (out.activityPreferences == null && p.activityPreferences.length) out.activityPreferences = [...p.activityPreferences];
-  if (out.budget == null && p.budgetPattern?.typicalMax != null) {
+  if (out.activityPreferences == null && p.activityPreferences.length)
+    out.activityPreferences = [...p.activityPreferences];
+  if (out.budget == null && p.budgetPattern?.typicalMax != null)
     out.budget = { amount: p.budgetPattern.typicalMax, currency: p.budgetPattern.currency };
-  }
+
   return out as T;
 }
 
-/**
- * Applies only preference-fit weight adjustments. Feasibility remains
- * dominant and the function never touches price or availability.
- */
 export function personalizeRankingFactors(
   factors: ScoreFactor[],
   context: PersonalizationContext,
 ): ScoreFactor[] {
   if (!context.consent.preferences && !context.consent.history) return factors.map(f => ({ ...f }));
 
-  const preferenceStrength = context.signals.length ? Math.min(0.25, 0.05 + context.signals.length * 0.01) : 0;
+  const preferenceStrength = context.signals.length
+    ? Math.min(0.25, 0.05 + context.signals.length * 0.01)
+    : 0;
   const adjusted = factors.map(f =>
     f.factor === "Customer preference fit"
       ? { ...f, weight: f.weight + preferenceStrength }
@@ -169,6 +166,7 @@ export function personalizeRankingFactors(
   const others = adjusted.filter(f => f !== feasibility);
   const sum = others.reduce((s, f) => s + f.weight, 0) || 1;
   const feasibilityWeight = feasibility ? Math.max(feasibility.weight, 0.3) : 0;
+
   return adjusted.map(f =>
     f === feasibility
       ? { ...f, weight: feasibilityWeight }
