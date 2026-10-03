@@ -13,3 +13,43 @@ export function packageOptimizationMetrics(input:PackageOptimizationInput, req:T
  const net=input.items.reduce((s,c)=>s+c.net.amount,0); const marginAmount=input.marginAmount??Math.max(0,input.total-net); const margin=input.total>0?Math.max(0,Math.min(1,marginAmount/input.total)):0; const preference=input.items.length?input.items.reduce((s,c)=>s+componentPreference(c,profile),0)/input.items.length:0; void registry; return {geography,time,margin,preference};
 }
 export function rankComponents(components:NormalizedComponent[], req:TripRequirements, registry:Map<string,SupplierRegistration>, profile:RankingProfile={}):NormalizedComponent[] { const places=new Set(req.destinations.map(x=>x.toLowerCase())); const score=(c:NormalizedComponent)=>{const quality=(c.quality??3)/5;const luxury=1-Math.abs(quality*5-req.luxuryLevel)/5;const geography=places.size?Number(places.has(c.start.place.toLowerCase())||places.has(c.end.place.toLowerCase())):1;const reliability=registry.get(c.supplierKey)?.reliability??0;const preference=componentPreference(c,profile);return .30*luxury+.20*reliability+.20*geography+.30*preference;}; return [...components].sort((a,b)=>score(b)-score(a)); }
+export interface OptimizationObjective { key: "score" | "price" | "margin" | "geography" | "time" | "preference"; direction: "maximize" | "minimize"; }
+
+/** Deterministic Pareto frontier. A candidate is dominated only when another candidate
+ * is at least as good on every objective and strictly better on one. */
+export function paretoFrontier(candidates: PackageOptimizationInput[], req: TripRequirements, registry: Map<string, SupplierRegistration>, profile: RankingProfile = {}): PackageOptimizationInput[] {
+  const objectives: OptimizationObjective[] = [
+    { key: "margin", direction: "maximize" }, { key: "geography", direction: "maximize" },
+    { key: "time", direction: "maximize" }, { key: "preference", direction: "maximize" },
+    { key: "price", direction: "minimize" },
+  ];
+  const scored = candidates.map((candidate) => ({ candidate, metrics: packageOptimizationMetrics(candidate, req, registry, profile) }));
+  const metric = (x: typeof scored[number], key: OptimizationObjective["key"]) => key === "price" ? x.candidate.total : x.metrics[key as keyof PackageOptimizationMetrics];
+  const dominates = (a: typeof scored[number], b: typeof scored[number]) => {
+    let strict = false;
+    for (const o of objectives) {
+      const av = metric(a, o.key), bv = metric(b, o.key);
+      if (o.direction === "maximize" && av < bv) return false;
+      if (o.direction === "minimize" && av > bv) return false;
+      if (av !== bv) strict = true;
+    }
+    return strict;
+  };
+  return scored.filter((x, i) => !scored.some((y, j) => i !== j && dominates(y, x))).map((x) => x.candidate).sort((a,b) => a.id.localeCompare(b.id));
+}
+
+/** Select a stable shortlist while preserving objective diversity. */
+export function optimizePackageSet(candidates: PackageOptimizationInput[], req: TripRequirements, registry: Map<string, SupplierRegistration>, limit = 3, profile: RankingProfile = {}): PackageOptimizationInput[] {
+  if (limit <= 0 || !candidates.length) return [];
+  const frontier = paretoFrontier(candidates, req, registry, profile);
+  const ranked = [...frontier].sort((a,b) => b.total === a.total ? a.id.localeCompare(b.id) : a.total - b.total);
+  const selected = ranked.slice(0, limit);
+  if (selected.length < limit) {
+    for (const candidate of candidates.slice().sort((a,b) => a.id.localeCompare(b.id))) {
+      if (selected.some((x) => x.id === candidate.id)) continue;
+      selected.push(candidate);
+      if (selected.length === limit) break;
+    }
+  }
+  return selected;
+}
