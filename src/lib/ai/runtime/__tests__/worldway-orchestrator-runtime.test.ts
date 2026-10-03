@@ -417,7 +417,7 @@ describe("Worldway specialist orchestration runtime", () => {
           bookingComponents: [component],
           supplierCapabilities: { air: ["revalidate"] },
           decisionContract: {
-            contractVersion: "1.0", decisionKind: "recommendation", decision: "prepare booking readiness check", confidence: 0.9,
+            contractVersion: "1.0", decisionKind: "recommendation", decision: "prepare readiness check", confidence: 0.9,
             evidence: [{ source: "runtime-test", reference: "booking:readiness:1", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
             correlationId: "wwai-test", sourceTaskId: "booking-readiness",
             constraints: [],
