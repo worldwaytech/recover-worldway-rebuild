@@ -310,7 +310,7 @@ export class WorldwayOrchestrator {
       }
     }
 
-    const resultList = ordered.map((task) => results.get(task.id) ?? { taskId: task.id, state: "skipped", error: "not_executed" });
+    const resultList: TaskExecutionResult[] = ordered.map((task) => results.get(task.id) ?? { taskId: task.id, state: "skipped" as const, error: "not_executed" });
     const problems = resultList.filter((r) => r.state !== "completed").map((r) => `${r.taskId}:${r.error ?? r.state}`);
     const timedOut = resultList.some((r) => r.state === "timed_out");
     const cancelled = resultList.some((r) => r.state === "cancelled");
