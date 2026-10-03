@@ -227,9 +227,16 @@ export function priceDynamicComponent(input: DynamicPricingInput): DynamicPriceQ
   const prePromotion = round2(supplierCost + markup + commission + channelFee);
   const promotion = activePromotion(policy.promotions, policy.channel, prePromotion, now);
   const rawDiscount = promotion ? round2(prePromotion * promotion.percentOff / 100) : 0;
-  const promotionDiscount = promotion?.maxDiscountAmount == null
+  const requestedDiscount = promotion?.maxDiscountAmount == null
     ? rawDiscount
     : round2(Math.min(rawDiscount, Math.max(0, promotion.maxDiscountAmount)));
+
+  // The margin floor is a hard commercial constraint. Promotions are capped,
+  // never allowed to violate it.
+  const floorRate = clamp(policy.minimumMarginPercent / 100, 0, 0.99);
+  const minimumCustomerPrice = round2((supplierCost + commission) / (1 - floorRate));
+  const floorSafeDiscount = round2(Math.max(0, prePromotion - minimumCustomerPrice));
+  const promotionDiscount = round2(Math.min(requestedDiscount, floorSafeDiscount));
   const customerPrice = round2(prePromotion - promotionDiscount);
   const grossProfit = round2(customerPrice - supplierCost - commission);
   const grossMarginPercent = customerPrice > 0 ? round2(grossProfit / customerPrice * 100) : 0;
