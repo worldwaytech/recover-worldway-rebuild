@@ -181,7 +181,7 @@ describe("Worldway AI Orchestrator foundation", () => {
     const orchestrator = new WorldwayOrchestrator({
       execute: async (task) => {
         if (task.kind === "model") {
-          return { decision: "review", evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
+          return { decisionKind: "recommendation", decision: "review", confidence: 0.92, constraints: ["deterministic-only"], evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
         }
         captured.push(task.input);
         return "accepted";
@@ -195,6 +195,22 @@ describe("Worldway AI Orchestrator foundation", () => {
       ],
     }, context());
     expect(result.ok).toBe(true);
-    expect(captured[0]).toMatchObject({ modelHandoff: { decision: "review", evidence: [{ reference: "model:validated" }] } });
+    expect(captured[0]).toMatchObject({ modelDecision: { contractVersion: "1.0", decision: "review", confidence: 0.92, correlationId: "wwai-test", evidence: [{ reference: "model:validated" }] } });
+  });
+
+  it("blocks model handoff when the typed decision contract is invalid", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.kind === "model" ? { decision: "missing-proof" } : "must-not-run",
+    });
+    const result = await orchestrator.run({
+      goal: "invalid-handoff",
+      tasks: [
+        { id: "model-step", kind: "model", modelTask: "concierge_chat" },
+        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step" },
+      ],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results.find((r) => r.taskId === "deterministic-step")?.state).toBe("failed");
+    expect(result.results.find((r) => r.taskId === "deterministic-step")?.error).toContain("decision contract invalid");
   });
 });
