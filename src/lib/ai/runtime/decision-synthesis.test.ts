@@ -21,6 +21,25 @@ function envelope(outputs: unknown[], withEvidence = true) {
 }
 
 describe("context-aware specialist decision synthesis", () => {
+  it("removes execution authority fields from specialist findings", () => {
+    const result = synthesizeSpecialistDecisions(envelope([
+      {
+        recommendation: "review",
+        executionAuthority: true,
+        payment: { action: "charge", amount: 100 },
+        nested: { booking: { execute: true }, safe: "kept" },
+      },
+    ])!, { expectedCorrelationId: "corr-synthesis-1" });
+    expect(result?.status).toBe("ready");
+    expect(result?.findings[0].output).toMatchObject({
+      recommendation: "review",
+      nested: { safe: "kept" },
+    });
+    expect(result?.findings[0].output).not.toHaveProperty("executionAuthority");
+    expect(result?.findings[0].output).not.toHaveProperty("payment");
+    expect(result?.findings[0].output).not.toHaveProperty("nested.booking");
+  });
+
   it("produces a ready synthesis for compatible findings", () => {
     const result = synthesizeSpecialistDecisions(envelope([
       { recommendation: "keep", classification: "feasible" },
