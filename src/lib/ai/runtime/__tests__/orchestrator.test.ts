@@ -175,4 +175,26 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.trace.evidence[0].items[0].reference).toBe("edge:ist:123");
   });
 
+
+  it("passes only provenance-bound model output into deterministic handoff tasks", async () => {
+    const captured: unknown[] = [];
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => {
+        if (task.kind === "model") {
+          return { decision: "review", evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
+        }
+        captured.push(task.input);
+        return "accepted";
+      },
+    });
+    const result = await orchestrator.run({
+      goal: "handoff",
+      tasks: [
+        { id: "model-step", kind: "model", modelTask: "concierge_chat" },
+        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step" },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(captured[0]).toMatchObject({ modelHandoff: { decision: "review", evidence: [{ reference: "model:validated" }] } });
+  });
 });

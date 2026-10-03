@@ -38,6 +38,8 @@ export interface OrchestrationTask {
   specialist?: string;
   /** Model-router task and prompt payload for bounded model execution. */
   modelTask?: TaskKind;
+  /** Explicit downstream handoff from one completed model task. */
+  handoffFrom?: string;
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -126,6 +128,9 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     if (task.kind === "tool" && !task.tool) problems.push(`missing_tool:${task.id}`);
     if (task.kind === "specialist" && !task.specialist) problems.push(`missing_specialist:${task.id}`);
     if (task.kind === "model" && !task.modelTask) problems.push(`missing_model_task:${task.id}`);
+    if (task.handoffFrom && task.handoffFrom === task.id) problems.push(`self_handoff:${task.id}`);
+    if (task.handoffFrom && task.kind !== "deterministic") problems.push(`handoff_target_must_be_deterministic:${task.id}`);
+    if (task.handoffFrom && !(task.dependsOn ?? []).includes(task.handoffFrom)) problems.push(`handoff_must_depend_on_source:${task.id}->${task.handoffFrom}`);
   }
 
   for (const task of tasks) {
@@ -246,6 +251,19 @@ function errorText(error: unknown) {
   return error instanceof Error ? error.message.slice(0, 160) : "task_error";
 }
 
+function validatedModelHandoff(task: OrchestrationTask, sourceTask: OrchestrationTask | undefined, source: TaskExecutionResult | undefined) {
+  if (task.kind !== "deterministic" || !task.handoffFrom) return task;
+  if (!sourceTask || sourceTask.kind !== "model") throw new OrchestrationValidationError(`Model handoff source must be a model task for ${task.id}`);
+  if (!source || source.state !== "completed" || !source.result || typeof source.result !== "object") {
+    throw new OrchestrationValidationError(`Invalid model handoff source for ${task.id}`);
+  }
+  const value = source.result as Record<string, unknown>;
+  if (!Array.isArray(value.evidence) || value.evidence.length === 0) {
+    throw new OrchestrationValidationError(`Model handoff lacks provenance for ${task.id}`);
+  }
+  return { ...task, input: { ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}), modelHandoff: value } };
+}
+
 export class WorldwayOrchestrator {
   constructor(
     private readonly executor: TaskExecutor,
@@ -332,9 +350,10 @@ export class WorldwayOrchestrator {
       executedSteps++;
 
       try {
-        const result = task.kind === "tool" && this.toolExecutor
-          ? await this.toolExecutor.execute(task, context)
-          : await this.executor.execute(task, context);
+        const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined);
+        const result = executionTask.kind === "tool" && this.toolExecutor
+          ? await this.toolExecutor.execute(executionTask, context)
+          : await this.executor.execute(executionTask, context);
         const finishedAt = new Date().toISOString();
         results.set(task.id, { taskId: task.id, state: "completed", result, startedAt, finishedAt });
         trace.taskFinished(task.id, "completed", finishedAt, result);
