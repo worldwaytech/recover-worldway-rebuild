@@ -142,7 +142,11 @@ export class ControlledCommerceApprovalStore {
     return approval ? { ...approval } : undefined;
   }
 
-  toHighRiskGrant(id: string, principalUserId: string): ToolContext["highRiskGrant"] {
+  toHighRiskGrant(
+    id: string,
+    principalUserId: string,
+    bookingReadinessValidated: boolean,
+  ): ToolContext["highRiskGrant"] {
     const approval = this.requireActive(id);
     if (approval.principalUserId !== principalUserId) {
       throw new CommerceApprovalError("principal_mismatch");
@@ -150,9 +154,12 @@ export class ControlledCommerceApprovalStore {
     if (approval.status !== "approved") {
       throw new CommerceApprovalError(`approval_required:${approval.status}`);
     }
+    if (!bookingReadinessValidated) {
+      throw new CommerceApprovalError("booking_readiness_required");
+    }
     return {
       tool: approval.tool,
-      grantedBy: "staff_approval",
+      grantedBy: "booking_readiness",
     };
   }
 
