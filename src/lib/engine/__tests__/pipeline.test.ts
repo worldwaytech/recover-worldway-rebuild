@@ -102,6 +102,22 @@ describe("capability control", () => {
   });
 });
 
+
+  it("propagates canonical chronology violations into package readiness", () => {
+    const overlappingActivity: CanonicalOffer = {
+      ...activity,
+      externalId: "A-overlap",
+      start: { ...activity.start, at: "2026-10-12T10:00:00Z" },
+      end: { ...activity.end, at: "2026-10-12T13:00:00Z" },
+    };
+    const out = runPackagePipeline(base([
+      { id: "chronology-invalid", offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity, overlappingActivity] },
+    ]));
+    const pkg = out[0]!;
+    expect(pkg.issues.some((i) => i.code === "overlap")).toBe(true);
+    expect(pkg.bookable).toBe(false);
+  });
+
 describe("supplier health", () => {
   it("tracks errors/latency and marks a failing supplier down", async () => {
     const h = new HealthTracker();
