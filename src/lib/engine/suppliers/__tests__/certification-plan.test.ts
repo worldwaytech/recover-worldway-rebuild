@@ -4,7 +4,7 @@ import { SUPPLIER_CERTIFICATION_PLAN, certificationPlanFor } from "../certificat
 describe("Supplier certification plan", () => {
   it("captures every supplier requiring a post-phase16 action", () => {
     expect(SUPPLIER_CERTIFICATION_PLAN.map((item) => item.supplierKey)).toEqual([
-      "travelshop", "ratehawk", "gadventures", "hbx-hotels", "hbx-transfers",
+      "travelgate", "travelshop", "ratehawk", "gadventures", "hbx-hotels", "hbx-transfers",
       "viator-affiliate", "up17", "airiq", "tripjack-cabs", "private-aviation",
       "skyaccess", "amadeus",
     ]);
