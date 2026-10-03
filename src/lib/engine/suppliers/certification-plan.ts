@@ -20,6 +20,7 @@ export interface SupplierCertificationPlan {
 }
 
 export const SUPPLIER_CERTIFICATION_PLAN: readonly SupplierCertificationPlan[] = [
+  { supplierKey: "travelgate", currentReadiness: "disabled", nextStep: "complete_contract_prerequisites", requiredEvidence: ["Travelgate API credentials", "test Search", "test Quote", "test Book", "test Booking Read", "test Cancel", "failure/retry evidence", "idempotency evidence", "production lifecycle evidence"], promotionBlocker: "Integration foundation exists, but Travelgate has no production certification evidence and remains inactive." },
   { supplierKey: "travelshop", currentReadiness: "production", nextStep: "complete_contract_prerequisites", requiredEvidence: ["partner country IDs", "paid production booking", "cancel/refund outcome"], promotionBlocker: "Booking is not production-certified until partner prerequisites and a paid end-to-end booking are evidenced." },
   { supplierKey: "ratehawk", currentReadiness: "uat", nextStep: "complete_production_booking", requiredEvidence: ["credentials", "search/price", "prebook", "production booking", "cancel/refund"], promotionBlocker: "Certification is incomplete." },
   { supplierKey: "gadventures", currentReadiness: "uat", nextStep: "complete_production_booking", requiredEvidence: ["supplier write access", "search/price", "booking", "cancel/modify outcome"], promotionBlocker: "Certification evidence and write access remain incomplete." },
