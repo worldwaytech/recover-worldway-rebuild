@@ -57,7 +57,7 @@ function clamp(n:number){return Math.max(0,Math.min(1,n));}
 function durationMinutes(a:string,b:string){return Math.max(0,Math.round((Date.parse(b)-Date.parse(a))/60000));}
 function risk(price:Money,services:LuxuryServiceRequirement|undefined):HighValueRiskLevel{
   const high=price.amount>=50000 || !!services?.privateAviation || !!services?.yacht;
-  const enhanced=price.amount>=150000 || !!services?.yacht;
+  const enhanced=(price.amount>=50000 && !!services?.privateAviation) || price.amount>=150000 || !!services?.yacht;
   return enhanced?"enhanced_review":high?"elevated":"standard";
 }
 
