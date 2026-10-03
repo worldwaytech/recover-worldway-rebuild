@@ -190,9 +190,12 @@ export function isSpecialistDecisionSynthesisContract(
   ) return false;
 
   const aggregateEvidence = validEvidence(candidate.evidence, new Date());
-  if (!aggregateEvidence || aggregateEvidence.length === 0) return false;
-  if (candidate.status === "insufficient_evidence" && coverage.membersWithEvidence !== 0) return false;
-  if (candidate.status === "ready" && (candidate.conflicts.length > 0 || coverage.membersWithEvidence === 0)) return false;
+  if (!aggregateEvidence) return false;
+  if (candidate.status === "insufficient_evidence") {
+    return coverage.membersWithEvidence === 0 && aggregateEvidence.length === 0;
+  }
+  if (aggregateEvidence.length === 0 || coverage.membersWithEvidence === 0) return false;
+  if (candidate.status === "ready" && candidate.conflicts.length > 0) return false;
   if (candidate.status === "conflicted" && candidate.conflicts.length === 0) return false;
 
   return true;
