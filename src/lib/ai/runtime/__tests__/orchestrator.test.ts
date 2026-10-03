@@ -221,7 +221,9 @@ describe("Worldway AI Orchestrator foundation", () => {
           return { specialist: task.specialist, output: { recommendation: task.id === "flight-step" ? "keep" : "keep" }, evidence: [{ source: "synthesis-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
         }
         captured.push(task.input);
-        return "accepted";
+        return task.kind === "deterministic"
+          ? { decisionKind: "recommendation", decision: "use deterministic itinerary", confidence: 0.9, expiresAt: "2099-01-01T00:00:00Z" }
+          : "accepted";
       },
     });
     const result = await orchestrator.run({
@@ -247,7 +249,7 @@ describe("Worldway AI Orchestrator foundation", () => {
       tasks: [
         { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
         { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
-        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true, acceptedDecisionKinds: ["recommendation"] },
       ],
     }, context());
     expect(result.ok).toBe(false);
