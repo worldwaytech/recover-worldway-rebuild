@@ -206,7 +206,7 @@ describe("Worldway AI Orchestrator foundation", () => {
       goal: "invalid-handoff",
       tasks: [
         { id: "model-step", kind: "model", modelTask: "concierge_chat" },
-        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step" },
+        { id: "deterministic-step", kind: "deterministic", dependsOn: ["model-step"], handoffFrom: "model-step", acceptedDecisionKinds: ["recommendation"] },
       ],
     }, context());
     expect(result.ok).toBe(false);
