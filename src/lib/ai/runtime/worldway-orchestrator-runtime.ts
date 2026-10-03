@@ -21,6 +21,7 @@ export interface WorldwayOrchestratorRuntimeOptions {
   model?: {
     router?: import("../router/router").RouterDeps;
     invoke: (model: import("../router/types").ModelSpec, task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
+    validateOutput: (task: import("../router/types").TaskKind, value: unknown, correlationId: string) => unknown | null;
   };
   deterministic?: (task: OrchestrationTask, context: Parameters<TaskExecutor["execute"]>[1]) => Promise<unknown>;
 }

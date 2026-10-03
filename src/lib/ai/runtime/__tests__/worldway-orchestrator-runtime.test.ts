@@ -59,6 +59,9 @@ describe("Worldway specialist orchestration runtime", () => {
       model: { router: { env: { LOVABLE_API_KEY: "test-key" } }, invoke: async (model, task, input, correlationId) => {
         calls.push({ model, task, input, correlationId });
         return { model: model.id, task, correlationId };
+      }, validateOutput: (_task, value) => {
+        const output = value as Record<string, unknown>;
+        return typeof output?.task === "string" && typeof output?.correlationId === "string" ? output : null;
       } },
     });
 
@@ -71,6 +74,20 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({ task: "concierge_chat", input: { prompt: "analyse itinerary" }, correlationId: "wwai-test" });
     expect(result.results[0].result).toMatchObject({ task: "concierge_chat", correlationId: "wwai-test" });
+  });
+
+  it("fails closed when model output does not pass validation", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      model: { router: { env: { LOVABLE_API_KEY: "test-key" } }, invoke: async () => ({ unsafe: true }), validateOutput: () => null },
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "model analysis",
+      tasks: [{ id: "model-step", kind: "model", modelTask: "concierge_chat", input: { prompt: "analyse itinerary" } }],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results[0].state).toBe("failed");
+    expect(result.results[0].error).toContain("Model output validation failed");
   });
 
   it("blocks model tasks when the routed model boundary is not configured", async () => {
