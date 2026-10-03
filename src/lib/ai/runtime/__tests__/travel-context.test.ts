@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyTravelMemoryDefaults, buildTravelAgentContext } from "../travel-context";
+import { buildPersonalizationContext, normalizeTravelerProfile } from "@/lib/engine/intelligence/traveler-profile";
 
 function db() {
   const memories = [{
@@ -11,6 +12,7 @@ function db() {
     source: "system_inference",
     source_ref: "journey:1",
     expires_at: null,
+    consent_scope: "history",
   }];
   return {
     from(table: string) {
@@ -64,12 +66,17 @@ describe("Worldway travel agent context", () => {
     const context = await buildTravelAgentContext(db() as any, "u");
     expect(context.explicitPreferences.luxuryLevel).toBe(5);
     expect(context.memories[0]?.sourceRef).toBe("journey:1");
+    expect(context.personalization.signals.some(s => s.key === "slow_travel")).toBe(true);
     expect(context.precedence).toBe("current_request_over_memory");
   });
 
   it("uses memory only for missing preferences", () => {
+    const profile = normalizeTravelerProfile({ pace: "relaxed", luxuryLevel: 5 });
+    const personalization = buildPersonalizationContext(profile, { preferences: true, history: true }, []);
     const context = {
       explicitPreferences: { pace: "relaxed", luxuryLevel: 5 },
+      travelerProfile: profile,
+      personalization,
       memories: [],
       precedence: "current_request_over_memory" as const,
     };
