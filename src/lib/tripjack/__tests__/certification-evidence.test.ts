@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
+vi.mock("../client.server", () => ({
+  tripjackCredentialStatus: () => ({ configured: true, missing: [] }),
+  tripjackCall: vi.fn().mockResolvedValue({ ok: false, correlationId: "cid-503", error: { kind: "http", status: 503, message: "HTTP 503" } }),
+}));
 
-import { evidenceStatus, TRIPJACK_EVIDENCE_STEPS } from "../certification.server";
+import { checkTripjackConnectivity, evidenceStatus, TRIPJACK_EVIDENCE_STEPS } from "../certification.server";
 
 const row = (status: number | null, at: string, outcome = status && status < 300 ? "ok" : "error", error_kind: string | null = null) => ({
   response_status: status,
@@ -21,6 +25,12 @@ describe("TripJack evidence status", () => {
   });
   it("classifies 401/403/404/503 as BLOCKED", () => {
     for (const s of [401, 403, 404, 503]) expect(evidenceStatus([row(s, "2026-10-01T10:00:00Z")])).toBe("BLOCKED");
+  });
+  it("classifies a live Cabs UAT 503 as supplier-side blocked", async () => {
+    const [cabs] = await checkTripjackConnectivity();
+    expect(cabs.state).toBe("SUPPLIER-SIDE BLOCKED");
+    expect(cabs.httpStatus).toBe(503);
+    expect(cabs.detail).toContain("HTTP 503");
   });
   it("covers every cab step including amendment charges and cancel", () => {
     const cabs = TRIPJACK_EVIDENCE_STEPS.filter((s) => s.suite === "cabs").flatMap((s) => [...s.capabilities]);
