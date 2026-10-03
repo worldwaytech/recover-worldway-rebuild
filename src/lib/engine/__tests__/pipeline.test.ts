@@ -77,7 +77,7 @@ describe("end-to-end package pipeline", () => {
     const candidates = [
       {
         id: "a-standard",
-        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z")],
+        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), { ...activity, externalId: "A-standard", title: "Standard Tour" }],
       },
       {
         id: "z-preferred",
@@ -88,7 +88,7 @@ describe("end-to-end package pipeline", () => {
       ...base(candidates),
       optimization: {
         limit: 1,
-        profile: { weights: { preference: 1 }, kindPreferences: { activity: 1 } },
+        profile: { weights: { preference: 1 }, kindPreferences: { activity: 1 }, interests: ["preferred"] },
       },
     });
     expect(out).toHaveLength(2);
