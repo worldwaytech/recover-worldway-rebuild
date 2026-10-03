@@ -35,7 +35,7 @@ describe("unified payment authority", () => {
   });
 
   it("rejects methods not enabled for the account", () => {
-    const restricted = { ...authority, allowedMethods: ["razorpay"] as const };
+    const restricted: PaymentAuthority = { ...authority, allowedMethods: ["razorpay"] };
     expect(authorizePaymentRequest(restricted, {
       method: "wallet", amountMinor: 100_000, currency: "INR",
     })).toEqual({ ok: false, error: "Payment method is not enabled for this account." });
