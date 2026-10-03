@@ -7,17 +7,18 @@ import {
   validateWorldwayDecisionContract,
   type OrchestrationTask,
   type TaskExecutor,
-  type WorldwayDecisionKind,
 } from "./orchestrator";
+import { SpecialistAgentRegistry } from "./specialist-agents";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
   orchestrator: WorldwayOrchestrator;
-  specialists: import("./specialist-agents").SpecialistAgentRegistry;
+  specialists: SpecialistAgentRegistry;
 }
 
 export interface WorldwayOrchestratorRuntimeOptions {
   tools: ToolRegistry;
+  /** Optional routed model execution. Provider/model selection stays inside the existing router. */
   model?: {
     router?: import("../router/router").RouterDeps;
     invoke: (model: import("../router/types").ModelSpec, task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
@@ -50,7 +51,7 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
 export function createWorldwayOrchestratorRuntime(
   options: WorldwayOrchestratorRuntimeOptions,
 ): WorldwayOrchestratorRuntime {
-  const specialists = new (requireSpecialistRegistry())();
+  const specialists = new SpecialistAgentRegistry();
   const toolExecutor = new ToolFabricTaskExecutor(options.tools);
   const specialistExecutor = new SpecialistTaskExecutor(specialists);
   const modelExecutor = options.model ? new RoutedModelTaskExecutor(options.model) : undefined;
@@ -77,9 +78,4 @@ export function createWorldwayOrchestratorRuntime(
     orchestrator: new WorldwayOrchestrator(executor, toolExecutor),
     specialists,
   };
-}
-
-function requireSpecialistRegistry() {
-  // Kept local to avoid widening the runtime module's public dependency surface.
-  return import("./specialist-agents").then ? import("./specialist-agents").SpecialistAgentRegistry : undefined as never;
 }
