@@ -6,7 +6,7 @@ import { emit, newCorrelationId } from "../router/telemetry";
 import { OrchestrationTraceCollector } from "./orchestration-trace";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
-export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic";
+export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic" | "model";
 
 export type TaskState =
   | "pending"
@@ -34,6 +34,8 @@ export interface OrchestrationTask {
   tool?: string;
   input?: unknown;
   specialist?: string;
+  /** Model-router task and prompt payload for bounded model execution. */
+  modelTask?: import("../router/types").TaskKind;
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -121,6 +123,7 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     byId.set(task.id, task);
     if (task.kind === "tool" && !task.tool) problems.push(`missing_tool:${task.id}`);
     if (task.kind === "specialist" && !task.specialist) problems.push(`missing_specialist:${task.id}`);
+    if (task.kind === "model" && !task.modelTask) problems.push(`missing_model_task:${task.id}`);
   }
 
   for (const task of tasks) {
@@ -197,6 +200,21 @@ export class SpecialistTaskExecutor implements TaskExecutor {
   execute(task: OrchestrationTask, ctx: OrchestrationContext) {
     if (task.kind !== "specialist" || !task.specialist) throw new OrchestrationValidationError(`Task ${task.id} is not a specialist task`);
     return this.delegate.delegate(task, ctx);
+  }
+}
+
+
+export interface RoutedModelExecutorOptions {
+  run: (task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
+}
+
+/** Explicit model boundary. The router remains authoritative for provider/model selection. */
+export class RoutedModelTaskExecutor implements TaskExecutor {
+  constructor(private readonly options: RoutedModelExecutorOptions) {}
+
+  execute(task: OrchestrationTask, ctx: OrchestrationContext) {
+    if (task.kind !== "model" || !task.modelTask) throw new OrchestrationValidationError(`Task ${task.id} is not a model task`);
+    return this.options.run(task.modelTask, task.input, ctx.correlationId);
   }
 }
 
