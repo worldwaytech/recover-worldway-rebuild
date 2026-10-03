@@ -41,7 +41,7 @@ export function scoreKnowledgeHit(hit: KnowledgeHit, now = Date.now()): Knowledg
   }
 
   return {
-    total: Number((confidence * 0.5 + trust * 0.3 + freshness * 0.2).toFixed(6)),
+    total: Number((confidence * 0.6 + trust * 0.25 + freshness * 0.15).toFixed(6)),
     confidence,
     trust,
     freshness,
