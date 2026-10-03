@@ -3,6 +3,8 @@
 // Planning-first: autonomous booking/payment/mutation remain disabled.
 
 import { emit, newCorrelationId } from "../router/telemetry";
+import { withRoute, type RouterDeps } from "../router/router";
+import type { ModelSpec, TaskKind } from "../router/types";
 import { OrchestrationTraceCollector } from "./orchestration-trace";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
@@ -35,7 +37,7 @@ export interface OrchestrationTask {
   input?: unknown;
   specialist?: string;
   /** Model-router task and prompt payload for bounded model execution. */
-  modelTask?: import("../router/types").TaskKind;
+  modelTask?: TaskKind;
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -205,16 +207,17 @@ export class SpecialistTaskExecutor implements TaskExecutor {
 
 
 export interface RoutedModelExecutorOptions {
-  run: (task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
+  router?: RouterDeps;
+  invoke: (model: ModelSpec, task: TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
 }
 
-/** Explicit model boundary. The router remains authoritative for provider/model selection. */
+/** Explicit model boundary. The existing router remains authoritative for provider/model selection, health, cost and fallback. */
 export class RoutedModelTaskExecutor implements TaskExecutor {
   constructor(private readonly options: RoutedModelExecutorOptions) {}
 
   execute(task: OrchestrationTask, ctx: OrchestrationContext) {
     if (task.kind !== "model" || !task.modelTask) throw new OrchestrationValidationError(`Task ${task.id} is not a model task`);
-    return this.options.run(task.modelTask, task.input, ctx.correlationId);
+    return withRoute(task.modelTask, (model) => this.options.invoke(model, task.modelTask!, task.input, ctx.correlationId), this.options.router, ctx.correlationId);
   }
 }
 
