@@ -23,6 +23,8 @@ describe("Worldway typed decision contract", () => {
       confidence: 0.94,
       evidence,
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["deterministic-only"],
     });
 
@@ -33,6 +35,8 @@ describe("Worldway typed decision contract", () => {
       decision: "Use the validated itinerary",
       confidence: 0.94,
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["deterministic-only"],
     });
     expect(contract?.evidence[0]).toEqual(evidence[0]);
@@ -48,6 +52,8 @@ describe("Worldway typed decision contract", () => {
       confidence: 0.8,
       evidence: [],
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
     })).toBeNull();
 
     expect(createWorldwayDecisionContract({
