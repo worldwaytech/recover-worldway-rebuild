@@ -46,7 +46,7 @@ export interface ToolContext {
   principal: { permission: Permission; scopes: Scope[]; userId?: string | null };
   signal?: AbortSignal;
   /** Explicit, deterministic authorisation for high-risk tools (e.g. booking readiness). Phase 1: never granted to AI. */
-  highRiskGrant?: { tool: string; grantedBy: "booking_readiness" | "staff_approval" };
+  highRiskGrant?: { tool: string; action: RiskLevel; grantedBy: "booking_readiness" | "staff_approval" };
 }
 
 export class ToolDeniedError extends Error {
@@ -62,7 +62,7 @@ export function authorize(spec: ToolSpec<any, any>, ctx: ToolContext): { ok: tru
   if (RANK[ctx.principal.permission] < RANK[spec.permission]) return { ok: false, reason: "permission" };
   if (!spec.scopes.every((s) => ctx.principal.scopes.includes(s))) return { ok: false, reason: "scope" };
   if (HIGH_RISK.has(spec.risk)) {
-    if (!ctx.highRiskGrant || ctx.highRiskGrant.tool !== spec.name) return { ok: false, reason: "high_risk_requires_deterministic_grant" };
+    if (!ctx.highRiskGrant || ctx.highRiskGrant.tool !== spec.name || ctx.highRiskGrant.action !== spec.risk) return { ok: false, reason: "high_risk_grant_mismatch" };
   } else if (!AI_ALLOWED_RISK.has(spec.risk)) return { ok: false, reason: "risk_not_allowed" };
   return { ok: true };
 }

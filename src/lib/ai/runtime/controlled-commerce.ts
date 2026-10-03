@@ -164,6 +164,7 @@ export class ControlledCommerceApprovalStore {
     }
     return {
       tool: approval.tool,
+      action: riskFor(approval.action),
       grantedBy: "booking_readiness",
     };
   }
