@@ -77,12 +77,12 @@ async function askBuiltin(message: string, history: ConciergeTurn[]): Promise<st
 }
 
 export async function askConcierge(input: { message: string; history?: ConciergeTurn[]; sessionId?: string; conversationId?: string }): Promise<ConciergeReply> {
-  const { redactText } = await import("@/lib/confidentiality/redact");
+  const { sanitizeCustomerAiReply } = await import("./safety/customer-output");
   if (conciergeProvider() === "aethercore") {
     const { askAetherCore, AetherCoreError } = await import("./aethercore.server");
     try {
       const r = await askAetherCore(input.message, input.sessionId, input.conversationId);
-      return { reply: redactText(r.reply), sessionId: r.sessionId, conversationId: r.conversationId, provider: "aethercore" };
+      return { reply: sanitizeCustomerAiReply(r.reply), sessionId: r.sessionId, conversationId: r.conversationId, provider: "aethercore" };
     } catch (e) {
       if (e instanceof AetherCoreError) throw new ConciergeError(e.userMessage);
       throw new ConciergeError("The concierge is temporarily unavailable. Please try again shortly.");
@@ -90,5 +90,5 @@ export async function askConcierge(input: { message: string; history?: Concierge
   }
   const text = await askBuiltin(input.message, input.history ?? []);
   if (!text) throw new ConciergeError("The concierge couldn't answer that. Please rephrase or contact the Worldway team.");
-  return { reply: redactText(text), sessionId: input.sessionId ?? null, conversationId: null, provider: "builtin" };
+  return { reply: sanitizeCustomerAiReply(text), sessionId: input.sessionId ?? null, conversationId: null, provider: "builtin" };
 }
