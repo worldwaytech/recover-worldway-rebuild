@@ -139,6 +139,23 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(result.results[0].result).toMatchObject({ decisionContract: { decision: "use itinerary", sourceTaskId: "decision-step" } });
   });
 
+  it("rejects legacy raw model decisions before deterministic execution", async () => {
+    let executed = false;
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      deterministic: async (task) => { executed = true; return task.input; },
+    });
+    const result = await runtime.orchestrator.run({
+      goal: "raw model decision",
+      tasks: [{ id: "decision-step", kind: "deterministic", acceptedDecisionKinds: ["recommendation"], input: {
+        modelDecision: { decision: "use itinerary", confidence: 0.9, evidence: [] },
+      }}],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(executed).toBe(false);
+    expect(result.results[0].error).toContain("raw_model_decision_rejected");
+  });
+
   it("rejects an expired or mismatched decision contract before deterministic execution", async () => {
     let executed = false;
     const runtime = createWorldwayOrchestratorRuntime({
