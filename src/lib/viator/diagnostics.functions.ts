@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CLIENT_CHECKOUT_EVENTS, sanitizeForTrace } from "@/lib/viator/diagnostics";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "@/lib/security/rate-limit.server";
 
 async function sha256Hex(value: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -23,6 +24,7 @@ const clientEventSchema = z.object({
 export const logViatorCheckoutEvent = createServerFn({ method: "POST" })
   .inputValidator((d) => clientEventSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("viator-diagnostics", requestFingerprint(currentRequest())), 60, 60);
     try {
       const { getActivityBooking } = await import("@/lib/viator/activity-bookings.server");
       const row = await getActivityBooking(data.cartRef);
