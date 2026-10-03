@@ -255,7 +255,7 @@ function validatedModelHandoff(task: OrchestrationTask, sourceTask: Orchestratio
     correlationId, sourceTaskId: source.taskId, constraints: value.constraints, expiresAt: value.expiresAt ?? new Date(Date.now() + 5 * 60_000).toISOString(),
   });
   if (!contract) throw new OrchestrationValidationError(`Model handoff decision contract invalid for ${task.id}`);
-  const validated = validateWorldwayDecisionContract(contract, { expectedCorrelationId: correlationId, expectedSourceTaskId: source.id, acceptedDecisionKinds: task.acceptedDecisionKinds });
+  const validated = validateWorldwayDecisionContract(contract, { expectedCorrelationId: correlationId, expectedSourceTaskId: source.taskId, acceptedDecisionKinds: task.acceptedDecisionKinds });
   if (!validated) throw new OrchestrationValidationError(`Model handoff decision contract integrity check failed for ${task.id}`);
   return { ...task, input: { ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}), modelDecision: validated } };
 }
