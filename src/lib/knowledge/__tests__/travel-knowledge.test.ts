@@ -47,6 +47,27 @@ describe("Travel Knowledge Layer foundation", () => {
     expect(publicFacts.some((x) => x.predicate === "season" && x.value === "shoulder")).toBe(true);
   });
 
+  it("rejects future-dated externally supplied evidence", () => {
+    const snapshot = ingestTravelKnowledge({
+      destinationFacts: [{
+        id: "future-fact",
+        entityType: "destination",
+        subjectId: "dest-1",
+        predicate: "status",
+        value: "future",
+        source: "destination_knowledge",
+        sensitivity: "public",
+        evidence: {
+          source: "destination_knowledge",
+          evidence: [{ source: "external", observedAt: "2099-01-01T00:00:00.000Z", confidence: 1 }],
+          observedAt: "2099-01-01T00:00:00.000Z",
+          confidence: 1,
+        },
+      }],
+    });
+    expect(snapshot.facts).toHaveLength(0);
+  });
+
   it("filters expired evidence as-of a historical query time", () => {
     const snapshot = ingestTravelKnowledge({
       observations: [{
