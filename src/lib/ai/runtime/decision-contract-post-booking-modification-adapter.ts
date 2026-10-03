@@ -41,6 +41,10 @@ export function projectDecisionContractToPostBookingModification(
 
   const componentIds = new Set<string>();
   const changes: Partial<Record<WorldwayModificationField, string | number>> = {};
+  const isValidDate = (value: string) => {
+    const parsed = Date.parse(value + "T00:00:00Z");
+    return Number.isFinite(parsed) && new Date(parsed).toISOString().slice(0, 10) === value;
+  };
 
   for (const rawConstraint of contract.constraints) {
     const constraint = rawConstraint.trim();
@@ -53,13 +57,14 @@ export function projectDecisionContractToPostBookingModification(
 
     const dateMatch = /^postbooking\.modification\.date=(\d{4}-\d{2}-\d{2})$/.exec(constraint);
     if (dateMatch) {
-      changes.date = dateMatch[1]!;
+      if (isValidDate(dateMatch[1]!)) changes.date = dateMatch[1]!;
       continue;
     }
 
     const timeMatch = /^postbooking\.modification\.time=(\d{2}:\d{2})$/.exec(constraint);
     if (timeMatch) {
-      changes.time = timeMatch[1]!;
+      const [hours, minutes] = timeMatch[1]!.split(":").map(Number);
+      if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) changes.time = timeMatch[1]!;
       continue;
     }
 
@@ -77,15 +82,22 @@ export function projectDecisionContractToPostBookingModification(
   }
 
   const selectedIds = componentIds.size
-    ? [...componentIds].filter((id) => input.components.some((component) => component.id === id))
+    ? [...componentIds]
     : input.components.map((component) => component.id);
 
-  const readiness = postBookingModificationReadiness(
+  const baseReadiness = postBookingModificationReadiness(
     input.bookingStatus,
     input.components,
     input.capabilities,
     selectedIds,
   );
+  const readiness = Object.keys(changes).length > 0
+    ? baseReadiness
+    : {
+        ...baseReadiness,
+        ready: false,
+        blockers: [...baseReadiness.blockers, "No supported modification change requested."],
+      };
 
   return {
     bookingId: input.bookingId,
