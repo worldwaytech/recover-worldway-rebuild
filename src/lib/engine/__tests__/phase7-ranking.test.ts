@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { packageOptimizationMetrics, rankComponents, resolveRankingWeights } from "../optimization";
+import { optimizePackageSet, packageOptimizationMetrics, paretoFrontier, rankComponents, resolveRankingWeights } from "../optimization";
 import { rankPackages } from "../ranking";
 import type { NormalizedComponent, SupplierRegistration, TripRequirements } from "../types";
 
@@ -12,4 +12,7 @@ describe("Phase 7 ranking and optimization",()=>{
  it("ranks complete packages using geography, time, margin and preference",()=>{const good=[c("g1","s1","stay","Luxury museum stay")];const weak=[c("g2","s2","stay","Generic stay","PAR")];const a=rankPackages([{id:"good",items:good,total:1000,marginAmount:200},{id:"weak",items:weak,total:900,marginAmount:20}],req,reg,{interests:["museum"]});expect(a[0]?.id).toBe("good");expect(a[0]?.factors.map(x=>x.factor)).toEqual(["Itinerary feasibility","Quality / luxury fit","Price","Within budget","Cancellation flexibility","Supplier reliability","Geographic fit","Time / convenience","Commercial margin","Customer preference fit"]);});
  it("supports component-level ranking without exposing supplier identity",()=>{const ranked=rankComponents([c("a","s2","activity","City museum visit"),c("b","s1","activity","City transfer")],req,reg,{interests:["museum"]});expect(ranked[0]?.id).toBe("a");});
  it("computes deterministic optimization metrics",()=>{const m=packageOptimizationMetrics({id:"x",items:[c("x1","s1","stay","Museum stay")],total:200,marginAmount:50},req,reg,{interests:["museum"]});expect(m.geography).toBe(1);expect(m.margin).toBe(0.25);expect(m.preference).toBeGreaterThan(0.5);});
-});
+})
+ it("builds a deterministic Pareto frontier",()=>{const a={id:"a",items:[c("a1","s1","stay","Museum stay")],total:100,marginAmount:30};const b={id:"b",items:[c("b1","s1","stay","Generic stay","IST")],total:120,marginAmount:40};const frontier=paretoFrontier([a,b],req,reg,{interests:["museum"]});expect(frontier.map(x=>x.id).sort()).toEqual(["a","b"]);});
+ it("returns a stable optimized shortlist",()=>{const items=[1,2,3,4].map(n=>({id:"p"+n,items:[c("p"+n,"s1","stay",n===1?"Museum stay":"Stay "+n)],total:100+n*10,marginAmount:n*5}));const selected=optimizePackageSet(items,req,reg,3,{interests:["museum"]});expect(selected).toHaveLength(3);expect(new Set(selected.map(x=>x.id)).size).toBe(3);});
+;
