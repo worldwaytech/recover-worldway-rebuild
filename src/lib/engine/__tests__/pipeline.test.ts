@@ -108,6 +108,66 @@ describe("end-to-end package pipeline", () => {
     expect(signaled[0]!.pricing!.total).toBeLessThan(baseline[0]!.pricing!.total * 1.11);
     expect(signaled[0]!.bookable).toBe(true);
   });
+  it("audits bounded decision consumption across ranking, pricing and orchestration without changing commerce authority", () => {
+    const candidate = {
+      id: "decision-audit",
+      offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity],
+    };
+    const profile = {
+      requirements: base([candidate]).requirements,
+      requiredKinds: ["flight" as const],
+      preferredKinds: ["activity" as const],
+      optionalKinds: [],
+      insurance: "not-requested" as const,
+      visa: "not-requested" as const,
+    };
+    const policy = {
+      currency: "USD" as const,
+      channel: "customer_b2c" as const,
+      baseRule: { markupPercent: 10, commissionPercent: 0, serviceFee: 0 },
+      minimumMarginPercent: 5,
+      maxDynamicMarkupDeltaPercent: 10,
+    };
+    const out = runPackagePipeline({
+      ...base([candidate]),
+      orchestration: profile,
+      ranking: { weights: { preference: 1, luxury: 0.5 } },
+      pricingPolicy: policy,
+      pricingSignalsFor: () => ({ demandIndex: 0.8, inventoryPressure: 0.7, conversionIndex: 0.6, leadTimeDays: 2 }),
+      pricingNow: "2026-10-03T00:00:00Z",
+    });
+    const pkg = out[0]!;
+
+    expect(pkg.bookable).toBe(true);
+    expect(pkg.optimized).toBe(true);
+    expect(pkg.pricing).not.toBeNull();
+    expect(pkg.pricing!.total).toBeGreaterThan(0);
+    expect(pkg.requirementCheck.missing).toEqual([]);
+    expect(pkg.requirementCheck.preferredMissing).toEqual([]);
+    expect(pkg.graph.map((item) => item.kind)).toEqual(["flight", "transfer", "stay", "activity"]);
+    expect(pkg.itinerary.length).toBeGreaterThan(0);
+  });
+
+  it("keeps deterministic hard requirements authoritative when preference inputs are present", () => {
+    const candidate = {
+      id: "hard-requirement-audit",
+      offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), activity],
+    };
+    const profile = {
+      requirements: base([candidate]).requirements,
+      requiredKinds: ["flight" as const, "insurance" as const],
+      preferredKinds: ["activity" as const],
+      optionalKinds: [],
+      insurance: "required" as const,
+      visa: "not-requested" as const,
+    };
+    const [pkg] = runPackagePipeline({ ...base([candidate]), orchestration: profile, ranking: { weights: { preference: 1 } } });
+    expect(pkg!.requirementCheck.missing).toEqual([
+      { kind: "insurance", reason: "Required insurance component is missing." },
+    ]);
+    expect(pkg!.bookable).toBe(false);
+  });
+
   it("blocks a package that falls outside the requested trip window", () => {
     const lateReturn = { ...flight, externalId: "F-late", start: { ...flight.start, at: "2026-10-16T03:30:00Z" }, end: { ...flight.end, at: "2026-10-16T11:00:00Z" } };
     const out = runPackagePipeline(base([
