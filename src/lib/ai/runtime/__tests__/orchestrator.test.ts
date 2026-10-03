@@ -75,9 +75,9 @@ describe("Worldway AI Orchestrator foundation", () => {
     const executor = { execute: run };
     const orchestrator = new WorldwayOrchestrator(executor, new ToolFabricTaskExecutor(toolRegistry()));
     const tasks: OrchestrationTask[] = [
-      { id: "a", kind: "deterministic" },
-      { id: "b", kind: "tool", tool: "read_value", input: { value: "b" } },
-      { id: "c", kind: "tool", tool: "read_value", input: { value: "c" } },
+      { id: "task-a", kind: "deterministic" },
+      { id: "task-b", kind: "tool", tool: "read_value", input: { value: "b" } },
+      { id: "task-c", kind: "tool", tool: "read_value", input: { value: "c" } },
     ];
     const result = await orchestrator.run(
       { goal: "budget", tasks, policy: { ...DEFAULT_ORCHESTRATION_POLICY, maxSteps: 3, maxToolCalls: 1 } },
