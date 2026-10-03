@@ -103,6 +103,27 @@ export function buildPersonalizationContext(
   for (const hotel of permitted.preferredHotels) {
     signals.push({ key: "preferred_hotel", value: hotel, confidence: 1, source: "explicit" });
   }
+  for (const dietary of permitted.dietaryPreferences) {
+    signals.push({ key: "dietary_preference", value: dietary, confidence: 1, source: "explicit" });
+  }
+  for (const room of permitted.roomPreferences) {
+    signals.push({ key: "room_preference", value: room, confidence: 1, source: "explicit" });
+  }
+  for (const activity of permitted.activityPreferences) {
+    signals.push({ key: "activity_preference", value: activity, confidence: 1, source: "explicit" });
+  }
+  for (const companion of permitted.companions) {
+    signals.push({ key: "companion_pattern", value: companion.relation + ":" + companion.count, confidence: 1, source: "explicit" });
+  }
+  for (const loyalty of permitted.loyaltyPrograms) {
+    signals.push({ key: "loyalty_program", value: loyalty.program, confidence: 1, source: "explicit" });
+  }
+  for (const date of permitted.importantTravelDates) {
+    signals.push({ key: "important_travel_date", value: date.label + ":" + date.monthDay, confidence: 1, source: "explicit" });
+  }
+  if (permitted.budgetPattern?.typicalMax != null) {
+    signals.push({ key: "budget_pattern_max", value: permitted.budgetPattern.typicalMax, confidence: 1, source: "explicit" });
+  }
 
   return { profile: permitted, signals, consent };
 }
