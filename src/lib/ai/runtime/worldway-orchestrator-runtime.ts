@@ -4,11 +4,11 @@ import {
   SpecialistTaskExecutor,
   ToolFabricTaskExecutor,
   WorldwayOrchestrator,
-  validateWorldwayDecisionContract,
   type OrchestrationTask,
   type TaskExecutor,
 } from "./orchestrator";
 import { SpecialistAgentRegistry } from "./specialist-agents";
+import { validateWorldwayDecisionContract } from "./decision-contract";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
