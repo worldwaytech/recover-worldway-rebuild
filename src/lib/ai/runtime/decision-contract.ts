@@ -33,6 +33,9 @@ export interface DecisionContractValidationOptions {
 const MAX_DECISION = 240;
 const MAX_CONSTRAINTS = 16;
 const MAX_CONSTRAINT = 160;
+const DECISION_KINDS: readonly WorldwayDecisionKind[] = [
+  "recommendation", "classification", "ranking", "routing", "explanation",
+];
 
 export function createWorldwayDecisionContract(input: {
   decisionKind: WorldwayDecisionKind;
@@ -80,17 +83,31 @@ export function createWorldwayDecisionContract(input: {
 export function isWorldwayDecisionContract(value: unknown): value is WorldwayDecisionContract {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<WorldwayDecisionContract>;
+  const constraints = candidate.constraints;
   return candidate.contractVersion === "1.0"
     && typeof candidate.decisionKind === "string"
+    && DECISION_KINDS.includes(candidate.decisionKind as WorldwayDecisionKind)
     && typeof candidate.decision === "string"
-    && candidate.decision.length > 0
+    && candidate.decision.trim().length > 0
+    && candidate.decision.length <= MAX_DECISION
     && typeof candidate.confidence === "number"
     && Number.isFinite(candidate.confidence)
+    && candidate.confidence >= 0
+    && candidate.confidence <= 1
     && Array.isArray(candidate.evidence)
     && candidate.evidence.length > 0
     && typeof candidate.correlationId === "string"
+    && candidate.correlationId.trim().length > 0
     && typeof candidate.sourceTaskId === "string"
-    && Array.isArray(candidate.constraints)
+    && candidate.sourceTaskId.trim().length > 0
+    && Array.isArray(constraints)
+    && constraints.length <= MAX_CONSTRAINTS
+    && constraints.every(
+      (constraint) =>
+        typeof constraint === "string"
+        && constraint.trim().length > 0
+        && constraint.length <= MAX_CONSTRAINT,
+    )
     && typeof candidate.expiresAt === "string"
     && !Number.isNaN(Date.parse(candidate.expiresAt));
 }
