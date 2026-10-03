@@ -64,6 +64,10 @@ export class ControlledCommerceApprovalStore {
   private readonly approvals = new Map<string, CommerceApproval>();
   private readonly idempotency = new Map<string, string>();
 
+  private idempotencyKey(principalUserId: string, key: string): string {
+    return `${principalUserId}:${key}`;
+  }
+
   request(input: CommerceApprovalRequest): CommerceApproval {
     if (!CONTROLLED_ACTIONS.has(input.action)) {
       throw new CommerceApprovalError("unsupported_action");
@@ -73,7 +77,8 @@ export class ControlledCommerceApprovalStore {
     const quoteId = assertNonEmpty(input.quoteId, "quote_id");
     const idempotencyKey = assertNonEmpty(input.idempotencyKey, "idempotency_key");
     const principalUserId = assertNonEmpty(input.principalUserId, "principal_user_id");
-    const existingId = this.idempotency.get(idempotencyKey);
+    const scopedIdempotencyKey = this.idempotencyKey(principalUserId, idempotencyKey);
+    const existingId = this.idempotency.get(scopedIdempotencyKey);
 
     if (existingId) {
       const existing = this.approvals.get(existingId);
@@ -95,7 +100,7 @@ export class ControlledCommerceApprovalStore {
     };
 
     this.approvals.set(approval.id, approval);
-    this.idempotency.set(idempotencyKey, approval.id);
+    this.idempotency.set(scopedIdempotencyKey, approval.id);
     return { ...approval };
   }
 
