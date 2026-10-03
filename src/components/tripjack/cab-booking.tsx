@@ -227,7 +227,8 @@ export function CabBooking({ enabled }: { enabled: boolean }) {
         paymentStatus: r.booking.paymentStatus,
         trackingLink: r.booking.trackingLink,
       });
-      r.booking.status === "failed" ? toast.error(r.message) : toast.success(r.message);
+      if (r.booking.status === "failed") toast.error(r.message);
+      else toast.success(r.message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Booking failed.");
     } finally {
