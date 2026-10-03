@@ -164,6 +164,51 @@ export function buildChronologicalTripGraph(items: NormalizedComponent[]): Chron
   };
 }
 
+
+export type JourneyContinuity = "continuous" | "transfer-required" | "location-discontinuity";
+
+export interface JourneySegment {
+  index: number;
+  fromNodeId: string;
+  toNodeId: string;
+  mode: NormalizedComponent["kind"];
+  fromPlace: string;
+  toPlace: string;
+  startAt: string;
+  endAt: string;
+  gapMinutes: number;
+  continuity: JourneyContinuity;
+}
+
+/**
+ * Explicit multi-city / multi-modal sequencing derived only from normalized
+ * supplier timestamps and locations. No dates or transfers are invented.
+ */
+export function buildJourneySegments(items: NormalizedComponent[]): JourneySegment[] {
+  const moving = sortChronologically(items).filter((c) => c.kind !== "stay" && c.kind !== "insurance");
+  return moving.slice(0, -1).map((from, index) => {
+    const to = moving[index + 1]!;
+    const gapMinutes = Math.round((ms(to.start) - ms(from.end)) / 60000);
+    const samePlace = from.end.place === to.start.place;
+    const continuity: JourneyContinuity =
+      samePlace ? (from.kind === "transfer" || to.kind === "transfer" ? "continuous" : "continuous")
+      : to.kind === "transfer" ? "transfer-required"
+      : "location-discontinuity";
+    return {
+      index,
+      fromNodeId: from.id,
+      toNodeId: to.id,
+      mode: to.kind,
+      fromPlace: from.end.place,
+      toPlace: to.start.place,
+      startAt: from.end.at,
+      endAt: to.start.at,
+      gapMinutes,
+      continuity,
+    };
+  });
+}
+
 /** Convenience predicate for booking-readiness and package auditing. */
 export function checkTripWindow(
   items: NormalizedComponent[],
