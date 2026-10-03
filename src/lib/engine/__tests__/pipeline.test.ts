@@ -77,7 +77,7 @@ describe("end-to-end package pipeline", () => {
     const candidates = [
       {
         id: "a-standard",
-        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z"), { ...activity, externalId: "A-standard", title: "Standard Tour" }],
+        offers: [flight, transfer, hotel("2026-10-11T14:00:00Z")],
       },
       {
         id: "z-preferred",
