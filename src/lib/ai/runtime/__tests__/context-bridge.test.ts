@@ -81,7 +81,11 @@ describe("Worldway orchestration context bridge", () => {
 
     expect(context.traveller.memories).toHaveLength(1);
     expect(context.traveller.activeTrip?.facts[0].value).toBe("fast");
-    expect(context.knowledge).toHaveLength(1);
+    expect(context.knowledge.facts).toHaveLength(1);
+    expect(context.knowledge.authority).toBe("advisory_only");
+    expect(context.knowledge.executionAuthority).toBe(false);
+    expect(Object.isFrozen(context.knowledge)).toBe(true);
+    expect(Object.isFrozen(context.knowledge.facts)).toBe(true);
     expect(context.precedence).toBe("current_request_over_memory_over_knowledge");
     expect(context.toolContext.highRiskGrant).toBeUndefined();
   });
@@ -103,5 +107,31 @@ describe("Worldway orchestration context bridge", () => {
       knowledge: knowledge(),
     });
     expect(context.traveller.memories).toHaveLength(0);
+  });
+});
+
+
+describe("Knowledge AI boundary", () => {
+  it("bounds Knowledge facts before AI consumption", () => {
+    const snapshot = knowledge();
+    snapshot.facts = Array.from({ length: 250 }, (_, index) => ({
+      ...snapshot.facts[0],
+      id: `dest:ist:fact:${index}`,
+      predicate: `fact_${index}`,
+    }));
+    const personalization = buildPersonalizationContext(EMPTY_TRAVELER_PROFILE, { preferences: true, history: true }, []);
+    const context = buildWorldwayOrchestrationContext({
+      base: base(),
+      traveller: {
+        travellerId: "traveller-3",
+        consent: { preferences: true, history: true },
+        profile: EMPTY_TRAVELER_PROFILE,
+        personalization,
+        memories: [],
+      },
+      knowledge: snapshot,
+    });
+    expect(context.knowledge.facts).toHaveLength(200);
+    expect(context.knowledge.executionAuthority).toBe(false);
   });
 });
