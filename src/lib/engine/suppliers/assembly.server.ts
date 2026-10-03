@@ -189,7 +189,7 @@ async function assembleMultiCityLiveProposals(req: TripRequirements, opts: Assem
 
   const stayMap = new Map<string, CanonicalOffer[]>();
   await Promise.all([...stayQueries.values()].map(async (q) => {
-    const h = await searchHotelsCanonical(q.city, q.checkin, q.checkout, req.adults);
+    const h = await searchHotelsCanonical(q.city, q.checkin, q.checkout, req.adults, currency);
     stayMap.set(q.city + "|" + q.checkin + "|" + q.checkout, h.offers);
   }));
 
