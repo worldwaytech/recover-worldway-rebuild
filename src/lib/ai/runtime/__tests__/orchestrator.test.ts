@@ -250,8 +250,9 @@ describe("Worldway AI Orchestrator foundation", () => {
         { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true },
       ],
     }, context());
-    expect(result.ok).toBe(true);
-    expect(result.results.find((item) => item.taskId === "decision-step")?.state).toBe("completed");
+    expect(result.ok).toBe(false);
+    expect(result.results.find((item) => item.taskId === "decision-step")?.state).toBe("failed");
+    expect(result.results.find((item) => item.taskId === "decision-step")?.error).toContain("not executable");
   });
 
 });
