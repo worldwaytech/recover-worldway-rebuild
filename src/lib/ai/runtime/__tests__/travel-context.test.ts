@@ -10,6 +10,7 @@ function db() {
     confidence: 0.8,
     source: "system_inference",
     source_ref: "journey:1",
+    consent_scope: "history",
     expires_at: null,
   }];
   return {
