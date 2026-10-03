@@ -2,8 +2,8 @@
 // Connects the existing Knowledge Layer and Traveller + Trip Memory to the
 // Orchestrator without creating a second source of truth or commerce authority.
 
-import type { KnowledgeFact, KnowledgeSnapshot, KnowledgeQuery } from "../../knowledge/travel-knowledge";
-import { queryTravelKnowledge } from "../../knowledge/travel-knowledge";
+import type { KnowledgeSnapshot, KnowledgeQuery } from "../../knowledge/travel-knowledge";
+import { buildWorldwayKnowledgeContext, type WorldwayKnowledgeContext } from "./knowledge-context";
 import {
   applyCurrentTripRequest,
   type CurrentTripRequest,
@@ -30,7 +30,7 @@ export interface OrchestrationContextInput {
 
 export interface WorldwayOrchestrationContext extends OrchestrationContext {
   traveller: TravellerTripContext;
-  knowledge: readonly KnowledgeFact[];
+  knowledge: WorldwayKnowledgeContext;
   precedence: "current_request_over_memory_over_knowledge";
 }
 
@@ -54,9 +54,7 @@ export function buildWorldwayOrchestrationContext(
     traveller = applyCurrentTripRequest(traveller, input.currentTripRequest);
   }
 
-  const knowledge = input.knowledge
-    ? queryTravelKnowledge(input.knowledge, input.knowledgeQuery ?? {})
-    : [];
+  const knowledge = buildWorldwayKnowledgeContext(input.knowledge, input.knowledgeQuery ?? {});
 
   return {
     ...input.base,
