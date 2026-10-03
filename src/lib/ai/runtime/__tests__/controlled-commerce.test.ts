@@ -53,7 +53,7 @@ describe("Controlled Agentic Commerce", () => {
     const consumed = store.consume(pending.id, "user-2");
     expect(consumed.status).toBe("consumed");
 
-    expect(() => store.toHighRiskGrant(pending.id, "user-2"))
+    expect(() => store.toHighRiskGrant(pending.id, "user-2", true))
       .toThrow("approval_required:consumed");
   });
 
