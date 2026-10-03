@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "@/lib/security/rate-limit.server";
 
 // Worldway Private Aviation — customer-facing server functions.
 // Every response is Worldway-branded: no partner names, URLs, tokens or sessions leave the server.
@@ -62,6 +63,7 @@ export const getJetEstimate = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("aviation-estimate", requestFingerprint(currentRequest())), 10, 60);
     // Live partner pricing with failover: primary aviation partner first, then the
     // next connected partner. Which partner answered stays server-side.
     let options: JetEstimateOption[] = [];
@@ -290,6 +292,7 @@ export type PublicEmptyLeg = {
 };
 
 export const listLiveEmptyLegs = createServerFn({ method: "GET" }).handler(async () => {
+  await consumeRateLimit(rateLimitKey("aviation-empty-legs", requestFingerprint(currentRequest())), 30, 60);
   const { fetchFeedLegs } = await import("./villiers.server");
   try {
     const legs = await fetchFeedLegs();
