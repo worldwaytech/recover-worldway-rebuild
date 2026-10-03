@@ -1,0 +1,10 @@
+import {describe,expect,it} from "vitest";
+import {AIRIQ_CERTIFICATION_REQUIREMENTS,assertAirIqProductionCertification,buildAirIqCertificationReport,type AirIqStepEvidence} from "../certification";
+const evidenceFor=(environment:"test"|"production",overrides:Partial<Record<(typeof AIRIQ_CERTIFICATION_REQUIREMENTS)[number],boolean>>={}):AirIqStepEvidence[]=>AIRIQ_CERTIFICATION_REQUIREMENTS.map(step=>({step,passed:overrides[step]??true,environment,reference:`AIRIQ-${environment}-${step}`,observedAt:"2026-10-03T00:00:00.000Z",detail:`Verified ${step}`}));
+describe("AIR iQ production certification gate",()=>{
+ it("certifies a complete production lifecycle",()=>{const r=buildAirIqCertificationReport(evidenceFor("production"),"production");expect(r.certified).toBe(true);expect(r.missing).toEqual([]);expect(()=>assertAirIqProductionCertification(r)).not.toThrow();});
+ it("fails closed when production booking is missing",()=>{const r=buildAirIqCertificationReport(evidenceFor("production",{production_booking:false}),"production");expect(r.certified).toBe(false);expect(r.missing).toContain("production_booking");expect(()=>assertAirIqProductionCertification(r)).toThrow();});
+ it("requires ticket status, failure resolution and idempotency",()=>{const r=buildAirIqCertificationReport(evidenceFor("production",{ticket_status:false,failure_resolution:false,idempotency:false}),"production");expect(r.missing).toEqual(expect.arrayContaining(["ticket_status","failure_resolution","idempotency"]));});
+ it("never promotes test evidence to production",()=>{const r=buildAirIqCertificationReport(evidenceFor("test"),"production");expect(r.certified).toBe(false);expect(r.missing).toEqual([...AIRIQ_CERTIFICATION_REQUIREMENTS]);expect(()=>assertAirIqProductionCertification(r)).toThrow();});
+ it("isolates evidence by environment",()=>{const r=buildAirIqCertificationReport([...evidenceFor("test"),...evidenceFor("production",{price:false})],"production");expect(r.missing).toEqual(["price"]);});
+});
