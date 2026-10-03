@@ -195,7 +195,7 @@ describe("Worldway AI Orchestrator foundation", () => {
       ],
     }, context());
     expect(result.ok).toBe(true);
-    expect(captured[0]).toMatchObject({ modelDecision: { contractVersion: "1.0", decision: "review", confidence: 0.92, correlationId: "wwai-test", evidence: [{ reference: "model:validated" }] } });
+    expect(captured[0]).toMatchObject({ decisionContract: { contractVersion: "1.0", decision: "review", confidence: 0.92, correlationId: "wwai-test", sourceTaskId: "model-step", evidence: [{ reference: "model:validated" }] } });
   });
 
   it("blocks model handoff when the typed decision contract is invalid", async () => {

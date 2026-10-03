@@ -31,6 +31,9 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
   if (task.kind !== "deterministic" || !input || typeof input !== "object" || Array.isArray(input)) return input;
 
   const value = input as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(value, "modelDecision")) {
+    throw new Error(`raw_model_decision_rejected:${task.id}`);
+  }
   const contract = value.decisionContract;
   if (task.decisionContractFrom && contract === undefined) throw new Error(`decision_contract_missing:${task.id}`);
   if (contract === undefined) return input;
