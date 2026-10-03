@@ -52,6 +52,38 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(result.trace.evidence[0].items[0].reference).toBe("dest:ist:season");
   });
 
+  it("routes model tasks through the explicit model boundary", async () => {
+    const calls: unknown[] = [];
+    const runtime = createWorldwayOrchestratorRuntime({
+      tools: new ToolRegistry(),
+      model: { run: async (task, input, correlationId) => {
+        calls.push({ task, input, correlationId });
+        return { model: "routed", task, correlationId };
+      } },
+    });
+
+    const result = await runtime.orchestrator.run({
+      goal: "model analysis",
+      tasks: [{ id: "model-step", kind: "model", modelTask: "concierge_chat", input: { prompt: "analyse itinerary" } }],
+    }, context());
+
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({ task: "concierge_chat", input: { prompt: "analyse itinerary" }, correlationId: "wwai-test" });
+    expect(result.results[0].result).toMatchObject({ model: "routed", task: "concierge_chat" });
+  });
+
+  it("blocks model tasks when the routed model boundary is not configured", async () => {
+    const runtime = createWorldwayOrchestratorRuntime({ tools: new ToolRegistry() });
+    const result = await runtime.orchestrator.run({
+      goal: "model analysis",
+      tasks: [{ id: "model-step", kind: "model", modelTask: "concierge_chat", input: { prompt: "analyse itinerary" } }],
+    }, context());
+    expect(result.ok).toBe(false);
+    expect(result.results[0].state).toBe("failed");
+    expect(result.results[0].error).toBe("model_executor_not_configured");
+  });
+
   it("keeps specialist execution separate from Tool Fabric mutations", async () => {
     const runtime = createWorldwayOrchestratorRuntime({ tools: new ToolRegistry() });
     runtime.specialists.register("booking_fulfilment", {
