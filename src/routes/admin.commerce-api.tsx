@@ -19,7 +19,9 @@ export const Route = createFileRoute("/admin/commerce-api")({
   component: CommerceApiAdmin,
 });
 
-const ALL_SCOPES = ["flights.search", "tours.read", "tours.quote", "trips.plan"] as const;
+const ALL_SCOPES = ["flights.search", "tours.read", "tours.quote", "trips.plan", "catalog.read", "pricing.quote", "booking.read", "booking.write", "payment.write", "wallet.read", "wallet.reserve"] as const;
+const API_PRODUCTS = ["flights", "hotels", "transfers", "activities", "tours", "cruises", "rail", "private_aviation", "concierge"] as const;
+type ApiAccessMode = "single_product" | "multi_product" | "full_catalogue";
 type Tenant = Awaited<ReturnType<typeof listPartnerTenants>>[number];
 
 function CommerceApiAdmin() {
@@ -75,7 +77,7 @@ function CommerceApiAdmin() {
         </CardContent>
       </Card>
       {rows?.length === 0 && <p className="text-sm text-muted-foreground">No partners yet.</p>}
-      {rows?.map((t) => <TenantCard key={t.id} t={t} onKey={(scopes, label) => act(() => mkKey({ data: { tenantId: t.id, label, scopes, expiresInDays: 365 } }).then((r) => setNewKey(r.key)), "Key created")}
+      {rows?.map((t) => <TenantCard key={t.id} t={t} onKey={(scopes, label, apiAccessMode, apiProducts) => act(() => mkKey({ data: { tenantId: t.id, label, scopes, apiAccessMode, apiProducts, expiresInDays: 365 } }).then((r) => setNewKey(r.key)), "Key created")}
         onRevoke={(id) => { if (confirm("Revoke this key? Calls using it will fail immediately.")) void act(() => revoke({ data: { keyId: id } }), "Key revoked"); }}
         onRotate={(id) => { if (confirm("Rotate this key? A new key is issued and the old one stops working now.")) void act(() => rotate({ data: { keyId: id } }).then((r) => setNewKey(r.key)), "Key rotated"); }}
         onLimit={(n) => act(() => limit({ data: { tenantId: t.id, rateLimitPerMinute: n } }), "Rate limit updated")}
@@ -86,9 +88,11 @@ function CommerceApiAdmin() {
 }
 
 function TenantCard({ t, onKey, onRevoke, onRotate, onLimit, onStatus, onMember }: {
-  t: Tenant; onKey: (s: string[], label: string) => void; onRevoke: (id: string) => void; onRotate: (id: string) => void; onLimit: (n: number) => void; onStatus: (s: "active" | "suspended") => void; onMember: (email: string, role: "owner" | "developer" | "viewer") => void;
+  t: Tenant; onKey: (s: string[], label: string, mode: ApiAccessMode, products: string[]) => void; onRevoke: (id: string) => void; onRotate: (id: string) => void; onLimit: (n: number) => void; onStatus: (s: "active" | "suspended") => void; onMember: (email: string, role: "owner" | "developer" | "viewer") => void;
 }) {
   const [scopes, setScopes] = useState<string[]>(["flights.search", "tours.read"]);
+  const [apiAccessMode, setApiAccessMode] = useState<ApiAccessMode>("multi_product");
+  const [apiProducts, setApiProducts] = useState<string[]>(["flights", "tours"]);
   const [label, setLabel] = useState("Production");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"owner" | "developer" | "viewer">("developer");
@@ -114,12 +118,29 @@ function TenantCard({ t, onKey, onRevoke, onRotate, onLimit, onStatus, onMember 
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input value={label} onChange={(e) => setLabel(e.target.value)} className="max-w-[10rem]" />
-          {ALL_SCOPES.map((s) => (
-            <label key={s} className="flex items-center gap-1 text-xs"><input type="checkbox" checked={scopes.includes(s)} onChange={(e) => setScopes(e.target.checked ? [...scopes, s] : scopes.filter((x) => x !== s))} />{s}</label>
-          ))}
-          <Button size="sm" disabled={!scopes.length || label.trim().length < 2} onClick={() => onKey(scopes, label)}>New key</Button>
+        <div className="space-y-2 rounded border p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} className="max-w-[10rem]" />
+            <select className="rounded-md border bg-background px-3 text-sm" value={apiAccessMode} onChange={(e) => setApiAccessMode(e.target.value as ApiAccessMode)}>
+              <option value="single_product">Single product API</option>
+              <option value="multi_product">Multiple products API</option>
+              <option value="full_catalogue">Full approved catalogue API</option>
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {API_PRODUCTS.map((p) => (
+              <label key={p} className="flex items-center gap-1 text-xs">
+                <input type="checkbox" checked={apiProducts.includes(p)} disabled={apiAccessMode === "full_catalogue"} onChange={(e) => setApiProducts(e.target.checked ? [...apiProducts, p] : apiProducts.filter((x) => x !== p))} />
+                {p}
+              </label>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {ALL_SCOPES.map((s) => (
+              <label key={s} className="flex items-center gap-1 text-xs"><input type="checkbox" checked={scopes.includes(s)} onChange={(e) => setScopes(e.target.checked ? [...scopes, s] : scopes.filter((x) => x !== s))} />{s}</label>
+            ))}
+          </div>
+          <Button size="sm" disabled={!scopes.length || label.trim().length < 2 || (apiAccessMode === "single_product" ? apiProducts.length !== 1 : apiAccessMode === "multi_product" ? apiProducts.length < 2 : false)} onClick={() => onKey(scopes, label, apiAccessMode, apiAccessMode === "full_catalogue" ? [...API_PRODUCTS] : apiProducts)}>New key</Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Rate limit (calls/min)</span>
