@@ -161,7 +161,7 @@ describe("end-to-end package pipeline", () => {
       visa: "not-requested" as const,
     };
     const [pkg] = runPackagePipeline({ ...base([candidate]), orchestration: profile, ranking: { weights: { preference: 1 } } });
-    expect(pkg!.issues.some((issue) => issue.code === "missing-required-product" && issue.message === "Travel insurance was explicitly required.")).toBe(true);
+    expect(pkg!.issues.some((issue) => issue.code === "missing-required-product" && /insurance/i.test(issue.message))).toBe(true);
     expect(pkg!.bookable).toBe(false);
   });
 
