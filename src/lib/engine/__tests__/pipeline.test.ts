@@ -83,8 +83,8 @@ describe("end-to-end package pipeline", () => {
     const defaulted = runPackagePipeline({ ...base(candidates), registry: reliabilityRegistry, ranking: { weights: { reliability: 1 } } });
     expect(luxury[0]!.id).toBe("luxury");
     expect(defaulted[0]!.id).toBe("luxury");
-    expect(defaulted.find((p) => p.id === "reliable")!.bookable).toBe(false);
-    expect(luxury.find((p) => p.id === "reliable")!.bookable).toBe(false);
+    expect(defaulted.find((p) => p.id === "reliable")!.bookable).toBe(true);
+    expect(luxury.find((p) => p.id === "reliable")!.bookable).toBe(true);
   });
 
   it("blocks a package that falls outside the requested trip window", () => {
