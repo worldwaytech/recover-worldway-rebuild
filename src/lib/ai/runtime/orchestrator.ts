@@ -209,6 +209,8 @@ export class SpecialistTaskExecutor implements TaskExecutor {
 export interface RoutedModelExecutorOptions {
   router?: RouterDeps;
   invoke: (model: ModelSpec, task: TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
+  /** Required fail-closed validation for model output before orchestration accepts it. */
+  validateOutput: (task: TaskKind, value: unknown, correlationId: string) => unknown | null;
 }
 
 /** Explicit model boundary. The existing router remains authoritative for provider/model selection, health, cost and fallback. */
@@ -217,7 +219,12 @@ export class RoutedModelTaskExecutor implements TaskExecutor {
 
   execute(task: OrchestrationTask, ctx: OrchestrationContext) {
     if (task.kind !== "model" || !task.modelTask) throw new OrchestrationValidationError(`Task ${task.id} is not a model task`);
-    return withRoute(task.modelTask, (model) => this.options.invoke(model, task.modelTask!, task.input, ctx.correlationId), this.options.router, ctx.correlationId);
+    return withRoute(task.modelTask, async (model) => {
+      const raw = await this.options.invoke(model, task.modelTask!, task.input, ctx.correlationId);
+      const validated = this.options.validateOutput(task.modelTask!, raw, ctx.correlationId);
+      if (validated === null) throw new OrchestrationValidationError(`Model output validation failed for ${task.id}`);
+      return validated;
+    }, this.options.router, ctx.correlationId);
   }
 }
 
