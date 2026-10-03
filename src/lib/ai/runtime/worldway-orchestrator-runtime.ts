@@ -19,7 +19,8 @@ export interface WorldwayOrchestratorRuntimeOptions {
   tools: ToolRegistry;
   /** Optional routed model execution. Provider/model selection stays inside the existing router. */
   model?: {
-    run: (task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
+    router?: import("../router/router").RouterDeps;
+    invoke: (model: import("../router/types").ModelSpec, task: import("../router/types").TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
   };
   deterministic?: (task: OrchestrationTask, context: Parameters<TaskExecutor["execute"]>[1]) => Promise<unknown>;
 }
