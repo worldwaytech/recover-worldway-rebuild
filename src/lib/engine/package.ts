@@ -4,7 +4,7 @@
 import { buildChronologicalTripGraph, buildJourneySegments, sortChronologically } from "./chronology";
 import { buildItinerary, checkTripRequirements, createTripRequirementProfile, detectOrchestrationConflicts, type TripRequirementProfile } from "./orchestration";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
-import { pricePackage, pricePackageDynamically, type FxTable, type PricingPolicy, type PricingRule } from "./pricing";
+import { pricePackage, pricePackageDynamically, type FxTable, type PricingPolicy, type PricingRule, type DemandSignals } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
 import { optimizePackageSet, type RankingProfile } from "./optimization";
 import type { AuditIssue, NormalizedComponent, SupplierRegistration, TripRequirements } from "./types";
@@ -24,7 +24,7 @@ export interface PipelineInput {
   /** Phase 8 bounded dynamic commercial policy. When present it supersedes ruleFor for pricing. */
   pricingPolicy?: PricingPolicy;
   /** Optional deterministic/AI-derived demand signals, bounded by pricingPolicy. */
-  pricingSignalsFor?: (c: NormalizedComponent) => Parameters<typeof pricePackageDynamically>[3] extends ((x: NormalizedComponent) => infer R) ? R : never;
+  pricingSignalsFor?: (c: NormalizedComponent) => DemandSignals | undefined;
   pricingNow?: string;
   orchestration?: TripRequirementProfile;
   ranking?: RankingProfile;
