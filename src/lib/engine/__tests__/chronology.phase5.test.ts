@@ -91,7 +91,7 @@ describe("Phase 5 canonical chronological graph", () => {
     });
 
     it("rejects transport that arrives after the requested return date", () => {
-      const late = { ...flight, id: "late", end: { ...flight.end, at: "2026-10-06T09:00:00Z" } };
+      const late = { ...flight, id: "late", start: { ...flight.start, at: "2026-10-06T03:00:00Z" }, end: { ...flight.end, at: "2026-10-06T09:00:00Z" } };
       const issues = checkTripWindow([late], { departFrom: "2026-09-28", returnBy: "2026-10-05" });
       expect(issues.map((i) => i.code)).toContain("outside-trip-window");
     });
