@@ -202,7 +202,7 @@ export function assertPartnerBookingContext(ctx: PartnerBookingContext) {
 }
 
 export function partnerWalletCanReserve(p: PartnerProfile, currency: string, amount: number) {
-  assertPartnerActive(p);
+  if (validatePartnerProfile(p).length || p.status !== "active") return false;
   finiteNonNegative(amount, "wallet amount");
   const w = p.wallet;
   if (!w?.enabled || !w.allowReserve) return false;
