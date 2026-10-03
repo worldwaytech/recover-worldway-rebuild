@@ -26,7 +26,15 @@ const MAX_EVIDENCE = 32;
 const MAX_SOURCE = 80;
 const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 
-export function sanitizeOrchestrationEvidence(input: unknown, now: Date = new Date()): OrchestrationEvidence[] {
+export interface EvidenceSanitizationOptions {
+  strictExpiry?: boolean;
+}
+
+export function sanitizeOrchestrationEvidence(
+  input: unknown,
+  now: Date = new Date(),
+  options: EvidenceSanitizationOptions = { strictExpiry: true },
+): OrchestrationEvidence[] {
   if (!Number.isFinite(now.getTime())) return [];
   if (!Array.isArray(input)) return [];
   const out: OrchestrationEvidence[] = [];
@@ -43,7 +51,7 @@ export function sanitizeOrchestrationEvidence(input: unknown, now: Date = new Da
     const expiresAt = typeof value.expiresAt === "string" ? value.expiresAt : undefined;
     if (expiresAt) {
       const expiresMs = Date.parse(expiresAt);
-      if (!Number.isFinite(expiresMs) || expiresMs <= observedMs) continue;
+      if (!Number.isFinite(expiresMs) || (options.strictExpiry !== false && expiresMs <= observedMs)) continue;
     }
     out.push({
       source: source.slice(0, MAX_SOURCE),
