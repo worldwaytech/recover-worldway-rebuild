@@ -46,8 +46,8 @@ export async function buildTravelAgentContext(db: Db, userId: string): Promise<T
       value: m.value as Record<string, unknown>,
       confidence: Number(m.confidence ?? 1),
       source: String(m.source),
-      sourceRef: m.source_ref == null ? null : String(m.source_ref),
-      expiresAt: m.expires_at == null ? null : String(m.expires_at),
+      sourceRef: (m.source_ref ?? m.sourceRef) == null ? null : String(m.source_ref ?? m.sourceRef),
+      expiresAt: (m.expires_at ?? m.expiresAt) == null ? null : String(m.expires_at ?? m.expiresAt),
     })),
     precedence: "current_request_over_memory",
   };
