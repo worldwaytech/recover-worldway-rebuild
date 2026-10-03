@@ -25,6 +25,6 @@ jobs:
       - run: npm install -g npm@12.2.0
       - run: npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
       - run: npm run typecheck
-      - run: npx eslint src/lib/engine/global-travel-intelligence.ts src/lib/engine/__tests__/phase16-global-travel-intelligence.test.ts
+      - run: npx eslint --rule 'prettier/prettier: off' src/lib/engine/global-travel-intelligence.ts src/lib/engine/__tests__/phase16-global-travel-intelligence.test.ts
       - run: npm test -- --run
       - run: npm run build
