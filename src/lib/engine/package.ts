@@ -1,7 +1,7 @@
 // Package pipeline — pure and deterministic:
 // Normalize → Trip Graph → Ranking → Package Audit → Pricing → Booking Readiness.
 // No supplier knowledge; AI never supplies availability, schedules or prices.
-import { sortChronologically } from "./chronology";
+import { buildChronologicalTripGraph, sortChronologically } from "./chronology";
 import { normalizeOffers, type CanonicalOffer } from "./normalize";
 import { pricePackage, type FxTable, type PricingRule } from "./pricing";
 import { rankPackages, type RankedPackage } from "./ranking";
@@ -39,8 +39,9 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
   const built = input.candidates.map((c) => {
     const { components, rejected } = normalizeOffers(c.offers);
     const graph = sortChronologically(components);
+    const chronology = buildChronologicalTripGraph(graph);
     const { pricing, error } = tryPrice(graph, input);
-    return { id: c.id, graph, rejected, pricing, priceError: error };
+    return { id: c.id, graph, chronology, rejected, pricing, priceError: error };
   });
   // Only priced packages have a comparable total; unpriced sort last and are never bookable.
   const ranked = rankPackages(
@@ -50,7 +51,7 @@ export function runPackagePipeline(input: PipelineInput): PipelinePackage[] {
   );
   return ranked.map((r) => {
     const b = built.find((x) => x.id === r.id)!;
-    const issues: AuditIssue[] = [...r.issues];
+    const issues: AuditIssue[] = [...b.chronology.issues, ...r.issues];
     if (!b.pricing) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: b.priceError ?? "Price unavailable" });
     if (b.rejected.length) issues.push({ code: "price-unavailable", severity: "error", componentIds: [], message: `${b.rejected.length} supplier result(s) could not be normalised.` });
     const bookable = r.bookable && !!b.pricing && b.rejected.length === 0 && b.graph.length > 0;
