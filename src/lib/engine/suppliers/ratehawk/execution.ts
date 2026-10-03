@@ -17,34 +17,38 @@ const STEP_MAP: Readonly<Record<string, RateHawkCertificationStep>> = {
   Cancellation: "cancel",
 };
 
-function mapStep(step: SandboxReport["steps"][number]): RateHawkStepEvidence | null {
+function mapStep(
+  step: SandboxReport["steps"][number],
+  environment: "sandbox" | "test" | "production",
+  observedAt: string,
+): RateHawkStepEvidence | null {
   const mapped = STEP_MAP[step.step];
   if (!mapped) return null;
 
   return {
     step: mapped,
     passed: step.passed,
-    environment: step.environment,
-    observedAt: new Date().toISOString(),
+    environment: environment === "test" ? "sandbox" : environment,
+    observedAt,
     detail: step.detail,
     ...(step.httpStatus != null ? { reference: `http:${step.httpStatus}` } : {}),
   };
 }
 
 /**
- * Converts the admin sandbox runner output into the central supplier
- * certification evidence model.
+ * Converts the admin sandbox validation output into the central certification
+ * evidence model. The source runner is deliberately sandbox-only.
  *
- * Sandbox evidence is intentionally never promoted to production evidence.
- * Failure/retry and idempotency remain missing because the sandbox runner does
- * not prove those controls by itself.
+ * Test is normalized to the central sandbox evidence environment because the
+ * central gate has only sandbox/production certification semantics.
+ * Sandbox evidence can never satisfy production certification.
  */
 export function buildRateHawkCertificationReportFromSandbox(
   report: SandboxReport,
 ): RateHawkCertificationReport {
   const evidence = report.steps
-    .map(mapStep)
+    .map((step) => mapStep(step, report.environment, report.finishedAt))
     .filter((item): item is RateHawkStepEvidence => item !== null);
 
-  return buildRateHawkCertificationReport(evidence, report.environment);
+  return buildRateHawkCertificationReport(evidence, "sandbox");
 }
