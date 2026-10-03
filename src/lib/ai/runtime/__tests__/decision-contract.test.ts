@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createWorldwayDecisionContract,
   isWorldwayDecisionContract,
+  validateWorldwayDecisionContract,
 } from "../decision-contract";
 
 const evidence = [
@@ -22,6 +23,8 @@ describe("Worldway typed decision contract", () => {
       confidence: 0.94,
       evidence,
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["deterministic-only"],
     });
 
@@ -32,9 +35,13 @@ describe("Worldway typed decision contract", () => {
       decision: "Use the validated itinerary",
       confidence: 0.94,
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["deterministic-only"],
     });
     expect(contract?.evidence[0]).toEqual(evidence[0]);
+    expect(contract?.sourceTaskId).toBe("model-step");
+    expect(contract?.expiresAt).toBeDefined();
     expect(isWorldwayDecisionContract(contract)).toBe(true);
   });
 
@@ -45,6 +52,8 @@ describe("Worldway typed decision contract", () => {
       confidence: 0.8,
       evidence: [],
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
     })).toBeNull();
 
     expect(createWorldwayDecisionContract({
@@ -53,6 +62,8 @@ describe("Worldway typed decision contract", () => {
       confidence: 0.8,
       evidence,
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
     })).toBeNull();
   });
 
@@ -66,6 +77,8 @@ describe("Worldway typed decision contract", () => {
         { source: "ignored", reference: "not valid ref!", observedAt: "2026-10-03T00:00:00Z", confidence: 0.5 },
       ],
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["  first  ", 123, "", "  second  "],
     });
 
@@ -87,3 +100,71 @@ describe("Worldway typed decision contract", () => {
     })).toBe(false);
   });
 });
+
+
+  it("accepts only a live contract bound to the active orchestration and source task", () => {
+    const contract = createWorldwayDecisionContract({
+      decisionKind: "recommendation",
+      decision: "review",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+    });
+    expect(validateWorldwayDecisionContract(contract, {
+      expectedCorrelationId: "wwai-test",
+      expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["recommendation"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    })).toEqual(contract);
+  });
+
+  it("rejects replay, expiry, unsupported decision kinds, and malformed provenance", () => {
+    const base = {
+      decisionKind: "recommendation" as const,
+      decision: "review",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+    };
+    const contract = createWorldwayDecisionContract(base);
+    expect(validateWorldwayDecisionContract(contract, {
+      expectedCorrelationId: "other-correlation",
+      expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["recommendation"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    })).toBeNull();
+    expect(validateWorldwayDecisionContract(contract, {
+      expectedCorrelationId: "wwai-test",
+      expectedSourceTaskId: "other-model",
+      acceptedDecisionKinds: ["recommendation"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    })).toBeNull();
+    expect(validateWorldwayDecisionContract(contract, {
+      expectedCorrelationId: "wwai-test",
+      expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["ranking"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    })).toBeNull();
+    expect(validateWorldwayDecisionContract(
+      { ...contract!, expiresAt: "2026-10-03T11:59:59Z" },
+      {
+        expectedCorrelationId: "wwai-test",
+        expectedSourceTaskId: "model-step",
+        acceptedDecisionKinds: ["recommendation"],
+        now: new Date("2026-10-03T12:00:00Z"),
+      },
+    )).toBeNull();
+    expect(validateWorldwayDecisionContract(
+      { ...contract!, evidence: [{ ...evidence[0], reference: "bad reference!" }] },
+      {
+        expectedCorrelationId: "wwai-test",
+        expectedSourceTaskId: "model-step",
+        acceptedDecisionKinds: ["recommendation"],
+        now: new Date("2026-10-03T12:00:00Z"),
+      },
+    )).toBeNull();
+  });

@@ -17,8 +17,16 @@ export interface WorldwayDecisionContract {
   confidence: number;
   evidence: OrchestrationEvidence[];
   correlationId: string;
+  sourceTaskId: string;
   constraints: string[];
-  expiresAt?: string;
+  expiresAt: string;
+}
+
+export interface DecisionContractValidationOptions {
+  expectedCorrelationId: string;
+  expectedSourceTaskId: string;
+  acceptedDecisionKinds: readonly WorldwayDecisionKind[];
+  now?: Date;
 }
 
 const MAX_DECISION = 240;
@@ -31,15 +39,22 @@ export function createWorldwayDecisionContract(input: {
   confidence: unknown;
   evidence: unknown;
   correlationId: string;
+  sourceTaskId: string;
   constraints?: unknown;
   expiresAt?: unknown;
 }): WorldwayDecisionContract | null {
   if (!input.correlationId || typeof input.correlationId !== "string") return null;
+  if (!input.sourceTaskId || typeof input.sourceTaskId !== "string") return null;
   if (typeof input.decision !== "string" || !input.decision.trim()) return null;
   if (typeof input.confidence !== "number" || !Number.isFinite(input.confidence)) return null;
 
   const evidence = sanitizeOrchestrationEvidence(input.evidence);
   if (evidence.length === 0) return null;
+
+  const expiresAt = typeof input.expiresAt === "string" && input.expiresAt
+    ? input.expiresAt
+    : undefined;
+  if (!expiresAt || Number.isNaN(Date.parse(expiresAt))) return null;
 
   const constraints = Array.isArray(input.constraints)
     ? input.constraints
@@ -48,8 +63,6 @@ export function createWorldwayDecisionContract(input: {
         .map((item) => item.trim().slice(0, MAX_CONSTRAINT))
     : [];
 
-  const expiresAt = typeof input.expiresAt === "string" && input.expiresAt ? input.expiresAt : undefined;
-
   return {
     contractVersion: "1.0",
     decisionKind: input.decisionKind,
@@ -57,8 +70,9 @@ export function createWorldwayDecisionContract(input: {
     confidence: Math.max(0, Math.min(1, input.confidence)),
     evidence,
     correlationId: input.correlationId,
+    sourceTaskId: input.sourceTaskId,
     constraints,
-    ...(expiresAt ? { expiresAt } : {}),
+    expiresAt,
   };
 }
 
@@ -70,8 +84,43 @@ export function isWorldwayDecisionContract(value: unknown): value is WorldwayDec
     && typeof candidate.decision === "string"
     && candidate.decision.length > 0
     && typeof candidate.confidence === "number"
+    && Number.isFinite(candidate.confidence)
     && Array.isArray(candidate.evidence)
     && candidate.evidence.length > 0
     && typeof candidate.correlationId === "string"
-    && Array.isArray(candidate.constraints);
+    && typeof candidate.sourceTaskId === "string"
+    && Array.isArray(candidate.constraints)
+    && typeof candidate.expiresAt === "string"
+    && !Number.isNaN(Date.parse(candidate.expiresAt));
+}
+
+export function validateWorldwayDecisionContract(
+  value: unknown,
+  options: DecisionContractValidationOptions,
+): WorldwayDecisionContract | null {
+  if (!isWorldwayDecisionContract(value)) return null;
+  if (value.correlationId !== options.expectedCorrelationId) return null;
+  if (value.sourceTaskId !== options.expectedSourceTaskId) return null;
+  if (!options.acceptedDecisionKinds.includes(value.decisionKind)) return null;
+
+  const now = options.now ?? new Date();
+  if (Date.parse(value.expiresAt) <= now.getTime()) return null;
+
+  const sanitizedEvidence = sanitizeOrchestrationEvidence(value.evidence);
+  if (sanitizedEvidence.length !== value.evidence.length) return null;
+
+  for (let index = 0; index < sanitizedEvidence.length; index += 1) {
+    const item = sanitizedEvidence[index];
+    if (item.expiresAt && Date.parse(item.expiresAt) <= now.getTime()) return null;
+    const original = value.evidence[index];
+    if (
+      item.source !== original.source
+      || item.reference !== original.reference
+      || item.observedAt !== original.observedAt
+      || item.confidence !== original.confidence
+      || item.expiresAt !== original.expiresAt
+    ) return null;
+  }
+
+  return value;
 }

@@ -6,7 +6,11 @@ import { emit, newCorrelationId } from "../router/telemetry";
 import { withRoute, type RouterDeps } from "../router/router";
 import type { ModelSpec, TaskKind } from "../router/types";
 import { OrchestrationTraceCollector } from "./orchestration-trace";
-import { createWorldwayDecisionContract, type WorldwayDecisionKind } from "./decision-contract";
+import {
+  createWorldwayDecisionContract,
+  validateWorldwayDecisionContract,
+  type WorldwayDecisionKind,
+} from "./decision-contract";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
 export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic" | "model";
@@ -41,6 +45,8 @@ export interface OrchestrationTask {
   modelTask?: TaskKind;
   /** Explicit downstream handoff from one completed model task. */
   handoffFrom?: string;
+  /** Decision kinds this deterministic consumer explicitly accepts. */
+  acceptedDecisionKinds?: WorldwayDecisionKind[];
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -132,6 +138,8 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     if (task.handoffFrom && task.handoffFrom === task.id) problems.push(`self_handoff:${task.id}`);
     if (task.handoffFrom && task.kind !== "deterministic") problems.push(`handoff_target_must_be_deterministic:${task.id}`);
     if (task.handoffFrom && !(task.dependsOn ?? []).includes(task.handoffFrom)) problems.push(`handoff_must_depend_on_source:${task.id}->${task.handoffFrom}`);
+    if (task.handoffFrom && !(task.acceptedDecisionKinds?.length)) problems.push(`handoff_missing_accepted_decision_kinds:${task.id}`);
+    if (task.acceptedDecisionKinds?.some((kind) => !["recommendation", "classification", "ranking", "routing", "explanation"].includes(kind))) problems.push(`invalid_decision_kind:${task.id}`);
   }
 
   for (const task of tasks) {
@@ -265,27 +273,43 @@ function validatedModelHandoff(
   if (!source || source.state !== "completed" || !source.result || typeof source.result !== "object") {
     throw new OrchestrationValidationError(`Invalid model handoff source for ${task.id}`);
   }
+  if (!task.acceptedDecisionKinds?.length) {
+    throw new OrchestrationValidationError(`Model handoff decision kinds not declared for ${task.id}`);
+  }
 
   const value = source.result as Record<string, unknown>;
+  const decisionKind = typeof value.decisionKind === "string"
+    ? value.decisionKind
+    : "recommendation";
   const contract = createWorldwayDecisionContract({
-    decisionKind: (typeof value.decisionKind === "string" ? value.decisionKind : "recommendation") as WorldwayDecisionKind,
+    decisionKind: decisionKind as WorldwayDecisionKind,
     decision: value.decision,
     confidence: value.confidence,
     evidence: value.evidence,
     correlationId,
+    sourceTaskId: sourceTask.id,
     constraints: value.constraints,
-    expiresAt: value.expiresAt,
+    expiresAt: value.expiresAt ?? new Date(Date.now() + 5 * 60_000).toISOString(),
   });
 
   if (!contract) {
     throw new OrchestrationValidationError(`Model handoff decision contract invalid for ${task.id}`);
   }
 
+  const validated = validateWorldwayDecisionContract(contract, {
+    expectedCorrelationId: correlationId,
+    expectedSourceTaskId: sourceTask.id,
+    acceptedDecisionKinds: task.acceptedDecisionKinds,
+  });
+  if (!validated) {
+    throw new OrchestrationValidationError(`Model handoff decision contract integrity check failed for ${task.id}`);
+  }
+
   return {
     ...task,
     input: {
       ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}),
-      modelDecision: contract,
+      modelDecision: validated,
     },
   };
 }
@@ -322,6 +346,7 @@ export class WorldwayOrchestrator {
     let executedSteps = 0;
     let toolCalls = 0;
     const started = Date.now();
+    const consumedModelHandoffs = new Set<string>();
 
     emit({
       type: "policy.decision",
@@ -376,6 +401,12 @@ export class WorldwayOrchestrator {
       executedSteps++;
 
       try {
+        if (task.handoffFrom) {
+          if (consumedModelHandoffs.has(task.handoffFrom)) {
+            throw new OrchestrationValidationError(`Model decision replay rejected for ${task.id}`);
+          }
+          consumedModelHandoffs.add(task.handoffFrom);
+        }
         const executionTask = validatedModelHandoff(task, task.handoffFrom ? ordered.find((candidate) => candidate.id === task.handoffFrom) : undefined, task.handoffFrom ? results.get(task.handoffFrom) : undefined, correlationId);
         const result = executionTask.kind === "tool" && this.toolExecutor
           ? await this.toolExecutor.execute(executionTask, context)
