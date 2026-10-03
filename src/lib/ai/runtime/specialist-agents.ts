@@ -1,6 +1,7 @@
 import type { WorldwayOrchestrationContext } from "./context-bridge";
 import { sanitizeOrchestrationEvidence, type OrchestrationEvidence } from "./orchestration-trace";
 import type { OrchestrationContext, OrchestrationTask, SpecialistDelegate } from "./orchestrator";
+import { sanitizeSpecialistAdvisoryOutput } from "./specialist-output-sanitizer";
 
 export const SPECIALIST_AGENT_KEYS = [
   "flight_intelligence","hotel_intelligence","experience_intelligence",
@@ -128,14 +129,7 @@ const MAX_COORDINATION_MEMBERS = 10;
 const MAX_COORDINATION_OUTPUT_BYTES = 16_000;
 
 function boundedOutput(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  try {
-    const serialized = JSON.stringify(value);
-    if (!serialized || serialized.length > MAX_COORDINATION_OUTPUT_BYTES) return null;
-    return value as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+  return sanitizeSpecialistAdvisoryOutput(value);
 }
 
 export function buildSpecialistCoordinationEnvelope(
