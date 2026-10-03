@@ -159,19 +159,51 @@ export async function prebookRate(bookHash: string, priceIncreasePercent = 0) {
   });
 }
 
-/** Create the booking process. `partnerOrderId` is our idempotency key. */
+export const RATEHAWK_MAX_BOOKING_FORM_CALLS = 10;
+export const RATEHAWK_MAX_BOOKING_STATUS_CALLS = 10;
+
+const CREATE_BOOKING_RETRYABLE_ERRORS = new Set(["double_booking_form", "duplicate_reservation", "unknown", "timeout"]);
+
+function isRetryableCreateBookingFailure(result: RatehawkResult<unknown>): boolean {
+  return !result.ok && (
+    CREATE_BOOKING_RETRYABLE_ERRORS.has(result.error.code) ||
+    (result.meta.httpStatus != null && result.meta.httpStatus >= 500 && result.meta.httpStatus <= 599)
+  );
+}
+
+function isTransientBookingStatusFailure(result: RatehawkResult<unknown>): boolean {
+  return !result.ok && (
+    result.error.code === "timeout" ||
+    result.error.code === "unknown" ||
+    (result.meta.httpStatus != null && result.meta.httpStatus >= 500 && result.meta.httpStatus <= 599)
+  );
+}
+
+/** ETG v3: retry only documented transient/duplicate form failures, with a new partner_order_id. */
 export async function createBookingForm(args: {
   partnerOrderId: string;
   bookHash: string;
   userIp: string;
   language?: string;
-}) {
-  return ratehawkCall<unknown>("bookingForm", {
-    partner_order_id: args.partnerOrderId,
-    book_hash: args.bookHash,
-    language: args.language ?? "en",
-    user_ip: args.userIp,
-  });
+}): Promise<RatehawkResult<unknown> & { partnerOrderId: string; attempts: number }> {
+  let partnerOrderId = args.partnerOrderId;
+  let result: RatehawkResult<unknown> = {
+    ok: false,
+    error: { code: "unknown", message: "Create booking process did not run.", origin: "network", retryable: true },
+    meta: { operation: "bookingForm", environment: ratehawkEnvironment(), httpStatus: null, latencyMs: 0, attempts: 0, supplierStatus: null },
+  };
+
+  for (let attempt = 1; attempt <= RATEHAWK_MAX_BOOKING_FORM_CALLS; attempt += 1) {
+    result = await ratehawkCall<unknown>("bookingForm", {
+      partner_order_id: partnerOrderId,
+      book_hash: args.bookHash,
+      language: args.language ?? "en",
+      user_ip: args.userIp,
+    });
+    if (result.ok || !isRetryableCreateBookingFailure(result)) return { ...result, partnerOrderId, attempts: attempt };
+    if (attempt < RATEHAWK_MAX_BOOKING_FORM_CALLS) partnerOrderId = randomUUID();
+  }
+  return { ...result, partnerOrderId, attempts: RATEHAWK_MAX_BOOKING_FORM_CALLS };
 }
 
 export interface RatehawkGuestName {
@@ -259,8 +291,8 @@ export async function resolveBookingOutcome(
   partnerOrderId: string,
   options: { maxAttempts?: number; delayMs?: number } = {},
 ): Promise<RatehawkBookingOutcome> {
-  const maxAttempts = options.maxAttempts ?? 12;
-  const delayMs = options.delayMs ?? 3_000;
+  const maxAttempts = Math.min(options.maxAttempts ?? RATEHAWK_MAX_BOOKING_STATUS_CALLS, RATEHAWK_MAX_BOOKING_STATUS_CALLS);
+  const delayMs = options.delayMs ?? 5_000;
 
   let supplierStatus: string | null = null;
   let supplierError: string | null = null;
@@ -273,11 +305,19 @@ export async function resolveBookingOutcome(
     supplierStatus = str(payload["status"]) ?? status.meta.supplierStatus ?? null;
     supplierError = status.ok ? null : status.error.code;
 
-    // A definitive supplier verdict: soldout / book_limit / anything but unknown.
-    if (supplierError && supplierError !== "unknown") break;
-    // Terminal success states.
-    if (supplierStatus && !["processing", "error"].includes(supplierStatus)) break;
-    if (status.ok && num(payload["percent"]) === 100) break;
+    // ETG defines processing, timeout, unknown and 5xx as in-progress.
+    const transient = isTransientBookingStatusFailure(status);
+    if (status.ok && supplierStatus === "processing") {
+      // Continue polling.
+    } else if (transient) {
+      // Continue polling until the certification cap/booking timeout.
+    } else if (status.ok && supplierStatus === "ok") {
+      break;
+    } else if (supplierError) {
+      break;
+    } else if (supplierStatus && supplierStatus !== "processing") {
+      break;
+    }
     if (i < maxAttempts - 1) await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
@@ -294,10 +334,13 @@ export async function resolveBookingOutcome(
   const orderId = row ? (num(row["order_id"]) ?? str(row["order_id"])) : null;
   const orderStatus = row ? str(row["status"]) : null;
 
+  const statusStillInProgress = attempts >= maxAttempts &&
+    (supplierStatus === "processing" || supplierError === "timeout" || supplierError === "unknown" || supplierError?.startsWith("http_5"));
+
   const internalStatus = mapRatehawkStatus({
     supplierStatus,
     dataStatus: supplierStatus,
-    errorCode: supplierError,
+    errorCode: statusStillInProgress ? "unknown" : supplierError,
     orderStatus,
   });
 
@@ -484,7 +527,7 @@ export async function runRatehawkSandboxValidation(args: {
   if (!search.ok || candidates.length === 0)
     return finish("Search returned no bookable hotel — the flow stopped here.");
 
-  const partnerOrderId = `wwl-sbx-${randomUUID()}`;
+  let partnerOrderId = randomUUID();
   let chosen: { hotelId: string; hid: number } | null = null;
   let detailsResult: Awaited<ReturnType<typeof getHotelDetails>> | null = null;
   let hpResult: Awaited<ReturnType<typeof getHotelRates>> | null = null;
@@ -522,6 +565,7 @@ export async function runRatehawkSandboxValidation(args: {
     }
 
     const bookingForm = await createBookingForm({ partnerOrderId, bookHash: hash, userIp: "203.0.113.10" });
+    partnerOrderId = bookingForm.partnerOrderId;
     const formData = asRecord(bookingForm.ok ? bookingForm.data : {});
     const nested = asRecord(asArray(asRecord(formData["payment_types"])["payment_types"])[0]);
     const flat = asRecord(asArray(formData["payment_types"])[0]);
