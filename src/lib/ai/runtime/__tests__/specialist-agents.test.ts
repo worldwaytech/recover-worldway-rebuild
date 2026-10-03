@@ -1,6 +1,5 @@
-import {
-  buildSpecialistCoordinationEnvelope, describe, expect, it } from "vitest";
-import { SPECIALIST_AGENT_DEFINITIONS, SPECIALIST_AGENT_KEYS, SpecialistAgentRegistry } from "../specialist-agents";
+import { describe, expect, it } from "vitest";
+import { buildSpecialistCoordinationEnvelope, SPECIALIST_AGENT_DEFINITIONS, SPECIALIST_AGENT_KEYS, SpecialistAgentRegistry } from "../specialist-agents";
 import { buildWorldwayOrchestrationContext } from "../context-bridge";
 import { EMPTY_TRAVELER_PROFILE, buildPersonalizationContext } from "../../../engine/intelligence/traveler-profile";
 
