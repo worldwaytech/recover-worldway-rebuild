@@ -58,13 +58,13 @@ export function tripjackAgentCredentialStatus(): {
   const invalid: string[] = [];
 
   if (!id) missing.push(TRIPJACK_AGENT_ENV.id);
-  else if (!/^\\d{3,20}$/.test(id)) invalid.push(TRIPJACK_AGENT_ENV.id);
+  else if (!/^\d{3,20}$/.test(id)) invalid.push(TRIPJACK_AGENT_ENV.id);
 
   if (!email) missing.push(TRIPJACK_AGENT_ENV.email);
-  else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) invalid.push(TRIPJACK_AGENT_ENV.email);
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) invalid.push(TRIPJACK_AGENT_ENV.email);
 
   if (!phone) missing.push(TRIPJACK_AGENT_ENV.phone);
-  else if (!/^\\+?[0-9][0-9\\s()-]{6,24}$/.test(phone)) invalid.push(TRIPJACK_AGENT_ENV.phone);
+  else if (!/^\+?[0-9][0-9\s()-]{6,24}$/.test(phone)) invalid.push(TRIPJACK_AGENT_ENV.phone);
 
   return { configured: missing.length === 0 && invalid.length === 0, missing, invalid };
 }
