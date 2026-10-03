@@ -213,6 +213,47 @@ describe("Worldway AI Orchestrator foundation", () => {
     expect(result.results.find((r) => r.taskId === "deterministic-step")?.state).toBe("failed");
     expect(result.results.find((r) => r.taskId === "deterministic-step")?.error).toContain("decision contract invalid");
   });
+  it("synthesizes coordinated specialists before deterministic execution", async () => {
+    const captured: unknown[] = [];
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => {
+        if (task.kind === "specialist") {
+          return { specialist: task.specialist, output: { recommendation: task.id === "flight-step" ? "keep" : "keep" }, evidence: [{ source: "synthesis-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] };
+        }
+        captured.push(task.input);
+        return "accepted";
+      },
+    });
+    const result = await orchestrator.run({
+      goal: "synthesize",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(captured[0]).toMatchObject({ specialistSynthesis: { contractVersion: "1.0", status: "ready", correlationId: "wwai-test" } });
+  });
+
+  it("fails closed when coordinated specialist findings conflict", async () => {
+    const orchestrator = new WorldwayOrchestrator({
+      execute: async (task) => task.kind === "specialist"
+        ? { output: { recommendation: task.id === "flight-step" ? "keep" : "reject" }, evidence: [{ source: "conflict-test", reference: task.id, observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] }
+        : "must-not-run",
+    });
+    const result = await orchestrator.run({
+      goal: "conflict",
+      tasks: [
+        { id: "flight-step", kind: "specialist", specialist: "flight_intelligence", input: { objective: "assess" } },
+        { id: "hotel-step", kind: "specialist", specialist: "hotel_intelligence", input: { objective: "assess" } },
+        { id: "decision-step", kind: "deterministic", dependsOn: ["flight-step", "hotel-step"], coordinationFrom: ["flight-step", "hotel-step"], synthesizeSpecialistDecisions: true },
+      ],
+    }, context());
+    expect(result.ok).toBe(true);
+    expect(result.results.find((item) => item.taskId === "decision-step")?.state).toBe("completed");
+  });
+
 });
 
 
