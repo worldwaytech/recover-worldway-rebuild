@@ -36,6 +36,7 @@ export interface OrchestrationTask {
   specialist?: string;
   modelTask?: TaskKind;
   handoffFrom?: string;
+  decisionContractFrom?: string;
   acceptedDecisionKinds?: WorldwayDecisionKind[];
   coordinationFrom?: string[];
   synthesizeSpecialistDecisions?: boolean;
@@ -91,6 +92,10 @@ function validateGraph(tasks: OrchestrationTask[]): { ok: true; order: Orchestra
     if (task.kind === "model" && !task.modelTask) problems.push(`missing_model_task:${task.id}`);
     if (task.handoffFrom && task.handoffFrom === task.id) problems.push(`self_handoff:${task.id}`);
     if (task.handoffFrom && task.kind !== "deterministic") problems.push(`handoff_target_must_be_deterministic:${task.id}`);
+    if (task.decisionContractFrom && task.kind !== "deterministic") problems.push(`decision_contract_target_must_be_deterministic:${task.id}`);
+    if (task.decisionContractFrom === task.id) problems.push(`decision_contract_self_reference:${task.id}`);
+    if (task.decisionContractFrom && !(task.dependsOn ?? []).includes(task.decisionContractFrom)) problems.push(`decision_contract_must_depend_on_source:${task.id}->${task.decisionContractFrom}`);
+    if (task.decisionContractFrom && !task.acceptedDecisionKinds?.length) problems.push(`decision_contract_missing_accepted_decision_kinds:${task.id}`);
     if (task.handoffFrom && !(task.dependsOn ?? []).includes(task.handoffFrom)) problems.push(`handoff_must_depend_on_source:${task.id}->${task.handoffFrom}`);
     if (task.handoffFrom && !(task.acceptedDecisionKinds?.length)) problems.push(`handoff_missing_accepted_decision_kinds:${task.id}`);
     if (task.acceptedDecisionKinds?.some((kind) => !["recommendation","classification","ranking","routing","explanation"].includes(kind))) problems.push(`invalid_decision_kind:${task.id}`);
@@ -221,6 +226,23 @@ function validatedSpecialistSynthesis(task: OrchestrationTask, coordinatedTask: 
   return { ...coordinatedTask, input: { ...input, specialistSynthesis: synthesis } };
 }
 
+function validatedDecisionContractHandoff(task: OrchestrationTask, sourceTask: OrchestrationTask | undefined, source: TaskExecutionResult | undefined, correlationId: string): OrchestrationTask {
+  if (task.kind !== "deterministic" || !task.decisionContractFrom) return task;
+  if (!sourceTask || sourceTask.kind !== "deterministic") throw new OrchestrationValidationError(`Decision contract source must be deterministic for ${task.id}`);
+  if (!source || source.state !== "completed" || !source.result || typeof source.result !== "object" || Array.isArray(source.result)) {
+    throw new OrchestrationValidationError(`Invalid decision contract source for ${task.id}`);
+  }
+  if (!task.acceptedDecisionKinds?.length) throw new OrchestrationValidationError(`Decision contract handoff kinds not declared for ${task.id}`);
+  const value = source.result as Record<string, unknown>;
+  const validated = validateWorldwayDecisionContract(value.decisionContract, {
+    expectedCorrelationId: correlationId,
+    expectedSourceTaskId: sourceTask.id,
+    acceptedDecisionKinds: task.acceptedDecisionKinds,
+  });
+  if (!validated) throw new OrchestrationValidationError(`Decision contract handoff validation failed for ${task.id}`);
+  return { ...task, input: { ...(typeof task.input === "object" && task.input ? task.input as Record<string, unknown> : {}), decisionContract: validated } };
+}
+
 function validatedModelHandoff(task: OrchestrationTask, sourceTask: OrchestrationTask | undefined, source: TaskExecutionResult | undefined, correlationId: string): OrchestrationTask {
   if (task.kind !== "deterministic" || !task.handoffFrom) return task;
   if (!sourceTask || sourceTask.kind !== "model") throw new OrchestrationValidationError(`Model handoff source must be a model task for ${task.id}`);
@@ -327,7 +349,13 @@ export class WorldwayOrchestrator {
         }
         const coordinatedTask = validatedSpecialistCoordination(task, ordered, results, correlationId);
         const synthesizedTask = validatedSpecialistSynthesis(task, coordinatedTask, correlationId);
-        const executionTask = validatedModelHandoff(synthesizedTask, synthesizedTask.handoffFrom ? ordered.find((candidate) => candidate.id === synthesizedTask.handoffFrom) : undefined, synthesizedTask.handoffFrom ? results.get(synthesizedTask.handoffFrom) : undefined, correlationId);
+        const decisionContractTask = validatedDecisionContractHandoff(
+          synthesizedTask,
+          synthesizedTask.decisionContractFrom ? ordered.find((candidate) => candidate.id === synthesizedTask.decisionContractFrom) : undefined,
+          synthesizedTask.decisionContractFrom ? results.get(synthesizedTask.decisionContractFrom) : undefined,
+          correlationId,
+        );
+        const executionTask = validatedModelHandoff(decisionContractTask, decisionContractTask.handoffFrom ? ordered.find((candidate) => candidate.id === decisionContractTask.handoffFrom) : undefined, decisionContractTask.handoffFrom ? results.get(decisionContractTask.handoffFrom) : undefined, correlationId);
         const rawResult = executionTask.kind === "tool" && this.toolExecutor ? await this.toolExecutor.execute(executionTask, context) : await this.executor.execute(executionTask, context);
         const result = validatedSpecialistDecisionBinding(task, executionTask, rawResult, correlationId);
         const finishedAt = new Date().toISOString();
