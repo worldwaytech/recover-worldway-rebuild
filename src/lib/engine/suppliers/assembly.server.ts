@@ -145,10 +145,13 @@ async function assembleMultiCityLiveProposals(req: TripRequirements, opts: Assem
     const to = destinations[i + 1]!;
     const dates = frontier.flatMap((x) => {
       const arrival = x.transports.at(-1)!;
-      const start = new Date(Date.parse(arrival.end.at));
+      // Search the next-city inventory from the actual arrival's LOCAL calendar date.
+      // UTC date can differ from destination-local date around midnight.
+      const localArrivalDate = localDateIn(arrival.end.at, arrival.end.timezone);
+      const anchor = new Date(localArrivalDate + "T00:00:00Z");
       const values: string[] = [];
       for (let d = 0; d < 7; d += 1) {
-        const day = new Date(start);
+        const day = new Date(anchor);
         day.setUTCDate(day.getUTCDate() + d);
         const iso = day.toISOString().slice(0, 10);
         if (iso < req.returnBy) values.push(iso);
@@ -160,7 +163,10 @@ async function assembleMultiCityLiveProposals(req: TripRequirements, opts: Assem
     for (const state of frontier) {
       const previous = state.transports.at(-1)!;
       const candidates = flights
-        .filter((f) => Date.parse(f.start.at) > Date.parse(previous.end.at) && Date.parse(f.end.at) < Date.parse(back.offers[0]?.start.at ?? "9999-12-31T23:59:59Z"))
+        .filter((f) =>
+          Date.parse(f.start.at) > Date.parse(previous.end.at) &&
+          back.offers.some((r) => Date.parse(f.end.at) < Date.parse(r.start.at))
+        )
         .sort((a, b) => Date.parse(a.start.at) - Date.parse(b.start.at))
         .slice(0, 2);
       for (const flight of candidates) next.push({ transports: [...state.transports, flight] });
