@@ -3,6 +3,7 @@
 // post-booking operations. Secret values never leave this module.
 
 import https from "https";
+import { createHash } from "crypto";
 import { HBX_HOSTS } from "./config";
 
 export type HbxMtlsEnvironment = "test" | "live";
