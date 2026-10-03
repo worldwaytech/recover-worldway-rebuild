@@ -45,6 +45,11 @@ describe("end-to-end package pipeline", () => {
     const bad = out.find((p) => p.id === "pkg-date")!;
     expect(out[0]!.id).toBe("arrival");
     expect(good.graph.map((c) => c.kind)).toEqual(["flight", "transfer", "stay", "activity"]);
+    expect(good.journeySegments.map((s) => [s.fromPlace, s.toPlace, s.mode, s.continuity])).toEqual([
+      ["LHR", "LHR", "transfer", "continuous"],
+      ["LON", "LON", "activity", "continuous"],
+    ]);
+    expect(good.journeySegments[0]?.gapMinutes).toBe(60);
     expect(good.bookable).toBe(true);
     expect(good.pricing!.total).toBeGreaterThan(0);
     expect(bad.issues.some((i) => i.code === "hotel-date-mismatch")).toBe(true);
