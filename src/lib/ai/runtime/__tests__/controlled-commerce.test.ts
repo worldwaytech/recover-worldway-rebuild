@@ -70,13 +70,29 @@ describe("Controlled Agentic Commerce", () => {
       .toThrow("booking_readiness_required");
 
     const grant = store.toHighRiskGrant(pending.id, "user-2", true);
-    expect(grant).toEqual({ tool: "pay_trip", grantedBy: "booking_readiness" });
+    expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness" });
 
     const consumed = store.consume(pending.id, "user-2");
     expect(consumed.status).toBe("consumed");
 
     expect(() => store.toHighRiskGrant(pending.id, "user-2", true))
       .toThrow("approval_required:consumed");
+  });
+
+  it("binds a high-risk grant to the exact approved action", () => {
+    const store = new ControlledCommerceApprovalStore();
+    const pending = store.request({
+      tool: "pay_trip",
+      action: "PAY",
+      quoteId: "quote-action",
+      idempotencyKey: "idem-action",
+      principalUserId: "user-action",
+    });
+    store.approve(pending.id, "user-action");
+
+    const grant = store.toHighRiskGrant(pending.id, "user-action", true);
+    expect(grant).toEqual({ tool: "pay_trip", action: "PAY", grantedBy: "booking_readiness" });
+  });
   });
 
   it("expires approval before it can be consumed", () => {
