@@ -2,9 +2,16 @@ import { describe, expect, it } from "vitest";
 import { SUPPLIER_CERTIFICATION_PLAN, certificationPlanFor } from "../certification-plan";
 
 describe("Supplier certification plan", () => {
+  it("covers every registered supplier exactly once", async () => {
+    const { SUPPLIER_CATALOG } = await import("../catalog.server");
+    const catalogKeys = SUPPLIER_CATALOG.map((item) => item.supplierKey).sort();
+    const planKeys = SUPPLIER_CERTIFICATION_PLAN.map((item) => item.supplierKey).sort();
+    expect(planKeys).toEqual(catalogKeys);
+  });
+
   it("captures every supplier requiring a post-phase16 action", () => {
     expect(SUPPLIER_CERTIFICATION_PLAN.map((item) => item.supplierKey)).toEqual([
-      "crystal", "travelgate", "travelshop", "ratehawk", "gadventures", "hbx-hotels", "hbx-transfers",
+      "viator-merchant", "tripsafe", "crystal", "travelgate", "travelshop", "ratehawk", "gadventures", "hbx-hotels", "hbx-transfers",
       "viator-affiliate", "up17", "airiq", "tripjack-cabs", "private-aviation",
       "skyaccess", "amadeus",
     ]);
