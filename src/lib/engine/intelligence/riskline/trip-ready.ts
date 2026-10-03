@@ -17,7 +17,7 @@ export interface TravelRiskEvidence {
   confidence: number;
   observedAt: string;
   expiresAt?: string;
-  source: KnowledgeEvidence["source"];
+  source: "destination_knowledge";
   sourceRef: string;
 }
 
@@ -35,7 +35,7 @@ export function risklineToKnowledgeEvidence(
       value,
       confidence: 0.8,
       observedAt,
-      source: "supplier" as const,
+      source: "destination_knowledge" as const,
       sourceRef: row.id ? `riskline:${row.id}` : "riskline:trip-ready",
     }));
   });
