@@ -88,6 +88,47 @@ describe("Worldway typed decision contract", () => {
     expect(isWorldwayDecisionContract({ ...base, sourceTaskId: "" })).toBe(false);
   });
 
+  it("rejects supplier and execution-authority content at the contract boundary", () => {
+    expect(createWorldwayDecisionContract({
+      decisionKind: "recommendation",
+      decision: "Book this supplier now",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+    })).toBeNull();
+
+    expect(createWorldwayDecisionContract({
+      decisionKind: "recommendation",
+      decision: "Use the validated itinerary",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+      constraints: ["supplierAction=confirmed"],
+    })).toBeNull();
+
+    const safe = createWorldwayDecisionContract({
+      decisionKind: "ranking",
+      decision: "Prioritize the validated itinerary",
+      confidence: 0.9,
+      evidence,
+      correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
+      constraints: ["ranking.weight.preference=0.8"],
+    });
+    expect(safe).not.toBeNull();
+    expect(validateWorldwayDecisionContract(safe, {
+      expectedCorrelationId: "wwai-test",
+      expectedSourceTaskId: "model-step",
+      acceptedDecisionKinds: ["ranking"],
+      now: new Date("2026-10-03T12:00:00Z"),
+    })).toEqual(safe);
+  });
+
   it("accepts only a live contract bound to the active orchestration and source task", () => {
     const contract = createWorldwayDecisionContract({
       decisionKind: "recommendation", decision: "review", confidence: 0.9, evidence,
