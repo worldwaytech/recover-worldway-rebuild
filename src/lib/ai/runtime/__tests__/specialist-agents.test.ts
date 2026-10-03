@@ -70,6 +70,28 @@ describe("Specialist Agent Framework", () => {
   });
 });
 
+  it("sanitizes specialist authority fields at coordination ingress", () => {
+    const envelope = buildSpecialistCoordinationEnvelope("corr-ingress", [{
+      specialist: "risk_trust",
+      taskId: "risk-step",
+      state: "completed",
+      output: {
+        recommendation: "review",
+        executionAuthority: true,
+        payment: { execute: true },
+        nested: { booking: true, safe: "kept" },
+      },
+      evidence: [{ source: "test", reference: "risk-step", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }],
+    }]);
+    expect(envelope?.members[0].output).toEqual({
+      recommendation: "review",
+      nested: { safe: "kept" },
+    });
+    expect(JSON.stringify(envelope)).not.toContain("executionAuthority");
+    expect(JSON.stringify(envelope)).not.toContain("payment");
+    expect(JSON.stringify(envelope)).not.toContain("booking");
+  });
+
 
   it("builds a bounded coordination envelope with correlation binding", () => {
     const envelope = buildSpecialistCoordinationEnvelope("corr-test", [

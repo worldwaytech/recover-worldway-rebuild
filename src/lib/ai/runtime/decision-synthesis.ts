@@ -1,5 +1,6 @@
 import { isSpecialistCoordinationEnvelope, type SpecialistCoordinationEnvelope } from "./specialist-agents";
 import { sanitizeOrchestrationEvidence, type OrchestrationEvidence } from "./orchestration-trace";
+import { sanitizeSpecialistAdvisoryOutput } from "./specialist-output-sanitizer";
 
 export type SpecialistSynthesisStatus = "ready" | "conflicted" | "insufficient_evidence";
 
@@ -32,50 +33,8 @@ export interface SpecialistDecisionSynthesisContract {
 
 const SYNTHESIS_FIELDS = ["recommendation", "classification", "routing"] as const;
 const MAX_FINDINGS = 10;
-const MAX_FINDING_OUTPUT_BYTES = 16_000;
-const MAX_ADVISORY_DEPTH = 4;
-const MAX_ADVISORY_ARRAY_ITEMS = 32;
-const BLOCKED_AUTHORITY_KEYS = new Set([
-  "execute", "execution", "executionauthority", "mutate", "mutation",
-  "booking", "book", "payment", "pay", "refund", "cancel",
-  "suppliermutation", "supplieraction", "tool", "toolcall",
-  "credential", "credentials", "secret", "secrets", "highriskgrant",
-]);
-
-function advisoryKey(key: string): boolean {
-  return !BLOCKED_AUTHORITY_KEYS.has(key.replace(/[^a-z0-9]/gi, "").toLowerCase());
-}
-
-function sanitizeAdvisoryValue(value: unknown, depth = 0): unknown {
-  if (depth > MAX_ADVISORY_DEPTH) return undefined;
-  if (value === null || typeof value === "boolean" || typeof value === "number") return value;
-  if (typeof value === "string") return value.slice(0, 2_000);
-  if (Array.isArray(value)) {
-    return value.slice(0, MAX_ADVISORY_ARRAY_ITEMS)
-      .map((item) => sanitizeAdvisoryValue(item, depth + 1))
-      .filter((item) => item !== undefined);
-  }
-  if (typeof value !== "object") return undefined;
-  const output: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(value)) {
-    if (!advisoryKey(key)) continue;
-    const sanitized = sanitizeAdvisoryValue(item, depth + 1);
-    if (sanitized !== undefined) output[key.slice(0, 120)] = sanitized;
-  }
-  return output;
-}
-
 function boundedObject(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const sanitized = sanitizeAdvisoryValue(value);
-  if (!sanitized || typeof sanitized !== "object" || Array.isArray(sanitized)) return null;
-  try {
-    const serialized = JSON.stringify(sanitized);
-    if (!serialized || serialized.length > MAX_FINDING_OUTPUT_BYTES) return null;
-    return sanitized as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+  return sanitizeSpecialistAdvisoryOutput(value);
 }
 
 function validEvidence(evidence: OrchestrationEvidence[], now: Date): OrchestrationEvidence[] | null {
