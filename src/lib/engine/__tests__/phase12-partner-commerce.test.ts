@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PartnerAuthError, requireScope } from "@/lib/commerce/partner-auth.server";
+import { PartnerAuthError, requireScope, type Scope } from "@/lib/commerce/partner-auth.server";
 import {
   assertPartnerActive,
   calculatePartnerPrice,
@@ -88,7 +88,7 @@ describe("Phase 12 partner commerce", () => {
       method: "api_key" as const,
       keyId: "key-1",
       userId: null,
-      scopes: ["flights.search", "tours.read"],
+      scopes: ["flights.search", "tours.read"] as Scope[],
       rateLimitPerMinute: 60,
     };
     expect(() => requireScope({ ...base, apiProducts: ["flights"], apiAccessMode: "single_product" }, "searchFlights")).not.toThrow();
