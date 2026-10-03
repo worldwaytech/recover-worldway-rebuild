@@ -62,6 +62,8 @@ describe("Worldway typed decision contract", () => {
       confidence: 0.8,
       evidence,
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
     })).toBeNull();
   });
 
@@ -75,6 +77,8 @@ describe("Worldway typed decision contract", () => {
         { source: "ignored", reference: "not valid ref!", observedAt: "2026-10-03T00:00:00Z", confidence: 0.5 },
       ],
       correlationId: "wwai-test",
+      sourceTaskId: "model-step",
+      expiresAt: "2026-10-04T00:00:00Z",
       constraints: ["  first  ", 123, "", "  second  "],
     });
 
