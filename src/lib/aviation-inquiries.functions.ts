@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "@/lib/security/rate-limit.server";
 
 // Public server function: accepts empty-leg inquiries from the website
 // (including anonymous visitors) and persists them so the Worldway Private
@@ -28,6 +29,11 @@ export type AviationInquiryInput = z.infer<typeof inquirySchema>;
 export const submitAviationInquiry = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inquirySchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(
+      rateLimitKey("aviation-inquiry", requestFingerprint(currentRequest())),
+      5,
+      60,
+    );
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const row = {
       intent: data.intent,
@@ -64,8 +70,5 @@ export const submitAviationInquiry = createServerFn({ method: "POST" })
         error: "Could not save inquiry. Please email aviation@worldwaytravelsgroup.com.",
       };
     }
-    console.log(
-      `[aviation-inquiries] new ${data.intent} inquiry ${inserted?.id ?? ""} for leg ${data.legId ?? "(none)"} from ${data.email}`,
-    );
-    return { ok: true as const, id: inserted?.id ?? null };
+    return { ok: true as const };
   });
