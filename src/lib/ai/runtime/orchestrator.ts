@@ -6,7 +6,7 @@ import { emit, newCorrelationId } from "../router/telemetry";
 import { withRoute, type RouterDeps } from "../router/router";
 import type { ModelSpec, TaskKind } from "../router/types";
 import { OrchestrationTraceCollector } from "./orchestration-trace";
-import { createWorldwayDecisionContract } from "./decision-contract";
+import { createWorldwayDecisionContract, type WorldwayDecisionKind } from "./decision-contract";
 import type { RiskLevel, ToolContext, ToolRegistry } from "../tools/fabric";
 
 export type OrchestrationTaskKind = "tool" | "specialist" | "deterministic" | "model";
@@ -268,7 +268,7 @@ function validatedModelHandoff(
 
   const value = source.result as Record<string, unknown>;
   const contract = createWorldwayDecisionContract({
-    decisionKind: value.decisionKind ?? "recommendation",
+    decisionKind: (typeof value.decisionKind === "string" ? value.decisionKind : "recommendation") as WorldwayDecisionKind,
     decision: value.decision,
     confidence: value.confidence,
     evidence: value.evidence,
