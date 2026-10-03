@@ -13,6 +13,7 @@ import { projectDecisionContractToRankingProfile } from "../../engine/decision-c
 import { projectDecisionContractToPricingSignals } from "./decision-contract-pricing-adapter";
 import { projectDecisionContractToOrchestrationPreferences } from "./decision-contract-orchestration-adapter";
 import { applyOrchestrationPreferences } from "../../engine/orchestration";
+import { projectDecisionContractToBookingReadiness } from "./decision-contract-booking-readiness-adapter";
 import type { ToolRegistry } from "../tools/fabric";
 
 export interface WorldwayOrchestratorRuntime {
@@ -71,6 +72,26 @@ function validatedDeterministicInput(task: OrchestrationTask, input: unknown, co
     }
     const pricingSignals = projectDecisionContractToPricingSignals(validated);
     return { ...value, decisionContract: validated, pricingSignals };
+  }
+
+  if (projection === "booking-readiness") {
+    if (validated.decisionKind !== "recommendation") {
+      throw new Error(`decision_contract_booking_readiness_projection_rejected:${task.id}`);
+    }
+    const components = value.bookingComponents;
+    const capabilities = value.supplierCapabilities;
+    if (!Array.isArray(components) || !capabilities || typeof capabilities !== "object" || Array.isArray(capabilities)) {
+      throw new Error(`booking_readiness_inputs_missing:${task.id}`);
+    }
+    const capabilityMap = new Map<string, readonly import("../../engine/types").SupplierCapability[]>(
+      Object.entries(capabilities as Record<string, readonly import("../../engine/types").SupplierCapability[]>),
+    );
+    const bookingReadiness = projectDecisionContractToBookingReadiness(
+      validated,
+      components as import("../../engine/types").NormalizedComponent[],
+      capabilityMap,
+    );
+    return { ...value, decisionContract: validated, bookingReadiness };
   }
 
   if (projection === "ranking") {
