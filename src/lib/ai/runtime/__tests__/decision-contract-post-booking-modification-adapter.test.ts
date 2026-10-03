@@ -96,6 +96,27 @@ describe("post-booking modification decision boundary", () => {
     ]));
   });
 
+  it("fails closed on unknown components and invalid modification values", () => {
+    const result = projectDecisionContractToPostBookingModification(contract([
+      "postbooking.modification.component=missing-component",
+      "postbooking.modification.date=2026-02-30",
+      "postbooking.modification.time=25:90",
+      "postbooking.modification.passengerCount=0",
+    ]), {
+      bookingId: "WWB-t1-1",
+      bookingStatus: "Booked",
+      components: [component],
+      capabilities,
+    });
+
+    expect(result.changes).toEqual({});
+    expect(result.readiness.ready).toBe(false);
+    expect(result.readiness.blockers).toEqual(expect.arrayContaining([
+      "missing-component: booking component not found",
+      "No supported modification change requested.",
+    ]));
+  });
+
   it("never turns a non-recommendation decision into a modification intent", () => {
     expect(() => projectDecisionContractToPostBookingModification(contract(
       ["postbooking.modification.date=2026-10-20"],
