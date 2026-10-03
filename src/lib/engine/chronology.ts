@@ -28,7 +28,27 @@ function haversineKm(a: LocalMoment, b: LocalMoment): number | null {
 }
 
 export const MIN_CONNECTION_MIN = 60;
+export const MIN_AIRPORT_TO_SERVICE_MIN = 90;
 const GROUND_KMH = 80;
+
+export interface ChronologicalTripGraph {
+  version: 1;
+  nodes: NormalizedComponent[];
+  edges: Array<{ from: string; to: string; gapMinutes: number }>;
+  destinationArrivalDate?: string;
+  finalDepartureDate?: string;
+  issues: AuditIssue[];
+}
+
+const transportKinds = new Set(["flight", "rail", "aviation", "cruise"]);
+
+function isTransport(c: NormalizedComponent): boolean {
+  return transportKinds.has(c.kind);
+}
+
+function isContainedStayPair(a: NormalizedComponent, b: NormalizedComponent): boolean {
+  return a.kind === "stay" || b.kind === "stay" || a.kind === "insurance" || b.kind === "insurance";
+}
 
 /**
  * Hotel check-in must be the local arrival date of the inbound transport,
@@ -51,13 +71,14 @@ export function checkChronology(items: NormalizedComponent[]): AuditIssue[] {
     }
   }
 
-  const transport = (k: string) => k === "flight" || k === "rail" || k === "aviation" || k === "cruise";
+  const transport = (k: string) => transportKinds.has(k);
 
   for (let i = 0; i < sorted.length; i++) {
     const a = sorted[i]!;
     for (let j = i + 1; j < sorted.length; j++) {
       const b = sorted[j]!;
-      // Stays legitimately overlap activities/transfers; people can't be on two moving things.
+      // Hotel stays contain destination activities/transfers, so overlap with a stay
+      // is expected. Two moving services may not overlap.
       const exclusive = (x: NormalizedComponent) => x.kind !== "stay" && x.kind !== "insurance";
       if (exclusive(a) && exclusive(b) && ms(b.start) < ms(a.end)) {
         issues.push({ code: "overlap", severity: "error", componentIds: [a.id, b.id], message: `${a.title} overlaps ${b.title}.` });
@@ -99,4 +120,44 @@ export function checkChronology(items: NormalizedComponent[]): AuditIssue[] {
     }
   }
   return issues;
+}
+
+
+/**
+ * Build the canonical chronological graph used by downstream ranking, packaging
+ * and booking-readiness layers. The graph is deterministic and uses supplier
+ * instants as the source of truth.
+ */
+export function buildChronologicalTripGraph(items: NormalizedComponent[]): ChronologicalTripGraph {
+  const nodes = sortChronologically(items);
+  const issues = checkChronology(nodes);
+  const edges: Array<{ from: string; to: string; gapMinutes: number }> = [];
+
+  const moving = nodes.filter((c) => c.kind !== "stay" && c.kind !== "insurance");
+  for (let i = 0; i + 1 < moving.length; i += 1) {
+    const from = moving[i]!;
+    const to = moving[i + 1]!;
+    edges.push({
+      from: from.id,
+      to: to.id,
+      gapMinutes: Math.round((ms(to.start) - ms(from.end)) / 60000),
+    });
+  }
+
+  const firstDestinationArrival = nodes.find((c) => isTransport(c) && c.end.place !== c.start.place);
+  const lastReturn = [...nodes].reverse().find((c) => isTransport(c));
+
+  return {
+    version: 1,
+    nodes,
+    edges,
+    destinationArrivalDate: firstDestinationArrival ? requiredCheckInDate(firstDestinationArrival) : undefined,
+    finalDepartureDate: lastReturn ? localDate(lastReturn.start) : undefined,
+    issues,
+  };
+}
+
+/** Convenience predicate for booking-readiness and package auditing. */
+export function chronologyIsValid(items: NormalizedComponent[]): boolean {
+  return checkChronology(items).every((issue) => issue.severity !== "error");
 }
