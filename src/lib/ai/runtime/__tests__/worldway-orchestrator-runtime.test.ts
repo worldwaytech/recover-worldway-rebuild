@@ -61,7 +61,7 @@ describe("Worldway specialist orchestration runtime", () => {
         return { model: model.id, task, correlationId };
       }, validateOutput: (_task, value) => {
         const output = value as Record<string, unknown>;
-        return typeof output?.task === "string" && typeof output?.correlationId === "string" ? output : null;
+        return typeof output?.task === "string" && typeof output?.correlationId === "string" ? { output, evidence: [{ source: "model-test", reference: "model:validated", observedAt: "2026-10-03T00:00:00Z", confidence: 1 }] } : null;
       } },
     });
 
@@ -74,6 +74,7 @@ describe("Worldway specialist orchestration runtime", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({ task: "concierge_chat", input: { prompt: "analyse itinerary" }, correlationId: "wwai-test" });
     expect(result.results[0].result).toMatchObject({ task: "concierge_chat", correlationId: "wwai-test" });
+    expect(result.trace.evidence[0].items[0].reference).toBe("model:validated");
   });
 
   it("fails closed when model output does not pass validation", async () => {

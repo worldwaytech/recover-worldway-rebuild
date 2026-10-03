@@ -206,11 +206,17 @@ export class SpecialistTaskExecutor implements TaskExecutor {
 }
 
 
+export interface ValidatedModelOutput {
+  output: Record<string, unknown>;
+  /** Opaque provenance references that justify the accepted model output. */
+  evidence: unknown[];
+}
+
 export interface RoutedModelExecutorOptions {
   router?: RouterDeps;
   invoke: (model: ModelSpec, task: TaskKind, input: unknown, correlationId: string) => Promise<unknown>;
-  /** Required fail-closed validation for model output before orchestration accepts it. */
-  validateOutput: (task: TaskKind, value: unknown, correlationId: string) => unknown | null;
+  /** Required fail-closed validation and provenance binding for model output. */
+  validateOutput: (task: TaskKind, value: unknown, correlationId: string) => ValidatedModelOutput | null;
 }
 
 /** Explicit model boundary. The existing router remains authoritative for provider/model selection, health, cost and fallback. */
@@ -223,7 +229,7 @@ export class RoutedModelTaskExecutor implements TaskExecutor {
       const raw = await this.options.invoke(model, task.modelTask!, task.input, ctx.correlationId);
       const validated = this.options.validateOutput(task.modelTask!, raw, ctx.correlationId);
       if (validated === null) throw new OrchestrationValidationError(`Model output validation failed for ${task.id}`);
-      return validated;
+      return { ...validated.output, evidence: validated.evidence };
     }, this.options.router, ctx.correlationId);
   }
 }
