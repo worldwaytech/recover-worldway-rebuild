@@ -73,6 +73,20 @@ describe("end-to-end package pipeline", () => {
     expect(disabled.every((p) => p.optimized)).toBe(true);
   });
 
+  it("consumes bounded ranking profile without changing deterministic booking authority", () => {
+    const candidates = [
+      { id: "luxury", offers: [flight, transfer, { ...hotel("2026-10-11T14:00:00Z"), externalId: "H-luxury", quality: 5 }] },
+      { id: "reliable", offers: [flight, transfer, { ...hotel("2026-10-11T14:00:00Z", "low"), externalId: "H-reliable", quality: 3 }] },
+    ];
+    const reliabilityRegistry = new Map(reg).set("low", { ...prod("low", "stay"), reliability: 0.1 });
+    const luxury = runPackagePipeline({ ...base(candidates), registry: reliabilityRegistry, ranking: { weights: { luxury: 1 } } });
+    const reliabilityWeighted = runPackagePipeline({ ...base(candidates), registry: reliabilityRegistry, ranking: { weights: { reliability: 1 } } });
+    expect(luxury[0]!.id).toBe("luxury");
+    expect(reliabilityWeighted[0]!.id).toBe("luxury");
+    expect(reliabilityWeighted.find((p) => p.id === "reliable")!.bookable).toBe(true);
+    expect(luxury.find((p) => p.id === "reliable")!.bookable).toBe(true);
+  });
+
   it("blocks a package that falls outside the requested trip window", () => {
     const lateReturn = { ...flight, externalId: "F-late", start: { ...flight.start, at: "2026-10-16T03:30:00Z" }, end: { ...flight.end, at: "2026-10-16T11:00:00Z" } };
     const out = runPackagePipeline(base([
