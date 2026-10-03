@@ -106,7 +106,8 @@ export interface AuditIssue {
     | "not-revalidated"
     | "supplier-not-bookable"
     | "price-unavailable"
-    | "substitution-requires-approval";
+    | "substitution-requires-approval"
+    | "outside-trip-window";
   severity: IssueSeverity;
   componentIds: string[];
   message: string;
