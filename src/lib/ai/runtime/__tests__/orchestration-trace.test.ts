@@ -9,8 +9,10 @@ describe("orchestration trace evidence", () => {
       { source: "invalid", reference: "person@example.com", observedAt: "2026-10-03T00:00:00Z", confidence: 1 },
       { source: "invalid", reference: "abc", observedAt: "2026-10-03T00:00:00Z", confidence: 2 },
     ]);
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
     expect(result[0].reference).toBe("edge:ist:123");
+    expect(result[1].reference).toBe("abc");
+    expect(result[1].confidence).toBe(1);
   });
 
   it("records lifecycle and provenance without payloads", () => {
