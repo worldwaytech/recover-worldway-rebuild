@@ -17,6 +17,10 @@ on:
     branches:
       - phase-5-trip-intelligence
 
+concurrency:
+  group: worldway-phase5-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
