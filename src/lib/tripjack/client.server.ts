@@ -40,6 +40,35 @@ export function tripjackCredentialStatus(): { configured: boolean; missing: stri
   return { configured, missing: configured ? [] : [TRIPJACK_API_KEY_SECRET] };
 }
 
+const TRIPJACK_AGENT_ENV = {
+  id: "TRIPJACK_AGENT_ID",
+  email: "TRIPJACK_AGENT_EMAIL",
+  phone: "TRIPJACK_AGENT_PHONE",
+} as const;
+
+export function tripjackAgentCredentialStatus(): {
+  configured: boolean;
+  missing: string[];
+  invalid: string[];
+} {
+  const id = process.env[TRIPJACK_AGENT_ENV.id]?.trim() ?? "";
+  const email = process.env[TRIPJACK_AGENT_ENV.email]?.trim() ?? "";
+  const phone = process.env[TRIPJACK_AGENT_ENV.phone]?.trim() ?? "";
+  const missing: string[] = [];
+  const invalid: string[] = [];
+
+  if (!id) missing.push(TRIPJACK_AGENT_ENV.id);
+  else if (!/^\\d{3,20}$/.test(id)) invalid.push(TRIPJACK_AGENT_ENV.id);
+
+  if (!email) missing.push(TRIPJACK_AGENT_ENV.email);
+  else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) invalid.push(TRIPJACK_AGENT_ENV.email);
+
+  if (!phone) missing.push(TRIPJACK_AGENT_ENV.phone);
+  else if (!/^\\+?[0-9][0-9\\s()-]{6,24}$/.test(phone)) invalid.push(TRIPJACK_AGENT_ENV.phone);
+
+  return { configured: missing.length === 0 && invalid.length === 0, missing, invalid };
+}
+
 export function tripjackCorrelationId(suite: TripjackSuite, capability: string): string {
   const rand = Math.random().toString(36).slice(2, 10);
   return `wwtg-tj-${suite}-${capability}-${Date.now().toString(36)}-${rand}`;
@@ -145,11 +174,16 @@ type EvidenceRecord = {
  * not stored and the body never contains the key. Failures are swallowed so an
  * evidence write can never break a customer flow.
  */
-const AGENT_FIELDS = ["agentId", "agentEmail", "agentPhone"] as const;
-export function stripAgentFields(body: unknown): unknown {
-  if (!body || typeof body !== "object" || Array.isArray(body)) return body;
-  const out = { ...(body as Record<string, unknown>) };
-  for (const k of AGENT_FIELDS) if (k in out) out[k] = REDACTED;
+const AGENT_FIELDS = new Set(["agentid", "agentemail", "agentphone"]);
+export function stripAgentFields(body: unknown, depth = 0): unknown {
+  if (depth > 10) return REDACTED;
+  if (Array.isArray(body)) return body.map((v) => stripAgentFields(v, depth + 1));
+  if (!body || typeof body !== "object") return body;
+
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
+    out[k] = AGENT_FIELDS.has(k.toLowerCase()) ? REDACTED : stripAgentFields(v, depth + 1);
+  }
   return out;
 }
 
@@ -280,12 +314,17 @@ export async function tripjackCall<T = unknown>(
       console.info(
         "[tripjack] cabs location-search",
         JSON.stringify({
-          url,
           via: relay ? "relay" : "direct",
           method: cap.method,
           correlationId,
           status: response.status,
-          body: text.slice(0, 2000),
+          response: (() => {
+            try {
+              return redact(JSON.parse(text));
+            } catch {
+              return "[non-json response]";
+            }
+          })(),
         }),
       );
     }
