@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { PartnerAuthError, requireScope } from "@/lib/commerce/partner-auth.server";
 import {
-  requireScope,
-  PartnerAuthError,
   assertPartnerActive,
   calculatePartnerPrice,
   commissionFor,
