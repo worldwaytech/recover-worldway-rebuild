@@ -32,6 +32,9 @@ export function customerBookabilityLabel(
 export function summariseCrystalInventory(voyages: Pick<CrystalVoyage, "dataSource" | "bookingMode">[]) {
   let apiLive = 0;
   let offApi = 0;
-  for (const v of voyages) (classifyCrystalVoyage(v) === "api_live" ? apiLive++ : offApi++);
+  for (const v of voyages) {
+    if (classifyCrystalVoyage(v) === "api_live") apiLive++;
+    else offApi++;
+  }
   return { apiLive, offApi, total: apiLive + offApi };
 }
