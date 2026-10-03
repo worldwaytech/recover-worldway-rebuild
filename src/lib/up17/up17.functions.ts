@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { consumeRateLimit, currentRequest, rateLimitKey, requestFingerprint } from "@/lib/security/rate-limit.server";
 
 export type { Up17City } from "./cities.db.server";
 
@@ -26,6 +27,7 @@ const searchSchema = z.object({
 export const up17FlightSearch = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => searchSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("up17-flight-search", requestFingerprint(currentRequest())), 60, 60);
     const { up17SearchFlights } = await import("./up17.server");
     const res = await up17SearchFlights(data);
     return {
@@ -109,6 +111,7 @@ const hotelSchema = z.object({
 export const up17HotelSearch = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => hotelSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("up17-hotel-search", requestFingerprint(currentRequest())), 60, 60);
     const { up17SearchHotels } = await import("./up17.server");
     const res = await up17SearchHotels(data);
     return {
@@ -171,6 +174,7 @@ const busSchema = z.object({
 export const up17BusSearch = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => busSchema.parse(d))
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("up17-bus-search", requestFingerprint(currentRequest())), 60, 60);
     const { up17SearchBuses } = await import("./up17.server");
     const res = await up17SearchBuses(data);
     return {
@@ -233,6 +237,7 @@ export const up17ConfirmFlightFare = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("up17-fare-confirm", requestFingerprint(currentRequest())), 60, 60);
     const { up17ConfirmFare } = await import("./up17.server");
     const res = await up17ConfirmFare(data);
     return { ok: res.ok, error: res.error, confirmation: res.data ?? null };
@@ -255,6 +260,7 @@ export const up17BookFlightTicket = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    await consumeRateLimit(rateLimitKey("up17-ticket-book", requestFingerprint(currentRequest())), 5, 60);
     const { claimVerifiedPaymentForFulfilment, recordFulfilment, releaseFulfilmentClaim, optionalUserId } =
       await import("@/lib/payments/payments.server");
 
