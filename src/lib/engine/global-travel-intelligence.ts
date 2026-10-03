@@ -1,0 +1,198 @@
+export type GraphNodeType = "destination" | "supplier" | "traveller" | "experience" | "airport" | "hotel" | "route";
+export type GraphEdgeType = "located_in" | "serves" | "prefers" | "offers" | "connects" | "requires" | "compatible_with";
+export type IntelligenceKind = "condition" | "inventory" | "price" | "demand" | "knowledge";
+export type CommerceChannel = "direct" | "partner_api" | "agent" | "enterprise";
+export type NetworkCapability = "discover" | "compare" | "quote" | "recommend" | "plan" | "hold" | "book" | "modify" | "cancel" | "refund";
+
+export interface EvidenceRef {
+  source: string;
+  observedAt: string;
+  expiresAt?: string;
+  confidence: number;
+  reference?: string;
+}
+
+export interface TravelGraphNode {
+  id: string;
+  type: GraphNodeType;
+  tenantId?: string;
+  canonicalKey: string;
+  attributes: Record<string, string | number | boolean | null>;
+}
+
+export interface TravelGraphEdge {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  type: GraphEdgeType;
+  weight?: number;
+  evidence: readonly EvidenceRef[];
+}
+
+export interface IntelligenceObservation {
+  id: string;
+  tenantId?: string;
+  kind: IntelligenceKind;
+  subjectId: string;
+  value: Record<string, string | number | boolean | null>;
+  evidence: readonly EvidenceRef[];
+  capturedAt: string;
+}
+
+export interface InventoryOffer {
+  id: string;
+  supplierKey: string;
+  productId: string;
+  currency: string;
+  total: number;
+  available: boolean;
+  priceVersion: string;
+  validUntil: string;
+  evidence: readonly EvidenceRef[];
+}
+
+export interface DemandSignal {
+  destinationId: string;
+  score: number;
+  direction: "rising" | "stable" | "falling";
+  observedAt: string;
+  evidence: readonly EvidenceRef[];
+}
+
+export interface CommerceNetworkPolicy {
+  allowedCapabilities: readonly NetworkCapability[];
+  maxQuoteAgeSeconds: number;
+  requireEvidence: boolean;
+  requireFreshInventoryForCommit: boolean;
+  allowAutonomousMutation: boolean;
+}
+
+export interface CommerceNetworkRequest {
+  requestId: string;
+  tenantId: string;
+  channel: CommerceChannel;
+  capability: NetworkCapability;
+  subjectIds: readonly string[];
+  requestedAt: string;
+  policy: CommerceNetworkPolicy;
+}
+
+export interface CommerceNetworkDecision {
+  requestId: string;
+  allowed: boolean;
+  reason: string;
+  requiresRevalidation: boolean;
+  evidenceComplete: boolean;
+}
+
+export interface GlobalTravelIntelligenceSnapshot {
+  destinationId: string;
+  conditions: readonly IntelligenceObservation[];
+  inventory: readonly InventoryOffer[];
+  demand?: DemandSignal;
+  generatedAt: string;
+}
+
+const MUTATING_CAPABILITIES = new Set<NetworkCapability>(["hold","book","modify","cancel","refund"]);
+const POSITIVE_CONFIDENCE = (n: number) => Number.isFinite(n) && n >= 0 && n <= 1;
+
+export function validateEvidence(evidence: readonly EvidenceRef[], now = new Date()): void {
+  if (!evidence.length) throw new Error("At least one evidence reference is required");
+  for (const item of evidence) {
+    if (!item.source.trim()) throw new Error("Evidence source is required");
+    if (!POSITIVE_CONFIDENCE(item.confidence)) throw new Error("Evidence confidence must be between 0 and 1");
+    const observed = new Date(item.observedAt);
+    if (Number.isNaN(observed.getTime())) throw new Error("Evidence observedAt must be a valid timestamp");
+    if (item.expiresAt) {
+      const expires = new Date(item.expiresAt);
+      if (Number.isNaN(expires.getTime())) throw new Error("Evidence expiresAt must be a valid timestamp");
+      if (expires.getTime() < observed.getTime()) throw new Error("Evidence cannot expire before observation");
+      if (expires.getTime() < now.getTime()) throw new Error("Evidence has expired");
+    }
+  }
+}
+
+export function upsertGraphNodes(nodes: readonly TravelGraphNode[]): TravelGraphNode[] {
+  const byKey = new Map<string, TravelGraphNode>();
+  for (const node of nodes) {
+    if (!node.id || !node.canonicalKey) throw new Error("Graph nodes require id and canonicalKey");
+    const key = node.type + ":" + node.canonicalKey.trim().toLowerCase();
+    byKey.set(key, node);
+  }
+  return [...byKey.values()].sort((a, b) => a.canonicalKey.localeCompare(b.canonicalKey));
+}
+
+export function validateGraphEdges(nodes: readonly TravelGraphNode[], edges: readonly TravelGraphEdge[]): void {
+  const ids = new Set(nodes.map((n) => n.id));
+  for (const edge of edges) {
+    if (!ids.has(edge.fromNodeId) || !ids.has(edge.toNodeId)) throw new Error("Graph edge references an unknown node");
+    validateEvidence(edge.evidence);
+    if (edge.weight !== undefined && !Number.isFinite(edge.weight)) throw new Error("Graph edge weight must be finite");
+  }
+}
+
+export function normalizeOffers(offers: readonly InventoryOffer[], now = new Date()): InventoryOffer[] {
+  const byKey = new Map<string, InventoryOffer>();
+  for (const offer of offers) {
+    if (!offer.supplierKey || !offer.productId || !offer.currency) throw new Error("Inventory offer is incomplete");
+    if (!Number.isFinite(offer.total) || offer.total < 0) throw new Error("Inventory offer total must be non-negative");
+    const expiry = new Date(offer.validUntil);
+    if (Number.isNaN(expiry.getTime()) || expiry.getTime() <= now.getTime()) continue;
+    validateEvidence(offer.evidence, now);
+    const key = offer.supplierKey + ":" + offer.productId + ":" + offer.currency;
+    const current = byKey.get(key);
+    if (!current || offer.total < current.total) byKey.set(key, offer);
+  }
+  return [...byKey.values()].sort((a, b) => a.total - b.total);
+}
+
+export function rankDemand(signals: readonly DemandSignal[]): DemandSignal[] {
+  return [...signals]
+    .filter((s) => Number.isFinite(s.score) && s.score >= 0 && s.score <= 1)
+    .sort((a, b) => b.score - a.score || a.destinationId.localeCompare(b.destinationId));
+}
+
+export function buildIntelligenceSnapshot(
+  destinationId: string,
+  conditions: readonly IntelligenceObservation[],
+  inventory: readonly InventoryOffer[],
+  demand?: DemandSignal,
+  now = new Date(),
+): GlobalTravelIntelligenceSnapshot {
+  const normalizedInventory = normalizeOffers(inventory, now);
+  for (const condition of conditions) {
+    validateEvidence(condition.evidence, now);
+  }
+  if (demand) validateEvidence(demand.evidence, now);
+  return { destinationId, conditions, inventory: normalizedInventory, demand, generatedAt: now.toISOString() };
+}
+
+export function authorizeNetworkRequest(request: CommerceNetworkRequest, now = new Date()): CommerceNetworkDecision {
+  const allowed = request.policy.allowedCapabilities.includes(request.capability);
+  const evidenceComplete = request.policy.requireEvidence ? request.subjectIds.length > 0 : true;
+  if (!allowed) return { requestId: request.requestId, allowed: false, reason: "Capability is not granted by network policy", requiresRevalidation: MUTATING_CAPABILITIES.has(request.capability), evidenceComplete };
+  if (!evidenceComplete) return { requestId: request.requestId, allowed: false, reason: "Evidence is required for this network request", requiresRevalidation: false, evidenceComplete: false };
+  if (MUTATING_CAPABILITIES.has(request.capability)) {
+    return {
+      requestId: request.requestId,
+      allowed: request.policy.allowAutonomousMutation,
+      reason: request.policy.allowAutonomousMutation ? "Mutating capability is policy-authorized" : "Mutating capability requires an approved execution path",
+      requiresRevalidation: request.policy.requireFreshInventoryForCommit,
+      evidenceComplete,
+    };
+  }
+  const ageSeconds = Math.max(0, (now.getTime() - new Date(request.requestedAt).getTime()) / 1000);
+  if (!Number.isFinite(ageSeconds) || ageSeconds > request.policy.maxQuoteAgeSeconds) {
+    return { requestId: request.requestId, allowed: false, reason: "Request evidence/quote window is stale", requiresRevalidation: true, evidenceComplete };
+  }
+  return { requestId: request.requestId, allowed: true, reason: "Network capability authorized", requiresRevalidation: false, evidenceComplete };
+}
+
+export function canCommitOffer(offer: InventoryOffer, now = new Date()): boolean {
+  const expiry = new Date(offer.validUntil);
+  return offer.available && !Number.isNaN(expiry.getTime()) && expiry.getTime() > now.getTime();
+}
+
+export const WORLDWAY_COMMERCE_NETWORK_CAPABILITIES: readonly NetworkCapability[] = [
+  "discover","compare","quote","recommend","plan","hold","book","modify","cancel","refund",
+];
