@@ -133,10 +133,12 @@ export function buildChronologicalTripGraph(items: NormalizedComponent[]): Chron
   const issues = checkChronology(nodes);
   const edges: Array<{ from: string; to: string; gapMinutes: number }> = [];
 
-  const moving = nodes.filter((c) => c.kind !== "stay" && c.kind !== "insurance");
-  for (let i = 0; i + 1 < moving.length; i += 1) {
-    const from = moving[i]!;
-    const to = moving[i + 1]!;
+  // Graph edges include stays because the canonical graph represents the
+  // complete itinerary. Insurance is non-temporal and therefore excluded.
+  const sequenced = nodes.filter((c) => c.kind !== "insurance");
+  for (let i = 0; i + 1 < sequenced.length; i += 1) {
+    const from = sequenced[i]!;
+    const to = sequenced[i + 1]!;
     edges.push({
       from: from.id,
       to: to.id,
