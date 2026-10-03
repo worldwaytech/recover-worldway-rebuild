@@ -78,7 +78,7 @@ export async function executeProposal(p: ActionProposal, reg: ToolRegistry, ctx:
   const v = await revalidate(p);
   if (!v.ok) return fail(`revalidation_failed:${v.blockers.join(",")}`, { deterministic_validation: v, approval_state: "failed" });
   try {
-    const result = await reg.invoke(p.tool, p.input, { ...ctx, highRiskGrant: { tool: p.tool, grantedBy: p.action === "REFUND" ? "staff_approval" : "booking_readiness" } });
+    const result = await reg.invoke(p.tool, p.input, { ...ctx, highRiskGrant: { tool: p.tool, action: p.action, grantedBy: p.action === "REFUND" ? "staff_approval" : "booking_readiness" } });
     return { ok: true as const, result, proposal: { ...p, deterministic_validation: v, approval_state: "executed" as const } };
   } catch {
     return fail("execution_failed", { deterministic_validation: v, approval_state: "failed" });
