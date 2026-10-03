@@ -86,17 +86,28 @@ const SOURCE_ORDER: KnowledgeSource[] = [
 const MAX_FACTS = 10000;
 const MAX_ID_LENGTH = 300;
 const MAX_PREDICATE_LENGTH = 200;
+const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 
 function isValidTimestamp(value: string): boolean {
   return Number.isFinite(Date.parse(value));
 }
 
 function validateFact(input: KnowledgeFact): KnowledgeFact | null {
+  const now = Date.now();
   if (!input.id || input.id.trim().length > MAX_ID_LENGTH) return null;
   if (!input.subjectId || input.subjectId.trim().length > MAX_ID_LENGTH) return null;
   if (!input.predicate || input.predicate.trim().length > MAX_PREDICATE_LENGTH) return null;
   if (!SOURCE_ORDER.includes(input.source)) return null;
   if (!isValidTimestamp(input.evidence.observedAt)) return null;
+  const observedAtMs = Date.parse(input.evidence.observedAt);
+  if (observedAtMs > now + MAX_FUTURE_SKEW_MS) return null;
+  for (const item of input.evidence.evidence) {
+    if (!item || !isValidTimestamp(item.observedAt)) return null;
+    const itemObservedAt = Date.parse(item.observedAt);
+    if (itemObservedAt > now + MAX_FUTURE_SKEW_MS) return null;
+    if (!Number.isFinite(item.confidence) || item.confidence < 0 || item.confidence > 1) return null;
+    if (item.expiresAt !== undefined && (!isValidTimestamp(item.expiresAt) || Date.parse(item.expiresAt) <= itemObservedAt)) return null;
+  }
   if (
     input.evidence.expiresAt !== undefined &&
     (!isValidTimestamp(input.evidence.expiresAt) ||

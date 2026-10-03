@@ -15,6 +15,16 @@ describe("orchestration trace evidence", () => {
     expect(result[1].confidence).toBe(1);
   });
 
+  it("rejects future-dated and inconsistent expiry evidence", () => {
+    const now = new Date("2026-10-03T12:00:00.000Z");
+    const result = sanitizeOrchestrationEvidence([
+      { source: "test", reference: "future", observedAt: "2026-10-04T00:00:00Z", confidence: 1 },
+      { source: "test", reference: "bad-expiry", observedAt: "2026-10-03T10:00:00Z", expiresAt: "2026-10-03T09:00:00Z", confidence: 1 },
+      { source: "test", reference: "valid", observedAt: "2026-10-03T10:00:00Z", expiresAt: "2026-10-03T13:00:00Z", confidence: 1 },
+    ], now);
+    expect(result.map((item) => item.reference)).toEqual(["valid"]);
+  });
+
   it("records lifecycle and provenance without payloads", () => {
     const events: unknown[] = [];
     const off = addTraceSink((event) => events.push(event));
