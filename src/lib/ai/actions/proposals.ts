@@ -100,15 +100,15 @@ export async function executeProposal(p: ActionProposal, reg: ToolRegistry, ctx:
   if (spec.risk !== (p.action as RiskLevel)) return fail("risk_mismatch");
   if (executedProposalIds.has(p.proposal_id)) return fail("already_executed");
   if (executingProposalIds.has(p.proposal_id)) return fail("execution_in_progress");
-  const v = await revalidate(p);
-  if (!v.ok) return fail(`revalidation_failed:${v.blockers.join(",")}`, { deterministic_validation: v, approval_state: "failed" });
   executingProposalIds.add(p.proposal_id);
   try {
+    const v = await revalidate(p);
+    if (!v.ok) return fail(`revalidation_failed:${v.blockers.join(",")}`, { deterministic_validation: v, approval_state: "failed" });
     const result = await reg.invoke(p.tool, p.input, { ...ctx, highRiskGrant: { tool: p.tool, action: p.action, grantedBy: p.action === "REFUND" ? "staff_approval" : "booking_readiness", principalUserId: ctx.principal.userId ?? "", expiresAt: p.expires_at } });
     executedProposalIds.add(p.proposal_id);
     return { ok: true as const, result, proposal: { ...p, deterministic_validation: v, approval_state: "executed" as const } };
   } catch {
-    return fail("execution_failed", { deterministic_validation: v, approval_state: "failed" });
+    return fail("execution_failed", { approval_state: "failed" });
   } finally {
     executingProposalIds.delete(p.proposal_id);
   }
