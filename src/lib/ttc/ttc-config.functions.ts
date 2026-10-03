@@ -5,7 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // RLS with no policies). Values are never returned to the browser or logged;
 // only a masked preview and status leave the server.
 
-type Ctx = { supabase: { rpc: Function }; userId: string };
+type RpcClient = { rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: boolean; error: unknown }> };
+type Ctx = { supabase: RpcClient; userId: string };
 
 async function assertSuperAdmin(context: Ctx) {
   const { data, error } = await context.supabase.rpc("has_role", {
