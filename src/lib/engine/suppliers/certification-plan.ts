@@ -1,0 +1,41 @@
+// Evidence-driven certification plan for currently registered suppliers.
+// This does not change liveStatus. Production promotion still requires the
+// existing supplier registry grants to be updated only after real evidence.
+
+export type CertificationNextStep =
+  | "complete_production_booking"
+  | "complete_contract_prerequisites"
+  | "complete_supplier_credentials"
+  | "complete_mtls"
+  | "resolve_upstream_outage"
+  | "maintain_current_scope"
+  | "defer";
+
+export interface SupplierCertificationPlan {
+  supplierKey: string;
+  currentReadiness: "production" | "uat" | "sandbox" | "blocked" | "disabled";
+  nextStep: CertificationNextStep;
+  requiredEvidence: readonly string[];
+  promotionBlocker: string;
+}
+
+export const SUPPLIER_CERTIFICATION_PLAN: readonly SupplierCertificationPlan[] = [
+  { supplierKey: "travelshop", currentReadiness: "production", nextStep: "complete_contract_prerequisites", requiredEvidence: ["partner country IDs", "paid production booking", "cancel/refund outcome"], promotionBlocker: "Booking is not production-certified until partner prerequisites and a paid end-to-end booking are evidenced." },
+  { supplierKey: "ratehawk", currentReadiness: "uat", nextStep: "complete_production_booking", requiredEvidence: ["credentials", "search/price", "prebook", "production booking", "cancel/refund"], promotionBlocker: "Certification is incomplete." },
+  { supplierKey: "gadventures", currentReadiness: "uat", nextStep: "complete_production_booking", requiredEvidence: ["supplier write access", "search/price", "booking", "cancel/modify outcome"], promotionBlocker: "Certification evidence and write access remain incomplete." },
+  { supplierKey: "hbx-hotels", currentReadiness: "uat", nextStep: "complete_mtls", requiredEvidence: ["valid mTLS certificate", "availability/price", "prebook", "book", "cancel"], promotionBlocker: "mTLS certificate is missing." },
+  { supplierKey: "hbx-transfers", currentReadiness: "uat", nextStep: "complete_production_booking", requiredEvidence: ["search", "price", "book", "cancel", "failure/retry evidence"], promotionBlocker: "Certification evidence is incomplete." },
+  { supplierKey: "viator-affiliate", currentReadiness: "production", nextStep: "complete_supplier_credentials", requiredEvidence: ["affiliate booking entitlement", "paid production booking", "cancel/refund outcome"], promotionBlocker: "Current key is not certified for affiliate booking." },
+  { supplierKey: "up17", currentReadiness: "production", nextStep: "complete_production_booking", requiredEvidence: ["production booking", "cancel/modify outcome", "idempotency evidence"], promotionBlocker: "Search/availability/price are evidenced; production booking is not certified." },
+  { supplierKey: "airiq", currentReadiness: "production", nextStep: "complete_production_booking", requiredEvidence: ["production booking", "voucher/status", "failure/retry evidence"], promotionBlocker: "Booking remains uncertified in production." },
+  { supplierKey: "tripjack-cabs", currentReadiness: "blocked", nextStep: "resolve_upstream_outage", requiredEvidence: ["stable location search", "price", "book", "cancel"], promotionBlocker: "UAT location search returns 503." },
+  { supplierKey: "private-aviation", currentReadiness: "production", nextStep: "maintain_current_scope", requiredEvidence: ["future booking/payment API if offered"], promotionBlocker: "Current scope is enquiry/estimate; no booking/payment API is certified." },
+  { supplierKey: "skyaccess", currentReadiness: "uat", nextStep: "complete_supplier_credentials", requiredEvidence: ["supplier approval", "live pricing", "verified departure times", "production certification"], promotionBlocker: "Unapproved/test-only status and unresolved data-quality evidence." },
+  { supplierKey: "amadeus", currentReadiness: "disabled", nextStep: "defer", requiredEvidence: ["commercial/API access", "coverage comparison", "normalization audit", "production certification"], promotionBlocker: "Explicitly deferred pending this reassessment and access evidence." },
+];
+
+export function certificationPlanFor(supplierKey: string): SupplierCertificationPlan {
+  const plan = SUPPLIER_CERTIFICATION_PLAN.find((item) => item.supplierKey === supplierKey);
+  if (!plan) throw new Error(`Certification plan not found: ${supplierKey}`);
+  return plan;
+}
