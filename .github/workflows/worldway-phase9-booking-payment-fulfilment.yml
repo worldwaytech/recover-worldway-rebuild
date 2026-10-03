@@ -16,4 +16,4 @@ jobs:
           node-version: 22
       - run: npm install -g npm@12.2.0 && npm install --no-audit --no-fund --package-lock=false --legacy-peer-deps
       - run: npm run typecheck
-      - run: npm test -- --run src/lib/engine/__tests__/chronology.phase5.test.ts src/lib/engine/__tests__/pipeline.test.ts src/lib/engine/__tests__/phase5-multicity.test.ts src/lib/engine/__tests__/phase6-orchestration.test.ts src/lib/engine/__tests__/phase7-ranking.test.ts src/lib/engine/__tests__/phase8-pricing.test.ts src/lib/engine/__tests__/phase9-booking-orchestration.test.ts
+      - run: npm test -- --run src/lib/engine/__tests__/chronology.phase5.test.ts src/lib/engine/__tests__/pipeline.test.ts src/lib/engine/__tests__/phase5-multicity.test.ts src/lib/engine/__tests__/phase6-orchestration.test.ts src/lib/engine/__tests__/phase7-ranking.test.ts src/lib/engine/__tests__/phase8-pricing.test.ts src/lib/engine/__tests__/phase9-booking-orchestration.test.ts src/lib/tripjack/__tests__/agent-profile.test.ts src/lib/tripjack/__tests__/client-redaction.test.ts
