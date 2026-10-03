@@ -27,7 +27,16 @@ describe("partner API auth", () => {
     vi.unstubAllEnvs();
   });
   it("enforces least-privilege scopes per operation", () => {
-    const p = { tenantId: "t", method: "api_key" as const, keyId: "k", userId: null, scopes: ["tours.read" as const], rateLimitPerMinute: 60 };
+    const p = {
+      tenantId: "t",
+      method: "api_key" as const,
+      keyId: "k",
+      userId: null,
+      scopes: ["tours.read" as const],
+      apiProducts: ["tours" as const],
+      apiAccessMode: "single_product" as const,
+      rateLimitPerMinute: 60,
+    };
     expect(() => requireScope(p, "searchTours")).not.toThrow();
     expect(() => requireScope(p, "quoteTour")).toThrow(PartnerAuthError);
     expect(OP_SCOPE.planTrip).toBe("trips.plan");
